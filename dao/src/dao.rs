@@ -18,13 +18,17 @@ impl<'a> Dao<'a> {
     }
 
     pub fn insert<V>(&mut self, s: &'a str, v: V)
-        where V: Into<Value> {
+    where
+        V: Into<Value>,
+    {
         self.0.insert(s, v.into());
     }
 
     fn get<T>(&'a self, s: &str) -> Result<T, DaoError<T>>
-        where T: TryFrom<&'a Value>,
-        <T as TryFrom<&'a Value>>::Error: Debug {
+    where
+        T: TryFrom<&'a Value>,
+        <T as TryFrom<&'a Value>>::Error: Debug,
+    {
         let value: Option<&'a Value> = self.0.get(s);
         match value {
             Some(v) => TryFrom::try_from(v).map_err(|e| DaoError::ConvertError(e)),
@@ -35,9 +39,10 @@ impl<'a> Dao<'a> {
 
 impl<'a> Serialize for Dao<'a> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where S: Serializer
+    where
+        S: Serializer,
     {
-        self.0.serialize(serializer) 
+        self.0.serialize(serializer)
     }
 }
 

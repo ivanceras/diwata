@@ -4,7 +4,7 @@ use std::fmt;
 use r2d2;
 
 #[derive(Debug)]
-pub enum ConnectError{
+pub enum ConnectError {
     OutOfConnection,
     NoSuchPoolConnection,
     ParseError(ParseError),
@@ -13,26 +13,26 @@ pub enum ConnectError{
 }
 
 /// TODO: use error_chain i guess?
-impl Error for ConnectError{
-   fn description(&self) -> &str{
-       "short desc"
-   }
-   fn cause(&self) -> Option<&Error> {
-       None
-   }
+impl Error for ConnectError {
+    fn description(&self) -> &str {
+        "short desc"
+    }
+    fn cause(&self) -> Option<&Error> {
+        None
+    }
 }
 
-impl fmt::Display for ConnectError{
+impl fmt::Display for ConnectError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.description())
     }
 }
 
 #[derive(Debug)]
-pub enum ParseError{
+pub enum ParseError {
     DbUrlParseError(url::ParseError),
 }
 
 
-pub enum DbError{
+pub enum DbError {
 }

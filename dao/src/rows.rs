@@ -5,16 +5,14 @@ use std::slice;
 
 /// use this to store data retrieved from the database
 /// This is also slimmer than Vec<Dao> when serialized
-pub struct Rows{
+pub struct Rows {
     columns: Vec<String>,
     data: Vec<Vec<Value>>,
 }
 
 
 
-impl Rows{
-
-
+impl Rows {
     /// Returns an iterator over the `Row`s.
     pub fn iter<'a>(&'a self) -> Iter<'a> {
         Iter {
@@ -45,7 +43,7 @@ impl<'a> Iterator for Iter<'a> {
     fn next(&mut self) -> Option<Dao<'a>> {
         self.iter.next().map(|row| {
             let mut dao = Dao::new();
-            for (i,column) in self.columns.iter().enumerate(){
+            for (i, column) in self.columns.iter().enumerate() {
                 dao.insert(column, row[i].clone());
             }
             dao
@@ -61,7 +59,7 @@ impl<'a> DoubleEndedIterator for Iter<'a> {
     fn next_back(&mut self) -> Option<Dao<'a>> {
         self.iter.next_back().map(|row| {
             let mut dao = Dao::new();
-            for (i,column) in self.columns.iter().enumerate(){
+            for (i, column) in self.columns.iter().enumerate() {
                 dao.insert(column, row[i].clone());
             }
             dao
@@ -73,41 +71,41 @@ impl<'a> ExactSizeIterator for Iter<'a> {}
 
 
 #[cfg(test)]
-mod test{
+mod test {
     use super::*;
 
     #[test]
-    fn iteration_count(){
+    fn iteration_count() {
         let columns = vec!["id".to_string(), "username".to_string()];
-        let data:Vec<Vec<Value>> = vec![vec![1.into(), "ivanceras".into()]];
-        let mut rows = Rows{
+        let data: Vec<Vec<Value>> = vec![vec![1.into(), "ivanceras".into()]];
+        let mut rows = Rows {
             columns: columns,
-            data: data
+            data: data,
         };
         assert_eq!(1, rows.iter().count());
     }
 
     #[test]
-    fn iteration_count2(){
+    fn iteration_count2() {
         let columns = vec!["id".to_string(), "username".to_string()];
-        let data:Vec<Vec<Value>> = vec![
-                vec![1.into(), "ivanceras".into()],
-                vec![2.into(), "lee".into()]
+        let data: Vec<Vec<Value>> = vec![
+            vec![1.into(), "ivanceras".into()],
+            vec![2.into(), "lee".into()],
         ];
-        let mut rows = Rows{
+        let mut rows = Rows {
             columns: columns,
-            data: data
+            data: data,
         };
         assert_eq!(2, rows.iter().count());
     }
 
     #[test]
-    fn dao(){
+    fn dao() {
         let columns = vec!["id".to_string(), "username".to_string()];
-        let data:Vec<Vec<Value>> = vec![vec![1.into(), "ivanceras".into()]];
-        let mut rows = Rows{
+        let data: Vec<Vec<Value>> = vec![vec![1.into(), "ivanceras".into()]];
+        let mut rows = Rows {
             columns: columns,
-            data: data
+            data: data,
         };
         let mut dao = Dao::new();
         dao.insert("id", 1);
@@ -116,15 +114,15 @@ mod test{
     }
 
     #[test]
-    fn dao2(){
+    fn dao2() {
         let columns = vec!["id".to_string(), "username".to_string()];
-        let data:Vec<Vec<Value>> = vec![
-                vec![1.into(), "ivanceras".into()],
-                vec![2.into(), "lee".into()]
+        let data: Vec<Vec<Value>> = vec![
+            vec![1.into(), "ivanceras".into()],
+            vec![2.into(), "lee".into()],
         ];
-        let mut rows = Rows{
+        let mut rows = Rows {
             columns: columns,
-            data: data
+            data: data,
         };
         let mut iter = rows.iter();
         let mut dao = Dao::new();
@@ -139,15 +137,15 @@ mod test{
     }
 
     #[test]
-    fn from_back(){
+    fn from_back() {
         let columns = vec!["id".to_string(), "username".to_string()];
-        let data:Vec<Vec<Value>> = vec![
-                vec![1.into(), "ivanceras".into()],
-                vec![2.into(), "lee".into()]
+        let data: Vec<Vec<Value>> = vec![
+            vec![1.into(), "ivanceras".into()],
+            vec![2.into(), "lee".into()],
         ];
-        let mut rows = Rows{
+        let mut rows = Rows {
             columns: columns,
-            data: data
+            data: data,
         };
         let mut iter = rows.iter();
         let mut dao2 = Dao::new();
@@ -163,15 +161,15 @@ mod test{
     }
 
     #[test]
-    fn into_iter(){
+    fn into_iter() {
         let columns = vec!["id".to_string(), "username".to_string()];
-        let data:Vec<Vec<Value>> = vec![
-                vec![1.into(), "ivanceras".into()],
-                vec![2.into(), "lee".into()]
+        let data: Vec<Vec<Value>> = vec![
+            vec![1.into(), "ivanceras".into()],
+            vec![2.into(), "lee".into()],
         ];
-        let mut rows = Rows{
+        let mut rows = Rows {
             columns: columns,
-            data: data
+            data: data,
         };
         let mut iter = rows.into_iter();
         let mut dao = Dao::new();

@@ -10,7 +10,7 @@ use widget::Widget;
 ///  - column datatype
 ///  - column data limit
 ///  - actual data content
-enum Reference{
+enum Reference {
     Person,
     Firstname,
     LastName,
@@ -18,7 +18,7 @@ enum Reference{
     Salutation,
     EmailAddress,
     Username,
-    CompanyName, 
+    CompanyName,
     Password, // password control
     Tag,
     CountryName,
@@ -40,14 +40,14 @@ enum Reference{
     VideoLink, // link to youtube videos
     ImageLink, // link to image, could be rehosted to avoid xss
     Tweet, // linked to a tweet
-    PopularService, // gmail, twitter, github, gitlab, 
+    PopularService, // gmail, twitter, github, gitlab,
     MapLocation,
     Latitude,
     Longitude,
 
     Address, // a person real address, which could be located in the map
     Icon, // icon, conveys meaning
-    Logo, // aesthetics images 
+    Logo, // aesthetics images
     Image, // potential to display as image
     Banner, // Huge images for banner puposes
 
@@ -91,10 +91,9 @@ enum Reference{
 
     BitcoinAddress,
     EthereumAddress,
-    
 }
 
-enum Document{
+enum Document {
     Pdf,
     Xls,
     Ods,
@@ -107,8 +106,7 @@ enum Document{
 }
 
 
-impl Reference{
-
+impl Reference {
     fn use_widget(&self) -> Widget {
         match *self {
             Reference::Password => Widget::Password,

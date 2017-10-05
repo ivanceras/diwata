@@ -10,8 +10,8 @@ pub enum ConvertError {
     NotSupported,
 }
 
-impl Error for ConvertError{
-    fn description(&self) -> &str{
+impl Error for ConvertError {
+    fn description(&self) -> &str {
         "Conversion is not supported"
     }
 
@@ -21,7 +21,6 @@ impl Error for ConvertError{
 }
 
 impl fmt::Display for ConvertError {
-    
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.description())
     }
@@ -29,10 +28,10 @@ impl fmt::Display for ConvertError {
 
 #[derive(Debug)]
 pub enum DaoError<'a, T>
-where T: TryFrom<&'a Value>,
+where
+    T: TryFrom<&'a Value>,
     <T as TryFrom<&'a Value>>::Error: Debug,
 {
     ConvertError(<T as TryFrom<&'a Value>>::Error),
     NoSuchValueError(String),
 }
-
