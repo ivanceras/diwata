@@ -1,0 +1,10 @@
+[package]
+name = "curtain-rewrite"
+version = "0.1.0"
+authors = ["lee"]
+
+[dependencies]
+dao = { path = "dao" }
+intel = { path = "intel" }
+
+[workspace]
