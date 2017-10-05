@@ -2,17 +2,27 @@
 use url::Url;
 use std::convert::TryFrom;
 use error::ParseError;
+use database::Database;
+use std::ops::Deref;
+
 cfg_if! {if #[cfg(feature = "with-postgres")]{
-    use postgres::Connection;
-    use r2d2_postgres;
-    use pg::PostgresIns;
+    use pg::PostgresDB;
 }}
-use r2d2;
 
 
-pub enum DbPlatform {
+pub enum DBPlatform {
     #[cfg(feature = "with-postgres")]
-    Postgres(PostgresIns),
+    Postgres(PostgresDB),
+}
+
+impl Deref for DBPlatform{
+    type Target = Database;
+
+    fn deref(&self) -> &Self::Target {
+        match *self{
+            DBPlatform::Postgres(ref pg) => pg
+        }
+    }
 }
 
 pub(crate) enum Platform {
@@ -20,6 +30,7 @@ pub(crate) enum Platform {
     Postgres,
     Unsupported(String),
 }
+
 
 impl<'a> TryFrom<&'a str> for Platform {
     type Error = ParseError;

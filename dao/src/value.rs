@@ -1,4 +1,3 @@
-use std::collections::BTreeMap;
 use uuid::Uuid;
 use chrono::NaiveDate;
 use chrono::{DateTime, Utc};
@@ -22,7 +21,6 @@ pub enum Value {
     Double(f64),
 
     Blob(Vec<u8>),
-    Char(char),
     Text(String),
     Str(&'static str),
 
@@ -80,7 +78,6 @@ impl_from!(i64, Bigint);
 impl_from!(f32, Float);
 impl_from!(f64, Double);
 impl_from!(Vec<u8>, Blob);
-impl_from!(char, Char);
 impl_from!(String, Text);
 impl_from!(&'static str, Str);
 impl_from!(Uuid, Uuid);

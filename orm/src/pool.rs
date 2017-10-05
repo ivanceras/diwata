@@ -1,19 +1,13 @@
-
-use r2d2;
-#[cfg(feature = "with-postgres")]
-use r2d2_postgres::PostgresConnectionManager;
-#[cfg(feature = "with-postgres")]
-use postgres::Connection;
+cfg_if! {if #[cfg(feature = "with-postgres")]{
+    use r2d2_postgres::PostgresConnectionManager;
+    use pg::{self, PostgresDB};
+    use r2d2;
+}}
 use std::convert::TryFrom;
 use platform::Platform;
 use error::{ParseError, ConnectError};
 use std::collections::BTreeMap;
-use url;
-#[cfg(feature = "with-postgres")]
-use pg::{self, PostgresIns};
-use std::ops::Deref;
-use database::Database;
-use platform::DbPlatform;
+use platform::DBPlatform;
 
 pub struct Pool<'a>(BTreeMap<&'a str, ConnPool>);
 pub enum ConnPool {
@@ -22,6 +16,7 @@ pub enum ConnPool {
 }
 
 pub enum PooledConn {
+    #[cfg(feature = "with-postgres")]
     PooledPg(r2d2::PooledConnection<PostgresConnectionManager>),
 }
 
@@ -53,7 +48,7 @@ impl<'a> Pool<'a> {
     }
 
     /// get the pool for this specific db_url, create one if it doesn't have yet.
-    pub fn get_pool(&mut self, db_url: &'a str) -> Result<&ConnPool, ConnectError> {
+    fn get_pool(&mut self, db_url: &'a str) -> Result<&ConnPool, ConnectError> {
         self.ensure(db_url)?;
         let platform: Result<Platform, ParseError> = TryFrom::try_from(db_url);
         match platform {
@@ -79,6 +74,7 @@ impl<'a> Pool<'a> {
     pub fn connect(&mut self, db_url: &'a str) -> Result<PooledConn, ConnectError> {
         let pool = self.get_pool(db_url)?;
         match *pool {
+            #[cfg(feature = "with-postgres")]
             ConnPool::PoolPg(ref pool_pg) => {
                 let pooled_conn = pool_pg.get();
                 match pooled_conn {
@@ -90,15 +86,18 @@ impl<'a> Pool<'a> {
     }
 
     /// get a database instance with a connection, ready to send sql statements
-    pub fn db(&mut self, db_url: &'a str) -> Result<DbPlatform, ConnectError> {
+    pub fn db(&mut self, db_url: &'a str) -> Result<DBPlatform, ConnectError> {
         let pooled_conn = self.connect(db_url)?;
         match pooled_conn {
-            PooledConn::PooledPg(pooled_pg) => Ok(DbPlatform::Postgres(PostgresIns(pooled_pg))),
+            #[cfg(feature = "with-postgres")]
+            PooledConn::PooledPg(pooled_pg) => Ok(DBPlatform::Postgres(PostgresDB(pooled_pg))),
         }
     }
+
 }
 
 #[cfg(test)]
+#[cfg(feature = "with-postgres")]
 mod tests_pg {
     use super::*;
 
@@ -106,10 +105,10 @@ mod tests_pg {
     fn connect() {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/rforum";
         let mut pool = Pool::new();
-        pool.ensure(db_url);
+        pool.ensure(db_url).is_ok();
         let pooled = pool.get_pool(db_url);
         match pooled {
-            Ok(ref conn) => println!("ok"),
+            Ok(_) => println!("ok"),
             Err(ref e) => eprintln!("error: {:?}", e),
         }
         assert!(pooled.is_ok());

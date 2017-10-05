@@ -5,6 +5,7 @@ use std::slice;
 
 /// use this to store data retrieved from the database
 /// This is also slimmer than Vec<Dao> when serialized
+#[derive(Debug)]
 pub struct Rows {
     columns: Vec<String>,
     data: Vec<Vec<Value>>,
@@ -12,7 +13,20 @@ pub struct Rows {
 
 
 
+
 impl Rows {
+
+    pub fn new(columns: Vec<String>) -> Self {
+        Rows{
+            columns,
+            data: vec![]
+        }
+    }
+
+    pub fn push(&mut self, row: Vec<Value>){
+        self.data.push(row)
+    }
+
     /// Returns an iterator over the `Row`s.
     pub fn iter<'a>(&'a self) -> Iter<'a> {
         Iter {
@@ -78,7 +92,7 @@ mod test {
     fn iteration_count() {
         let columns = vec!["id".to_string(), "username".to_string()];
         let data: Vec<Vec<Value>> = vec![vec![1.into(), "ivanceras".into()]];
-        let mut rows = Rows {
+        let rows = Rows {
             columns: columns,
             data: data,
         };
@@ -92,7 +106,7 @@ mod test {
             vec![1.into(), "ivanceras".into()],
             vec![2.into(), "lee".into()],
         ];
-        let mut rows = Rows {
+        let rows = Rows {
             columns: columns,
             data: data,
         };
@@ -103,7 +117,7 @@ mod test {
     fn dao() {
         let columns = vec!["id".to_string(), "username".to_string()];
         let data: Vec<Vec<Value>> = vec![vec![1.into(), "ivanceras".into()]];
-        let mut rows = Rows {
+        let rows = Rows {
             columns: columns,
             data: data,
         };
@@ -120,7 +134,7 @@ mod test {
             vec![1.into(), "ivanceras".into()],
             vec![2.into(), "lee".into()],
         ];
-        let mut rows = Rows {
+        let rows = Rows {
             columns: columns,
             data: data,
         };
@@ -143,7 +157,7 @@ mod test {
             vec![1.into(), "ivanceras".into()],
             vec![2.into(), "lee".into()],
         ];
-        let mut rows = Rows {
+        let rows = Rows {
             columns: columns,
             data: data,
         };
@@ -167,7 +181,7 @@ mod test {
             vec![1.into(), "ivanceras".into()],
             vec![2.into(), "lee".into()],
         ];
-        let mut rows = Rows {
+        let rows = Rows {
             columns: columns,
             data: data,
         };

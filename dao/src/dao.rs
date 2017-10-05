@@ -2,10 +2,8 @@ use std::collections::BTreeMap;
 use std::convert::TryFrom;
 use std::fmt::Debug;
 use value::Value;
-use std::error::Error;
 use error::DaoError;
-use error::ConvertError;
-use serde::ser::{Serialize, Serializer, SerializeStruct};
+use serde::ser::{Serialize, Serializer};
 
 
 #[derive(Debug, PartialEq)]
@@ -24,7 +22,8 @@ impl<'a> Dao<'a> {
         self.0.insert(s, v.into());
     }
 
-    fn get<T>(&'a self, s: &str) -> Result<T, DaoError<T>>
+
+    pub fn get<T>(&'a self, s: &str) -> Result<T, DaoError<T>>
     where
         T: TryFrom<&'a Value>,
         <T as TryFrom<&'a Value>>::Error: Debug,

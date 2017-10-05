@@ -2,10 +2,11 @@ use url;
 use std::error::Error;
 use std::fmt;
 use r2d2;
+#[cfg(feature = "with-postgres")]
+use postgres;
 
 #[derive(Debug)]
 pub enum ConnectError {
-    OutOfConnection,
     NoSuchPoolConnection,
     ParseError(ParseError),
     UnsupportedDb(String),
@@ -33,6 +34,13 @@ pub enum ParseError {
     DbUrlParseError(url::ParseError),
 }
 
+#[derive(Debug)]
+pub enum PlatformError{
+    #[cfg(feature = "with-postgres")]
+    PostgresError(postgres::Error)
+}
 
+#[derive(Debug)]
 pub enum DbError {
+    PlatformError(PlatformError),
 }

@@ -1,3 +1,4 @@
+#![deny(warnings)]
 #![feature(try_from)]
 
 extern crate chrono;
@@ -10,6 +11,7 @@ extern crate serde_derive;
 
 pub use value::Value;
 pub use rows::Rows;
+pub use dao::Dao;
 
 
 mod dao;
