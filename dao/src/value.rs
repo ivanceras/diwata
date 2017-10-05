@@ -9,7 +9,7 @@ use error::ConvertError;
 /// Generic value storage 32 byte in size
 /// Some contains the same value container, but the variant is more
 /// important for type hinting and view presentation hinting purposes
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum Value {
     Bool(bool),
 

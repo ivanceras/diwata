@@ -5,5 +5,8 @@ authors = ["lee"]
 description = "Dao provides a flexible way to access data from the database"
 
 [dependencies]
-chrono = "0.4.0"
-uuid = {version = "0.5.1", features = ["v4"]}
+chrono = {version = "0.4.0", features = ["serde"]}
+uuid = {version = "0.5.1", features = ["serde", "v4"]}
+serde = "1.0.15"
+serde_derive = "1.0.15"
+serde_json = "1.0.3"
