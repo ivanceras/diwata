@@ -5,7 +5,7 @@ use std::slice;
 
 /// use this to store data retrieved from the database
 /// This is also slimmer than Vec<Dao> when serialized
-pub(crate) struct Rows{
+pub struct Rows{
     columns: Vec<String>,
     data: Vec<Vec<Value>>,
 }

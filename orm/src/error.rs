@@ -1,6 +1,7 @@
 use url;
 use std::error::Error;
 use std::fmt;
+use r2d2;
 
 #[derive(Debug)]
 pub enum ConnectError{
@@ -8,6 +9,7 @@ pub enum ConnectError{
     NoSuchPoolConnection,
     ParseError(ParseError),
     UnsupportedDb(String),
+    Timeout(r2d2::GetTimeout),
 }
 
 /// TODO: use error_chain i guess?
@@ -29,4 +31,8 @@ impl fmt::Display for ConnectError{
 #[derive(Debug)]
 pub enum ParseError{
     DbUrlParseError(url::ParseError),
+}
+
+
+pub enum DbError{
 }

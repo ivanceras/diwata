@@ -2,6 +2,18 @@
 use url::{Url};
 use std::convert::TryFrom;
 use error::ParseError;
+cfg_if! {if #[cfg(feature = "with-postgres")]{
+    use postgres::Connection;
+    use r2d2_postgres;
+    use pg::PostgresIns;
+}}
+use r2d2;
+
+
+pub enum DbPlatform{
+    #[cfg(feature = "with-postgres")]
+    Postgres(PostgresIns)
+}
 
 pub(crate) enum Platform{
     #[cfg(feature = "with-postgres")]

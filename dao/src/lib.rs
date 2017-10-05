@@ -8,6 +8,8 @@ extern crate serde_json;
 extern crate serde_derive;
 
 
+pub use value::Value;
+pub use rows::Rows;
 
 
 mod dao;
