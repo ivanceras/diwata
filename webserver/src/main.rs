@@ -16,4 +16,8 @@ fn main() {
             println!("row {:?}", row);
         }
     }
+
+    let articles: Result<Rows, DbError> = (&db).execute_sql_select("select * from article", &[]);
+    println!("articles: {:#?}", articles);
 }
+

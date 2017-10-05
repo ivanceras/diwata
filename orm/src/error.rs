@@ -37,10 +37,18 @@ pub enum ParseError {
 #[derive(Debug)]
 pub enum PlatformError{
     #[cfg(feature = "with-postgres")]
-    PostgresError(postgres::Error)
+    PostgresError(postgres::Error),
+    SqlError(postgres::Error, String),
 }
 
 #[derive(Debug)]
 pub enum DbError {
     PlatformError(PlatformError),
+    ConvertError(ConvertError),
+}
+
+#[derive(Debug)]
+pub enum ConvertError{
+    UnknownDataType,
+    UnsupportedDataType(String),
 }

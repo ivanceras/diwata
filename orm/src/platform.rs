@@ -20,6 +20,7 @@ impl Deref for DBPlatform{
 
     fn deref(&self) -> &Self::Target {
         match *self{
+            #[cfg(feature = "with-postgres")]
             DBPlatform::Postgres(ref pg) => pg
         }
     }

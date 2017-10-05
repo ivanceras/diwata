@@ -10,6 +10,7 @@ use error::ConvertError;
 /// important for type hinting and view presentation hinting purposes
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum Value {
+    Nil, // no value
     Bool(bool),
 
     Tinyint(i8),
@@ -54,6 +55,41 @@ impl<'a> TryFrom<&'a Value> for f32 {
             Value::Tinyint(v) => Ok(v as f32),
             Value::Smallint(v) => Ok(v as f32),
             Value::Int(v) => Ok(v as f32),
+            _ => Err(ConvertError::NotSupported),
+        }
+    }
+}
+
+impl<'a> TryFrom<&'a Value> for i32 {
+    type Error = ConvertError;
+
+    fn try_from(value: &'a Value) -> Result<Self, Self::Error> {
+        match *value {
+            Value::Tinyint(v) => Ok(v as i32),
+            Value::Smallint(v) => Ok(v as i32),
+            Value::Int(v) => Ok(v as i32),
+            _ => Err(ConvertError::NotSupported),
+        }
+    }
+}
+
+impl<'a> TryFrom<&'a Value> for String {
+    type Error = ConvertError;
+
+    fn try_from(value: &'a Value) -> Result<Self, Self::Error> {
+        match *value {
+            Value::Text(ref v) => Ok(v.to_string()),
+            _ => Err(ConvertError::NotSupported),
+        }
+    }
+}
+
+impl<'a> TryFrom<&'a Value> for bool {
+    type Error = ConvertError;
+
+    fn try_from(value: &'a Value) -> Result<Self, Self::Error> {
+        match *value {
+            Value::Bool(v) => Ok(v),
             _ => Err(ConvertError::NotSupported),
         }
     }

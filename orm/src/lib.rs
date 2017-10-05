@@ -1,5 +1,6 @@
 #![deny(warnings)]
 #![feature(try_from)]
+#![feature(conservative_impl_trait)]
 #[macro_use]
 extern crate cfg_if;
 extern crate r2d2;
@@ -8,6 +9,8 @@ extern crate dao;
 cfg_if! {if #[cfg(feature = "with-postgres")]{
     extern crate r2d2_postgres;
     extern crate postgres;
+    #[macro_use]
+    extern crate postgres_shared;
     mod pg;
 }}
 extern crate uuid;
