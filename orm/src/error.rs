@@ -2,8 +2,9 @@ use url;
 use std::error::Error;
 use std::fmt;
 use r2d2;
-#[cfg(feature = "with-postgres")]
-use postgres;
+cfg_if! {if #[cfg(feature = "with-postgres")]{
+    use pg::PostgresError;
+}}
 
 #[derive(Debug)]
 pub enum ConnectError {
@@ -34,12 +35,11 @@ pub enum ParseError {
     DbUrlParseError(url::ParseError),
 }
 
+
 #[derive(Debug)]
 pub enum PlatformError{
     #[cfg(feature = "with-postgres")]
-    PostgresError(postgres::Error),
-    #[cfg(feature = "with-postgres")]
-    SqlError(postgres::Error, String),
+    PostgresError(PostgresError),
 }
 
 #[derive(Debug)]

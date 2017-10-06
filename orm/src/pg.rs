@@ -5,12 +5,11 @@ use database::Database;
 use dao::Value;
 use error::DbError;
 use dao::Rows;
-use postgres::types::{ToSql,FromSql,Type};
+use postgres;
+use postgres::types::{self,ToSql,FromSql,Type};
 use error::PlatformError;
-use postgres::types;
 use uuid::Uuid;
 use chrono::{DateTime};
-use postgres;
 use postgres::types::IsNull;
 use std::error::Error;
 
@@ -47,7 +46,7 @@ impl Database for PostgresDB{
                                     Some(value) => match value{
                                         Ok(value) =>  record.push(value.0),
                                         Err(e) => {
-                                            return Err(DbError::PlatformError(PlatformError::PostgresError(e)))
+                                            return Err(DbError::PlatformError(PlatformError::PostgresError(PostgresError::GenericError(e))))
                                         }
                                     },
                                     None => {
@@ -59,10 +58,10 @@ impl Database for PostgresDB{
                         }
                         Ok(records)
                     },
-                    Err(e) => Err(DbError::PlatformError(PlatformError::SqlError(e, sql.to_string()))),
+                    Err(e) => Err(DbError::PlatformError(PlatformError::PostgresError(PostgresError::SqlError(e, sql.to_string())))),
                 }
             },
-            Err(e) => Err(DbError::PlatformError(PlatformError::SqlError(e, sql.to_string())))
+            Err(e) => Err(DbError::PlatformError(PlatformError::PostgresError(PostgresError::SqlError(e, sql.to_string()))))
         }
     }
 }
@@ -198,6 +197,12 @@ impl FromSql for OwnedPgValue{
         }
 
     }
+}
+
+#[derive(Debug)]
+pub enum PostgresError{
+    GenericError(postgres::Error),
+    SqlError(postgres::Error, String),
 }
 
 
