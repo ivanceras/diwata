@@ -1,13 +1,4 @@
-
-#![feature(prelude_import)]
-#![no_std]
-#[prelude_import]
-use std::prelude::v1::*;
 extern crate dao;
-#[macro_use]
-extern crate dao_codegen;
-#[macro_use]
-extern crate std as std;
 
 use dao::{FromDao, ToDao};
 
@@ -39,4 +30,5 @@ fn main() {
         username: "ivanceras".to_string(),
     };
     let dao = user.to_dao();
+    println!("dao: {:#?}", dao);
 }

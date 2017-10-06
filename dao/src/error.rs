@@ -30,8 +30,8 @@ impl fmt::Display for ConvertError {
 pub enum DaoError<'a, T>
 where
     T: TryFrom<&'a Value>,
-    <T as TryFrom<&'a Value>>::Error: Debug,
+    T::Error: Debug,
 {
-    ConvertError(<T as TryFrom<&'a Value>>::Error),
+    ConvertError(T::Error),
     NoSuchValueError(String),
 }

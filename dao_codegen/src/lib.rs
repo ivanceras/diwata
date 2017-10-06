@@ -1,3 +1,5 @@
+#![deny(warnings)]
+
 extern crate proc_macro;
 extern crate syn;
 #[macro_use]
@@ -5,8 +7,6 @@ extern crate quote;
 extern crate dao;
 
 use proc_macro::TokenStream;
-use syn::MetaItem::*;
-use dao::{FromDao,ToDao};
 
 #[proc_macro_derive(FromDao)]
 pub fn from_dao(input: TokenStream) -> TokenStream {

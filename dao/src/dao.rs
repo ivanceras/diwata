@@ -27,7 +27,7 @@ impl<'a> Dao<'a> {
     pub fn get<T>(&'a self, s: &str) -> Result<T, DaoError<T>>
     where
         T: TryFrom<&'a Value>,
-        <T as TryFrom<&'a Value>>::Error: Debug,
+        T::Error: Debug,
     {
         let value: Option<&'a Value> = self.0.get(s);
         match value {
