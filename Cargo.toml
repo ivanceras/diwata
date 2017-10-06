@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "dao",
+    "dao_codegen",
     "intel",
     "orm",
     "webserver",

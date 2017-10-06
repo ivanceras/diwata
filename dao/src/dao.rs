@@ -10,6 +10,7 @@ use serde::ser::{Serialize, Serializer};
 pub struct Dao<'a>(BTreeMap<&'a str, Value>);
 
 
+
 impl<'a> Dao<'a> {
     pub fn new() -> Self {
         Dao(BTreeMap::new())
@@ -35,6 +36,7 @@ impl<'a> Dao<'a> {
         }
     }
 
+
 }
 
 impl<'a> Serialize for Dao<'a> {
@@ -44,6 +46,19 @@ impl<'a> Serialize for Dao<'a> {
     {
         self.0.serialize(serializer)
     }
+}
+
+pub trait FromDao {
+    /// convert dao to an instance of the corresponding struct of the model
+    /// taking into considerating the renamed columns
+    fn from_dao(dao: &Dao) -> Self; 
+}
+
+pub trait ToDao{
+
+    /// convert from an instance of the struct to a dao representation
+    /// to be saved into the database
+    fn to_dao(&self) -> Dao;
 }
 
 
@@ -97,4 +112,5 @@ mod tests {
         assert!(life.is_some());
         assert_eq!(life.unwrap(), 42);
     }
+
 }

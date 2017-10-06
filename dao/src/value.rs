@@ -55,42 +55,31 @@ impl Value {
 }
 
 
-macro_rules! impl_tryfrom {
-    ($ty: ty, $ty_name: tt, $($variant: ident),*) => {
-        impl<'a> TryFrom<&'a Value> for $ty {
-            type Error = ConvertError;
-
-            fn try_from(value: &'a Value) -> Result<Self, Self::Error> {
-                match *value {
-                    $(Value::$variant(ref v) => Ok(v.to_owned() as $ty),
-                    )*
-                    _ => Err(ConvertError::NotSupported(value.get_type_name().to_string(), $ty_name.into())),
-                }
-            }
-        }
-    }
-}
-
-impl_tryfrom!(bool, "bool", Bool);
-impl_tryfrom!(i8, "i8", Tinyint);
-impl_tryfrom!(i16, "i16", Tinyint, Smallint);
-impl_tryfrom!(i32, "i32", Tinyint, Smallint, Int);
-impl_tryfrom!(i64, "i64", Tinyint, Smallint, Int, Bigint);
-impl_tryfrom!(f32, "f32", Float);
-impl_tryfrom!(f64, "f64", Float, Double);
-impl_tryfrom!(Vec<u8>, "Vec<u8>", Blob);
-impl_tryfrom!(String, "String", Text);
-impl_tryfrom!(&'static str, "&'static str", Str);
-impl_tryfrom!(Uuid, "Uuid", Uuid);
-impl_tryfrom!(NaiveDate, "NaiveDate", Date);
-impl_tryfrom!(DateTime<Utc>, "DateTime<Utc>", Timestamp);
 
 
 macro_rules! impl_from {
     ($ty:ty, $variant: ident) => {
+        /// Owned types
         impl From<$ty> for Value {
             fn from(f: $ty) -> Self{
                 Value::$variant(f)
+            }
+        }
+
+        /// For borrowed types
+        impl<'a> From<&'a $ty> for Value {
+            fn from(f: &'a $ty) -> Self{
+                Value::$variant(f.to_owned())
+            }
+        }
+
+        /// for borrowed option types
+        impl<'a> From<&'a Option<$ty>> for Value {
+            fn from(f: &'a Option<$ty>) -> Self{
+                match *f{
+                    Some(ref f) => From::from(f), 
+                    None => Value::Nil,
+                }
             }
         }
     }
@@ -110,9 +99,22 @@ impl_from!(Uuid, Uuid);
 impl_from!(NaiveDate, Date);
 impl_from!(DateTime<Utc>, Timestamp);
 
+macro_rules! impl_tryfrom {
+    ($ty: ty, $ty_name: tt, $($variant: ident),*) => {
+        /// try from to owned
+        impl<'a> TryFrom<&'a Value> for $ty {
+            type Error = ConvertError;
 
-macro_rules! impl_tryfrom_for_option{
-    ($ty:ty) => {
+            fn try_from(value: &'a Value) -> Result<Self, Self::Error> {
+                match *value {
+                    $(Value::$variant(ref v) => Ok(v.to_owned() as $ty),
+                    )*
+                    _ => Err(ConvertError::NotSupported(value.get_type_name().to_string(), $ty_name.into())),
+                }
+            }
+        }
+
+        /// try from to Option<T>
         impl<'a> TryFrom<&'a Value> for Option<$ty> {
             type Error = ConvertError;
 
@@ -126,19 +128,19 @@ macro_rules! impl_tryfrom_for_option{
     }
 }
 
-impl_tryfrom_for_option!(bool);
-impl_tryfrom_for_option!(i8);
-impl_tryfrom_for_option!(i16);
-impl_tryfrom_for_option!(i32);
-impl_tryfrom_for_option!(i64);
-impl_tryfrom_for_option!(f32);
-impl_tryfrom_for_option!(f64);
-impl_tryfrom_for_option!(Vec<u8>);
-impl_tryfrom_for_option!(String);
-impl_tryfrom_for_option!(&'static str);
-impl_tryfrom_for_option!(Uuid);
-impl_tryfrom_for_option!(NaiveDate);
-impl_tryfrom_for_option!(DateTime<Utc>);
+impl_tryfrom!(bool, "bool", Bool);
+impl_tryfrom!(i8, "i8", Tinyint);
+impl_tryfrom!(i16, "i16", Tinyint, Smallint);
+impl_tryfrom!(i32, "i32", Tinyint, Smallint, Int);
+impl_tryfrom!(i64, "i64", Tinyint, Smallint, Int, Bigint);
+impl_tryfrom!(f32, "f32", Float);
+impl_tryfrom!(f64, "f64", Float, Double);
+impl_tryfrom!(Vec<u8>, "Vec<u8>", Blob);
+impl_tryfrom!(String, "String", Text);
+impl_tryfrom!(&'static str, "&'static str", Str);
+impl_tryfrom!(Uuid, "Uuid", Uuid);
+impl_tryfrom!(NaiveDate, "NaiveDate", Date);
+impl_tryfrom!(DateTime<Utc>, "DateTime<Utc>", Timestamp);
 
 #[cfg(test)]
 mod tests {
