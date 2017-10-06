@@ -7,15 +7,12 @@ use error::DbError;
 use dao::Rows;
 use postgres::types::{ToSql,FromSql,Type};
 use error::PlatformError;
-use postgres::rows::Row;
 use postgres::types;
 use uuid::Uuid;
-use chrono::offset::Utc;
-use chrono::{NaiveDate, DateTime};
+use chrono::{DateTime};
 use postgres;
 use postgres::types::IsNull;
 use std::error::Error;
-use error::ConvertError;
 
 pub fn init_pool(db_url: &str) -> r2d2::Pool<r2d2_postgres::PostgresConnectionManager>{
     let config = r2d2::Config::default();
@@ -44,8 +41,8 @@ impl Database for PostgresDB{
                             let mut record:Vec<Value> = vec![];
                             for (i,c) in columns.iter().enumerate(){
                                 let _column_name = c.name();
-                                //let value: Option<Result<Value, DbError>> = convert_from_sql_to_value(c.type_(), &r, i);
                                 let value: Option<Result<OwnedPgValue, postgres::Error>> = r.get_opt(i);
+                                println!("{:?}", value);
                                 match value{
                                     Some(value) => match value{
                                         Ok(value) =>  record.push(value.0),
@@ -187,94 +184,22 @@ impl FromSql for OwnedPgValue{
     }
 
     fn from_sql_null(_ty: &Type) -> Result<Self, Box<Error + Sync + Send>> { 
+        println!("converting from null!");
         Ok(OwnedPgValue(Value::Nil))
     }
     fn from_sql_nullable(
         ty: &Type, 
         raw: Option<&[u8]>
     ) -> Result<Self, Box<Error + Sync + Send>> { 
-
-        macro_rules! match_type {
-            ($ty: ident, $variant: ident ) => {
-                $ty::from_sql_nullable(ty, raw).map(|v|OwnedPgValue(Value::$variant(v)))
-            }
-        }
-        match *ty {
-            types::BOOL => match_type!(bool, Bool), 
-            types::INT2  => match_type!(i16, Smallint),
-            types::INT4  => match_type!(i32, Int),
-            types::INT8  => match_type!(i64, Bigint),
-            types::FLOAT4 => match_type!(f32, Float),
-            types::FLOAT8 => match_type!(f64, Double),
-            types::TEXT | types::VARCHAR => match_type!(String, Text),
-            types::UUID => match_type!(Uuid, Uuid),
-            types::TIMESTAMPTZ | types::TIMESTAMP => match_type!(DateTime,Timestamp),
-            _ => panic!("unable to convert from {:?}", ty), 
+        println!("converting from nullable!");
+        match raw{
+            Some(raw) => Self::from_sql(ty, raw),
+            None => Self::from_sql_null(ty), 
         }
 
     }
 }
 
-
-/// hacky way to convert to value, since FromSql is Sized
-#[allow(unused)]
-fn convert_from_sql_to_value(ty: &Type, row: &Row, index: usize) -> Option<Result<Value, DbError>> {
-
-    macro_rules! match_type  {
-        ($ty: ty, $variant: ident) => {
-            {
-                let value: Option<Result<$ty, postgres::Error>> = row.get_opt(index);
-                value.map(|v:Result<$ty, postgres::Error>| {
-                        match v{
-                            Ok(value) => Ok(Value::$variant(value)),
-                            Err(e) => {
-                               Err(DbError::PlatformError(PlatformError::PostgresError(e)))
-                            }
-                        }
-                    }
-                )
-            }
-        }
-    }
-        
-    match *ty {
-        types::BOOL => {
-            match_type!(bool, Bool)
-        },
-        types::INT2 => {
-            match_type!(i16, Smallint)
-        }
-        types::INT4 => {
-            match_type!(i32, Int)
-        }
-        types::INT8 => {
-            match_type!(i64, Bigint)
-        }
-        types::FLOAT4 => {
-            match_type!(f32, Float)
-        },
-        types::FLOAT8 => {
-            match_type!(f64, Double)
-        },
-        types::TEXT | types::VARCHAR => {
-            match_type!(String, Text)
-        },
-        types::UUID => {
-            match_type!(Uuid, Uuid)
-        },
-        types::DATE => {
-            match_type!(NaiveDate, Date)
-        }
-        types::TIMESTAMPTZ | types::TIMESTAMP => {
-            match_type!(DateTime<Utc>, Timestamp)
-        },
-        types::UNKNOWN => {
-            Some(Err(DbError::ConvertError(ConvertError::UnknownDataType)))
-        },
-
-        _ => Some(Err(DbError::ConvertError(ConvertError::UnsupportedDataType(ty.name().to_string())))) 
-    }
-}
 
 
 #[cfg(test)]
@@ -355,14 +280,15 @@ mod test{
         ];
         let rows:Result<Rows, DbError> = (&db).execute_sql_select("select 'Hello'::TEXT, $1::TEXT, $2::BOOL, $3::INT, $4::FLOAT", &values);
         println!("columns: {:#?}", rows);
+        assert!(rows.is_ok());
         if let Ok(rows) = rows {
             for row in rows.iter(){
                 println!("row {:?}", row);
-                let v4:Result<f32, _> = row.get("float8");
-                assert_eq!(v4.unwrap(), 1.0f32);// Hello was overwritten
+                let v4:Result<f64, _> = row.get("float8");
+                assert_eq!(v4.unwrap(), 1.0f64);
 
                 let v3:Result<i32, _> = row.get("int4");
-                assert_eq!(v3.unwrap(), 42i32);// Hello was overwritten
+                assert_eq!(v3.unwrap(), 42i32);
 
                 let hi: Result<String, _> = row.get("text");
                 assert_eq!(hi.unwrap(), "hi");
@@ -378,24 +304,24 @@ mod test{
         let mut pool = Pool::new();
         let db_url = "postgres://postgres:p0stgr3s@localhost/medical";
         let db  = pool.db(db_url).unwrap();
-        let rows:Result<Rows, DbError> = (&db).execute_sql_select("select * from doctor", &[]);
+        let rows:Result<Rows, DbError> = (&db).execute_sql_select("select 'rust'::TEXT AS name, NULL::TEXT AS schedule, NULL::TEXT AS specialty from doctor", &[]);
         println!("columns: {:#?}", rows);
+        assert!(rows.is_ok());
         if let Ok(rows) = rows {
             for row in rows.iter(){
                 println!("row {:?}", row);
-                let v4:Result<f32, _> = row.get("float8");
-                assert_eq!(v4.unwrap(), 1.0f32);// Hello was overwritten
+                let name:Result<Option<String>, _> = row.get("name");
+                println!("name: {:?}", name);
+                assert_eq!(name.unwrap().unwrap(), "rust");
 
-                let v3:Result<i32, _> = row.get("int4");
-                assert_eq!(v3.unwrap(), 42i32);// Hello was overwritten
+                let schedule:Result<Option<String>, _> = row.get("schedule");
+                println!("schedule: {:?}", schedule);
+                assert_eq!(schedule.unwrap(), None);
 
-                let hi: Result<String, _> = row.get("text");
-                assert_eq!(hi.unwrap(), "hi");
-                
-                let b: Result<bool, _> = row.get("bool");
-                assert_eq!(b.unwrap(), true);
+                let specialty: Result<Option<String>, _> = row.get("specialty");
+                println!("specialty: {:?}", specialty);
+                assert_eq!(specialty.unwrap(), None);
             }
         }
-        panic!();
     }
 }

@@ -7,7 +7,7 @@ use std::convert::TryFrom;
 
 #[derive(Debug)]
 pub enum ConvertError {
-    NotSupported,
+    NotSupported(String,String),
 }
 
 impl Error for ConvertError {

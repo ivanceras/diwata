@@ -38,6 +38,7 @@ pub enum ParseError {
 pub enum PlatformError{
     #[cfg(feature = "with-postgres")]
     PostgresError(postgres::Error),
+    #[cfg(feature = "with-postgres")]
     SqlError(postgres::Error, String),
 }
 

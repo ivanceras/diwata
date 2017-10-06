@@ -34,6 +34,7 @@ impl<'a> Dao<'a> {
             None => Err(DaoError::NoSuchValueError(s.into())),
         }
     }
+
 }
 
 impl<'a> Serialize for Dao<'a> {
@@ -84,5 +85,16 @@ mod tests {
         let json = serde_json::to_string(&dao).unwrap();
         let expected = r#"{"lemons":{"Str":"lemonade"},"life":{"Int":42}}"#;
         assert_eq!(json, expected);
+    }
+
+    #[test]
+    fn test_get_opt(){
+        let mut dao = Dao::new();
+        dao.insert("life", 42);
+        let life: Result<Option<i32>,_> = dao.get("life");
+        assert!(life.is_ok());
+        let life = life.unwrap();
+        assert!(life.is_some());
+        assert_eq!(life.unwrap(), 42);
     }
 }

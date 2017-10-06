@@ -30,70 +30,60 @@ pub enum Value {
     Timestamp(DateTime<Utc>),
 }
 
-impl<'a> TryFrom<&'a Value> for f64 {
-    type Error = ConvertError;
-
-    fn try_from(value: &'a Value) -> Result<Self, Self::Error> {
-        match *value {
-            Value::Double(v) => Ok(v),
-            Value::Float(v) => Ok(v as f64),
-            Value::Tinyint(v) => Ok(v as f64),
-            Value::Smallint(v) => Ok(v as f64),
-            Value::Int(v) => Ok(v as f64),
-            _ => Err(ConvertError::NotSupported),
+impl Value {
+    
+    #[doc(hidden)] /// this is for debugging pupose only
+    #[allow(unused)]
+    fn get_type_name(&self) -> &'static str{
+        match *self{
+            Value::Nil => "Nil",
+            Value::Bool(_) => "bool",
+            Value::Tinyint(_) => "i8",
+            Value::Smallint(_) => "i16",
+            Value::Int(_) => "i32",
+            Value::Bigint(_) => "i64",
+            Value::Float(_) => "f32",
+            Value::Double(_) => "f64",
+            Value::Blob(_) => "Vec<u8>",
+            Value::Text(_) => "String",
+            Value::Str(_) => "&'static str",
+            Value::Uuid(_) => "Uuid",
+            Value::Date(_) => "NaiveDate",
+            Value::Timestamp(_) => "DateTime",
         }
     }
 }
 
-impl<'a> TryFrom<&'a Value> for f32 {
-    type Error = ConvertError;
 
-    fn try_from(value: &'a Value) -> Result<Self, Self::Error> {
-        match *value {
-            Value::Double(v) => Ok(v as f32), //TODO: check for overflow
-            Value::Float(v) => Ok(v),
-            Value::Tinyint(v) => Ok(v as f32),
-            Value::Smallint(v) => Ok(v as f32),
-            Value::Int(v) => Ok(v as f32),
-            _ => Err(ConvertError::NotSupported),
+macro_rules! impl_tryfrom {
+    ($ty: ty, $ty_name: tt, $($variant: ident),*) => {
+        impl<'a> TryFrom<&'a Value> for $ty {
+            type Error = ConvertError;
+
+            fn try_from(value: &'a Value) -> Result<Self, Self::Error> {
+                match *value {
+                    $(Value::$variant(ref v) => Ok(v.to_owned() as $ty),
+                    )*
+                    _ => Err(ConvertError::NotSupported(value.get_type_name().to_string(), $ty_name.into())),
+                }
+            }
         }
     }
 }
 
-impl<'a> TryFrom<&'a Value> for i32 {
-    type Error = ConvertError;
-
-    fn try_from(value: &'a Value) -> Result<Self, Self::Error> {
-        match *value {
-            Value::Tinyint(v) => Ok(v as i32),
-            Value::Smallint(v) => Ok(v as i32),
-            Value::Int(v) => Ok(v as i32),
-            _ => Err(ConvertError::NotSupported),
-        }
-    }
-}
-
-impl<'a> TryFrom<&'a Value> for String {
-    type Error = ConvertError;
-
-    fn try_from(value: &'a Value) -> Result<Self, Self::Error> {
-        match *value {
-            Value::Text(ref v) => Ok(v.to_string()),
-            _ => Err(ConvertError::NotSupported),
-        }
-    }
-}
-
-impl<'a> TryFrom<&'a Value> for bool {
-    type Error = ConvertError;
-
-    fn try_from(value: &'a Value) -> Result<Self, Self::Error> {
-        match *value {
-            Value::Bool(v) => Ok(v),
-            _ => Err(ConvertError::NotSupported),
-        }
-    }
-}
+impl_tryfrom!(bool, "bool", Bool);
+impl_tryfrom!(i8, "i8", Tinyint);
+impl_tryfrom!(i16, "i16", Tinyint, Smallint);
+impl_tryfrom!(i32, "i32", Tinyint, Smallint, Int);
+impl_tryfrom!(i64, "i64", Tinyint, Smallint, Int, Bigint);
+impl_tryfrom!(f32, "f32", Float);
+impl_tryfrom!(f64, "f64", Float, Double);
+impl_tryfrom!(Vec<u8>, "Vec<u8>", Blob);
+impl_tryfrom!(String, "String", Text);
+impl_tryfrom!(&'static str, "&'static str", Str);
+impl_tryfrom!(Uuid, "Uuid", Uuid);
+impl_tryfrom!(NaiveDate, "NaiveDate", Date);
+impl_tryfrom!(DateTime<Utc>, "DateTime<Utc>", Timestamp);
 
 
 macro_rules! impl_from {
@@ -121,10 +111,40 @@ impl_from!(NaiveDate, Date);
 impl_from!(DateTime<Utc>, Timestamp);
 
 
+macro_rules! impl_tryfrom_for_option{
+    ($ty:ty) => {
+        impl<'a> TryFrom<&'a Value> for Option<$ty> {
+            type Error = ConvertError;
+
+            fn try_from(value: &'a Value) -> Result<Self, Self::Error> {
+                match *value {
+                    Value::Nil => Ok(None),
+                    _ => TryFrom::try_from(value).map(|v|Some(v)), 
+                }
+            }
+        }
+    }
+}
+
+impl_tryfrom_for_option!(bool);
+impl_tryfrom_for_option!(i8);
+impl_tryfrom_for_option!(i16);
+impl_tryfrom_for_option!(i32);
+impl_tryfrom_for_option!(i64);
+impl_tryfrom_for_option!(f32);
+impl_tryfrom_for_option!(f64);
+impl_tryfrom_for_option!(Vec<u8>);
+impl_tryfrom_for_option!(String);
+impl_tryfrom_for_option!(&'static str);
+impl_tryfrom_for_option!(Uuid);
+impl_tryfrom_for_option!(NaiveDate);
+impl_tryfrom_for_option!(DateTime<Utc>);
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use std::mem::size_of;
+    use chrono::offset::Utc;
 
     #[test]
     fn data_sizes() {
@@ -136,4 +156,19 @@ mod tests {
         assert_eq!(16, size_of::<Uuid>());
     }
 
+    #[test]
+    fn test_types() {
+        let _: Value = 127i8.into();
+        let _: Value = 2222i16.into();
+        let _: Value = 4444i32.into();
+        let _: Value = 10000i64.into();
+        let _v1:Value = 1.0f32.into();
+        let _v2:Value = 100.0f64.into();
+        let _v3:Value = Utc::now().into();
+        let _v7:Value = Utc::today().naive_utc().into();
+        let _v4:Value = "hello world!".into();
+        let _v5:Value = "hello world!".to_string().into();
+        let _v6:Value = vec![1u8,2,255,3].into();
+
+    }
 }
