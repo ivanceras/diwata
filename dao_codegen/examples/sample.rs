@@ -27,7 +27,7 @@ impl ToDao for User {
 }
 
 impl ToTable for User {
-    fn to_table(&self) -> dao::Table {
+    fn to_table() -> dao::Table {
         dao::Table {
             name: "User".into(),
             schema: None,
@@ -43,6 +43,6 @@ fn main() {
     };
     let dao = user.to_dao();
     println!("dao: {:#?}", dao);
-    let table = user.to_table();
+    let table = User::to_table();
     println!("table: {:?}", table);
 }

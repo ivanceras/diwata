@@ -1,6 +1,5 @@
 use syn;
 use quote;
-use proc_macro::TokenStream;
 
 
 pub fn impl_from_dao(ast: &syn::MacroInput) -> quote::Tokens {

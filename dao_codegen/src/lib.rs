@@ -1,4 +1,4 @@
-//#![deny(warnings)]
+#![deny(warnings)]
 
 extern crate dao;
 extern crate proc_macro;

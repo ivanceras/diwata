@@ -1,7 +1,6 @@
 
 use syn;
 use quote;
-use proc_macro::TokenStream;
 
 
 pub fn impl_to_table(ast: &syn::MacroInput) -> quote::Tokens {
@@ -9,9 +8,9 @@ pub fn impl_to_table(ast: &syn::MacroInput) -> quote::Tokens {
     quote! {
         impl ToTable for  #name {
 
-            fn to_table(&self) -> dao::Table {
+            fn to_table() -> dao::Table {
                 dao::Table{
-                    name: stringify!(#name).into(),
+                    name: stringify!(#name).to_lowercase().into(),
                     schema: None,
                     alias: None,
                 }

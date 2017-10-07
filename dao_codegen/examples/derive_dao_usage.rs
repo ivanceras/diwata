@@ -19,7 +19,8 @@ fn main() {
     };
     println!("user: {:#?}", user);
     let dao = user.to_dao();
-    let table = user.to_table();
+    println!("dao: {:#?}", dao);
+    let table = User::to_table();
     println!("table name: {}", table.name);
-    println!("table: {:?}", table);
+    println!("table: {:#?}", table);
 }
