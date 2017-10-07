@@ -1,8 +1,6 @@
 use error::DbError;
 use dao::{FromDao, ToColumns, ToDao, ToTable};
-use database::Database;
-use dao::Value;
-use chrono::offset::Utc;
+use dao::{Value,ToValue};
 use platform::DBPlatform;
 
 pub struct EntityManager(pub DBPlatform);
@@ -74,8 +72,7 @@ impl EntityManager {
         let mut values: Vec<Value> = Vec::with_capacity(entities.len() * columns.len());
         for entity in entities {
             let mut dao = entity.to_dao();
-            let mut dao = entity.to_dao();
-            for (ci, col) in columns.iter().enumerate() {
+            for col in columns.iter() {
                 let value = dao.remove(&col.name);
                 match value {
                     Some(value) => values.push(value),
@@ -94,19 +91,17 @@ impl EntityManager {
         Ok(retrieved_entities)
     }
 
-    fn execute_sql_with_return<'a, T, R>(
+    pub fn execute_sql_with_return<'a, R>(
         &self,
         sql: &str,
-        params: &'a [T],
+        params: &'a [&'a ToValue],
     ) -> Result<Vec<R>, DbError>
     where
-        T: Into<Value>,
         R: FromDao,
-        Value: From<&'a T>,
     {
-        let values: Vec<Value> = params.iter().map(|param| param.into()).collect();
+        let values: Vec<Value> = params.iter().map(|param| param.to_value() ).collect::<Vec<Value>>();
         let rows = self.0.execute_sql_with_return(sql, &values)?;
-        Ok(rows.iter().map(|dao| R::from_dao(&dao)).collect::<Vec<_>>())
+        Ok(rows.iter().map(|dao| R::from_dao(&dao)).collect::<Vec<R>>())
     }
 }
 
@@ -219,5 +214,30 @@ mod test {
         println!("users: {:#?}", users);
         assert!(users.is_ok());
         panic!();
+    }
+
+    #[test]
+    fn execute_sql() {
+        #[derive( Debug, FromDao )]
+        struct Event{
+            id: i32,
+            name: String,
+            created: DateTime<Utc>,
+        }
+        let db_url = "postgres://postgres:p0stgr3s@localhost/rforum";
+        let mut pool = Pool::new();
+        let em = pool.em(db_url).unwrap();
+        let id = 1;
+        let name = "dbus-notifications".to_string();
+        let created = Utc::now();
+        let events: Result<Vec<Event>,DbError> = 
+            em.execute_sql_with_return("SELECT $1::INT as id, $2::TEXT as name, $3::TIMESTAMP WITH TIME ZONE as created", &[&id, &name, &created]);
+        println!("events: {:#?}", events);
+        assert!(events.is_ok());
+        for event in events.unwrap().iter(){
+            assert_eq!(event.id, id);
+            assert_eq!(event.name, name);
+            assert_eq!(event.created.date(), created.date());
+        }
     }
 }

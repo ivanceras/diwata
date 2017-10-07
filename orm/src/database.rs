@@ -1,4 +1,4 @@
-use dao::{Dao, Rows, Value};
+use dao::{Rows, Value};
 
 use error::DbError;
 

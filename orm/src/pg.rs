@@ -2,7 +2,7 @@ use r2d2;
 use r2d2_postgres;
 use r2d2_postgres::TlsMode;
 use database::Database;
-use dao::{Dao,Value};
+use dao::{Value};
 use error::DbError;
 use dao::Rows;
 use postgres;

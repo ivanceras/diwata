@@ -55,6 +55,22 @@ impl Value {
 }
 
 
+/// A trait to allow passing of parameters ergonomically
+/// in em.execute_sql_with_return
+pub trait ToValue{
+    fn to_value(&self) -> Value;
+}
+
+
+macro_rules! impl_to_value {
+    ($ty: ty) => {
+        impl ToValue for $ty {
+            fn to_value(&self) -> Value {
+                self.into()
+            }
+        }
+    }
+}
 
 
 macro_rules! impl_from {
@@ -82,6 +98,8 @@ macro_rules! impl_from {
                 }
             }
         }
+
+        impl_to_value!($ty);
     }
 }
 

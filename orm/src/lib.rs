@@ -1,4 +1,4 @@
-//#![deny(warnings)]
+#![deny(warnings)]
 #![feature(try_from)]
 #![feature(conservative_impl_trait)]
 #[macro_use]

@@ -10,6 +10,7 @@ extern crate uuid;
 
 
 pub use value::Value;
+pub use value::ToValue;
 pub use rows::Rows;
 pub use dao::Dao;
 pub use dao::FromDao;
