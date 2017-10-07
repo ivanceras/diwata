@@ -41,7 +41,6 @@ impl Database for PostgresDB{
                             for (i,c) in columns.iter().enumerate(){
                                 let _column_name = c.name();
                                 let value: Option<Result<OwnedPgValue, postgres::Error>> = r.get_opt(i);
-                                println!("{:?}", value);
                                 match value{
                                     Some(value) => match value{
                                         Ok(value) =>  record.push(value.0),
@@ -164,14 +163,12 @@ impl FromSql for OwnedPgValue{
     }
 
     fn from_sql_null(_ty: &Type) -> Result<Self, Box<Error + Sync + Send>> { 
-        println!("converting from null!");
         Ok(OwnedPgValue(Value::Nil))
     }
     fn from_sql_nullable(
         ty: &Type, 
         raw: Option<&[u8]>
     ) -> Result<Self, Box<Error + Sync + Send>> { 
-        println!("converting from nullable!");
         match raw{
             Some(raw) => Self::from_sql(ty, raw),
             None => Self::from_sql_null(ty), 

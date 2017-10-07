@@ -18,6 +18,6 @@ impl Table {
 }
 
 pub trait ToTable {
-    /// extract the table info
+    /// extract the table name from a struct
     fn to_table() -> Table;
 }

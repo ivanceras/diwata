@@ -8,6 +8,7 @@ extern crate syn;
 
 mod dao_derive;
 mod table_derive;
+mod column_derive;
 
 
 use proc_macro::TokenStream;
@@ -33,5 +34,13 @@ pub fn to_table(input: TokenStream) -> TokenStream {
     let s = input.to_string();
     let ast = syn::parse_macro_input(&s).unwrap();
     let gen = table_derive::impl_to_table(&ast);
+    gen.parse().unwrap()
+}
+
+#[proc_macro_derive(ToColumns)]
+pub fn to_columns(input: TokenStream) -> TokenStream {
+    let s = input.to_string();
+    let ast = syn::parse_macro_input(&s).unwrap();
+    let gen = column_derive::impl_to_columns(&ast);
     gen.parse().unwrap()
 }

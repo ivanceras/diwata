@@ -1,5 +1,5 @@
 use error::DbError;
-use dao::{FromDao, ToDao, ToTable};
+use dao::{FromDao, ToDao, ToTable, ToColumns};
 use database::Database;
 
 pub struct EntityManager<'a>(pub &'a Database);
@@ -24,12 +24,17 @@ impl<'a> EntityManager<'a> {
     }
 
     /// insert to table the values of this struct
-    pub fn insert<TD, FD>(&self, _daos: &[TD]) -> Result<Vec<FD>, DbError>
+    pub fn insert<T, D>(&self, _daos: &[D]) -> Result<Vec<T>, DbError>
     where
-        TD: ToDao,
-        FD: FromDao,
+        D: ToDao,
+        T: ToTable + FromDao + ToColumns,
     {
-        panic!();
+        let table = T::to_table();
+        let columns = T::to_columns();
+        let mut buff = String::new();
+        buff += &format!("INSERT INTO {} ", table.name());
+        buff += &format!("({})",columns.iter().map(|c| c.name.to_owned()).collect::<Vec<_>>().join(", "));
+        Ok(vec![])
     }
 }
 
@@ -52,6 +57,12 @@ mod test{
         let mut pool = Pool::new();
         let db  = pool.db(db_url).unwrap();
         let em = EntityManager(&*db);
-        let users = em.get_all::<Users>();
+        let users: Result<Vec<Users>, DbError> = em.get_all();
+        println!("users: {:#?}", users);
+        if let Ok(users) = users{
+            for user in users{
+                println!("user: {:?}", user);
+            }
+        }
     }
 }
