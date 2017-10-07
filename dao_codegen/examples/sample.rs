@@ -1,7 +1,7 @@
 extern crate dao;
 
 use dao::{FromDao, ToDao};
-use dao::{ToTable, ToColumns};
+use dao::{ToColumns, ToTable};
 
 
 struct User {

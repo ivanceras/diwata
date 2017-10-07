@@ -21,8 +21,8 @@ pub fn impl_to_columns(ast: &syn::MacroInput) -> quote::Tokens {
     let from_fields: Vec<quote::Tokens> = fields
         .iter()
         .map(|&(field, _ty)| {
-            quote!{ 
-                Column{ 
+            quote!{
+                Column{
                     name: stringify!(#field).into(),
                     table: Some(stringify!(#name).to_lower_case().into()),
                     alias: None,

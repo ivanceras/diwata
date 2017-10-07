@@ -87,7 +87,6 @@ impl<'a> Pool<'a> {
             PooledConn::PooledPg(pooled_pg) => Ok(DBPlatform::Postgres(PostgresDB(pooled_pg))),
         }
     }
-
 }
 
 #[cfg(test)]

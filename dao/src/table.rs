@@ -7,11 +7,10 @@ pub struct Table {
 }
 
 impl Table {
-
     pub fn name(&self) -> String {
         if let Some(ref schema) = self.schema {
-            format!("{}.{}",schema, self.name)
-        }else{
+            format!("{}.{}", schema, self.name)
+        } else {
             format!("{}", self.name)
         }
     }

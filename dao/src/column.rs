@@ -9,7 +9,6 @@ pub struct Column {
 
 
 pub trait ToColumns {
-
     /// extract the columns from struct
     fn to_columns() -> Vec<Column>;
 }
