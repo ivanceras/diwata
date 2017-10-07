@@ -24,7 +24,7 @@ pub struct PostgresDB(pub r2d2::PooledConnection<r2d2_postgres::PostgresConnecti
 
 impl Database for PostgresDB{
     
-    fn execute_sql_select(&self, sql: &str, param: &[Value]) -> Result<Rows, DbError> {
+    fn execute_sql_with_return(&self, sql: &str, param: &[Value]) -> Result<Rows, DbError> {
         let stmt = self.0.prepare(&sql);
         match stmt{
             Ok(stmt) => {
@@ -64,9 +64,6 @@ impl Database for PostgresDB{
         }
     }
 
-    fn insert(&self, _dao: &[Dao]) -> Result<Rows, DbError> {
-        panic!();
-    }
 }
 
 
@@ -246,7 +243,7 @@ mod test{
             42.into(),
             1.0.into(),
         ];
-        let rows:Result<Rows, DbError> = (&db).execute_sql_select("select 'Hello', $1::TEXT, $2::BOOL, $3::INT, $4::FLOAT", &values);
+        let rows:Result<Rows, DbError> = (&db).execute_sql_with_return("select 'Hello', $1::TEXT, $2::BOOL, $3::INT, $4::FLOAT", &values);
         assert!(!rows.is_ok());
     }
 
@@ -261,7 +258,7 @@ mod test{
             42.into(),
             1.0.into(),
         ];
-        let rows:Result<Rows, DbError> = (&db).execute_sql_select("select 'Hello'::TEXT, $1::TEXT, $2::BOOL, $3::INT, $4::FLOAT", &values);
+        let rows:Result<Rows, DbError> = (&db).execute_sql_with_return("select 'Hello'::TEXT, $1::TEXT, $2::BOOL, $3::INT, $4::FLOAT", &values);
         println!("columns: {:#?}", rows);
         assert!(rows.is_ok());
         if let Ok(rows) = rows {
@@ -287,7 +284,7 @@ mod test{
         let mut pool = Pool::new();
         let db_url = "postgres://postgres:p0stgr3s@localhost/medical";
         let db  = pool.db(db_url).unwrap();
-        let rows:Result<Rows, DbError> = (&db).execute_sql_select("select 'rust'::TEXT AS name, NULL::TEXT AS schedule, NULL::TEXT AS specialty from doctor", &[]);
+        let rows:Result<Rows, DbError> = (&db).execute_sql_with_return("select 'rust'::TEXT AS name, NULL::TEXT AS schedule, NULL::TEXT AS specialty from doctor", &[]);
         println!("columns: {:#?}", rows);
         assert!(rows.is_ok());
         if let Ok(rows) = rows {

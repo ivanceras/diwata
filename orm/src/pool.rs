@@ -8,6 +8,7 @@ use platform::Platform;
 use error::{ConnectError, ParseError};
 use std::collections::BTreeMap;
 use platform::DBPlatform;
+use entity::EntityManager;
 
 pub struct Pool<'a>(BTreeMap<&'a str, ConnPool>);
 pub enum ConnPool {
@@ -86,6 +87,11 @@ impl<'a> Pool<'a> {
             #[cfg(feature = "with-postgres")]
             PooledConn::PooledPg(pooled_pg) => Ok(DBPlatform::Postgres(PostgresDB(pooled_pg))),
         }
+    }
+
+    pub fn em(&mut self, db_url: &'a str) -> Result<EntityManager, ConnectError> {
+        let db = self.db(db_url)?;
+        Ok(EntityManager(db))
     }
 }
 

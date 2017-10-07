@@ -35,6 +35,10 @@ impl<'a> Dao<'a> {
             None => Err(DaoError::NoSuchValueError(s.into())),
         }
     }
+
+    pub fn remove(&mut self, s: &str) -> Option<Value> {
+        self.0.remove(s)
+    }
 }
 
 impl<'a> Serialize for Dao<'a> {
