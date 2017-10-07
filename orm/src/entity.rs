@@ -93,6 +93,26 @@ impl EntityManager {
         }
         Ok(retrieved_entities)
     }
+
+    fn execute_sql_with_return<'a, T,R>(&self, sql: &str, params: &'a [T]) -> Result<Vec<R>, DbError> 
+        where T: Into<Value>,
+              R: FromDao,
+              Value: From<&'a T>
+        {
+        let values:Vec<Value> =
+            params
+                .iter()
+                .map(|param|
+                    param.into()
+                )
+                .collect();
+        let rows = self.0.execute_sql_with_return(sql, &values)?;
+        Ok(rows
+            .iter()
+            .map(|dao| R::from_dao(&dao))
+            .collect::<Vec<_>>()
+        )
+    }
 }
 
 
