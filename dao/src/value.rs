@@ -57,7 +57,7 @@ impl Value {
 
 /// A trait to allow passing of parameters ergonomically
 /// in em.execute_sql_with_return
-pub trait ToValue{
+pub trait ToValue {
     fn to_value(&self) -> Value;
 }
 

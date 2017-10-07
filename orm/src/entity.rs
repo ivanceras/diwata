@@ -1,6 +1,6 @@
 use error::DbError;
 use dao::{FromDao, ToColumns, ToDao, ToTable};
-use dao::{Value,ToValue};
+use dao::{ToValue, Value};
 use platform::DBPlatform;
 
 pub struct EntityManager(pub DBPlatform);
@@ -99,7 +99,10 @@ impl EntityManager {
     where
         R: FromDao,
     {
-        let values: Vec<Value> = params.iter().map(|param| param.to_value() ).collect::<Vec<Value>>();
+        let values: Vec<Value> = params
+            .iter()
+            .map(|param| param.to_value())
+            .collect::<Vec<Value>>();
         let rows = self.0.execute_sql_with_return(sql, &values)?;
         Ok(rows.iter().map(|dao| R::from_dao(&dao)).collect::<Vec<R>>())
     }
@@ -218,8 +221,8 @@ mod test {
 
     #[test]
     fn execute_sql() {
-        #[derive( Debug, FromDao )]
-        struct Event{
+        #[derive(Debug, FromDao)]
+        struct Event {
             id: i32,
             name: String,
             created: DateTime<Utc>,
@@ -230,11 +233,13 @@ mod test {
         let id = 1;
         let name = "dbus-notifications".to_string();
         let created = Utc::now();
-        let events: Result<Vec<Event>,DbError> = 
-            em.execute_sql_with_return("SELECT $1::INT as id, $2::TEXT as name, $3::TIMESTAMP WITH TIME ZONE as created", &[&id, &name, &created]);
+        let events: Result<Vec<Event>, DbError> = em.execute_sql_with_return(
+            "SELECT $1::INT as id, $2::TEXT as name, $3::TIMESTAMP WITH TIME ZONE as created",
+            &[&id, &name, &created],
+        );
         println!("events: {:#?}", events);
         assert!(events.is_ok());
-        for event in events.unwrap().iter(){
+        for event in events.unwrap().iter() {
             assert_eq!(event.id, id);
             assert_eq!(event.name, name);
             assert_eq!(event.created.date(), created.date());
