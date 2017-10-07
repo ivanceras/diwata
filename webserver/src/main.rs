@@ -20,6 +20,7 @@ fn main() {
         }
     }
 
-    let articles: Result<Rows, DbError> = (&db).execute_sql_with_return("select * from article", &[]);
+    let articles: Result<Rows, DbError> =
+        (&db).execute_sql_with_return("select * from article", &[]);
     println!("articles: {:#?}", articles);
 }
