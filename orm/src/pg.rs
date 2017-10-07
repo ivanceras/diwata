@@ -2,7 +2,7 @@ use r2d2;
 use r2d2_postgres;
 use r2d2_postgres::TlsMode;
 use database::Database;
-use dao::Value;
+use dao::{Dao,Value};
 use error::DbError;
 use dao::Rows;
 use postgres;
@@ -64,32 +64,13 @@ impl Database for PostgresDB{
             Err(e) => Err(DbError::PlatformError(PlatformError::PostgresError(PostgresError::SqlError(e, sql.to_string()))))
         }
     }
-}
 
-
-#[allow(unused)]
-fn to_sql_types1<'a>(values: &'a [Value] ) -> Vec<&'a ToSql> {
-    let mut sql_types: Vec<&ToSql> = vec![];
-    for t in values {
-        match *t {
-            Value::Bool(ref v) => sql_types.push(v),
-            Value::Tinyint(ref v) => sql_types.push(v),
-            Value::Smallint(ref v) => sql_types.push(v),
-            Value::Int(ref v) => sql_types.push(v),
-            Value::Bigint(ref v) => sql_types.push(v),
-            Value::Float(ref v) => sql_types.push(v),
-            Value::Double(ref v) => sql_types.push(v),
-            Value::Blob(ref v) => sql_types.push(v),
-            Value::Text(ref v) => sql_types.push(v),
-            Value::Str(ref v) => sql_types.push(v),
-            Value::Uuid(ref v) => sql_types.push(v),
-            Value::Date(ref v) => sql_types.push(v),
-            Value::Timestamp(ref v) => sql_types.push(v),
-            Value::Nil => panic!("This should be null"),
-        }
+    fn insert(&self, _dao: &[Dao]) -> Result<Rows, DbError> {
+        panic!();
     }
-    sql_types
 }
+
+
 
 fn to_pg_values(values: &[Value]) -> Vec<PgValue> {
     values.iter().map(|v| PgValue(v)).collect()

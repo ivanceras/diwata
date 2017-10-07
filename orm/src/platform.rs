@@ -11,24 +11,22 @@ cfg_if! {if #[cfg(feature = "with-postgres")]{
 
 
 pub enum DBPlatform {
-    #[cfg(feature = "with-postgres")]
-    Postgres(PostgresDB),
+    #[cfg(feature = "with-postgres")] Postgres(PostgresDB),
 }
 
-impl Deref for DBPlatform{
+impl Deref for DBPlatform {
     type Target = Database;
 
     fn deref(&self) -> &Self::Target {
-        match *self{
+        match *self {
             #[cfg(feature = "with-postgres")]
-            DBPlatform::Postgres(ref pg) => pg
+            DBPlatform::Postgres(ref pg) => pg,
         }
     }
 }
 
 pub(crate) enum Platform {
-    #[cfg(feature = "with-postgres")]
-    Postgres,
+    #[cfg(feature = "with-postgres")] Postgres,
     Unsupported(String),
 }
 

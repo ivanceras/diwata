@@ -31,11 +31,11 @@ pub enum Value {
 }
 
 impl Value {
-    
-    #[doc(hidden)] /// this is for debugging pupose only
+    #[doc(hidden)]
+    /// this is for debugging pupose only
     #[allow(unused)]
-    fn get_type_name(&self) -> &'static str{
-        match *self{
+    fn get_type_name(&self) -> &'static str {
+        match *self {
             Value::Nil => "Nil",
             Value::Bool(_) => "bool",
             Value::Tinyint(_) => "i8",
@@ -164,13 +164,12 @@ mod tests {
         let _: Value = 2222i16.into();
         let _: Value = 4444i32.into();
         let _: Value = 10000i64.into();
-        let _v1:Value = 1.0f32.into();
-        let _v2:Value = 100.0f64.into();
-        let _v3:Value = Utc::now().into();
-        let _v7:Value = Utc::today().naive_utc().into();
-        let _v4:Value = "hello world!".into();
-        let _v5:Value = "hello world!".to_string().into();
-        let _v6:Value = vec![1u8,2,255,3].into();
-
+        let _v1: Value = 1.0f32.into();
+        let _v2: Value = 100.0f64.into();
+        let _v3: Value = Utc::now().into();
+        let _v7: Value = Utc::today().naive_utc().into();
+        let _v4: Value = "hello world!".into();
+        let _v5: Value = "hello world!".to_string().into();
+        let _v6: Value = vec![1u8, 2, 255, 3].into();
     }
 }

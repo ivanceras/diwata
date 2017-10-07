@@ -15,15 +15,14 @@ pub struct Rows {
 
 
 impl Rows {
-
     pub fn new(columns: Vec<String>) -> Self {
-        Rows{
+        Rows {
             columns,
-            data: vec![]
+            data: vec![],
         }
     }
 
-    pub fn push(&mut self, row: Vec<Value>){
+    pub fn push(&mut self, row: Vec<Value>) {
         self.data.push(row)
     }
 
@@ -171,7 +170,6 @@ mod test {
         dao.insert("id", 1);
         dao.insert("username", "ivanceras");
         assert_eq!(dao, iter.next_back().unwrap());
-
     }
 
     #[test]

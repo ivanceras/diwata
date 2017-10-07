@@ -1,6 +1,7 @@
 extern crate dao;
 
 use dao::{FromDao, ToDao};
+use dao::ToTable;
 
 
 struct User {
@@ -24,6 +25,17 @@ impl ToDao for User {
         dao
     }
 }
+
+impl ToTable for User {
+    fn to_table(&self) -> dao::Table {
+        dao::Table {
+            name: "User".into(),
+            schema: None,
+            alias: None,
+        }
+    }
+}
+
 fn main() {
     let user = User {
         id: 1,
@@ -31,4 +43,6 @@ fn main() {
     };
     let dao = user.to_dao();
     println!("dao: {:#?}", dao);
+    let table = user.to_table();
+    println!("table: {:?}", table);
 }

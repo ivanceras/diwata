@@ -5,19 +5,17 @@ cfg_if! {if #[cfg(feature = "with-postgres")]{
 }}
 use std::convert::TryFrom;
 use platform::Platform;
-use error::{ParseError, ConnectError};
+use error::{ConnectError, ParseError};
 use std::collections::BTreeMap;
 use platform::DBPlatform;
 
 pub struct Pool<'a>(BTreeMap<&'a str, ConnPool>);
 pub enum ConnPool {
-    #[cfg(feature = "with-postgres")]
-    PoolPg(r2d2::Pool<PostgresConnectionManager>),
+    #[cfg(feature = "with-postgres")] PoolPg(r2d2::Pool<PostgresConnectionManager>),
 }
 
 pub enum PooledConn {
-    #[cfg(feature = "with-postgres")]
-    PooledPg(r2d2::PooledConnection<PostgresConnectionManager>),
+    #[cfg(feature = "with-postgres")] PooledPg(r2d2::PooledConnection<PostgresConnectionManager>),
 }
 
 
@@ -30,19 +28,17 @@ impl<'a> Pool<'a> {
     fn ensure(&mut self, db_url: &'a str) -> Result<(), ConnectError> {
         let platform: Result<Platform, _> = TryFrom::try_from(db_url);
         match platform {
-            Ok(platform) => {
-                match platform {
-                    #[cfg(feature = "with-postgres")]
-                    Platform::Postgres => {
-                        let pool_pg = pg::init_pool(db_url);
-                        if self.0.get(db_url).is_none() {
-                            self.0.insert(db_url, ConnPool::PoolPg(pool_pg));
-                        }
-                        Ok(())
+            Ok(platform) => match platform {
+                #[cfg(feature = "with-postgres")]
+                Platform::Postgres => {
+                    let pool_pg = pg::init_pool(db_url);
+                    if self.0.get(db_url).is_none() {
+                        self.0.insert(db_url, ConnPool::PoolPg(pool_pg));
                     }
-                    Platform::Unsupported(scheme) => Err(ConnectError::UnsupportedDb(scheme)),
+                    Ok(())
                 }
-            }
+                Platform::Unsupported(scheme) => Err(ConnectError::UnsupportedDb(scheme)),
+            },
             Err(e) => Err(ConnectError::ParseError(e)),
         }
     }
@@ -52,20 +48,18 @@ impl<'a> Pool<'a> {
         self.ensure(db_url)?;
         let platform: Result<Platform, ParseError> = TryFrom::try_from(db_url);
         match platform {
-            Ok(platform) => {
-                match platform {
-                    #[cfg(feature = "with-postgres")]
-                    Platform::Postgres => {
-                        let conn: Option<&ConnPool> = self.0.get(db_url);
-                        if let Some(conn) = conn {
-                            Ok(conn)
-                        } else {
-                            Err(ConnectError::NoSuchPoolConnection)
-                        }
+            Ok(platform) => match platform {
+                #[cfg(feature = "with-postgres")]
+                Platform::Postgres => {
+                    let conn: Option<&ConnPool> = self.0.get(db_url);
+                    if let Some(conn) = conn {
+                        Ok(conn)
+                    } else {
+                        Err(ConnectError::NoSuchPoolConnection)
                     }
-                    Platform::Unsupported(scheme) => Err(ConnectError::UnsupportedDb(scheme)),
                 }
-            }
+                Platform::Unsupported(scheme) => Err(ConnectError::UnsupportedDb(scheme)),
+            },
             Err(e) => Err(ConnectError::ParseError(e)),
         }
     }
@@ -93,7 +87,6 @@ impl<'a> Pool<'a> {
             PooledConn::PooledPg(pooled_pg) => Ok(DBPlatform::Postgres(PostgresDB(pooled_pg))),
         }
     }
-
 }
 
 #[cfg(test)]

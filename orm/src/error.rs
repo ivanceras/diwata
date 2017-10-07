@@ -37,9 +37,8 @@ pub enum ParseError {
 
 
 #[derive(Debug)]
-pub enum PlatformError{
-    #[cfg(feature = "with-postgres")]
-    PostgresError(PostgresError),
+pub enum PlatformError {
+    #[cfg(feature = "with-postgres")] PostgresError(PostgresError),
 }
 
 #[derive(Debug)]
@@ -49,7 +48,7 @@ pub enum DbError {
 }
 
 #[derive(Debug)]
-pub enum ConvertError{
+pub enum ConvertError {
     UnknownDataType,
     UnsupportedDataType(String),
 }

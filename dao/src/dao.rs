@@ -35,8 +35,6 @@ impl<'a> Dao<'a> {
             None => Err(DaoError::NoSuchValueError(s.into())),
         }
     }
-
-
 }
 
 impl<'a> Serialize for Dao<'a> {
@@ -51,15 +49,15 @@ impl<'a> Serialize for Dao<'a> {
 pub trait FromDao {
     /// convert dao to an instance of the corresponding struct of the model
     /// taking into considerating the renamed columns
-    fn from_dao(dao: &Dao) -> Self; 
+    fn from_dao(dao: &Dao) -> Self;
 }
 
-pub trait ToDao{
-
+pub trait ToDao {
     /// convert from an instance of the struct to a dao representation
     /// to be saved into the database
     fn to_dao(&self) -> Dao;
 }
+
 
 
 
@@ -103,10 +101,10 @@ mod tests {
     }
 
     #[test]
-    fn test_get_opt(){
+    fn test_get_opt() {
         let mut dao = Dao::new();
         dao.insert("life", 42);
-        let life: Result<Option<i32>,_> = dao.get("life");
+        let life: Result<Option<i32>, _> = dao.get("life");
         assert!(life.is_ok());
         let life = life.unwrap();
         assert!(life.is_some());
