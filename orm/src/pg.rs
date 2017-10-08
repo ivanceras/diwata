@@ -12,6 +12,7 @@ use uuid::Uuid;
 use chrono::{DateTime};
 use postgres::types::IsNull;
 use std::error::Error;
+use std::fmt;
 
 pub fn init_pool(db_url: &str) -> r2d2::Pool<r2d2_postgres::PostgresConnectionManager>{
     let config = r2d2::Config::default();
@@ -98,6 +99,7 @@ impl<'a> ToSql for PgValue<'a>{
             Value::Float(ref v) => v.to_sql(ty, out),
             Value::Double(ref v) => v.to_sql(ty, out),
             Value::Blob(ref v) => v.to_sql(ty, out),
+            Value::Char(ref v) => v.to_string().to_sql(ty, out),
             Value::Text(ref v) => v.to_sql(ty, out),
             Value::Str(ref v) => v.to_sql(ty, out),
             Value::Uuid(ref v) => v.to_sql(ty, out),
@@ -113,6 +115,7 @@ impl<'a> ToSql for PgValue<'a>{
             types::INT2 | types::INT4 | types::INT8 => true,
             types::FLOAT4 | types::FLOAT8 => true,
             types::TEXT | types::VARCHAR => true,
+            types::BPCHAR=> true,
             types::UUID => true,
             types::TIMESTAMPTZ | types::TIMESTAMP => true,
             types::UNKNOWN => false,
@@ -127,21 +130,36 @@ impl<'a> ToSql for PgValue<'a>{
 impl FromSql for OwnedPgValue{
     fn from_sql(ty: &Type, raw: &[u8]) -> Result<Self, Box<Error + Sync + Send>>{
         macro_rules! match_type {
-            ($ty: ident, $variant: ident ) => {
-                $ty::from_sql(ty, raw).map(|v|OwnedPgValue(Value::$variant(v)))
+            ($variant: ident ) => {
+                FromSql::from_sql(ty, raw).map(|v|OwnedPgValue(Value::$variant(v)))
             }
         }
 
         match *ty {
-            types::BOOL => match_type!(bool, Bool), 
-            types::INT2  => match_type!(i16, Smallint),
-            types::INT4  => match_type!(i32, Int),
-            types::INT8  => match_type!(i64, Bigint),
-            types::FLOAT4 => match_type!(f32, Float),
-            types::FLOAT8 => match_type!(f64, Double),
-            types::TEXT | types::VARCHAR => match_type!(String, Text),
-            types::UUID => match_type!(Uuid, Uuid),
-            types::TIMESTAMPTZ | types::TIMESTAMP => match_type!(DateTime,Timestamp),
+            types::BOOL => match_type!(Bool), 
+            types::INT2  => match_type!(Smallint),
+            types::INT4  => match_type!(Int),
+            types::INT8  => match_type!(Bigint),
+            types::FLOAT4 => match_type!(Float),
+            types::FLOAT8 => match_type!(Double),
+            types::TEXT | types::VARCHAR => match_type!(Text),
+            types::BPCHAR => {
+                let v: Result<String,_> = FromSql::from_sql(&types::TEXT, raw);
+                match v{
+                    Ok(v) => {
+                        if v.chars().count() == 1 {
+                            Ok( OwnedPgValue(Value::Char(v.chars().next().unwrap())))
+                        }else {
+                            Err(Box::new(PostgresError::ConvertStringToCharError(format!("More than 1 char in '{}'",v))))
+                        }
+                    },
+                    Err(e) => Err(e)
+                }
+            }
+            types::UUID => match_type!(Uuid),
+            types::DATE => match_type!(Date),
+            types::TIMESTAMPTZ | types::TIMESTAMP => match_type!(Timestamp),
+            types::BYTEA => match_type!(Blob),
             _ => panic!("unable to convert from {:?}", ty), 
         }
 
@@ -152,10 +170,13 @@ impl FromSql for OwnedPgValue{
             types::INT2 | types::INT4 | types::INT8 => true,
             types::FLOAT4 | types::FLOAT8 => true,
             types::TEXT | types::VARCHAR => true,
+            types::BPCHAR => true,
             types::UUID => true,
+            types::DATE => true,
             types::TIMESTAMPTZ | types::TIMESTAMP => true,
+            types::BYTEA => true,
             types::UNKNOWN => false,
-            _ => false 
+            _ => panic!("can not accept type {:?}", ty), 
         }
     }
 
@@ -178,8 +199,25 @@ impl FromSql for OwnedPgValue{
 pub enum PostgresError{
     GenericError(postgres::Error),
     SqlError(postgres::Error, String),
+    ConvertStringToCharError(String),
 }
 
+
+impl Error for PostgresError {
+    fn description(&self) -> &str{
+        "postgres error"
+    }
+
+    fn cause(&self) -> Option<&Error> { 
+        None
+    }
+}
+
+impl fmt::Display for PostgresError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:#?}", self)
+    }
+}
 
 
 #[cfg(test)]
@@ -194,7 +232,7 @@ mod test{
 
     #[test]
     fn connect_test_query(){
-        let db_url = "postgres://postgres:p0stgr3s@localhost:5432/rforum";
+        let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
         let mut pool = Pool::new();
         let conn = pool.connect(db_url);
         assert!(conn.is_ok());
@@ -213,7 +251,7 @@ mod test{
     }
     #[test]
     fn connect_test_query_explicit_deref(){
-        let db_url = "postgres://postgres:p0stgr3s@localhost:5432/rforum";
+        let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
         let mut pool = Pool::new();
         let conn = pool.connect(db_url);
         assert!(conn.is_ok());
@@ -235,7 +273,7 @@ mod test{
     #[test]
     fn test_unknown_type(){
         let mut pool = Pool::new();
-        let db_url = "postgres://postgres:p0stgr3s@localhost/rforum";
+        let db_url = "postgres://postgres:p0stgr3s@localhost/sakila";
         let db  = pool.db(db_url).unwrap();
         let values:Vec<Value> = vec![
             "hi".into(),
@@ -250,7 +288,7 @@ mod test{
     #[test]
     fn using_values(){
         let mut pool = Pool::new();
-        let db_url = "postgres://postgres:p0stgr3s@localhost/rforum";
+        let db_url = "postgres://postgres:p0stgr3s@localhost/sakila";
         let db  = pool.db(db_url).unwrap();
         let values:Vec<Value> = vec![
             "hi".into(),
@@ -282,9 +320,9 @@ mod test{
     #[test]
     fn with_nulls(){
         let mut pool = Pool::new();
-        let db_url = "postgres://postgres:p0stgr3s@localhost/medical";
+        let db_url = "postgres://postgres:p0stgr3s@localhost/sakila";
         let db  = pool.db(db_url).unwrap();
-        let rows:Result<Rows, DbError> = (&db).execute_sql_with_return("select 'rust'::TEXT AS name, NULL::TEXT AS schedule, NULL::TEXT AS specialty from doctor", &[]);
+        let rows:Result<Rows, DbError> = (&db).execute_sql_with_return("select 'rust'::TEXT AS name, NULL::TEXT AS schedule, NULL::TEXT AS specialty from actor", &[]);
         println!("columns: {:#?}", rows);
         assert!(rows.is_ok());
         if let Ok(rows) = rows {

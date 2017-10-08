@@ -22,6 +22,7 @@ pub enum Value {
     Double(f64),
 
     Blob(Vec<u8>),
+    Char(char),
     Text(String),
     Str(&'static str),
 
@@ -46,6 +47,7 @@ impl Value {
             Value::Double(_) => "f64",
             Value::Blob(_) => "Vec<u8>",
             Value::Text(_) => "String",
+            Value::Char(_) => "char",
             Value::Str(_) => "&'static str",
             Value::Uuid(_) => "Uuid",
             Value::Date(_) => "NaiveDate",
@@ -67,6 +69,12 @@ macro_rules! impl_to_value {
         impl ToValue for $ty {
             fn to_value(&self) -> Value {
                 self.into()
+            }
+        }
+
+        impl<'a> ToValue for &'a $ty {
+            fn to_value(&self) -> Value {
+                (*self).into()
             }
         }
     }
@@ -111,11 +119,14 @@ impl_from!(i64, Bigint);
 impl_from!(f32, Float);
 impl_from!(f64, Double);
 impl_from!(Vec<u8>, Blob);
+impl_from!(char, Char);
 impl_from!(String, Text);
 impl_from!(&'static str, Str);
 impl_from!(Uuid, Uuid);
 impl_from!(NaiveDate, Date);
 impl_from!(DateTime<Utc>, Timestamp);
+
+
 
 macro_rules! impl_tryfrom {
     ($ty: ty, $ty_name: tt, $($variant: ident),*) => {
@@ -132,6 +143,11 @@ macro_rules! impl_tryfrom {
             }
         }
 
+    }
+}
+
+macro_rules! impl_tryfrom_option{
+    ($ty: ty) => {
         /// try from to Option<T>
         impl<'a> TryFrom<&'a Value> for Option<$ty> {
             type Error = ConvertError;
@@ -146,6 +162,24 @@ macro_rules! impl_tryfrom {
     }
 }
 
+/// Char can be casted into String
+impl<'a> TryFrom<&'a Value> for String {
+    type Error = ConvertError;
+
+    fn try_from(value: &'a Value) -> Result<Self, Self::Error> {
+        match *value {
+            Value::Text(ref v) => Ok(v.to_owned()),
+            Value::Char(ref v) => {
+                let mut s = String::new();
+                s.push(*v);
+                Ok(s)
+            },
+            _ => Err(ConvertError::NotSupported(value.get_type_name().to_string(), "String".into())),
+        }
+    }
+}
+
+
 impl_tryfrom!(bool, "bool", Bool);
 impl_tryfrom!(i8, "i8", Tinyint);
 impl_tryfrom!(i16, "i16", Tinyint, Smallint);
@@ -154,11 +188,26 @@ impl_tryfrom!(i64, "i64", Tinyint, Smallint, Int, Bigint);
 impl_tryfrom!(f32, "f32", Float);
 impl_tryfrom!(f64, "f64", Float, Double);
 impl_tryfrom!(Vec<u8>, "Vec<u8>", Blob);
-impl_tryfrom!(String, "String", Text);
+impl_tryfrom!(char, "char", Char);
 impl_tryfrom!(&'static str, "&'static str", Str);
 impl_tryfrom!(Uuid, "Uuid", Uuid);
 impl_tryfrom!(NaiveDate, "NaiveDate", Date);
 impl_tryfrom!(DateTime<Utc>, "DateTime<Utc>", Timestamp);
+
+impl_tryfrom_option!(bool);
+impl_tryfrom_option!(i8);
+impl_tryfrom_option!(i16);
+impl_tryfrom_option!(i32);
+impl_tryfrom_option!(i64);
+impl_tryfrom_option!(f32);
+impl_tryfrom_option!(f64);
+impl_tryfrom_option!(Vec<u8>);
+impl_tryfrom_option!(char);
+impl_tryfrom_option!(String);
+impl_tryfrom_option!(&'static str);
+impl_tryfrom_option!(Uuid);
+impl_tryfrom_option!(NaiveDate);
+impl_tryfrom_option!(DateTime<Utc>);
 
 #[cfg(test)]
 mod tests {

@@ -24,7 +24,7 @@ impl EntityManager {
     }
 
     /// insert to table the values of this struct
-    pub fn insert<T, R>(&self, entities: &[T]) -> Result<Vec<R>, DbError>
+    pub fn insert<T, R>(&self, entities: &[&T]) -> Result<Vec<R>, DbError>
     where
         T: ToTable + ToColumns + ToDao,
         R: FromDao + ToColumns,
@@ -110,124 +110,223 @@ impl EntityManager {
 
 
 #[cfg(test)]
-mod test {
+#[cfg(feature = "with-postgres")]
+mod test_pg {
     extern crate dao;
     use super::*;
     use dao::{FromDao, ToColumns, ToDao, ToTable};
     use pool::Pool;
-    use chrono::DateTime;
+    use chrono::{NaiveDate,DateTime};
     use chrono::offset::Utc;
+    use uuid::Uuid;
 
     #[test]
     fn use_em() {
         #[derive(Debug, FromDao, ToTable)]
-        struct Users {
-            id: i32,
-            email: String,
+        struct Actor {
+            actor_id: i32,
+            first_name: String,
+
         }
-        let db_url = "postgres://postgres:p0stgr3s@localhost/rforum";
+        let db_url = "postgres://postgres:p0stgr3s@localhost/sakila";
         let mut pool = Pool::new();
         let em = pool.em(db_url).unwrap();
-        let users: Result<Vec<Users>, DbError> = em.get_all();
-        println!("users: {:#?}", users);
-        if let Ok(users) = users {
-            for user in users {
-                println!("user: {:?}", user);
-            }
+        let actors: Result<Vec<Actor>, DbError> = em.get_all();
+        println!("Actor: {:#?}", actors);
+        let actors = actors.unwrap();
+        for actor in actors {
+            println!("actor: {:?}", actor);
         }
+    }
+
+    #[test]
+    fn various_data_types(){
+        let db_url = "postgres://postgres:p0stgr3s@localhost/sakila";
+        let mut pool = Pool::new();
+        let em = pool.em(db_url).unwrap();
+        #[derive(Debug,PartialEq, FromDao, ToDao, ToColumns, ToTable)]
+        struct Sample{
+            vnil: Option<String>,
+            vbool: bool,
+            vsmallint: i16,
+            vint: i32,
+            vbigint: i64,
+            vfloat: f32,
+            vdouble: f64,
+            vblob: Vec<u8>,
+            vtext: String,
+            vuuid: Uuid,
+            vdate: NaiveDate,
+            vtimestamp: DateTime<Utc>,
+        }
+
+        let sample: Result<Vec<Sample>,DbError> = em.execute_sql_with_return(r#"
+            SELECT NULL::TEXT as vnil,
+                    true::BOOL as vbool,
+                    1000::INT2 as vsmallint,
+                    32000::INT as vint,
+                    123000::INT4 as vbigint,
+                    1.0::FLOAT4 as vfloat,
+                    2.0::FLOAT8 as vdouble,
+                    E'\\000'::BYTEA as vblob,
+                    'Hello'::TEXT as vtext,
+                    'd25af116-fb30-4731-9cf9-2251c235e8fa'::UUID as vuuid,
+                    now()::DATE as vdate,
+                    now()::TIMESTAMP WITH TIME ZONE as vtimestamp
+
+        "#,&[]);
+        println!("{:#?}", sample);
+        assert!(sample.is_ok());
+
+        let sample = sample.unwrap();
+        let sample = &sample[0];
+
+        assert_eq!(None, sample.vnil);
+        assert_eq!(true, sample.vbool);
+        assert_eq!(1000, sample.vsmallint);
+        assert_eq!(32000, sample.vint);
+        assert_eq!(123000, sample.vbigint);
+        assert_eq!(1.0, sample.vfloat);
+        assert_eq!(2.0, sample.vdouble);
+        assert_eq!(vec![0], sample.vblob);
+        assert_eq!("Hello".to_string(), sample.vtext);
+        let now = Utc::now();
+        let today = now.date();
+        let naive_today = today.naive_utc();
+        assert_eq!(naive_today, sample.vdate);
+        assert_eq!(today, sample.vtimestamp.date());
+            
+    }
+    #[test]
+    fn edgecase_data_types(){
+        let db_url = "postgres://postgres:p0stgr3s@localhost/sakila";
+        let mut pool = Pool::new();
+        let em = pool.em(db_url).unwrap();
+        #[derive(Debug,PartialEq, FromDao, ToDao, ToColumns, ToTable)]
+        struct Sample{
+            vchar: String,
+        }
+
+        let sample: Result<Vec<Sample>,DbError> = em.execute_sql_with_return(r#"
+            SELECT 
+                'c'::CHAR as VCHAR
+        "#,&[]);
+        println!("{:#?}", sample);
+        assert!(sample.is_ok());
+
+        let sample = sample.unwrap();
+        let sample = &sample[0];
+        assert_eq!("c".to_string(), sample.vchar);
+            
+    }
+
+    #[test]
+    fn char1(){
+        let db_url = "postgres://postgres:p0stgr3s@localhost/sakila";
+        let mut pool = Pool::new();
+        let em = pool.em(db_url).unwrap();
+        #[derive(Debug,PartialEq, FromDao, ToDao, ToColumns, ToTable)]
+        struct Sample{
+            vchar: char,
+        }
+
+        let sample: Result<Vec<Sample>,DbError> = em.execute_sql_with_return(r#"
+            SELECT 
+                'c'::CHAR as VCHAR
+        "#,&[]);
+        println!("{:#?}", sample);
+        assert!(sample.is_ok());
+
+        let sample = sample.unwrap();
+        let sample = &sample[0];
+        assert_eq!('c', sample.vchar);
+            
     }
 
     #[test]
     fn insert_some_data() {
-        #[derive(Debug, FromDao, ToDao, ToColumns, ToTable)]
-        struct Users {
-            id: i32,
-            email: String,
-            username: String,
-            password: String,
-            created_at: DateTime<Utc>,
+        #[derive(Debug,PartialEq, FromDao, ToDao, ToColumns, ToTable)]
+        struct Actor {
+            first_name: String,
+            last_name: String,
         }
-        let db_url = "postgres://postgres:p0stgr3s@localhost/rforum";
+        let db_url = "postgres://postgres:p0stgr3s@localhost/sakila";
         let mut pool = Pool::new();
         let em = pool.em(db_url).unwrap();
-        let user1 = Users {
-            id: 1000,
-            username: "user1000".into(),
-            email: "user1000@forum.org".to_string(),
-            password: "user1000rocks".into(),
-            created_at: Utc::now(),
+        let tom_cruise = Actor {
+            first_name: "TOM".into(),
+            last_name: "CRUISE".to_string(),
         };
-        let user2 = Users {
-            id: 1002,
-            username: "user1002".into(),
-            email: "user1002@forum.org".to_string(),
-            password: "user1002rocks".into(),
-            created_at: Utc::now(),
+        let tom_hanks = Actor {
+            first_name: "TOM".into(),
+            last_name: "HANKS".to_string(),
         };
 
-        let users: Result<Vec<Users>, DbError> = em.insert(&[user1, user2]);
-        println!("users: {:#?}", users);
-        assert!(users.is_ok());
-        panic!();
+        let actors: Result<Vec<Actor>, DbError> = em.insert(&[&tom_cruise, &tom_hanks]);
+        println!("Actor: {:#?}", actors);
+        assert!(actors.is_ok());
+        let actors = actors.unwrap();
+        assert_eq!(tom_cruise, actors[0]);
+        assert_eq!(tom_hanks, actors[1]);
     }
 
     #[test]
     fn insert_some_data_with_different_retrieve() {
-        mod insertion {
+        mod for_insert {
             use super::*;
-            #[derive(Debug, ToDao, ToColumns, ToTable)]
-            pub struct Users {
-                pub id: i32,
-                pub email: String,
-                pub username: String,
-                pub password: String,
+            #[derive(Debug, PartialEq, ToDao, ToColumns, ToTable)]
+            pub struct Actor {
+                pub first_name: String,
+                pub last_name: String,
             }
         }
 
-        mod retrieve {
+        mod for_retrieve {
             use super::*;
             #[derive(Debug, FromDao, ToColumns, ToTable)]
-            pub struct Users {
-                id: i32,
-                email: String,
-                username: String,
-                password: String,
-                created_at: DateTime<Utc>,
+            pub struct Actor {
+                pub actor_id: i32,
+                pub first_name: String,
+                pub last_name: String,
+                pub last_update: DateTime<Utc>,
             }
         }
 
 
-        let db_url = "postgres://postgres:p0stgr3s@localhost/rforum";
+        let db_url = "postgres://postgres:p0stgr3s@localhost/sakila";
         let mut pool = Pool::new();
         let em = pool.em(db_url).unwrap();
-        let user1 = insertion::Users {
-            id: 1000,
-            username: "user1000".into(),
-            email: "user1000@forum.org".to_string(),
-            password: "user1000rocks".into(),
+        let tom_cruise = for_insert::Actor {
+            first_name: "TOM".into(),
+            last_name: "CRUISE".to_string(),
         };
-        let user2 = insertion::Users {
-            id: 1002,
-            username: "user1002".into(),
-            email: "user1002@forum.org".to_string(),
-            password: "user1002rocks".into(),
+        let tom_hanks = for_insert::Actor {
+            first_name: "TOM".into(),
+            last_name: "HANKS".to_string(),
         };
 
-        let users: Result<Vec<retrieve::Users>, DbError> = em.insert(&[user1, user2]);
-        println!("users: {:#?}", users);
-        assert!(users.is_ok());
-        panic!();
+        let actors: Result<Vec<for_retrieve::Actor>, DbError> = em.insert(&[&tom_cruise, &tom_hanks]);
+        println!("Actor: {:#?}", actors);
+        assert!(actors.is_ok());
+        let actors = actors.unwrap();
+        let today = Utc::now().date();
+        assert_eq!(tom_cruise.first_name, actors[0].first_name);
+        assert_eq!(tom_cruise.last_name, actors[0].last_name);
+        assert_eq!(today, actors[0].last_update.date());
+        assert_eq!(tom_hanks.first_name, actors[1].first_name);
+        assert_eq!(tom_hanks.last_name, actors[1].last_name);
+        assert_eq!(today, actors[1].last_update.date());
     }
 
     #[test]
-    fn execute_sql() {
+    fn execute_sql_non_existing_table() {
         #[derive(Debug, FromDao)]
         struct Event {
             id: i32,
             name: String,
             created: DateTime<Utc>,
         }
-        let db_url = "postgres://postgres:p0stgr3s@localhost/rforum";
+        let db_url = "postgres://postgres:p0stgr3s@localhost/sakila";
         let mut pool = Pool::new();
         let em = pool.em(db_url).unwrap();
         let id = 1;
@@ -245,4 +344,5 @@ mod test {
             assert_eq!(event.created.date(), created.date());
         }
     }
+
 }

@@ -55,7 +55,7 @@ pub fn impl_to_dao(ast: &syn::MacroInput) -> quote::Tokens {
         },
         syn::Body::Enum(_) => panic!("#[derive(ToDao)] can only be used with structs"),
     };
-    let from_fields: Vec<quote::Tokens> = fields
+    let from_fields: &Vec<quote::Tokens> = &fields
         .iter()
         .map(|&(field, _ty)| {
             quote!{ dao.insert(stringify!(#field), &self.#field);}
@@ -71,6 +71,7 @@ pub fn impl_to_dao(ast: &syn::MacroInput) -> quote::Tokens {
                 dao
             }
         }
+
     }
 }
 

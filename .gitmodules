@@ -1,0 +1,3 @@
+[submodule "sakila"]
+	path = sakila
+	url = https://ivanceras@github.com/ivanceras/sakila
