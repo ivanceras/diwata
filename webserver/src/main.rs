@@ -1,9 +1,9 @@
-extern crate orm;
-use orm::Pool;
-use orm::Database;
-use orm::Rows;
-use orm::Dao;
-use orm::DbError;
+extern crate rustorm;
+use rustorm::Pool;
+use rustorm::Database;
+use rustorm::Rows;
+use rustorm::Dao;
+use rustorm::DbError;
 
 fn main() {
     let mut pool = Pool::new();

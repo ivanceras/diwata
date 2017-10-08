@@ -4,4 +4,4 @@ version = "0.1.0"
 authors = ["lee"]
 
 [dependencies]
-orm = { path = "../orm" }
+rustorm = { path = "../rustorm" }
