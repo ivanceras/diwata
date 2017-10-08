@@ -173,8 +173,11 @@ impl<'a> TryFrom<&'a Value> for String {
                 let mut s = String::new();
                 s.push(*v);
                 Ok(s)
-            },
-            _ => Err(ConvertError::NotSupported(value.get_type_name().to_string(), "String".into())),
+            }
+            _ => Err(ConvertError::NotSupported(
+                value.get_type_name().to_string(),
+                "String".into(),
+            )),
         }
     }
 }

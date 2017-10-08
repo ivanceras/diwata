@@ -116,7 +116,7 @@ mod test_pg {
     use super::*;
     use dao::{FromDao, ToColumns, ToDao, ToTable};
     use pool::Pool;
-    use chrono::{NaiveDate,DateTime};
+    use chrono::{DateTime, NaiveDate};
     use chrono::offset::Utc;
     use uuid::Uuid;
 
@@ -126,7 +126,6 @@ mod test_pg {
         struct Actor {
             actor_id: i32,
             first_name: String,
-
         }
         let db_url = "postgres://postgres:p0stgr3s@localhost/sakila";
         let mut pool = Pool::new();
@@ -140,12 +139,12 @@ mod test_pg {
     }
 
     #[test]
-    fn various_data_types(){
+    fn various_data_types() {
         let db_url = "postgres://postgres:p0stgr3s@localhost/sakila";
         let mut pool = Pool::new();
         let em = pool.em(db_url).unwrap();
-        #[derive(Debug,PartialEq, FromDao, ToDao, ToColumns, ToTable)]
-        struct Sample{
+        #[derive(Debug, PartialEq, FromDao, ToDao, ToColumns, ToTable)]
+        struct Sample {
             vnil: Option<String>,
             vbool: bool,
             vsmallint: i16,
@@ -160,7 +159,8 @@ mod test_pg {
             vtimestamp: DateTime<Utc>,
         }
 
-        let sample: Result<Vec<Sample>,DbError> = em.execute_sql_with_return(r#"
+        let sample: Result<Vec<Sample>, DbError> = em.execute_sql_with_return(
+            r#"
             SELECT NULL::TEXT as vnil,
                     true::BOOL as vbool,
                     1000::INT2 as vsmallint,
@@ -174,7 +174,9 @@ mod test_pg {
                     now()::DATE as vdate,
                     now()::TIMESTAMP WITH TIME ZONE as vtimestamp
 
-        "#,&[]);
+        "#,
+            &[],
+        );
         println!("{:#?}", sample);
         assert!(sample.is_ok());
 
@@ -195,57 +197,60 @@ mod test_pg {
         let naive_today = today.naive_utc();
         assert_eq!(naive_today, sample.vdate);
         assert_eq!(today, sample.vtimestamp.date());
-            
     }
     #[test]
-    fn edgecase_data_types(){
+    fn edgecase_data_types() {
         let db_url = "postgres://postgres:p0stgr3s@localhost/sakila";
         let mut pool = Pool::new();
         let em = pool.em(db_url).unwrap();
-        #[derive(Debug,PartialEq, FromDao, ToDao, ToColumns, ToTable)]
-        struct Sample{
+        #[derive(Debug, PartialEq, FromDao, ToDao, ToColumns, ToTable)]
+        struct Sample {
             vchar: String,
         }
 
-        let sample: Result<Vec<Sample>,DbError> = em.execute_sql_with_return(r#"
+        let sample: Result<Vec<Sample>, DbError> = em.execute_sql_with_return(
+            r#"
             SELECT 
                 'c'::CHAR as VCHAR
-        "#,&[]);
+        "#,
+            &[],
+        );
         println!("{:#?}", sample);
         assert!(sample.is_ok());
 
         let sample = sample.unwrap();
         let sample = &sample[0];
         assert_eq!("c".to_string(), sample.vchar);
-            
     }
 
     #[test]
-    fn char1(){
+    fn char1() {
         let db_url = "postgres://postgres:p0stgr3s@localhost/sakila";
         let mut pool = Pool::new();
         let em = pool.em(db_url).unwrap();
-        #[derive(Debug,PartialEq, FromDao, ToDao, ToColumns, ToTable)]
-        struct Sample{
+        #[derive(Debug, PartialEq, FromDao, ToDao, ToColumns, ToTable)]
+        struct Sample {
             vchar: char,
         }
 
-        let sample: Result<Vec<Sample>,DbError> = em.execute_sql_with_return(r#"
+        let sample: Result<Vec<Sample>, DbError> = em.execute_sql_with_return(
+            r#"
             SELECT 
                 'c'::CHAR as VCHAR
-        "#,&[]);
+        "#,
+            &[],
+        );
         println!("{:#?}", sample);
         assert!(sample.is_ok());
 
         let sample = sample.unwrap();
         let sample = &sample[0];
         assert_eq!('c', sample.vchar);
-            
     }
 
     #[test]
     fn insert_some_data() {
-        #[derive(Debug,PartialEq, FromDao, ToDao, ToColumns, ToTable)]
+        #[derive(Debug, PartialEq, FromDao, ToDao, ToColumns, ToTable)]
         struct Actor {
             first_name: String,
             last_name: String,
@@ -305,7 +310,8 @@ mod test_pg {
             last_name: "HANKS".to_string(),
         };
 
-        let actors: Result<Vec<for_retrieve::Actor>, DbError> = em.insert(&[&tom_cruise, &tom_hanks]);
+        let actors: Result<Vec<for_retrieve::Actor>, DbError> =
+            em.insert(&[&tom_cruise, &tom_hanks]);
         println!("Actor: {:#?}", actors);
         assert!(actors.is_ok());
         let actors = actors.unwrap();
