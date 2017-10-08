@@ -24,7 +24,6 @@ pub enum Value {
     Blob(Vec<u8>),
     Char(char),
     Text(String),
-    Str(&'static str),
 
     Uuid(Uuid),
     Date(NaiveDate),
@@ -48,7 +47,6 @@ impl Value {
             Value::Blob(_) => "Vec<u8>",
             Value::Text(_) => "String",
             Value::Char(_) => "char",
-            Value::Str(_) => "&'static str",
             Value::Uuid(_) => "Uuid",
             Value::Date(_) => "NaiveDate",
             Value::Timestamp(_) => "DateTime",
@@ -108,6 +106,34 @@ macro_rules! impl_from {
         }
 
         impl_to_value!($ty);
+    };
+
+    ($ty:ty, $variant: ident, $fn: ident) => {
+        /// Owned types
+        impl From<$ty> for Value {
+            fn from(f: $ty) -> Self{
+                Value::$variant(f.$fn())
+            }
+        }
+
+        /// For borrowed types
+        impl<'a> From<&'a $ty> for Value {
+            fn from(f: &'a $ty) -> Self{
+                Value::$variant(f.$fn())
+            }
+        }
+
+        /// for borrowed option types
+        impl<'a> From<&'a Option<$ty>> for Value {
+            fn from(f: &'a Option<$ty>) -> Self{
+                match *f{
+                    Some(ref f) => From::from(f), 
+                    None => Value::Nil,
+                }
+            }
+        }
+
+        impl_to_value!($ty);
     }
 }
 
@@ -121,7 +147,7 @@ impl_from!(f64, Double);
 impl_from!(Vec<u8>, Blob);
 impl_from!(char, Char);
 impl_from!(String, Text);
-impl_from!(&'static str, Str);
+impl_from!(&'static str, Text, to_string);
 impl_from!(Uuid, Uuid);
 impl_from!(NaiveDate, Date);
 impl_from!(DateTime<Utc>, Timestamp);
@@ -163,6 +189,7 @@ macro_rules! impl_tryfrom_option{
 }
 
 /// Char can be casted into String
+/// and they havea separate implementation for extracting data
 impl<'a> TryFrom<&'a Value> for String {
     type Error = ConvertError;
 
@@ -192,7 +219,6 @@ impl_tryfrom!(f32, "f32", Float);
 impl_tryfrom!(f64, "f64", Float, Double);
 impl_tryfrom!(Vec<u8>, "Vec<u8>", Blob);
 impl_tryfrom!(char, "char", Char);
-impl_tryfrom!(&'static str, "&'static str", Str);
 impl_tryfrom!(Uuid, "Uuid", Uuid);
 impl_tryfrom!(NaiveDate, "NaiveDate", Date);
 impl_tryfrom!(DateTime<Utc>, "DateTime<Utc>", Timestamp);
@@ -207,7 +233,6 @@ impl_tryfrom_option!(f64);
 impl_tryfrom_option!(Vec<u8>);
 impl_tryfrom_option!(char);
 impl_tryfrom_option!(String);
-impl_tryfrom_option!(&'static str);
 impl_tryfrom_option!(Uuid);
 impl_tryfrom_option!(NaiveDate);
 impl_tryfrom_option!(DateTime<Utc>);

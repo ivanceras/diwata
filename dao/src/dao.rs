@@ -100,7 +100,7 @@ mod tests {
         dao.insert("life", 42);
         dao.insert("lemons", "lemonade");
         let json = serde_json::to_string(&dao).unwrap();
-        let expected = r#"{"lemons":{"Str":"lemonade"},"life":{"Int":42}}"#;
+        let expected = r#"{"lemons":{"Text":"lemonade"},"life":{"Int":42}}"#;
         assert_eq!(json, expected);
     }
 
@@ -108,6 +108,20 @@ mod tests {
     fn test_get_opt() {
         let mut dao = Dao::new();
         dao.insert("life", 42);
+        let life: Result<Option<i32>, _> = dao.get("life");
+        assert!(life.is_ok());
+        let life = life.unwrap();
+        assert!(life.is_some());
+        assert_eq!(life.unwrap(), 42);
+    }
+
+    #[test]
+    fn referenced() {
+        let mut dao = Dao::new();
+        let v = 42;
+        let s = "lemonade";
+        dao.insert("life", &v);
+        dao.insert("lemons", &s);
         let life: Result<Option<i32>, _> = dao.get("life");
         assert!(life.is_ok());
         let life = life.unwrap();

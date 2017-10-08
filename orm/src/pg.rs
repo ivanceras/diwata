@@ -101,7 +101,6 @@ impl<'a> ToSql for PgValue<'a>{
             Value::Blob(ref v) => v.to_sql(ty, out),
             Value::Char(ref v) => v.to_string().to_sql(ty, out),
             Value::Text(ref v) => v.to_sql(ty, out),
-            Value::Str(ref v) => v.to_sql(ty, out),
             Value::Uuid(ref v) => v.to_sql(ty, out),
             Value::Date(ref v) => v.to_sql(ty, out),
             Value::Timestamp(ref v) => v.to_sql(ty, out),

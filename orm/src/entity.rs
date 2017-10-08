@@ -153,6 +153,7 @@ mod test_pg {
             vfloat: f32,
             vdouble: f64,
             vblob: Vec<u8>,
+            vchar: char,
             vtext: String,
             vuuid: Uuid,
             vdate: NaiveDate,
@@ -169,6 +170,7 @@ mod test_pg {
                     1.0::FLOAT4 as vfloat,
                     2.0::FLOAT8 as vdouble,
                     E'\\000'::BYTEA as vblob,
+                    'c'::CHAR as vchar,
                     'Hello'::TEXT as vtext,
                     'd25af116-fb30-4731-9cf9-2251c235e8fa'::UUID as vuuid,
                     now()::DATE as vdate,
@@ -182,6 +184,9 @@ mod test_pg {
 
         let sample = sample.unwrap();
         let sample = &sample[0];
+        let now = Utc::now();
+        let today = now.date();
+        let naive_today = today.naive_utc();
 
         assert_eq!(None, sample.vnil);
         assert_eq!(true, sample.vbool);
@@ -191,15 +196,78 @@ mod test_pg {
         assert_eq!(1.0, sample.vfloat);
         assert_eq!(2.0, sample.vdouble);
         assert_eq!(vec![0], sample.vblob);
+        assert_eq!('c', sample.vchar);
         assert_eq!("Hello".to_string(), sample.vtext);
-        let now = Utc::now();
-        let today = now.date();
-        let naive_today = today.naive_utc();
         assert_eq!(naive_today, sample.vdate);
         assert_eq!(today, sample.vtimestamp.date());
     }
+
     #[test]
-    fn edgecase_data_types() {
+    fn various_data_types_nulls() {
+        let db_url = "postgres://postgres:p0stgr3s@localhost/sakila";
+        let mut pool = Pool::new();
+        let em = pool.em(db_url).unwrap();
+        #[derive(Debug, PartialEq, FromDao, ToDao, ToColumns, ToTable)]
+        struct Sample {
+            vnil: Option<String>,
+            vbool: Option<bool>,
+            vsmallint: Option<i16>,
+            vint: Option<i32>,
+            vbigint: Option<i64>,
+            vfloat: Option<f32>,
+            vdouble: Option<f64>,
+            vblob: Option<Vec<u8>>,
+            vchar: Option<char>,
+            vtext: Option<String>,
+            vuuid: Option<Uuid>,
+            vdate: Option<NaiveDate>,
+            vtimestamp: Option<DateTime<Utc>>,
+        }
+
+        let sample: Result<Vec<Sample>, DbError> = em.execute_sql_with_return(
+            r#"
+            SELECT NULL::TEXT as vnil,
+                    NULL::BOOL as vbool,
+                    NULL::INT2 as vsmallint,
+                    NULL::INT as vint,
+                    NULL::INT4 as vbigint,
+                    NULL::FLOAT4 as vfloat,
+                    NULL::FLOAT8 as vdouble,
+                    NULL::BYTEA as vblob,
+                    NULL::CHAR as vchar,
+                    NULL::TEXT as vtext,
+                    NULL::UUID as vuuid,
+                    NULL::DATE as vdate,
+                    NULL::TIMESTAMP WITH TIME ZONE as vtimestamp
+
+        "#,
+            &[],
+        );
+        println!("{:#?}", sample);
+        assert!(sample.is_ok());
+
+        let sample = sample.unwrap();
+        let sample = &sample[0];
+
+        let now = Utc::now();
+        let today = now.date();
+        let naive_today = today.naive_utc();
+
+        assert_eq!(None, sample.vnil);
+        assert_eq!(None, sample.vbool);
+        assert_eq!(None, sample.vsmallint);
+        assert_eq!(None, sample.vint);
+        assert_eq!(None, sample.vbigint);
+        assert_eq!(None, sample.vfloat);
+        assert_eq!(None, sample.vdouble);
+        assert_eq!(None, sample.vblob);
+        assert_eq!(None, sample.vtext);
+        assert_eq!(None, sample.vdate);
+        assert_eq!(None, sample.vtimestamp);
+    }
+
+    #[test]
+    fn edgecase_use_char_as_string() {
         let db_url = "postgres://postgres:p0stgr3s@localhost/sakila";
         let mut pool = Pool::new();
         let em = pool.em(db_url).unwrap();
