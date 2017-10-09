@@ -12,10 +12,10 @@ use rustorm::DbError;
 
 use chrono::DateTime;
 use chrono::offset::Utc;
-use rustorm::{ToTable, ToColumns, FromDao, ToDao};
+use rustorm::{ToTableName, ToColumnNames, FromDao, ToDao};
 
 
-#[derive(Debug, ToTable, ToColumns, FromDao, ToDao)]
+#[derive(Debug, ToTableName, ToColumnNames, FromDao, ToDao)]
 struct Film{
     film_id: i32,
     title: String,
@@ -29,7 +29,7 @@ struct Film{
     replacement_cost: f64, //TODO: numeric hack
     //rating: Option<String>,
     last_update: DateTime<Utc>,
-    //special_features:Vec<String>,
+    special_features:Vec<String>,
 }
 
 fn main() {
@@ -46,7 +46,9 @@ fn main() {
         rental_rate::FLOAT8,
         length,
         replacement_cost::FLOAT8,
-        last_update
+        --rating,
+        last_update,
+        special_features
         FROM film", &[]);
     println!("films: {:#?}", films);
     if let Ok(films) = films{
