@@ -1,5 +1,6 @@
 use rustorm::TableName;
 use column::Column;
+use column::TableKey;
 
 pub struct Table {
     pub name: TableName,
@@ -18,6 +19,8 @@ pub struct Table {
 
     /// views can also be generated
     pub is_view: bool,
+
+    pub table_key: Vec<TableKey>,
 
 }
 
