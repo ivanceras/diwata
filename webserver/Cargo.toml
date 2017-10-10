@@ -7,5 +7,5 @@ authors = ["lee"]
 rustorm = { path = "../rustorm" }
 chrono = "0.4.0"
 dao = {path = "../rustorm/dao"}
-dao_codegen = {path = "../rustorm/dao_codegen"}
+rustorm_codegen = {path = "../rustorm/codegen"}
 
