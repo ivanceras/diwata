@@ -1,6 +1,6 @@
 extern crate rustorm;
 #[macro_use]
-extern crate dao_codegen;
+extern crate rustorm_codegen;
 extern crate dao;
 extern crate chrono;
 
