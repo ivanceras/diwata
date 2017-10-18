@@ -1,0 +1,15 @@
+image: rust
+
+stages:
+  - build
+
+build:
+  stage: build
+  script:
+    - cargo build --release
+  cache:
+    paths:
+      - target/
+  artifacts:
+    paths:
+      - target/release/curtain-rewrite
