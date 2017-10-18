@@ -20,7 +20,7 @@ before_script:
   - echo `pwd` && ls -la
   - cd .. && git clone https://github.com/ivanceras/sqlite
   - git clone https://github.com/ivanceras/r2d2-sqlite3
-  - cd curtain
+  - cd curtain-rewrite
 
 stages:
   - build
