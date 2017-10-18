@@ -21,7 +21,7 @@ before_script:
   - cd .. && git clone https://github.com/ivanceras/sqlite
   - git clone https://github.com/ivanceras/r2d2-sqlite3
   - cd curtain-rewrite
-  - rustup override nightly
+  - rustup override set nightly
 
 stages:
   - build
