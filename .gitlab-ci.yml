@@ -3,6 +3,12 @@ image: rust
 services:
   - postgres:latest
 
+variables:
+  POSTGRES_DB: sakila
+  POSTGRES_USER: sakila 
+  POSTGRES_PASSWORD: sakila
+  GIT_SUBMODULE_STRATEGY: recursive
+
 before_script:
   - apt update
   - apt install -y postgresql-client
