@@ -4,6 +4,7 @@ services:
   - postgres:latest
 
 before_script:
+  - sudo apt install -y postgresql-client
   - psql -U postgres -h localhost -c 'CREATE DATABASE sakila;' 
   - psql -U postgres -h localhost -d sakila -f ./sakila/postgres-sakila-db/postgres-sakila-schema.sql 
   - psql -U postgres -h localhost -d sakila -f ./sakila/postgres-sakila-db/postgres-sakila-data.sql
