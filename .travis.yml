@@ -15,6 +15,7 @@ before_script:
   - psql -U postgres -h localhost -d sakila -f ./sakila/postgres-sakila-db/postgres-sakila-data.sql
   - git clone https://github.com/ivanceras/sqlite
   - git clone https://github.com/ivanceras/r2d2-sqlite3
+  - echo `pwd` && ls -la
 
   
 script:
