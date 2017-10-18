@@ -15,9 +15,9 @@ stages:
   - test
 
 test:
+  script:
     - cargo test --all-features
 
 build:
-  stage: build
   script:
     - cargo build -p webserver --release
