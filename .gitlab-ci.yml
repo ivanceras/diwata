@@ -10,6 +10,7 @@ variables:
   GIT_SUBMODULE_STRATEGY: recursive
 
 before_script:
+  - export PGPASSWORD=$POSTGRES_PASSWORD
   - apt update
   - apt install -y postgresql-client
   - psql -U postgres -h postgres -c 'CREATE DATABASE sakila;' 
