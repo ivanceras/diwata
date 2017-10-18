@@ -9,11 +9,15 @@ rust:
 services:
   - postgresql
 
+variables:
+  POSTGRES_DB: sakila
+  POSTGRES_USER: sakila 
+  POSTGRES_PASSWORD: sakila
+
 before_script:
-  - psql -U postgres -h localhost -c 'CREATE DATABASE sakila;' 
-  - psql -U postgres -h localhost -d sakila -f ./sakila/postgres-sakila-db/postgres-sakila-schema.sql 
-  - psql -U postgres -h localhost -d sakila -f ./sakila/postgres-sakila-db/postgres-sakila-data.sql
-  - psql -U postgres -h localhost -c "ALTER USER postgres WITH PASSWORD 'p0stgr3s';"
+  - psql -U sakila -h localhost -c 'CREATE DATABASE sakila;' 
+  - psql -U sakila -h localhost -d sakila -f ./sakila/postgres-sakila-db/postgres-sakila-schema.sql 
+  - psql -U sakila -h localhost -d sakila -f ./sakila/postgres-sakila-db/postgres-sakila-data.sql
   - cd /home/travis/build/copyleft && git clone https://github.com/ivanceras/sqlite
   - cd /home/travis/build/copyleft && git clone https://github.com/ivanceras/r2d2-sqlite3
   - cd /home/travis/build/copyleft/curtain
