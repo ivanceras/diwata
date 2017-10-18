@@ -13,6 +13,8 @@ before_script:
   - psql -c 'CREATE DATABASE sakila;' -U postgres
   - psql -U postgres -h localhost -d sakila -f ./sakila/postgres-sakila-db/postgres-sakila-schema.sql 
   - psql -U postgres -h localhost -d sakila -f ./sakila/postgres-sakila-db/postgres-sakila-data.sql
+  - git clone https://github.com/ivanceras/sqlite
+  - git clone https://github.com/ivanceras/r2d2-sqlite3
 
   
 script:
