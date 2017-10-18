@@ -1,0 +1,19 @@
+os:
+  - linux
+
+language: rust
+
+rust:
+  - nightly
+
+services:
+  - postgresql
+
+before_script:
+  - psql -c 'CREATE DATABASE sakila;' -U postgres
+  - psql -U postgres -h localhost -d sakila -f ./sakila/postgres-sakila-db/postgres-sakila-schema.sql 
+  - psql -U postgres -h localhost -d sakila -f ./sakila/postgres-sakila-db/postgres-sakila-data.sql
+
+  
+script:
+  - cargo build
