@@ -1,15 +1,23 @@
 image: rust
 
+before_script:
+  - psql -U postgres -h localhost -c 'CREATE DATABASE sakila;' 
+  - psql -U postgres -h localhost -d sakila -f ./sakila/postgres-sakila-db/postgres-sakila-schema.sql 
+  - psql -U postgres -h localhost -d sakila -f ./sakila/postgres-sakila-db/postgres-sakila-data.sql
+  - psql -U postgres -h localhost -c "ALTER USER postgres WITH PASSWORD 'p0stgr3s';"
+  - echo `pwd` && ls -la
+  - cd .. && git clone https://github.com/ivanceras/sqlite
+  - git clone https://github.com/ivanceras/r2d2-sqlite3
+  - cd curtain
+
 stages:
   - build
+  - test
+
+test:
+    - cargo test --all-features
 
 build:
   stage: build
   script:
-    - cargo build --release
-  cache:
-    paths:
-      - target/
-  artifacts:
-    paths:
-      - target/release/curtain-rewrite
+    - cargo build -p webserver --release
