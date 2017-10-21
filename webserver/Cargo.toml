@@ -4,7 +4,7 @@ version = "0.1.0"
 authors = ["lee"]
 
 [dependencies]
-rustorm = { path = "../rustorm" }
+rustorm = { path = "../rustorm", features = ["with-postgres"] }
 chrono = "0.4.0"
 dao = {path = "../rustorm/dao"}
 rustorm_codegen = {path = "../rustorm/codegen"}
