@@ -2,6 +2,10 @@ extern crate rustorm;
 mod reference;
 mod widget;
 
+mod window;
+mod tab;
+mod field;
+
 #[cfg(test)]
 mod tests {
     #[test]
