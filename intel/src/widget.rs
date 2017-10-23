@@ -17,7 +17,7 @@ pub(crate) enum Widget {
     BannerImage,
 
     Dropdown,
-    DropdownWithLogo,
+    DropdownWithImage,
     AutoCompleteDropdown,
     DialogDropdown,
 
