@@ -10,7 +10,8 @@ use widget::Widget;
 ///  - column datatype
 ///  - column data limit
 ///  - actual data content
-enum Reference {
+#[derive(Debug, PartialEq)]
+pub enum Reference {
     Person,
     Firstname,
     LastName,
@@ -19,6 +20,7 @@ enum Reference {
     EmailAddress,
     Username,
     CompanyName,
+    Name, // generic name
     Password, // password control
     Tag,
     CountryName,
@@ -30,7 +32,10 @@ enum Reference {
     Title,
     Description,
 
-    UserId,
+    PrimaryUserId, // user_id on users table
+    PrimaryUserUuid, // user_id in uuid in users table
+    ReferredUserId, // user_id referred from other table
+    ReferredUserUuid,// referred user in uuid
     Created,
     Updated,
     Calendar,
@@ -93,6 +98,7 @@ enum Reference {
     EthereumAddress,
 }
 
+#[derive(Debug, PartialEq)]
 enum Document {
     Pdf,
     Xls,

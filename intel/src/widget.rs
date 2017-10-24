@@ -1,6 +1,6 @@
 
 
-pub(crate) enum Widget {
+pub enum Widget {
     Label,
     Textbox,
     Password,
