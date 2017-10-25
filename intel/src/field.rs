@@ -4,6 +4,7 @@ use rustorm::Column;
 use widget::Widget;
 use reference::Reference;
 use rustorm::types::SqlType;
+use rustorm::column::Capacity;
 
 
 pub struct Field {
@@ -19,7 +20,7 @@ pub struct Field {
 impl Field{
 
     /// derive field from supplied column
-    fn from_column(column: &Column) -> Self {
+    fn from_column(_column: &Column) -> Self {
         panic!("field to column incoming");
     }
 
@@ -28,7 +29,7 @@ impl Field{
     /// - sql_type, capacity
     /// - column_name as clue
     /// - actual value to verify if it matches the reference
-    fn derive_reference(column: &Column) -> Reference {
+    fn derive_reference(column: &Column) -> Option<Reference> {
         let table_name = &column.table.name;
         let column_name = &column.name.name;
         let sql_type = &column.specification.sql_type;
@@ -38,11 +39,11 @@ impl Field{
         // if the column a password column
         if sql_type == &SqlType::Varchar
             && column_name == "password"{
-            Reference::Password
+            Some(Reference::Password)
         }
         else if sql_type == &SqlType::Varchar
             && column_name == "name"{
-                Reference::Name
+                Some(Reference::Name)
         }
         else if (sql_type == &SqlType::Varchar
                     || sql_type == &SqlType::Tinytext
@@ -50,11 +51,11 @@ impl Field{
                     || sql_type == &SqlType::Text
                 )
             && column_name == "description"{
-                Reference::Description
+                Some(Reference::Description)
         }
         else if sql_type == &SqlType::TextArray
             && column_name == "tag"{
-                Reference::Tag
+                Some(Reference::Tag)
         }
         else if 
             (
@@ -72,24 +73,80 @@ impl Field{
             && column_name == "user_id" 
             && (table_name == "users" 
                 || table_name == "user"){
-                Reference::PrimaryUserId
+                Some(Reference::PrimaryUserId)
         }
         else if sql_type == &SqlType::Uuid
             && default_is_generated_uuid  
             && column_name == "user_id" 
             && (table_name == "users" 
                 || table_name == "user"){
-                Reference::PrimaryUserUuid
+                Some(Reference::PrimaryUserUuid)
+        }
+        // if numeric range with 2 precision on decimal
+        else if sql_type == &SqlType::Numeric
+            && match *capacity{
+                Some(ref capacity) => {
+                    match *capacity{
+                        Capacity::Limit(_limit) => false,
+                        Capacity::Range(_whole, decimal) => decimal == 2
+                    }
+                }
+                None => false
+            }
+            && (column_name == "price"
+                || column_name == "cost")
+        {
+                Some(Reference::Price)
         }
         else {
-            panic!("column '{}' is not yet dealt with", column_name);
+            println!("column '{}' is not yet dealt with", column_name);
+            None
+        }
+    }
+
+    /// derive reference but not really sure
+    fn derive_maybe_reference(column: &Column) -> Option<Reference> {
+        let column_name = &column.name.name;
+        let sql_type = &column.specification.sql_type;
+        let capacity = &column.specification.capacity;
+        if sql_type == &SqlType::Char
+            || (sql_type == &SqlType::Varchar
+                && match *capacity{
+                    Some(ref capacity) => 
+                        match *capacity{
+                            Capacity::Limit(limit) =>limit == 1,
+                            Capacity::Range(_, _) => false
+                        },
+                    None => false
+                }
+              )
+        {
+            Some(Reference::Symbol)
+        }
+        else if sql_type == &SqlType::Numeric
+            && match *capacity{
+                Some(ref capacity) => {
+                    match *capacity{
+                        Capacity::Limit(_limit) => false,
+                        Capacity::Range(_whole, decimal) => decimal == 2
+                    }
+                }
+                None => false
+            }
+            && (column_name.ends_with("_price")
+                || column_name.ends_with("_cost"))
+        {
+                Some(Reference::Price)
+        }
+        else{
+            None
         }
     }
 
     /// derive widget base from column
     /// reference is derived first then the widget is based
     /// from the reference
-    fn derive_widget(column: &Column) -> Widget {
+    fn derive_widget(_column: &Column) -> Widget {
         panic!("derive widget from column data_type and name as a clue")
     }
 }
@@ -109,6 +166,7 @@ pub struct ControlWidget{
     /// if the value is too long
     max_width: usize,
     /// height of the control, character wise
+    /// textbox defaults to 1
     height: usize,
 }
 
@@ -205,7 +263,7 @@ mod test{
         let user_id = &table.columns[0];
         let reference = Field::derive_reference(user_id);
         println!("reference: {:#?}", reference);
-        assert_eq!(reference, Reference::PrimaryUserId);
+        assert_eq!(reference, Some(Reference::PrimaryUserId));
     }
 }
 

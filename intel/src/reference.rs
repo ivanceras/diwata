@@ -73,6 +73,8 @@ pub enum Reference {
     SortOrder, // a column that describes the sort order of the item, if present then reordering capability will be displayed
     Selection, // bool, an item could be selected
 
+    Enum,// enum list
+
     MarkdownBlogEntry,    // a markdown formatted text content
     MarkdownCommentEntry, // a markdown formatted text comment
     Markdown,             // no specifics
@@ -99,7 +101,7 @@ pub enum Reference {
 }
 
 #[derive(Debug, PartialEq)]
-enum Document {
+pub enum Document {
     Pdf,
     Xls,
     Ods,

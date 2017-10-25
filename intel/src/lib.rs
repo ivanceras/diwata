@@ -1,3 +1,5 @@
+#![deny(warnings)]
+#![allow(dead_code)]
 extern crate rustorm;
 mod reference;
 mod widget;
