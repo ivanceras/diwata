@@ -73,7 +73,7 @@ pub enum Reference {
     SortOrder, // a column that describes the sort order of the item, if present then reordering capability will be displayed
     Selection, // bool, an item could be selected
 
-    Enum,// enum list
+    Enum(String, Vec<String>),// enum list
 
     MarkdownBlogEntry,    // a markdown formatted text content
     MarkdownCommentEntry, // a markdown formatted text comment
@@ -115,10 +115,20 @@ pub enum Document {
 
 
 impl Reference {
-    fn use_widget(&self) -> Widget {
+    fn use_widget_in_full_view(&self) -> Widget {
         match *self {
             Reference::Password => Widget::Password,
             Reference::MarkdownBlogEntry => Widget::MarkdownHtml,
+            Reference::Enum(ref _name, ref choices) => {
+                // if there are 2 choices, then it will be a radio group
+                // if there are 3 choices, radio group
+                // 4 choices, radio group
+                // 5 or more it will be a dropdownlist
+                match choices.len(){
+                    1...4 => Widget::Radiogroup(choices.to_owned()),
+                    _ => Widget::FixDropdown(choices.to_owned()),
+                }
+            }
             _ => Widget::Textbox,
         }
     }

@@ -155,6 +155,8 @@ impl Field{
 /// contains the widget 
 /// and the dropdown data
 pub struct ControlWidget{
+    // the label of the widget
+    label: String,
     widget: Widget,
     /// if the widget is Dropdown, DropdownWithImage, AutoCompleteDropdown
     /// DialogDropdown, CountryList, CountrListWithFlag
