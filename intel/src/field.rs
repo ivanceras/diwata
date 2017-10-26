@@ -146,8 +146,33 @@ impl Field{
     /// derive widget base from column
     /// reference is derived first then the widget is based
     /// from the reference
-    fn derive_widget(_column: &Column) -> Widget {
-        panic!("derive widget from column data_type and name as a clue")
+    fn derive_control_widget(column: &Column) -> ControlWidget {
+        let reference = Field::derive_reference(column);
+        let reference = match reference{
+            Some(reference) => Some(reference),
+            None => Field::derive_maybe_reference(column),
+        };
+        if let Some(reference) = reference{
+            let widget = reference.get_widget_fullview();
+            ControlWidget{
+                label: column.name.name.to_string(),
+                widget: widget,
+                dropdown_data: None,
+                width: 20,
+                max_len: None,
+                height: 1,
+            }
+        }
+        else{
+            ControlWidget{
+                label: column.name.name.to_string(),
+                widget: Widget::Textbox,
+                dropdown_data: None,
+                width: 20,
+                max_len: None,
+                height: 1,
+            }
+        }
     }
 }
 
@@ -166,7 +191,7 @@ pub struct ControlWidget{
     width: usize,
     /// if limit is set in column this will warn the user
     /// if the value is too long
-    max_width: usize,
+    max_len: Option<usize>,
     /// height of the control, character wise
     /// textbox defaults to 1
     height: usize,

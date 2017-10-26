@@ -16,28 +16,30 @@ pub enum Reference {
     Firstname,
     LastName,
     MiddleName,
-    Salutation,
-    EmailAddress,
+    Salutation, // Engr, Mr,
+    EmailAddress, // user@provider.ext
     Username,
-    CompanyName,
+    CompanyName, //google, pepsi, spacex
     Name, // generic name
     Password, // password control
-    Tag,
-    CountryName,
-    CountryCode,
-    Color,
+    Tag, // tags of, ie: cheap, sale, easy, solved, nsfw
+    CountryName, // Norway, Argentina, Mexico, etc
+    CountryCode, //ph,gb,eu,jp
+    Color,  //red, gree, blue, and webcolors #CCFFAA
     Shape,
-    Timezone,
+    Timezone, // so I can display the timezone selector widget
 
-    Title,
-    Description,
+    Title, // title column
+    Description, // description of the record
 
     PrimaryUserId, // user_id on users table
     PrimaryUserUuid, // user_id in uuid in users table
     ReferredUserId, // user_id referred from other table
     ReferredUserUuid,// referred user in uuid
-    Created,
-    Updated,
+    PrimaryUuid, // it is a primary key value and uuid type
+    ReferredUuid, // a foreign key uuid referring to another record from some other table
+    Created, // indicates a date the record was created
+    Updated, // indicates a date the record was updated
     Calendar,
     CalendarTime,
 
@@ -87,16 +89,17 @@ pub enum Reference {
     CsvData,              // a data csv inside a value
     SvgImage,             // an svg image
     BinaryExecutable,     // an executable binary data
-    Document(Document),
+    Document(Document),   // a blob attached document
 
     Model3D, // a 3D object
     Video,   // a video
     Mp3Audio,
 
-    IpAddress,
-    DomainName,
+    IpV4Address, // ipv4 such as 192.168.1.2
+    IpV6Address,
+    DomainName, // domain names such as ivanceras.com
 
-    BitcoinAddress,
+    BitcoinAddress, //bitcoin address 1GXKZxaLoJWO2349D012SHJ
     EthereumAddress,
 }
 
@@ -115,7 +118,7 @@ pub enum Document {
 
 
 impl Reference {
-    fn use_widget_in_full_view(&self) -> Widget {
+    pub fn get_widget_fullview(&self) -> Widget {
         match *self {
             Reference::Password => Widget::Password,
             Reference::MarkdownBlogEntry => Widget::MarkdownHtml,

@@ -31,14 +31,16 @@ pub enum Widget {
     DialogDropdown,
 
     Checkbox,
+    CheckmarkStatusImage, // use check mark such as for "is_active"
+    IndicatorStatusImage, // on/off - dull gray/ birght green LED
     RadioGroup,
+    ToggleButton, // switch button with on/off
     UrlLink,
     UrlTextbox,
 
     PrimaryButton,
     SecondaryButton,
     AuxilliaryButton,
-    ToggleButton,
 
     FileDownloadLink,
     FileUpload,
