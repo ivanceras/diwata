@@ -5,13 +5,14 @@ use widget::Widget;
 use reference::Reference;
 use rustorm::types::SqlType;
 use rustorm::column::Capacity;
+use rustorm::types::ArrayType;
 
 
 pub struct Field {
     /// name of the field, derive from column name
     name: String,
     /// derived from column comment
-    description: String,
+    description: Option<String>,
     column_name: ColumnName,
     /// the control widget based on the api of intellisense
     control_widget: ControlWidget,
@@ -20,8 +21,13 @@ pub struct Field {
 impl Field{
 
     /// derive field from supplied column
-    fn from_column(_column: &Column) -> Self {
-        panic!("field to column incoming");
+    fn from_column(column: &Column) -> Self {
+        Field{
+            name: column.name.name.to_string(),
+            description: column.comment.clone(),
+            column_name: column.name.to_owned(),
+            control_widget: Field::derive_control_widget(column)
+        }
     }
 
     /// derive reference from column using
@@ -53,7 +59,7 @@ impl Field{
             && column_name == "description"{
                 Some(Reference::Description)
         }
-        else if sql_type == &SqlType::TextArray
+        else if sql_type == &SqlType::ArrayType(ArrayType::Text)
             && column_name == "tag"{
                 Some(Reference::Tag)
         }
@@ -147,7 +153,25 @@ impl Field{
     /// reference is derived first then the widget is based
     /// from the reference
     fn derive_control_widget(column: &Column) -> ControlWidget {
+        let max_len = match column.specification.capacity{
+            Some(Capacity::Limit(limit)) => Some(limit),
+            _ => None,
+        };
         let reference = Field::derive_reference(column);
+        let (width, height) = if let Some(ref stat) = column.stat{
+            // wrap at 100 character per line
+            if stat.avg_width > 100 {
+                let width = 100;
+                let height = (stat.avg_width - 1) / 100 + 1;
+                (width, height)
+            }
+            else{
+                (stat.avg_width, 1)
+            }
+        }
+        else{
+            (20, 1)
+        };
         let reference = match reference{
             Some(reference) => Some(reference),
             None => Field::derive_maybe_reference(column),
@@ -156,11 +180,11 @@ impl Field{
             let widget = reference.get_widget_fullview();
             ControlWidget{
                 label: column.name.name.to_string(),
-                widget: widget,
+                widget,
                 dropdown_data: None,
-                width: 20,
-                max_len: None,
-                height: 1,
+                width, 
+                max_len,
+                height,
             }
         }
         else{
@@ -168,9 +192,9 @@ impl Field{
                 label: column.name.name.to_string(),
                 widget: Widget::Textbox,
                 dropdown_data: None,
-                width: 20,
-                max_len: None,
-                height: 1,
+                width,
+                max_len,
+                height,
             }
         }
     }
@@ -188,13 +212,13 @@ pub struct ControlWidget{
     dropdown_data: Option<DropdownData>,
     /// width (character wise) of the widget based on
     /// average of the database values on this column
-    width: usize,
+    width: i32,
     /// if limit is set in column this will warn the user
     /// if the value is too long
-    max_len: Option<usize>,
+    max_len: Option<i32>,
     /// height of the control, character wise
     /// textbox defaults to 1
-    height: usize,
+    height: i32,
 }
 
 
