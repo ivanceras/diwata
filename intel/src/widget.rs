@@ -10,11 +10,13 @@ pub enum Widget {
     Editor,
     ReadOnlyEditor,
     CodeHighlighter,
+    ColorSelector,
+    DatePicker,
+    DateTimePicker,
 
-    Image,
-    RoundedImage,
     LogoImage,
-    BannerImage,
+    MediumImage,
+    LargeImageEmbed,
 
     /// dropdown where there is no need 
     /// to fetch for more data
@@ -37,6 +39,10 @@ pub enum Widget {
     ToggleButton, // switch button with on/off
     UrlLink,
     UrlTextbox,
+
+    VideoLink,
+    YoutubeVideoEmbed,
+    TweetEmbed,
 
     PrimaryButton,
     SecondaryButton,

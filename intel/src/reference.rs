@@ -14,7 +14,7 @@ use widget::Widget;
 pub enum Reference {
     Person,
     Firstname,
-    LastName,
+    Lastname,
     MiddleName,
     Salutation, // Engr, Mr,
     EmailAddress, // user@provider.ext
@@ -23,10 +23,11 @@ pub enum Reference {
     Name, // generic name
     Password, // password control
     Tag, // tags of, ie: cheap, sale, easy, solved, nsfw
-    CountryName, // Norway, Argentina, Mexico, etc
-    CountryCode, //ph,gb,eu,jp
+    /// should not be in country table
+    CountryNameLookup, // Norway, Argentina, Mexico, etc
+    /// should not be in country table
+    CountryCodeLookup, //ph,gb,eu,jp
     Color,  //red, gree, blue, and webcolors #CCFFAA
-    Shape,
     Timezone, // so I can display the timezone selector widget
 
     Title, // title column
@@ -40,14 +41,17 @@ pub enum Reference {
     ReferredUuid, // a foreign key uuid referring to another record from some other table
     Created, // indicates a date the record was created
     Updated, // indicates a date the record was updated
-    Calendar,
-    CalendarTime,
+    CreatedBy, // indicated the user who created the record
+    UpdatedBy, // indicates the user who updated the record
+    IsActive, // a boolean indicates whether the record is active or not
+    Date, // generic date
+    DateTime, // generic date time
 
     Url,       //url links, could be linked/summarized (ie: starts with https:// and or wwww )
-    VideoLink, // link to youtube videos
+    VideoLink, // link to videos
+    YoutubeVideoLink, // link to youtube videos
     ImageLink, // link to image, could be rehosted to avoid xss
     Tweet,     // linked to a tweet
-    PopularService, // gmail, twitter, github, gitlab,
     MapLocation,
     Latitude,
     Longitude,
@@ -90,6 +94,7 @@ pub enum Reference {
     SvgImage,             // an svg image
     BinaryExecutable,     // an executable binary data
     Document(Document),   // a blob attached document
+    GenericBlob,  // generic blob, the data type is not identified
 
     Model3D, // a 3D object
     Video,   // a video
@@ -120,7 +125,46 @@ pub enum Document {
 impl Reference {
     pub fn get_widget_fullview(&self) -> Widget {
         match *self {
+            Reference::Person => Widget::Textbox,
+            Reference::Firstname => Widget::Textbox,
+            Reference::Lastname => Widget::Textbox,
+            Reference::MiddleName => Widget::Textbox,
+            Reference::Salutation => Widget::Textbox,
+            Reference::EmailAddress => Widget::Textbox,
+            Reference::Username => Widget::Textbox,
+            Reference::CompanyName => Widget::Textbox,
+            Reference::Name => Widget::Textbox,
             Reference::Password => Widget::Password,
+            Reference::Tag => Widget::TagSelection,
+            Reference::CountryNameLookup => Widget::AutoCompleteDropdown,
+            Reference::CountryCodeLookup => Widget::DropdownWithImage,
+            Reference::Color => Widget::ColorSelector,
+            Reference::Timezone => Widget::TimezoneLookup,
+
+            Reference::Title => Widget::Textbox,
+            Reference::Description => Widget::MultilineText,
+            Reference::PrimaryUserId => Widget::Textbox,
+            Reference::PrimaryUserUuid => Widget::Textbox,
+            Reference::ReferredUserId => Widget::DialogDropdown,
+            Reference::ReferredUserUuid => Widget::DialogDropdown,
+            Reference::PrimaryUuid => Widget::Textbox,
+            Reference::ReferredUuid => Widget::DialogDropdown,
+            Reference::Created => Widget::Textbox,
+            Reference::Updated => Widget::Textbox,
+            Reference::CreatedBy => Widget::Textbox,
+            Reference::UpdatedBy => Widget::Textbox,
+            Reference::IsActive => Widget::CheckmarkStatusImage,
+            Reference::Date => Widget::DatePicker,
+            Reference::DateTime => Widget::DateTimePicker,
+
+            Reference::Url => Widget::Textbox,
+            Reference::Video => Widget::VideoLink,
+            Reference::YoutubeVideoLink => Widget::YoutubeVideoEmbed,
+            Reference::ImageLink => Widget::LargeImageEmbed,
+            Reference::Tweet => Widget::TweetEmbed,
+
+            Reference::GenericBlob => Widget::FileUpload,
+
             Reference::MarkdownBlogEntry => Widget::MarkdownHtml,
             Reference::Enum(ref _name, ref choices) => {
                 // if there are 2 choices, then it will be a radio group

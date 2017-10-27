@@ -39,6 +39,7 @@ impl Field{
         let table_name = &column.table.name;
         let column_name = &column.name.name;
         let sql_type = &column.specification.sql_type;
+        let limit = column.specification.get_limit();
         let capacity = &column.specification.capacity;
         let is_autoincrement = column.is_autoincrement();
         let default_is_generated_uuid = column.default_is_generated_uuid(); 
@@ -104,6 +105,29 @@ impl Field{
         {
                 Some(Reference::Price)
         }
+            // country name lookup only if 
+            // it does not belong to a country table 
+        else if sql_type == &SqlType::Varchar
+            && table_name != "country"
+            && (column_name =="country"
+                || column_name == "country_name"
+                )
+                {
+            Some(Reference::CountryNameLookup)
+        }
+        else if sql_type == &SqlType::Varchar
+            && table_name != "country"
+            && Some(2) == limit
+            && column_name =="country_code"
+                {
+            Some(Reference::CountryNameLookup)
+        }
+        else if sql_type == &SqlType::Blob
+            || sql_type == &SqlType::Tinyblob
+            || sql_type == &SqlType::Mediumblob
+            || sql_type == &SqlType::Varbinary {
+            Some(Reference::GenericBlob)
+        }
         else {
             println!("column '{}' is not yet dealt with", column_name);
             None
@@ -115,16 +139,10 @@ impl Field{
         let column_name = &column.name.name;
         let sql_type = &column.specification.sql_type;
         let capacity = &column.specification.capacity;
+        let limit = column.specification.get_limit();
         if sql_type == &SqlType::Char
             || (sql_type == &SqlType::Varchar
-                && match *capacity{
-                    Some(ref capacity) => 
-                        match *capacity{
-                            Capacity::Limit(limit) =>limit == 1,
-                            Capacity::Range(_, _) => false
-                        },
-                    None => false
-                }
+                && limit == Some(1)
               )
         {
             Some(Reference::Symbol)
@@ -153,10 +171,7 @@ impl Field{
     /// reference is derived first then the widget is based
     /// from the reference
     fn derive_control_widget(column: &Column) -> ControlWidget {
-        let max_len = match column.specification.capacity{
-            Some(Capacity::Limit(limit)) => Some(limit),
-            _ => None,
-        };
+        let limit = column.specification.get_limit();
         let reference = Field::derive_reference(column);
         let (width, height) = if let Some(ref stat) = column.stat{
             // wrap at 100 character per line
@@ -183,7 +198,7 @@ impl Field{
                 widget,
                 dropdown_data: None,
                 width, 
-                max_len,
+                max_len: limit,
                 height,
             }
         }
@@ -193,7 +208,7 @@ impl Field{
                 widget: Widget::Textbox,
                 dropdown_data: None,
                 width,
-                max_len,
+                max_len: limit,
                 height,
             }
         }
