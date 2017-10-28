@@ -12,7 +12,7 @@ use widget::Widget;
 ///  - actual data content
 #[derive(Debug, PartialEq)]
 pub enum Reference {
-    Person,
+    PersonName,
     Firstname,
     Lastname,
     MiddleName,
@@ -33,6 +33,7 @@ pub enum Reference {
     Title, // title column
     Description, // description of the record
 
+    TableLookup, // generic table lookup
     PrimaryUserId, // user_id on users table
     PrimaryUserUuid, // user_id in uuid in users table
     ReferredUserId, // user_id referred from other table
@@ -125,7 +126,7 @@ pub enum Document {
 impl Reference {
     pub fn get_widget_fullview(&self) -> Widget {
         match *self {
-            Reference::Person => Widget::Textbox,
+            Reference::PersonName => Widget::Textbox,
             Reference::Firstname => Widget::Textbox,
             Reference::Lastname => Widget::Textbox,
             Reference::MiddleName => Widget::Textbox,
@@ -143,6 +144,7 @@ impl Reference {
 
             Reference::Title => Widget::Textbox,
             Reference::Description => Widget::MultilineText,
+            Reference::TableLookup => Widget::TableLookupDropdown,
             Reference::PrimaryUserId => Widget::Textbox,
             Reference::PrimaryUserUuid => Widget::Textbox,
             Reference::ReferredUserId => Widget::DialogDropdown,
@@ -176,7 +178,7 @@ impl Reference {
                     _ => Widget::FixDropdown(choices.to_owned()),
                 }
             }
-            _ => Widget::Textbox,
+            _ => Widget::Textbox
         }
     }
 }

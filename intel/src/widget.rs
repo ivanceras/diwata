@@ -31,6 +31,7 @@ pub enum Widget {
     DropdownWithImage,
     AutoCompleteDropdown,
     DialogDropdown,
+    TableLookupDropdown,
 
     Checkbox,
     CheckmarkStatusImage, // use check mark such as for "is_active"

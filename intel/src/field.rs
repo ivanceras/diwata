@@ -6,6 +6,8 @@ use reference::Reference;
 use rustorm::types::SqlType;
 use rustorm::column::Capacity;
 use rustorm::types::ArrayType;
+use tab::Tab;
+use rustorm::Table;
 
 
 pub struct Field {
@@ -13,7 +15,10 @@ pub struct Field {
     name: String,
     /// derived from column comment
     description: Option<String>,
-    column_name: ColumnName,
+    /// the interpretation of this column
+    /// of the the data it holds based on column specification
+    /// column_name, sql_type and limits
+    reference: Option<Reference>,
     /// the control widget based on the api of intellisense
     control_widget: ControlWidget,
 }
@@ -21,12 +26,49 @@ pub struct Field {
 impl Field{
 
     /// derive field from supplied column
-    fn from_column(column: &Column) -> Self {
+    /// has_one_tab is supplied from the Tab where this field belongs to
+    fn from_column(column: &Column, has_one_tab: Option<Tab>) -> Self {
+        let reference = Self::try_derive_reference(column);
+        let control_widget = Self::derive_control_widget(column, &reference);
         Field{
             name: column.name.name.to_string(),
             description: column.comment.clone(),
-            column_name: column.name.to_owned(),
-            control_widget: Field::derive_control_widget(column)
+            reference,
+            control_widget
+        }
+    }
+
+    /// 2 or more columns
+    /// will be merge into 1 field
+    /// such as this: a lookup to the table
+    /// that uses composite foreign key
+    /// the field name will be the table name
+    /// it looks up to
+    fn from_has_one_table(columns: Vec<&Column>, table: &Table) -> Self {
+        let reference = Reference::TableLookup;
+        let widget = reference.get_widget_fullview();
+        let control_widget = ControlWidget {
+            label: table.name.name.to_string(),
+            widget,
+            dropdown_data: None, // not yet computed here
+            width: 20, // get the average widget of the table record display identifier
+            max_len: None,
+            height: 1,
+        };
+        Field{
+            name: table.name.name.to_string(),
+            description: table.comment.to_owned(),
+            reference: Some(reference),
+            control_widget
+        }
+    }
+
+    /// check to see if has a strict derive_reference
+    /// also try the derive_maybe_reference
+    fn try_derive_reference(column: &Column) -> Option<Reference> {
+        match Self::derive_reference(column){
+            Some(reference) => Some(reference),
+            None => Self::derive_maybe_reference(column)
         }
     }
 
@@ -163,6 +205,7 @@ impl Field{
                 Some(Reference::Price)
         }
         else{
+            println!("column '{}' is not yet dealt with", column_name);
             None
         }
     }
@@ -170,9 +213,8 @@ impl Field{
     /// derive widget base from column
     /// reference is derived first then the widget is based
     /// from the reference
-    fn derive_control_widget(column: &Column) -> ControlWidget {
+    fn derive_control_widget(column: &Column, reference: &Option<Reference>) -> ControlWidget {
         let limit = column.specification.get_limit();
-        let reference = Field::derive_reference(column);
         let (width, height) = if let Some(ref stat) = column.stat{
             // wrap at 100 character per line
             if stat.avg_width > 100 {
@@ -187,11 +229,7 @@ impl Field{
         else{
             (20, 1)
         };
-        let reference = match reference{
-            Some(reference) => Some(reference),
-            None => Field::derive_maybe_reference(column),
-        };
-        if let Some(reference) = reference{
+        if let Some(ref reference) = *reference{
             let widget = reference.get_widget_fullview();
             ControlWidget{
                 label: column.name.name.to_string(),
