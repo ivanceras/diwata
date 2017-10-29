@@ -5,8 +5,6 @@
 use rustorm::Table;
 use rustorm::ColumnName;
 use rustorm::TableName;
-use rustorm::table::TableKey;
-use rustorm::table::ForeignKey;
 
 pub struct TableIntel<'a>(pub &'a Table);
 
@@ -134,6 +132,13 @@ impl<'a> TableIntel<'a>{
              }
         }
         has_one_tables
+    }
+
+    pub fn get_has_one_tablenames(&self, tables: &Vec<Table>) -> Vec<TableName> {
+        self.get_has_one_tables(tables)
+            .iter()
+            .map(|t|t.name.clone())
+            .collect()
     }
 
     /// list of tables that refers to this table
@@ -299,7 +304,6 @@ mod test{
         let em = em.unwrap();
         let all_tables = em.get_all_tables();
         assert!(all_tables.is_ok());
-        let all_tables = all_tables.unwrap();
         let table_name = TableName::from("bazaar.product_availability");
         let table = em.get_table(&table_name).unwrap();
         let table_intel = TableIntel(&table);
@@ -317,7 +321,6 @@ mod test{
         let all_tables = em.get_all_tables();
         assert!(all_tables.is_ok());
         let all_tables = all_tables.unwrap();
-        let table_name = TableName::from("bazaar.product");
         for table in &all_tables{
             let table_intel = TableIntel(&table);
             let one_one_tables = table_intel.get_one_one_tables(&all_tables);
@@ -355,6 +358,6 @@ mod test{
                 }
             }
         }
-        panic!();
+        //panic!();
     }
 }

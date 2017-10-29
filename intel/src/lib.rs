@@ -8,6 +8,8 @@ mod window;
 mod tab;
 mod field;
 mod table_intel;
+mod service;
+mod data_service;
 
 #[cfg(test)]
 mod tests {

@@ -17,27 +17,29 @@ pub struct Window {
     /// maps to table schema
     pub group: Option<String>,
     /// corresponds to the main table 
-    main_tab: Tab,
+    pub main_tab: Tab,
+    /// table names that is referred by fields from the main table
+    /// the first page of it is retrieved
+    pub has_one_tables: Vec<TableName>,
     /// this record is linked 1:1 to this record
     /// and the table that contains that record
     /// is owned in this window and edited here
-    one_one_tabs: Vec<Tab>,
+    pub one_one_tabs: Vec<Tab>,
     /// the tabs that refers to the selected record
     /// 1:M
-    has_many_tabs: Vec<Tab>,
+    pub has_many_tabs: Vec<Tab>,
     /// an indirect connection to this record
     /// must have an option to remove/show from the list
     /// async loaded?
-    indirect_tabs: Vec<Tab>,
+    pub indirect_tabs: Vec<Tab>,
 }
 
 impl Window{
     
-    fn from_tables(main_table: &Table, one_one: &Vec<&Table>, has_one: &Vec<&Table>,
+    fn from_tables(main_table: &Table, one_one: &Vec<&Table>, has_one_tables: Vec<TableName>,
                    has_many: &Vec<&Table>, indirect: &Vec<IndirectTable>, all_tables: &Vec<Table>) -> Self  {
         let main_tab:Tab = Tab::from_table(main_table, all_tables); 
         let one_one_tabs:Vec<Tab> = one_one.iter().map(|t|Tab::from_table(t, all_tables)).collect();
-        //let has_one_tabs:Vec<Tab> = has_one.iter().map(|t|Tab::from_table(t, all_tables)).collect();
         let has_many_tabs:Vec<Tab> = has_many.iter().map(|t|Tab::from_table(t, all_tables)).collect();
         let indirect_tabs:Vec<Tab> = indirect.iter().map(|t|Tab::from_table(t.indirect_table, all_tables)).collect();
         Window{
@@ -45,6 +47,7 @@ impl Window{
             description: main_tab.description.to_owned(),
             group: main_tab.table_name.schema.to_owned(), 
             main_tab,
+            has_one_tables,
             one_one_tabs,
             has_many_tabs,
             indirect_tabs
@@ -95,26 +98,25 @@ fn get_grouped_windows(em: &EntityManager) -> Result<Vec<GroupedWindow>, DbError
 /// extract all the tables and create a window object for each that can
 /// be a window, cache them for later use, so as not to keeping redoing 
 /// analytical and calculations
-fn get_all_windows(em: &EntityManager) -> Result<Vec<Window>, DbError> {
-    let tables = em.get_all_tables()?;
+pub fn derive_all_windows(tables: &Vec<Table>) -> Vec<Window> {
     let mut all_windows = Vec::with_capacity(tables.len());
-    for table in &tables{
+    for table in tables{
         let table_intel = TableIntel(table);
         if table_intel.is_window(&tables){
             let one_one_tables:Vec<&Table> = table_intel.get_one_one_tables(&tables);
-            let has_one_tables:Vec<&Table> = table_intel.get_has_one_tables(&tables);
+            let has_one_tables: Vec<TableName> = table_intel.get_has_one_tablenames(&tables);
             let has_many_tables:Vec<&Table> = table_intel.get_has_many_tables(&tables);
             let indirect_tables:Vec<IndirectTable> = table_intel.get_indirect_tables(&tables);
             println!("window: {}", table.name.name);
-            let window = Window::from_tables(&table, &one_one_tables, &has_one_tables, 
+            let window = Window::from_tables(&table, &one_one_tables, has_one_tables,
                                              &has_many_tables, &indirect_tables, &tables);
             all_windows.push(window);
         }
     }
-    Ok(all_windows)
+    all_windows
 }
 
-fn get_window<'t>(table_name: &TableName, windows: &'t Vec<Window>) -> Option<&'t Window> {
+pub fn get_window<'t>(table_name: &TableName, windows: &'t Vec<Window>) -> Option<&'t Window> {
     windows.iter()
         .find(|w|w.main_tab.table_name == *table_name)
 }
@@ -131,9 +133,8 @@ mod tests{
         let em = pool.em(db_url);
         assert!(em.is_ok());
         let em = em.unwrap();
-        let windows = get_all_windows(&em);
-        assert!(windows.is_ok());
-        let windows = windows.unwrap();
+        let tables = em.get_all_tables().unwrap();
+        let windows = derive_all_windows(&tables);
         assert_eq!(windows.len(), 12);
     }
 
@@ -144,9 +145,8 @@ mod tests{
         let em = pool.em(db_url);
         assert!(em.is_ok());
         let em = em.unwrap();
-        let windows = get_all_windows(&em);
-        assert!(windows.is_ok());
-        let windows = windows.unwrap();
+        let tables = em.get_all_tables().unwrap();
+        let windows = derive_all_windows(&tables);
         let product = TableName::from("bazaar.product");
         let product_window = get_window(&product, &windows);
         assert!(product_window.is_some());
@@ -171,9 +171,8 @@ mod tests{
         let em = pool.em(db_url);
         assert!(em.is_ok());
         let em = em.unwrap();
-        let windows = get_all_windows(&em);
-        assert!(windows.is_ok());
-        let windows = windows.unwrap();
+        let tables = em.get_all_tables().unwrap();
+        let windows = derive_all_windows(&tables);
         let table = TableName::from("bazaar.users");
         let window = get_window(&table, &windows);
         assert!(window.is_some());
