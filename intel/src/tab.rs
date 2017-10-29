@@ -3,39 +3,73 @@ use rustorm::ColumnName;
 use rustorm::table::ForeignKey;
 
 use field::Field;
+use rustorm::Table;
+use rustorm::Column;
+use table_intel;
 
+#[derive(Debug)]
 pub struct Tab {
-    name: String,
-    description: Option<String>,
-    table_name: TableName,
-    link_grade: TabExtent,
+    pub name: String,
+    pub description: Option<String>,
+    pub table_name: TableName,
     /// simple fields, the lookup fields are not included
     /// in these
-    fields: Vec<Field>,
+    pub fields: Vec<Field>,
 }
 
-pub enum TabExtent{
-    OneOne,
-    HasOne,
-    HasMany,
-    InDirect(LinkerTable), 
+impl Tab{
+
+    pub fn from_table(table: &Table, tables: &Vec<Table>) -> Self {
+        let fields = Tab::derive_fields(table, tables);
+        Tab{
+            name: table.name.name.to_string(),
+            description: table.comment.to_owned(),
+            table_name: table.name.to_owned(),
+            fields: fields
+        }
+    }
+
+    fn derive_fields(table: &Table, tables: &Vec<Table>) -> Vec<Field> {
+        let mut fields = Vec::with_capacity(table.columns.len());
+        fields.extend(Tab::derive_simple_fields(table));
+        fields.extend(Tab::derive_foreign_fields(table, tables));
+        fields
+    }
+
+
+    fn derive_simple_fields(table: &Table) -> Vec<Field> {
+        let columns: &Vec<Column> = &table.columns;
+        let foreign_column_names: Vec<&ColumnName> = table.get_foreign_columns();
+        let plain_columns:Vec<&Column> = columns.iter()
+                .filter(|c|
+                       !foreign_column_names.contains(&&c.name))
+                .collect();
+        let mut fields: Vec<Field> = Vec::with_capacity(plain_columns.len());
+        for pc in plain_columns{
+            let field = Field::from_column(pc);
+            fields.push(field)
+        }
+        fields
+    }
+    
+    fn derive_foreign_fields(table: &Table, all_tables: &Vec<Table>) -> Vec<Field> {
+        let foreign_keys:Vec<&ForeignKey> = table.get_foreign_keys();
+        let mut fields: Vec<Field> = Vec::with_capacity(foreign_keys.len());
+        for fk in foreign_keys{
+            let mut columns:Vec<&Column> = Vec::with_capacity(fk.columns.len());
+            for fc in &fk.columns{
+                if let Some(col) = table.get_column(fc){
+                    columns.push(col);
+                }
+            }
+            let foreign_table = table_intel::get_table(&fk.foreign_table, all_tables);
+            if let Some(foreign_table) = foreign_table {
+                let field = Field::from_has_one_table(&columns, foreign_table);
+                fields.push(field);
+            }
+        }
+        fields
+    }
+
 }
 
-/// Rec -> record
-/// Lin -> linker
-/// Ind -> indirect
-/// 1:M  for Rec:Lin
-/// M:N for Lin:In
-pub struct LinkerTable{
-    /// the column of the highlighted record tab
-    /// that links to the indirect table
-    record_tab_column: Vec<ColumnName>,
-    /// the linker table 
-    /// and its column names that would refer to the columns of
-    /// the indirect tabs
-    foreign: ForeignKey,
-    /// the referred columns from the indirect table that is being
-    /// referred to by the linker columns of the linker table
-    /// This is most likely the primary key of this indirect table
-    tab_column: Vec<ColumnName>
-}

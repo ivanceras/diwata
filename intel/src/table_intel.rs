@@ -8,7 +8,7 @@ use rustorm::TableName;
 use rustorm::table::TableKey;
 use rustorm::table::ForeignKey;
 
-struct TableIntel<'a>(&'a Table);
+pub struct TableIntel<'a>(pub &'a Table);
 
 impl<'a> TableIntel<'a>{
 
@@ -111,7 +111,7 @@ impl<'a> TableIntel<'a>{
     /// table is also that table's primary key,
     /// and that foreign columns refers to this tables primary keys
     /// then that is a 1:1 table to this table
-    fn get_one_one_tables<'t>(&self, tables: &'t Vec<Table>)-> Vec<&'t Table> {
+    pub fn get_one_one_tables<'t>(&self, tables: &'t Vec<Table>)-> Vec<&'t Table> {
         let mut one_one_tables: Vec<&Table> = vec![];
         for table in tables{
             let table_intel = TableIntel(table);
@@ -124,7 +124,7 @@ impl<'a> TableIntel<'a>{
         one_one_tables
     }
 
-    fn get_has_one_tables<'t>(&self, tables: &'t Vec<Table>) -> Vec<&'t Table> {
+    pub fn get_has_one_tables<'t>(&self, tables: &'t Vec<Table>) -> Vec<&'t Table> {
         let mut has_one_tables: Vec<&Table> = vec![];
         for table in tables {
             let table_intel = TableIntel(&table);
@@ -139,7 +139,7 @@ impl<'a> TableIntel<'a>{
     /// list of tables that refers to this table
     /// but is not owned
     /// neither a linke
-    fn get_has_many_tables<'t>(&self, tables: &'t Vec<Table>) -> Vec<&'t Table> {
+    pub fn get_has_many_tables<'t>(&self, tables: &'t Vec<Table>) -> Vec<&'t Table> {
         let mut has_many_tables: Vec<&Table> = vec![];
         for table in tables {
             let table_intel = TableIntel(&table);
@@ -152,7 +152,7 @@ impl<'a> TableIntel<'a>{
         has_many_tables
     }
 
-    fn get_indirect_tables<'t>(&self, tables: &'t Vec<Table>) -> Vec<IndirectTable<'t>> {
+    pub fn get_indirect_tables<'t>(&self, tables: &'t Vec<Table>) -> Vec<IndirectTable<'t>> {
         let mut indirect_tables = vec![];
         for table in tables{
             let table_intel = TableIntel(&table);
@@ -179,16 +179,27 @@ impl<'a> TableIntel<'a>{
         indirect_tables
     }
 
-
+    /// check if this table will have it's own window
+    /// algorithm: if it has no referring tables
+    /// tip: linkers and owned tables has no referring tables
+    /// so no need to check for them 
+    pub fn is_window(&self, tables: &Vec<Table>) -> bool {
+        self.get_referring_tables(tables).len() > 0
+    }
 
 }
 
+pub fn get_table<'t>(tablename: &TableName, tables: &'t Vec<Table>) -> Option<&'t Table> {
+    tables.iter()
+        .find(|t|t.name == *tablename)
+}
+
 #[derive(Debug, PartialEq)]
-struct IndirectTable<'t>{
+pub struct IndirectTable<'t>{
     /// the linker table
-    linker: &'t Table,
+    pub linker: &'t Table,
     /// the indirect table, where this contituents indirect tables
-    indirect_table: &'t Table,
+    pub indirect_table: &'t Table,
 }
 
 #[cfg(test)]
@@ -212,6 +223,7 @@ mod test{
         let one_one_tables = table_intel.get_one_one_tables(&all_tables);
         assert_eq!(one_one_tables.len(), 1);
         assert_eq!(one_one_tables[0].name, TableName::from("bazaar.product_availability"));
+        assert!(table_intel.is_window(&all_tables));
     }
 
     #[test]
@@ -232,6 +244,7 @@ mod test{
         let intel_availability = TableIntel(&product_availability);
         assert!(intel_product.is_referred_by(&product_availability));
         assert!(intel_availability.refers_to(&product));
+        assert!(intel_product.is_window(&all_tables));
     }
 
     #[test]
@@ -274,6 +287,7 @@ mod test{
         let table = em.get_table(&table_name).unwrap();
         let table_intel = TableIntel(&table);
         assert!(table_intel.is_linker_table());
+        assert!(!table_intel.is_window(&all_tables));
     }
 
     #[test]
@@ -291,6 +305,7 @@ mod test{
         let table_intel = TableIntel(&table);
         assert!(table_intel.is_owned_table());
     }
+
 
     #[test]
     fn table_relations(){
@@ -318,7 +333,7 @@ mod test{
             println!();    
             if !one_one_tables.is_empty() {
                 for one_one in one_one_tables{
-                    println!("  one_one: {}", one_one.name.name)
+                    println!("  1<->1: {}", one_one.name.name)
                 }
             }
             let has_one_tables = table_intel.get_has_one_tables(&all_tables);

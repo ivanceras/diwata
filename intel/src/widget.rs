@@ -1,5 +1,6 @@
 
 
+#[derive(Debug)]
 pub enum Widget {
     Label,
     Textbox,

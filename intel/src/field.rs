@@ -10,11 +10,14 @@ use tab::Tab;
 use rustorm::Table;
 
 
+#[derive(Debug)]
 pub struct Field {
     /// name of the field, derive from column name
     name: String,
     /// derived from column comment
     description: Option<String>,
+    /// derive from lookuped table comment
+    info: Option<String>,
     /// the interpretation of this column
     /// of the the data it holds based on column specification
     /// column_name, sql_type and limits
@@ -26,13 +29,13 @@ pub struct Field {
 impl Field{
 
     /// derive field from supplied column
-    /// has_one_tab is supplied from the Tab where this field belongs to
-    fn from_column(column: &Column, has_one_tab: Option<Tab>) -> Self {
+    pub fn from_column(column: &Column) -> Self {
         let reference = Self::try_derive_reference(column);
         let control_widget = Self::derive_control_widget(column, &reference);
         Field{
             name: column.name.name.to_string(),
             description: column.comment.clone(),
+            info: None,
             reference,
             control_widget
         }
@@ -44,7 +47,7 @@ impl Field{
     /// that uses composite foreign key
     /// the field name will be the table name
     /// it looks up to
-    fn from_has_one_table(columns: Vec<&Column>, table: &Table) -> Self {
+    pub fn from_has_one_table(columns: &Vec<&Column>, table: &Table) -> Self {
         let reference = Reference::TableLookup;
         let widget = reference.get_widget_fullview();
         let control_widget = ControlWidget {
@@ -55,9 +58,18 @@ impl Field{
             max_len: None,
             height: 1,
         };
+        let mut columns_comment = String::new();
+        for col in columns{
+            if let Some(ref comment) = col.comment{
+                columns_comment.push_str(&comment);
+            }
+        }
         Field{
             name: table.name.name.to_string(),
-            description: table.comment.to_owned(),
+            description: if !columns_comment.is_empty(){
+                            Some(columns_comment)
+                         }else{None},
+            info: table.comment.to_owned(),
             reference: Some(reference),
             control_widget
         }
@@ -204,6 +216,33 @@ impl Field{
         {
                 Some(Reference::Price)
         }
+        else if (sql_type == &SqlType::TimestampTz
+            || sql_type == &SqlType::Timestamp)
+            && column_name == "created"{
+                Some(Reference::Created)
+        }
+        else if (sql_type == &SqlType::TimestampTz
+            || sql_type == &SqlType::Timestamp)
+            && (column_name == "updated"
+                || column_name == "last_update"
+                )
+                {
+                Some(Reference::Updated)
+        }
+        else if (sql_type == &SqlType::Uuid
+            || sql_type == &SqlType::Int)
+            && (column_name == "created_by"
+                ||column_name == "createdby"
+                ){
+                Some(Reference::CreatedBy)
+        }
+        else if (sql_type == &SqlType::Uuid
+            || sql_type == &SqlType::Int)
+            && (column_name == "updated_by"
+                || column_name == "updatedby"
+                ){
+                Some(Reference::UpdatedBy)
+        }
         else{
             println!("column '{}' is not yet dealt with", column_name);
             None
@@ -256,6 +295,7 @@ impl Field{
 
 /// contains the widget 
 /// and the dropdown data
+#[derive(Debug)]
 pub struct ControlWidget{
     // the label of the widget
     label: String,
@@ -276,11 +316,13 @@ pub struct ControlWidget{
 
 
 /// a simple downdown list in string
+#[derive(Debug)]
 pub struct DropdownRecord{
     identifier: String,
     display: String,
 }
 
+#[derive(Debug)]
 pub struct DropdownList{
     /// api url for the next page to be loaded
     api_url: String,
@@ -293,6 +335,7 @@ pub struct DropdownList{
     reached_last_page: bool,
 }
 
+#[derive(Debug)]
 pub enum Image{
     Url(String),
     DataUrl(String),
@@ -302,6 +345,7 @@ pub enum Image{
 }
 
 
+#[derive(Debug)]
 pub struct DropdownRecordWithImage{
     identifier: String,
     display: String,
@@ -309,6 +353,7 @@ pub struct DropdownRecordWithImage{
     image: Image,
 }
 
+#[derive(Debug)]
 pub struct DropdownListWithImage{
     /// api url for the next page to be loaded
     api_url: String,
@@ -321,6 +366,7 @@ pub struct DropdownListWithImage{
     reached_last_page: bool,
 }
 
+#[derive(Debug)]
 pub struct DropdownListWithAutoComplete{
     /// api url for the next page to be loaded
     api_url: String,
@@ -334,6 +380,7 @@ pub struct DropdownListWithAutoComplete{
 }
 
 
+#[derive(Debug)]
 pub enum DropdownData{
     DropdownList(DropdownList),
     /// whatever the image shape displayed as is
