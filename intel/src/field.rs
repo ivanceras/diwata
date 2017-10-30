@@ -113,7 +113,9 @@ impl Field{
                 Some(Reference::Description)
         }
         else if sql_type == &SqlType::ArrayType(ArrayType::Text)
-            && column_name == "tag"{
+            && (column_name == "tag"
+                || column_name == "tags"
+                ){
                 Some(Reference::Tag)
         }
         else if 
@@ -180,6 +182,39 @@ impl Field{
             || sql_type == &SqlType::Varbinary {
             Some(Reference::GenericBlob)
         }
+        else if (sql_type == &SqlType::TimestampTz
+            || sql_type == &SqlType::Timestamp)
+            && column_name == "created"{
+                Some(Reference::Created)
+        }
+        else if (sql_type == &SqlType::TimestampTz
+            || sql_type == &SqlType::Timestamp)
+            && (column_name == "updated"
+                || column_name == "last_update"
+                )
+                {
+                Some(Reference::Updated)
+        }
+        else if (sql_type == &SqlType::Uuid
+            || sql_type == &SqlType::Int)
+            && (column_name == "created_by"
+                ||column_name == "createdby"
+                ){
+                Some(Reference::CreatedBy)
+        }
+        else if (sql_type == &SqlType::Uuid
+            || sql_type == &SqlType::Int)
+            && (column_name == "updated_by"
+                || column_name == "updatedby"
+                ){
+                Some(Reference::UpdatedBy)
+        }
+        else if sql_type == &SqlType::Bool
+            && (column_name == "is_active"
+                || column_name == "active"
+                ){
+                Some(Reference::UpdatedBy)
+        }
         else {
             println!("column '{}' is not yet dealt with", column_name);
             None
@@ -213,33 +248,6 @@ impl Field{
                 || column_name.ends_with("_cost"))
         {
                 Some(Reference::Price)
-        }
-        else if (sql_type == &SqlType::TimestampTz
-            || sql_type == &SqlType::Timestamp)
-            && column_name == "created"{
-                Some(Reference::Created)
-        }
-        else if (sql_type == &SqlType::TimestampTz
-            || sql_type == &SqlType::Timestamp)
-            && (column_name == "updated"
-                || column_name == "last_update"
-                )
-                {
-                Some(Reference::Updated)
-        }
-        else if (sql_type == &SqlType::Uuid
-            || sql_type == &SqlType::Int)
-            && (column_name == "created_by"
-                ||column_name == "createdby"
-                ){
-                Some(Reference::CreatedBy)
-        }
-        else if (sql_type == &SqlType::Uuid
-            || sql_type == &SqlType::Int)
-            && (column_name == "updated_by"
-                || column_name == "updatedby"
-                ){
-                Some(Reference::UpdatedBy)
         }
         else{
             println!("column '{}' is not yet dealt with", column_name);

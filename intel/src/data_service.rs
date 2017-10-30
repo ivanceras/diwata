@@ -26,7 +26,7 @@ fn get_maintable_data_first_page(em: &EntityManager, tables: &Vec<Table>,  windo
     let main_table = table_intel::get_table(main_tablename, tables);
     assert!(main_table.is_some());
     let main_table = main_table.unwrap();
-    sql += "product.price::FLOAT8, product.unit, product.tags, product.info ";
+    sql += "product.price::FLOAT8, product.unit, product.tags, product.info,product_availability.*, currency.*  ";
     sql += &format!("FROM {} \n",main_tablename.complete_name());
     for one1 in window.one_one_tabs.iter(){
         let one1_table = table_intel::get_table(&one1.table_name, tables);
