@@ -21,12 +21,11 @@ pub struct Filter;
 ///    as well.
 fn get_maintable_data_first_page(em: &EntityManager, tables: &Vec<Table>,  window: &Window, 
                                  filter: Option<Filter>, page_size: i32){
-    let mut sql = String::from("SELECT "); 
+    let mut sql = String::from("SELECT * "); 
     let main_tablename = &window.main_tab.table_name;
     let main_table = table_intel::get_table(main_tablename, tables);
     assert!(main_table.is_some());
     let main_table = main_table.unwrap();
-    sql += "product.price::FLOAT8, product.unit, product.tags, product.info,product_availability.*, currency.*  ";
     sql += &format!("FROM {} \n",main_tablename.complete_name());
     for one1 in window.one_one_tabs.iter(){
         let one1_table = table_intel::get_table(&one1.table_name, tables);
@@ -109,7 +108,7 @@ mod tests{
 
     #[test]
     fn first_page(){
-        let db_url = "postgres://postgres:p0stgr3s@localhost:5432/bazaar_v6";
+        let db_url = "postgres://postgres:p0stgr3s@localhost:5432/bazaar_v8";
         let mut pool = Pool::new();
         let em = pool.em(db_url);
         assert!(em.is_ok());
@@ -120,7 +119,7 @@ mod tests{
         let window = window::get_window(&table_name, &windows);
         assert!(window.is_some());
         let window  = window.unwrap();
-        get_maintable_data_first_page(&em, &tables, &window, None, 20);
+        get_maintable_data_first_page(&em, &tables, &window, None, 200);
         panic!();
     }
 }

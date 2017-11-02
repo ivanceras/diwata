@@ -128,7 +128,7 @@ mod tests{
 
     #[test]
     fn all_windows(){
-        let db_url = "postgres://postgres:p0stgr3s@localhost:5432/bazaar_v6";
+        let db_url = "postgres://postgres:p0stgr3s@localhost:5432/bazaar_v8";
         let mut pool = Pool::new();
         let em = pool.em(db_url);
         assert!(em.is_ok());
@@ -140,7 +140,7 @@ mod tests{
 
     #[test]
     fn product_window(){
-        let db_url = "postgres://postgres:p0stgr3s@localhost:5432/bazaar_v6";
+        let db_url = "postgres://postgres:p0stgr3s@localhost:5432/bazaar_v8";
         let mut pool = Pool::new();
         let em = pool.em(db_url);
         assert!(em.is_ok());
@@ -155,7 +155,7 @@ mod tests{
         assert_eq!(win.one_one_tabs.len(), 1);
         assert_eq!(win.one_one_tabs[0].table_name.name, "product_availability");
 
-        assert_eq!(win.has_many_tabs.len(), 0);
+        assert_eq!(win.has_many_tabs.len(), 1);
 
         assert_eq!(win.indirect_tabs.len(), 3);
         assert_eq!(win.indirect_tabs[0].table_name.name, "category");
@@ -166,7 +166,7 @@ mod tests{
 
     #[test]
     fn user_window(){
-        let db_url = "postgres://postgres:p0stgr3s@localhost:5432/bazaar_v6";
+        let db_url = "postgres://postgres:p0stgr3s@localhost:5432/bazaar_v8";
         let mut pool = Pool::new();
         let em = pool.em(db_url);
         assert!(em.is_ok());
@@ -180,11 +180,12 @@ mod tests{
         assert_eq!(win.one_one_tabs.len(), 1);
         assert_eq!(win.one_one_tabs[0].table_name.name, "user_location");
 
-        assert_eq!(win.has_many_tabs.len(), 4);
+        assert_eq!(win.has_many_tabs.len(), 5);
         assert_eq!(win.has_many_tabs[0].table_name.name, "api_key");
         assert_eq!(win.has_many_tabs[1].table_name.name, "product");
-        assert_eq!(win.has_many_tabs[2].table_name.name, "settings");
-        assert_eq!(win.has_many_tabs[3].table_name.name, "user_info");
+        assert_eq!(win.has_many_tabs[2].table_name.name, "review");
+        assert_eq!(win.has_many_tabs[3].table_name.name, "settings");
+        assert_eq!(win.has_many_tabs[4].table_name.name, "user_info");
 
         assert_eq!(win.indirect_tabs.len(), 1);
         assert_eq!(win.indirect_tabs[0].table_name.name, "review");
@@ -192,7 +193,7 @@ mod tests{
 
     #[test]
     fn grouped_windows(){
-        let db_url = "postgres://postgres:p0stgr3s@localhost:5432/bazaar_v6";
+        let db_url = "postgres://postgres:p0stgr3s@localhost:5432/bazaar_v8";
         let mut pool = Pool::new();
         let em = pool.em(db_url);
         assert!(em.is_ok());

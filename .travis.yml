@@ -18,6 +18,8 @@ before_script:
   - psql -U postgres -h localhost -c "ALTER USER postgres WITH PASSWORD 'p0stgr3s';"
   - cd /home/travis/build/copyleft && git clone https://github.com/ivanceras/sqlite
   - cd /home/travis/build/copyleft && git clone https://github.com/ivanceras/r2d2-sqlite3
+  - cd /home/travis/build/copyleft && git clone https://github.com/ivanceras/bazaar
+  - cd /home/travis/build/copyleft/bazaar/scripts && sh setup.sh
   - cd /home/travis/build/copyleft/curtain
 
   

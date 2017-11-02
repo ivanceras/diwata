@@ -214,7 +214,7 @@ mod test{
 
     #[test]
     fn one_one_tables(){
-        let db_url = "postgres://postgres:p0stgr3s@localhost:5432/bazaar_v6";
+        let db_url = "postgres://postgres:p0stgr3s@localhost:5432/bazaar_v8";
         let mut pool = Pool::new();
         let em = pool.em(db_url);
         assert!(em.is_ok());
@@ -233,7 +233,7 @@ mod test{
 
     #[test]
     fn proudct_availability_and_product(){
-        let db_url = "postgres://postgres:p0stgr3s@localhost:5432/bazaar_v6";
+        let db_url = "postgres://postgres:p0stgr3s@localhost:5432/bazaar_v8";
         let mut pool = Pool::new();
         let em = pool.em(db_url);
         assert!(em.is_ok());
@@ -254,7 +254,7 @@ mod test{
 
     #[test]
     fn users_table(){
-        let db_url = "postgres://postgres:p0stgr3s@localhost:5432/bazaar_v6";
+        let db_url = "postgres://postgres:p0stgr3s@localhost:5432/bazaar_v8";
         let mut pool = Pool::new();
         let em = pool.em(db_url);
         assert!(em.is_ok());
@@ -271,16 +271,17 @@ mod test{
         let has_one_tables = table_intel.get_has_one_tables(&all_tables);
         assert_eq!(has_one_tables.len(), 0);
         let has_many_tables = table_intel.get_has_many_tables(&all_tables);
-        assert_eq!(has_many_tables.len(), 4);
+        assert_eq!(has_many_tables.len(), 5);
         assert_eq!(has_many_tables[0].name, TableName::from("bazaar.api_key"));
         assert_eq!(has_many_tables[1].name, TableName::from("bazaar.product"));
-        assert_eq!(has_many_tables[2].name, TableName::from("bazaar.settings"));
-        assert_eq!(has_many_tables[3].name, TableName::from("bazaar.user_info"));
+        assert_eq!(has_many_tables[2].name, TableName::from("bazaar.review"));
+        assert_eq!(has_many_tables[3].name, TableName::from("bazaar.settings"));
+        assert_eq!(has_many_tables[4].name, TableName::from("bazaar.user_info"));
     }
 
     #[test]
     fn linker_tables(){
-        let db_url = "postgres://postgres:p0stgr3s@localhost:5432/bazaar_v6";
+        let db_url = "postgres://postgres:p0stgr3s@localhost:5432/bazaar_v8";
         let mut pool = Pool::new();
         let em = pool.em(db_url);
         assert!(em.is_ok());
@@ -297,7 +298,7 @@ mod test{
 
     #[test]
     fn owned_tables(){
-        let db_url = "postgres://postgres:p0stgr3s@localhost:5432/bazaar_v6";
+        let db_url = "postgres://postgres:p0stgr3s@localhost:5432/bazaar_v8";
         let mut pool = Pool::new();
         let em = pool.em(db_url);
         assert!(em.is_ok());
@@ -313,7 +314,7 @@ mod test{
 
     #[test]
     fn table_relations(){
-        let db_url = "postgres://postgres:p0stgr3s@localhost:5432/bazaar_v6";
+        let db_url = "postgres://postgres:p0stgr3s@localhost:5432/bazaar_v8";
         let mut pool = Pool::new();
         let em = pool.em(db_url);
         assert!(em.is_ok());
