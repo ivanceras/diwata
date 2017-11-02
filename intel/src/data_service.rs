@@ -20,7 +20,7 @@ pub struct Filter;
 ///    the first page of the lookup table is also loaded
 ///    as well.
 fn get_maintable_data_first_page(em: &EntityManager, tables: &Vec<Table>,  window: &Window, 
-                                 filter: Option<Filter>, page_size: i32){
+                                 filter: Option<Filter>, page_size: i32) -> Result<Rows, DbError> {
     let mut sql = String::from("SELECT * "); 
     let main_tablename = &window.main_tab.table_name;
     let main_table = table_intel::get_table(main_tablename, tables);
@@ -72,7 +72,7 @@ fn get_maintable_data_first_page(em: &EntityManager, tables: &Vec<Table>,  windo
     sql += &format!("LIMIT {}", page_size);
     println!("SQL: {}", sql);
     let result: Result<Rows, DbError> = em.db().execute_sql_with_return(&sql, &[]);
-    println!("result: {:#?}", result);
+    result
 }
 
 /// get the next page of the window
@@ -119,8 +119,11 @@ mod tests{
         let window = window::get_window(&table_name, &windows);
         assert!(window.is_some());
         let window  = window.unwrap();
-        get_maintable_data_first_page(&em, &tables, &window, None, 200);
-        panic!();
+        let data = get_maintable_data_first_page(&em, &tables, &window, None, 200);
+        println!("data: {:#?}", data);
+        assert!(data.is_ok());
+        let data = data.unwrap();
+        assert_eq!(data.iter().len(), 10);
     }
 }
 
