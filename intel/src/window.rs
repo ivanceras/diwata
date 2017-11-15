@@ -7,27 +7,35 @@ use rustorm::Table;
 use table_intel::TableIntel;
 use table_intel::IndirectTable;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Clone)]
 pub struct Window {
+
     /// maps to main table name
     pub name: String,
+
     /// maps to table comment
     pub description: Option<String>,
+
     /// group name where this window comes from
     /// maps to table schema
     pub group: Option<String>,
+
     /// corresponds to the main table 
     pub main_tab: Tab,
+
     /// table names that is referred by fields from the main table
     /// the first page of it is retrieved
     pub has_one_tables: Vec<TableName>,
+
     /// this record is linked 1:1 to this record
     /// and the table that contains that record
     /// is owned in this window and edited here
     pub one_one_tabs: Vec<Tab>,
+
     /// the tabs that refers to the selected record
     /// 1:M
     pub has_many_tabs: Vec<Tab>,
+
     /// an indirect connection to this record
     /// must have an option to remove/show from the list
     /// async loaded?
@@ -55,14 +63,14 @@ impl Window{
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct WindowName{
     pub name: String,
     pub table_name: TableName,
 }
 
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct GroupedWindow{
     group: String,
     window_names: Vec<WindowName>
@@ -74,7 +82,7 @@ pub struct GroupedWindow{
 
 /// get all the schema content and convert to grouped window
 /// for displaying as a list in the client side
-fn get_grouped_windows(em: &EntityManager) -> Result<Vec<GroupedWindow>, DbError> {
+pub fn get_grouped_windows(em: &EntityManager) -> Result<Vec<GroupedWindow>, DbError> {
     let schema_content: Vec<SchemaContent> = em.get_grouped_tables()?;
     let mut grouped_windows: Vec<GroupedWindow> = Vec::with_capacity(schema_content.len()); 
     for sc in schema_content{

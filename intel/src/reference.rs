@@ -10,7 +10,7 @@ use widget::Widget;
 ///  - column datatype
 ///  - column data limit
 ///  - actual data content
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Serialize, Clone)]
 pub enum Reference {
     PersonName,
     Firstname,
@@ -109,7 +109,7 @@ pub enum Reference {
     EthereumAddress,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Serialize, Clone)]
 pub enum Document {
     Pdf,
     Xls,

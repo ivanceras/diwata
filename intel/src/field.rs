@@ -8,7 +8,7 @@ use rustorm::types::ArrayType;
 use rustorm::Table;
 
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Clone)]
 pub struct Field {
     /// name of the field, derive from column name
     name: String,
@@ -301,7 +301,7 @@ impl Field{
 
 /// contains the widget 
 /// and the dropdown data
-#[derive(Debug)]
+#[derive(Debug, Serialize, Clone)]
 pub struct ControlWidget{
     // the label of the widget
     label: String,
@@ -322,13 +322,13 @@ pub struct ControlWidget{
 
 
 /// a simple downdown list in string
-#[derive(Debug)]
+#[derive(Debug, Serialize, Clone)]
 pub struct DropdownRecord{
     identifier: String,
     display: String,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Clone)]
 pub struct DropdownList{
     /// api url for the next page to be loaded
     api_url: String,
@@ -341,7 +341,7 @@ pub struct DropdownList{
     reached_last_page: bool,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Clone)]
 pub enum Image{
     Url(String),
     DataUrl(String),
@@ -351,7 +351,7 @@ pub enum Image{
 }
 
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Clone)]
 pub struct DropdownRecordWithImage{
     identifier: String,
     display: String,
@@ -359,7 +359,7 @@ pub struct DropdownRecordWithImage{
     image: Image,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Clone)]
 pub struct DropdownListWithImage{
     /// api url for the next page to be loaded
     api_url: String,
@@ -372,7 +372,7 @@ pub struct DropdownListWithImage{
     reached_last_page: bool,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Clone)]
 pub struct DropdownListWithAutoComplete{
     /// api url for the next page to be loaded
     api_url: String,
@@ -386,7 +386,7 @@ pub struct DropdownListWithAutoComplete{
 }
 
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Clone)]
 pub enum DropdownData{
     DropdownList(DropdownList),
     /// whatever the image shape displayed as is

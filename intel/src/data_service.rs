@@ -19,8 +19,11 @@ pub struct Filter;
 ///    the selected value is also loaded in, additionally
 ///    the first page of the lookup table is also loaded
 ///    as well.
-fn get_maintable_data_first_page(em: &EntityManager, tables: &Vec<Table>,  window: &Window, 
-                                 filter: Option<Filter>, page_size: i32) -> Result<Rows, DbError> {
+pub fn get_maintable_data_first_page(em: &EntityManager, 
+                                 tables: &Vec<Table>,  
+                                 window: &Window, 
+                                 filter: Option<Filter>, 
+                                 page_size: i32) -> Result<Rows, DbError> {
     let mut sql = String::from("SELECT * "); 
     let main_tablename = &window.main_tab.table_name;
     let main_table = table_intel::get_table(main_tablename, tables);
@@ -115,7 +118,7 @@ mod tests{
         let em = em.unwrap();
         let tables = em.get_all_tables().unwrap();
         let windows = window::derive_all_windows(&tables);
-        let table_name = TableName::from("bazaar.product");
+        let table_name = TableName::from("bazaar.address");
         let window = window::get_window(&table_name, &windows);
         assert!(window.is_some());
         let window  = window.unwrap();
@@ -123,7 +126,6 @@ mod tests{
         println!("data: {:#?}", data);
         assert!(data.is_ok());
         let data = data.unwrap();
-        assert_eq!(data.iter().len(), 10);
     }
 }
 

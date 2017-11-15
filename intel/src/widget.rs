@@ -1,6 +1,6 @@
 
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Clone)]
 pub enum Widget {
     Label,
     Textbox,

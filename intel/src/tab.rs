@@ -7,7 +7,7 @@ use rustorm::Table;
 use rustorm::Column;
 use table_intel;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Clone)]
 pub struct Tab {
     pub name: String,
     pub description: Option<String>,
