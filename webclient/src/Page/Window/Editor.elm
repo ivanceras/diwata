@@ -1,6 +1,7 @@
 module Page.Window.Editor exposing (Model, Msg, initEdit, initNew, update, view)
 
 import Data.Window as Window exposing (Window, Body)
+import Data.Window.TableName as TableName exposing (TableName)
 import Data.Session as Session exposing (Session)
 import Data.User as User exposing (User)
 import Html exposing (..)
@@ -22,7 +23,7 @@ import Views.Page as Page
 
 type alias Model =
     { errors : List Error
-    , editingWindow : Maybe Window.Slug
+    , editingWindow : Maybe TableName 
     , title : String
     , body : String
     , description : String
@@ -41,24 +42,24 @@ initNew =
     }
 
 
-initEdit : Session -> Window.Slug -> Task PageLoadError Model
-initEdit session slug =
+initEdit : Session -> TableName -> Task PageLoadError Model
+initEdit session tableName =
     let
         maybeAuthToken =
             session.user
                 |> Maybe.map .token
     in
-    Request.Window.get maybeAuthToken slug
+    Request.Window.get maybeAuthToken tableName
         |> Http.toTask
         |> Task.mapError (\_ -> pageLoadError Page.Other "Window is currently unavailable.")
         |> Task.map
             (\window ->
                 { errors = []
-                , editingWindow = Just slug
-                , title = window.title
-                , body = Window.bodyToMarkdownString window.body
-                , description = window.description
-                , tags = window.tags
+                , editingWindow = Just tableName 
+                , title = window.name
+                , body = "Hello" 
+                , description = Maybe.withDefault "" window.description
+                , tags = []
                 }
             )
 
@@ -137,8 +138,8 @@ type Msg
     | SetDescription String
     | SetTags String
     | SetBody String
-    | CreateCompleted (Result Http.Error (Window Body))
-    | EditCompleted (Result Http.Error (Window Body))
+    | CreateCompleted (Result Http.Error Window)
+    | EditCompleted (Result Http.Error Window)
 
 
 update : User -> Msg -> Model -> ( Model, Cmd Msg )
@@ -154,9 +155,9 @@ update user msg model =
                                 |> Http.send CreateCompleted
                                 |> pair { model | errors = [] }
 
-                        Just slug ->
+                        Just tableName ->
                             user.token
-                                |> Request.Window.update slug model
+                                |> Request.Window.update tableName model
                                 |> Http.send EditCompleted
                                 |> pair { model | errors = [] }
 
@@ -176,7 +177,7 @@ update user msg model =
             { model | body = body } => Cmd.none
 
         CreateCompleted (Ok window) ->
-            Route.Window window.slug
+            Route.Window window.mainTab.tableName
                 |> Route.modifyUrl
                 |> pair model
 
@@ -185,7 +186,7 @@ update user msg model =
                 => Cmd.none
 
         EditCompleted (Ok window) ->
-            Route.Window window.slug
+            Route.Window window.mainTab.tableName
                 |> Route.modifyUrl
                 |> pair model
 
@@ -228,6 +229,6 @@ tagsFromString str =
         |> List.filter (not << String.isEmpty)
 
 
-redirectToWindow : Window.Slug -> Cmd msg
+redirectToWindow : TableName -> Cmd msg
 redirectToWindow =
     Route.modifyUrl << Route.Window

@@ -14,7 +14,7 @@ import Request.Window
 import SelectList exposing (SelectList)
 import Task exposing (Task)
 import Util exposing ((=>), onClickStopPropagation)
-import Views.Window.Feed as Feed exposing (FeedSource, globalFeed, tagFeed, yourFeed)
+import Views.Window.GroupedWindow as GroupedWindow exposing (FeedSource, globalFeed, tagFeed, yourFeed)
 import Views.Page as Page
 
 
@@ -22,8 +22,8 @@ import Views.Page as Page
 
 
 type alias Model =
-    { tags : List Tag
-    , feed : Feed.Model
+    {
+     groupedWindow : GroupedWindow.Model
     }
 
 
@@ -37,19 +37,15 @@ init session =
             else
                 SelectList.fromLists [] yourFeed [ globalFeed ]
 
-        loadTags =
-            Request.Window.tags
-                |> Http.toTask
-
         loadSources =
-            Feed.init session feedSources
+            GroupedWindow.init session feedSources
 
         handleLoadError e =
-            let _ = Debug.log "handleerror" e
+            let _ = Debug.log "LoadError" e
             in
             pageLoadError Page.Home "Homepage is currently unavailable."
     in
-    Task.map2 Model loadTags loadSources
+    Task.map Model loadSources
         |> Task.mapError handleLoadError
 
 
@@ -59,16 +55,14 @@ init session =
 
 view : Session -> Model -> Html Msg
 view session model =
-    div [ class "home-page" ]
+    div [ class "window" ]
         [ viewBanner
-        , div [ class "container page" ]
-            [ div [ class "row" ]
-                [ div [ class "col-md-9" ] (viewFeed model.feed)
+        , div [ class "window-content" ]
+            [ div [ class "pane-group" ]
+                [ div [ class "pane pane-sm sidebar" ] (viewGroupedWindow model.groupedWindow)
                 , div [ class "col-md-3" ]
                     [ div [ class "sidebar" ]
-                        [ p [] [ text "Popular Tags" ]
-                        , viewTags model.tags
-                        ]
+                        []
                     ]
                 ]
             ]
@@ -79,17 +73,17 @@ viewBanner : Html msg
 viewBanner =
     div [ class "banner" ]
         [ div [ class "container" ]
-            [ h1 [ class "logo-font" ] [ text "conduit" ]
-            , p [] [ text "A place to share your knowledge." ]
+            [ h1 [ class "logo-font" ] [ text "curtain" ]
+            , p [] [ text "a user-friendly database interface" ]
             ]
         ]
 
 
-viewFeed : Feed.Model -> List (Html Msg)
-viewFeed feed =
-    div [ class "feed-toggle" ]
-        [ Feed.viewFeedSources feed |> Html.map FeedMsg ]
-        :: (Feed.viewWindows feed |> List.map (Html.map FeedMsg))
+viewGroupedWindow : GroupedWindow.Model -> List (Html Msg)
+viewGroupedWindow groupedWindow =
+    div [ class "groupedWindow-toggle" ]
+        [  GroupedWindow.viewFeedSources groupedWindow |> Html.map FeedMsg ]
+        :: (GroupedWindow.viewWindowNames groupedWindow |> List.map (Html.map FeedMsg))
 
 
 viewTags : List Tag -> Html Msg
@@ -112,7 +106,7 @@ viewTag tagName =
 
 
 type Msg
-    = FeedMsg Feed.Msg
+    = FeedMsg GroupedWindow.Msg
     | SelectTag Tag
 
 
@@ -124,13 +118,13 @@ update session msg model =
         FeedMsg subMsg ->
             let
                 ( newFeed, subCmd ) =
-                    Feed.update session subMsg model.feed
+                    GroupedWindow.update session subMsg model.groupedWindow
             in
-            { model | feed = newFeed } => Cmd.map FeedMsg subCmd
+            { model | groupedWindow = newFeed } => Cmd.map FeedMsg subCmd
 
         SelectTag tagName ->
             let
                 subCmd =
-                    Feed.selectTag (Maybe.map .token session.user) tagName
+                    GroupedWindow.selectTag (Maybe.map .token session.user) tagName
             in
             model => Cmd.map FeedMsg subCmd

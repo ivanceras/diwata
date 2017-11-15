@@ -1,4 +1,17 @@
-module Views.Window.Feed exposing (FeedSource, Model, Msg, authorFeed, favoritedFeed, globalFeed, init, selectTag, tagFeed, update, viewWindows, viewFeedSources, yourFeed)
+module Views.Window.GroupedWindow exposing 
+    ( FeedSource
+    , Model
+    , Msg
+    , authorFeed
+    , favoritedFeed
+    , globalFeed
+    , init
+    , selectTag
+    , tagFeed
+    , update
+    , viewWindowNames
+    , viewFeedSources
+    , yourFeed)
 
 {-| The reusable Window Feed that appears on both the Home page as well as on
 the Profile page. There's a lot of logic here, so it's more convenient to use
@@ -14,7 +27,8 @@ overkill, so we use simpler APIs instead.
 -}
 
 import Data.Window as Window exposing (Window, Tag)
-import Data.Window.Feed exposing (Feed)
+import Data.Window.GroupedWindow as GroupedWindow exposing (GroupedWindow, WindowName)
+import Data.Window.TableName as TableName exposing (TableName,tableNameToString)
 import Data.AuthToken as AuthToken exposing (AuthToken)
 import Data.Session as Session exposing (Session)
 import Data.User as User exposing (Username)
@@ -31,6 +45,7 @@ import Views.Window
 import Views.Errors as Errors
 import Views.Page exposing (bodyId)
 import Views.Spinner exposing (spinner)
+import Route exposing (Route)
 
 
 -- MODEL --
@@ -46,7 +61,7 @@ a surprising state, we know exactly where to look: this file.
 -}
 type alias InternalModel =
     { errors : List String
-    , feed : Feed
+    , groupedWindow : List GroupedWindow
     , feedSources : SelectList FeedSource
     , activePage : Int
     , isLoading : Bool
@@ -59,11 +74,11 @@ init session feedSources =
         source =
             SelectList.selected feedSources
 
-        toModel ( activePage, feed ) =
+        toModel ( activePage, groupedWindow ) =
             Model
                 { errors = []
                 , activePage = activePage
-                , feed = feed
+                , groupedWindow = groupedWindow
                 , feedSources = feedSources
                 , isLoading = False
                 }
@@ -76,11 +91,24 @@ init session feedSources =
 
 -- VIEW --
 
+viewWindowName: WindowName -> Html msg
+viewWindowName windowName = 
+    a [class "nav-group-item", Route.href (Route.Window windowName.tableName) ]
+        [span [class "icon icon-list"] []
+        ,text windowName.name
+        ]
 
-viewWindows : Model -> List (Html Msg)
-viewWindows (Model { activePage, feed, feedSources }) =
-    List.map (Views.Window.view ToggleFavorite) feed.windows
-        ++ [ pagination activePage feed (SelectList.selected feedSources) ]
+viewWindowGroup: GroupedWindow  -> Html msg
+viewWindowGroup groupedWindow = 
+    nav [class "nav-group"]
+        [ h5 [class "nav-group-title"] [text groupedWindow.group]
+        , div [] <| List.map viewWindowName groupedWindow.windowNames
+        ]
+
+
+viewWindowNames : Model -> List (Html Msg)
+viewWindowNames (Model { activePage, groupedWindow, feedSources }) =
+    List.map viewWindowGroup groupedWindow
 
 
 viewFeedSources : Model -> Html Msg
@@ -151,21 +179,6 @@ limit feedSource =
             5
 
 
-pagination : Int -> Feed -> FeedSource -> Html Msg
-pagination activePage feed feedSource =
-    let
-        windowsPerPage =
-            limit feedSource
-
-        totalPages =
-            ceiling (toFloat feed.windowsCount / toFloat windowsPerPage)
-    in
-    if totalPages > 1 then
-        List.range 1 totalPages
-            |> List.map (\page -> pageLink page (page == activePage))
-            |> ul [ class "pagination" ]
-    else
-        Html.text ""
 
 
 pageLink : Int -> Bool -> Html Msg
@@ -187,10 +200,11 @@ pageLink page isActive =
 type Msg
     = DismissErrors
     | SelectFeedSource FeedSource
-    | FeedLoadCompleted FeedSource (Result Http.Error ( Int, Feed ))
-    | ToggleFavorite (Window ())
-    | FavoriteCompleted (Result Http.Error (Window ()))
+    | FeedLoadCompleted FeedSource (Result Http.Error ( Int, List GroupedWindow ))
+    | ToggleFavorite TableName
+    | FavoriteCompleted (Result Http.Error TableName)
     | SelectPage Int
+    | SelectWindow TableName
 
 
 update : Session -> Msg -> Model -> ( Model, Cmd Msg )
@@ -211,9 +225,9 @@ updateInternal session msg model =
                 |> Task.attempt (FeedLoadCompleted source)
                 |> pair { model | isLoading = True }
 
-        FeedLoadCompleted source (Ok ( activePage, feed )) ->
+        FeedLoadCompleted source (Ok ( activePage, groupedWindow )) ->
             { model
-                | feed = feed
+                | groupedWindow = groupedWindow
                 , feedSources = selectFeedSource source model.feedSources
                 , activePage = activePage
                 , isLoading = False
@@ -222,31 +236,24 @@ updateInternal session msg model =
 
         FeedLoadCompleted _ (Err error) ->
             { model
-                | errors = model.errors ++ [ "Server error while trying to load feed" ]
+                | errors = model.errors ++ [ "Server error while trying to load groupedWindow" ]
                 , isLoading = False
             }
                 => Cmd.none
 
-        ToggleFavorite window ->
+        ToggleFavorite tableName ->
             case session.user of
                 Nothing ->
                     { model | errors = model.errors ++ [ "You are currently signed out. You must sign in to favorite windows." ] }
                         => Cmd.none
 
                 Just user ->
-                    Request.Window.toggleFavorite window user.token
+                    Request.Window.toggleFavorite tableName user.token
                         |> Http.send FavoriteCompleted
                         |> pair model
 
         FavoriteCompleted (Ok window) ->
-            let
-                feed =
-                    model.feed
-
-                newFeed =
-                    { feed | windows = List.map (replaceWindow window) feed.windows }
-            in
-            { model | feed = newFeed } => Cmd.none
+             model => Cmd.none
 
         FavoriteCompleted (Err error) ->
             { model | errors = model.errors ++ [ "Server error while trying to favorite window." ] }
@@ -259,10 +266,14 @@ updateInternal session msg model =
             in
             source
                 |> fetch (Maybe.map .token session.user) page
-                |> Task.andThen (\feed -> Task.map (\_ -> feed) scrollToTop)
+                |> Task.andThen (\groupedWindow -> Task.map (\_ -> groupedWindow) scrollToTop)
                 |> Task.attempt (FeedLoadCompleted source)
                 |> pair model
 
+        SelectWindow tableName ->
+            let _ = Debug.log "select window" (tableNameToString tableName)
+            in
+            model => Cmd.none
 
 scrollToTop : Task x ()
 scrollToTop =
@@ -272,7 +283,7 @@ scrollToTop =
         |> Task.onError (\_ -> Task.succeed ())
 
 
-fetch : Maybe AuthToken -> Int -> FeedSource -> Task Http.Error ( Int, Feed )
+fetch : Maybe AuthToken -> Int -> FeedSource -> Task Http.Error ( Int, List GroupedWindow )
 fetch token page feedSource =
     let
         defaultListConfig =
@@ -298,8 +309,8 @@ fetch token page feedSource =
                             { defaultFeedConfig | offset = offset, limit = windowsPerPage }
                     in
                     token
-                        |> Maybe.map (Request.Window.feed feedConfig >> Http.toTask)
-                        |> Maybe.withDefault (Task.fail (Http.BadUrl "You need to be signed in to view your feed."))
+                        |> Maybe.map (Request.Window.groupedWindow feedConfig >> Http.toTask)
+                        |> Maybe.withDefault (Task.fail (Http.BadUrl "You need to be signed in to view your groupedWindow."))
 
                 GlobalFeed ->
                     Request.Window.list listConfig token
@@ -318,15 +329,8 @@ fetch token page feedSource =
                         |> Http.toTask
     in
     task
-        |> Task.map (\feed -> ( page, feed ))
+        |> Task.map (\groupedWindow -> ( page, groupedWindow ))
 
-
-replaceWindow : Window a -> Window a -> Window a
-replaceWindow newWindow oldWindow =
-    if newWindow.slug == oldWindow.slug then
-        newWindow
-    else
-        oldWindow
 
 
 selectFeedSource : FeedSource -> SelectList FeedSource -> SelectList FeedSource

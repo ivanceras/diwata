@@ -6,16 +6,20 @@ module Request.Window
         , defaultFeedConfig
         , defaultListConfig
         , delete
-        , feed
+        , groupedWindow
         , get
         , list
-        , tags
         , toggleFavorite
         , update
         )
 
-import Data.Window as Window exposing (Window, Body, Tag, slugToString)
-import Data.Window.Feed as Feed exposing (Feed)
+import Data.Window as Window exposing (Window, Body, Tag, slugToString, baseWindowDecoder)
+import Data.Window.GroupedWindow as GroupedWindow exposing (GroupedWindow, WindowName)
+import Data.Window.TableName as TableName exposing 
+    ( TableName
+    , tableNameToString
+    , tableNameParser
+    )
 import Data.AuthToken as AuthToken exposing (AuthToken, withAuthorization)
 import Data.User as User exposing (Username)
 import Http
@@ -29,15 +33,14 @@ import Util exposing ((=>))
 -- SINGLE --
 
 
-get : Maybe AuthToken -> Window.Slug -> Http.Request (Window Body)
-get maybeToken slug =
+get : Maybe AuthToken -> TableName -> Http.Request Window
+get maybeToken tableName =
     let
         expect =
-            Window.decoderWithBody
-                |> Decode.field "article"
+            Window.baseWindowDecoder
                 |> Http.expectJson
     in
-    apiUrl ("/articles/" ++ Window.slugToString slug)
+    apiUrl ("/window/" ++ tableNameToString tableName)
         |> HttpBuilder.get
         |> HttpBuilder.withExpect expect
         |> withAuthorization maybeToken
@@ -67,7 +70,7 @@ defaultListConfig =
     }
 
 
-list : ListConfig -> Maybe AuthToken -> Http.Request Feed
+list : ListConfig -> Maybe AuthToken -> Http.Request (List GroupedWindow)
 list config maybeToken =
     [ "tag" => Maybe.map Window.tagToString config.tag
     , "author" => Maybe.map User.usernameToString config.author
@@ -76,7 +79,7 @@ list config maybeToken =
     , "offset" => Just (toString config.offset)
     ]
         |> List.filterMap maybeVal
-        |> buildFromQueryParams "/articles"
+        |> buildFromQueryParams "/windows"
         |> withAuthorization maybeToken
         |> HttpBuilder.toRequest
 
@@ -98,62 +101,50 @@ defaultFeedConfig =
     }
 
 
-feed : FeedConfig -> AuthToken -> Http.Request Feed
-feed config token =
+groupedWindow : FeedConfig -> AuthToken -> Http.Request (List GroupedWindow)
+groupedWindow config token =
     [ "limit" => Just (toString config.limit)
     , "offset" => Just (toString config.offset)
     ]
         |> List.filterMap maybeVal
-        |> buildFromQueryParams "/articles/feed"
+        |> buildFromQueryParams "/windows"
         |> withAuthorization (Just token)
         |> HttpBuilder.toRequest
 
 
-
--- TAGS --
-
-
-tags : Http.Request (List Tag)
-tags =
-    Decode.field "tags" (Decode.list Window.tagDecoder)
-        |> Http.get (apiUrl "/tags")
 
 
 
 -- FAVORITE --
 
 
-toggleFavorite : Window a -> AuthToken -> Http.Request (Window ())
-toggleFavorite window authToken =
-    if window.favorited then
-        unfavorite window.slug authToken
-    else
-        favorite window.slug authToken
+toggleFavorite : TableName -> AuthToken -> Http.Request TableName 
+toggleFavorite tableName authToken =
+    favorite tableName authToken
 
 
-favorite : Window.Slug -> AuthToken -> Http.Request (Window ())
+favorite : TableName -> AuthToken -> Http.Request TableName
 favorite =
     buildFavorite HttpBuilder.post
 
 
-unfavorite : Window.Slug -> AuthToken -> Http.Request (Window ())
+unfavorite : TableName -> AuthToken -> Http.Request TableName
 unfavorite =
     buildFavorite HttpBuilder.delete
 
 
 buildFavorite :
     (String -> RequestBuilder a)
-    -> Window.Slug
+    -> TableName 
     -> AuthToken
-    -> Http.Request (Window ())
-buildFavorite builderFromUrl slug token =
+    -> Http.Request TableName
+buildFavorite builderFromUrl tableName token =
     let
         expect =
-            Window.decoder
-                |> Decode.field "article"
+            TableName.decoder
                 |> Http.expectJson
     in
-    [ apiUrl "/articles", slugToString slug, "favorite" ]
+    [ apiUrl "/windows", tableNameToString tableName, "favorite" ]
         |> String.join "/"
         |> builderFromUrl
         |> withAuthorization (Just token)
@@ -182,12 +173,11 @@ type alias EditConfig record =
     }
 
 
-create : CreateConfig record -> AuthToken -> Http.Request (Window Body)
+create : CreateConfig record -> AuthToken -> Http.Request Window
 create config token =
     let
         expect =
-            Window.decoderWithBody
-                |> Decode.field "article"
+            Window.baseWindowDecoder
                 |> Http.expectJson
 
         window =
@@ -202,7 +192,7 @@ create config token =
             Encode.object [ "article" => window ]
                 |> Http.jsonBody
     in
-    apiUrl "/articles"
+    apiUrl "/windows"
         |> HttpBuilder.post
         |> withAuthorization (Just token)
         |> withBody body
@@ -210,12 +200,11 @@ create config token =
         |> HttpBuilder.toRequest
 
 
-update : Window.Slug -> EditConfig record -> AuthToken -> Http.Request (Window Body)
-update slug config token =
+update : TableName -> EditConfig record -> AuthToken -> Http.Request Window
+update tableName config token =
     let
         expect =
-            Window.decoderWithBody
-                |> Decode.field "article"
+            Window.baseWindowDecoder
                 |> Http.expectJson
 
         window =
@@ -229,7 +218,7 @@ update slug config token =
             Encode.object [ "article" => window ]
                 |> Http.jsonBody
     in
-    apiUrl ("/articles/" ++ slugToString slug)
+    apiUrl ("/articles/" ++ tableNameToString tableName)
         |> HttpBuilder.put
         |> withAuthorization (Just token)
         |> withBody body
@@ -263,10 +252,10 @@ maybeVal ( key, value ) =
             Just (key => val)
 
 
-buildFromQueryParams : String -> List ( String, String ) -> RequestBuilder Feed
+buildFromQueryParams : String -> List ( String, String ) -> RequestBuilder (List GroupedWindow)
 buildFromQueryParams url queryParams =
     url
         |> apiUrl
         |> HttpBuilder.get
-        |> withExpect (Http.expectJson Feed.decoder)
+        |> withExpect (Http.expectJson (Decode.list GroupedWindow.decoder))
         |> withQueryParams queryParams

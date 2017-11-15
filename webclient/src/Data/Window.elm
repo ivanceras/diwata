@@ -6,15 +6,15 @@ module Data.Window
         , Tag
         , bodyToHtml
         , bodyToMarkdownString
-        , decoder
-        , decoderWithBody
         , slugParser
         , slugToString
         , tagDecoder
         , tagToString
+        , baseWindowDecoder
         )
 
 import Data.Window.Author as Author exposing (Author)
+import Data.Window.TableName as TableName exposing (TableName)
 import Date exposing (Date)
 import Html exposing (Attribute, Html)
 import Json.Decode as Decode exposing (Decoder)
@@ -47,48 +47,43 @@ function produces `List (Window ())` because the API does not return bodies.
 Those windows are useful to the feed, but not to the individual window view.
 
 -}
-type alias Window a =
-    { description : String
-    , slug : Slug
-    , title : String
-    , tags : List String
-    , createdAt : Date
-    , updatedAt : Date
-    , favorited : Bool
-    , favoritesCount : Int
-    , author : Author
-    , body : a
+type alias Window =
+    { name : String
+    , description : Maybe String
+    , group : Maybe String
+    , mainTab : Tab
+    , has_one_tables : List TableName 
+    , one_one_tabs : List Tab
+    , has_many_tabs : List Tab
+    , indirect_tabs : List Tab
     }
+
+type alias Tab = 
+    { tableName: TableName
+    }
+
+tabDecoder : Decoder Tab
+tabDecoder =
+    decode Tab
+        |> required "table_name" TableName.decoder
+
 
 
 
 -- SERIALIZATION --
 
 
-decoder : Decoder (Window ())
-decoder =
-    baseWindowDecoder
-        |> hardcoded ()
-
-
-decoderWithBody : Decoder (Window Body)
-decoderWithBody =
-    baseWindowDecoder
-        |> required "body" bodyDecoder
-
-
-baseWindowDecoder : Decoder (a -> Window a)
+baseWindowDecoder : Decoder Window
 baseWindowDecoder =
     decode Window
-        |> required "description" (Decode.map (Maybe.withDefault "") (Decode.nullable Decode.string))
-        |> required "slug" (Decode.map Slug Decode.string)
-        |> required "title" Decode.string
-        |> required "tagList" (Decode.list Decode.string)
-        |> required "createdAt" Json.Decode.Extra.date
-        |> required "updatedAt" Json.Decode.Extra.date
-        |> required "favorited" Decode.bool
-        |> required "favoritesCount" Decode.int
-        |> required "author" Author.decoder
+        |> required "name" Decode.string
+        |> required "description" (Decode.nullable Decode.string)
+        |> required "group" (Decode.nullable Decode.string)
+        |> required "main_tab" tabDecoder
+        |> required "has_one_tables" (Decode.list TableName.decoder)
+        |> required "one_one_tabs" (Decode.list tabDecoder) 
+        |> required "has_many_tabs" (Decode.list tabDecoder) 
+        |> required "indirect_tabs" (Decode.list tabDecoder) 
 
 
 

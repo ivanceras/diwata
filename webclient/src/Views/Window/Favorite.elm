@@ -16,17 +16,14 @@ You pass it some configuration, followed by a `List (Attribute msg)` and a
 
 -}
 button :
-    (Window a -> msg)
-    -> Window a
+    (Window -> msg)
+    -> Window
     -> List (Attribute msg)
     -> List (Html msg)
     -> Html msg
 button toggleFavorite window extraAttributes extraChildren =
     let
         favoriteButtonClass =
-            if window.favorited then
-                "btn-primary"
-            else
                 "btn-outline-primary"
 
         attributes =

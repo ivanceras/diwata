@@ -16,7 +16,7 @@ import Request.Profile
 import SelectList exposing (SelectList)
 import Task exposing (Task)
 import Util exposing ((=>), pair, viewIf)
-import Views.Window.Feed as Feed exposing (FeedSource, authorFeed, favoritedFeed)
+import Views.Window.GroupedWindow as GroupedWindow exposing (FeedSource, authorFeed, favoritedFeed)
 import Views.Errors as Errors
 import Views.Page as Page
 import Views.User.Follow as Follow
@@ -28,7 +28,7 @@ import Views.User.Follow as Follow
 type alias Model =
     { errors : List String
     , profile : Profile
-    , feed : Feed.Model
+    , groupedWindow : GroupedWindow.Model
     }
 
 
@@ -48,7 +48,7 @@ init session username =
                 |> Http.toTask
 
         loadFeedSources =
-            Feed.init session (defaultFeedSources username)
+            GroupedWindow.init session (defaultFeedSources username)
 
         handleLoadError _ =
             "Profile is currently unavailable."
@@ -82,7 +82,7 @@ view session model =
                 ]
             ]
         , div [ class "container" ]
-            [ div [ class "row" ] [ viewFeed model.feed ] ]
+            [ div [ class "row" ] [ viewFeed model.groupedWindow ] ]
         ]
 
 
@@ -96,12 +96,12 @@ viewProfileInfo isMyProfile profile =
         ]
 
 
-viewFeed : Feed.Model -> Html Msg
-viewFeed feed =
+viewFeed : GroupedWindow.Model -> Html Msg
+viewFeed groupedWindow =
     div [ class "col-xs-12 col-md-10 offset-md-1" ] <|
         div [ class "windows-toggle" ]
-            [ Feed.viewFeedSources feed |> Html.map FeedMsg ]
-            :: (Feed.viewWindows feed |> List.map (Html.map FeedMsg))
+            [ GroupedWindow.viewFeedSources groupedWindow |> Html.map FeedMsg ]
+            :: (GroupedWindow.viewWindowNames groupedWindow |> List.map (Html.map FeedMsg))
 
 
 
@@ -112,7 +112,7 @@ type Msg
     = DismissErrors
     | ToggleFollow
     | FollowCompleted (Result Http.Error Profile)
-    | FeedMsg Feed.Msg
+    | FeedMsg GroupedWindow.Msg
 
 
 update : Session -> Msg -> Model -> ( Model, Cmd Msg )
@@ -148,9 +148,9 @@ update session msg model =
         FeedMsg subMsg ->
             let
                 ( newFeed, subCmd ) =
-                    Feed.update session subMsg model.feed
+                    GroupedWindow.update session subMsg model.groupedWindow
             in
-            { model | feed = newFeed } => Cmd.map FeedMsg subCmd
+            { model | groupedWindow = newFeed } => Cmd.map FeedMsg subCmd
 
 
 followButton : Profile -> Html Msg

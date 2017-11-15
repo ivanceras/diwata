@@ -5,7 +5,7 @@ module Page.Window exposing (Model, Msg, init, update, view)
 
 import Data.Window as Window exposing (Window, Body)
 import Data.Window.Author as Author exposing (Author)
-import Data.Window.Comment as Comment exposing (Comment, CommentId)
+import Data.Window.Record as Record exposing (Rows, CommentId)
 import Data.Session as Session exposing (Session)
 import Data.User as User exposing (User)
 import Data.UserPhoto as UserPhoto
@@ -17,7 +17,7 @@ import Html.Events exposing (onClick, onInput, onSubmit)
 import Http
 import Page.Errored as Errored exposing (PageLoadError, pageLoadError)
 import Request.Window
-import Request.Window.Comments
+import Request.Window.Records
 import Request.Profile
 import Route
 import Task exposing (Task)
@@ -28,6 +28,8 @@ import Views.Author
 import Views.Errors
 import Views.Page as Page
 import Views.User.Follow as Follow
+import Data.Window.GroupedWindow as GroupedWindow exposing (GroupedWindow, WindowName)
+import Data.Window.TableName as TableName exposing (TableName)
 
 
 -- MODEL --
@@ -37,29 +39,32 @@ type alias Model =
     { errors : List String
     , commentText : String
     , commentInFlight : Bool
-    , window : Window Body
-    , comments : List Comment
+    , tableName : TableName 
+    , window : Window
+    , comments : Rows
     }
 
 
-init : Session -> Window.Slug -> Task PageLoadError Model
-init session slug =
+init : Session -> TableName -> Task PageLoadError Model
+init session tableName =
     let
         maybeAuthToken =
             Maybe.map .token session.user
 
         loadWindow =
-            Request.Window.get maybeAuthToken slug
+            Request.Window.get maybeAuthToken tableName
                 |> Http.toTask
 
         loadComments =
-            Request.Window.Comments.list maybeAuthToken slug
+            Request.Window.Records.list maybeAuthToken tableName
                 |> Http.toTask
 
-        handleLoadError _ =
+        handleLoadError e =
+            let _ = Debug.log "handleLoadError" e
+            in
             pageLoadError Page.Other "Window is currently unavailable."
     in
-    Task.map2 (Model [] "" False) loadWindow loadComments
+    Task.map2 (Model [] "" False tableName) loadWindow loadComments
         |> Task.mapError handleLoadError
 
 
@@ -70,67 +75,26 @@ init session slug =
 view : Session -> Model -> Html Msg
 view session model =
     let
-        window =
-            model.window
-
-        author =
-            window.author
-
-        buttons =
-            viewButtons window author session.user
+        tableName =
+            model.tableName
 
         postingDisabled =
             model.commentInFlight
     in
     div [ class "window-page" ]
-        [ viewBanner model.errors window author session.user
-        , div [ class "container page" ]
+        [ div [ class "container page" ]
             [ div [ class "row window-content" ]
                 [ div [ class "col-md-12" ]
-                    [ Window.bodyToHtml window.body [] ]
+                    [text tableName.name]
                 ]
             , hr [] []
-            , div [ class "window-actions" ]
-                [ div [ class "window-meta" ] <|
-                    [ a [ Route.href (Route.Profile author.username) ]
-                        [ img [ UserPhoto.src author.image ] [] ]
-                    , div [ class "info" ]
-                        [ Views.Author.view author.username
-                        , Views.Window.viewTimestamp window
-                        ]
-                    ]
-                        ++ buttons
-                ]
             , div [ class "row" ]
-                [ div [ class "col-xs-12 col-md-8 offset-md-2" ] <|
-                    viewAddComment postingDisabled session.user
-                        :: List.map (viewComment session.user) model.comments
+                [ div [ class "col-xs-12 col-md-8 offset-md-2" ] 
+                    [text "data here"]
                 ]
             ]
         ]
 
-
-viewBanner : List String -> Window a -> Author -> Maybe User -> Html Msg
-viewBanner errors window author maybeUser =
-    let
-        buttons =
-            viewButtons window author maybeUser
-    in
-    div [ class "banner" ]
-        [ div [ class "container" ]
-            [ h1 [] [ text window.title ]
-            , div [ class "window-meta" ] <|
-                [ a [ Route.href (Route.Profile author.username) ]
-                    [ img [ UserPhoto.src author.image ] [] ]
-                , div [ class "info" ]
-                    [ Views.Author.view author.username
-                    , Views.Window.viewTimestamp window
-                    ]
-                ]
-                    ++ buttons
-            , Views.Errors.view DismissErrors errors
-            ]
-        ]
 
 
 viewAddComment : Bool -> Maybe User -> Html Msg
@@ -161,58 +125,18 @@ viewAddComment postingDisabled maybeUser =
                         [ class "btn btn-sm btn-primary"
                         , disabled postingDisabled
                         ]
-                        [ text "Post Comment" ]
+                        [ text "Post Rows" ]
                     ]
                 ]
 
 
-viewButtons : Window a -> Author -> Maybe User -> List (Html Msg)
-viewButtons window author maybeUser =
-    let
-        isMyWindow =
-            Maybe.map .username maybeUser == Just author.username
-    in
-    if isMyWindow then
-        [ editButton window
-        , text " "
-        , deleteButton window
-        ]
-    else
-        [ followButton author
-        , text " "
-        , favoriteButton window
-        ]
+viewButtons : WindowName -> Author -> Maybe User -> List (Html Msg)
+viewButtons windowName author maybeUser =
+    [ editButton windowName
+    , deleteButton windowName
+    ]
 
 
-viewComment : Maybe User -> Comment -> Html Msg
-viewComment user comment =
-    let
-        author =
-            comment.author
-
-        isAuthor =
-            Maybe.map .username user == Just comment.author.username
-    in
-    div [ class "card" ]
-        [ div [ class "card-block" ]
-            [ p [ class "card-text" ] [ text comment.body ] ]
-        , div [ class "card-footer" ]
-            [ a [ class "comment-author", href "" ]
-                [ img [ class "comment-author-img", UserPhoto.src author.image ] []
-                , text " "
-                ]
-            , text " "
-            , a [ class "comment-author", Route.href (Route.Profile author.username) ]
-                [ text (User.usernameToString comment.author.username) ]
-            , span [ class "date-posted" ] [ text (formatCommentTimestamp comment.createdAt) ]
-            , viewIf isAuthor <|
-                span
-                    [ class "mod-options"
-                    , onClick (DeleteComment comment.id)
-                    ]
-                    [ i [ class "ion-trash-a" ] [] ]
-            ]
-        ]
 
 
 formatCommentTimestamp : Date -> String
@@ -227,26 +151,21 @@ formatCommentTimestamp =
 type Msg
     = DismissErrors
     | ToggleFavorite
-    | FavoriteCompleted (Result Http.Error (Window Body))
-    | ToggleFollow
-    | FollowCompleted (Result Http.Error Author)
+    | FavoriteCompleted (Result Http.Error TableName)
     | SetCommentText String
     | DeleteComment CommentId
     | CommentDeleted CommentId (Result Http.Error ())
     | PostComment
-    | CommentPosted (Result Http.Error Comment)
-    | DeleteWindow
-    | WindowDeleted (Result Http.Error ())
+    | CommentPosted (Result Http.Error Rows)
+    | CloseWindow
 
 
 update : Session -> Msg -> Model -> ( Model, Cmd Msg )
 update session msg model =
     let
-        window =
-            model.window
+        tableName =
+            model.tableName
 
-        author =
-            window.author
     in
     case msg of
         DismissErrors ->
@@ -255,17 +174,16 @@ update session msg model =
         ToggleFavorite ->
             let
                 cmdFromAuth authToken =
-                    Request.Window.toggleFavorite model.window authToken
+                    Request.Window.toggleFavorite tableName authToken
                         |> Http.toTask
-                        |> Task.map (\newWindow -> { newWindow | body = window.body })
                         |> Task.attempt FavoriteCompleted
             in
             session
                 |> Session.attempt "favorite" cmdFromAuth
                 |> Tuple.mapFirst (Util.appendErrors model)
 
-        FavoriteCompleted (Ok newWindow) ->
-            { model | window = newWindow } => Cmd.none
+        FavoriteCompleted (Ok tableName) ->
+            { model | tableName = tableName } => Cmd.none
 
         FavoriteCompleted (Err error) ->
             -- In a serious production application, we would log the error to
@@ -274,27 +192,6 @@ update session msg model =
                 |> Util.appendErrors model
                 => Cmd.none
 
-        ToggleFollow ->
-            let
-                cmdFromAuth authToken =
-                    authToken
-                        |> Request.Profile.toggleFollow author.username author.following
-                        |> Http.send FollowCompleted
-            in
-            session
-                |> Session.attempt "follow" cmdFromAuth
-                |> Tuple.mapFirst (Util.appendErrors model)
-
-        FollowCompleted (Ok { following }) ->
-            let
-                newWindow =
-                    { window | author = { author | following = following } }
-            in
-            { model | window = newWindow } => Cmd.none
-
-        FollowCompleted (Err error) ->
-            { model | errors = "Unable to follow user." :: model.errors }
-                => Cmd.none
 
         SetCommentText commentText ->
             { model | commentText = commentText } => Cmd.none
@@ -310,7 +207,7 @@ update session msg model =
                 let
                     cmdFromAuth authToken =
                         authToken
-                            |> Request.Window.Comments.post model.window.slug comment
+                            |> Request.Window.Records.post tableName comment
                             |> Http.send CommentPosted
                 in
                 session
@@ -320,7 +217,7 @@ update session msg model =
         CommentPosted (Ok comment) ->
             { model
                 | commentInFlight = False
-                , comments = comment :: model.comments
+                , comments = model.comments
             }
                 => Cmd.none
 
@@ -332,7 +229,7 @@ update session msg model =
             let
                 cmdFromAuth authToken =
                     authToken
-                        |> Request.Window.Comments.delete model.window.slug id
+                        |> Request.Window.Records.delete tableName id
                         |> Http.send (CommentDeleted id)
             in
             session
@@ -340,62 +237,34 @@ update session msg model =
                 |> Tuple.mapFirst (Util.appendErrors model)
 
         CommentDeleted id (Ok ()) ->
-            { model | comments = withoutComment id model.comments }
-                => Cmd.none
+            let _ = Debug.log "comment deleted" id
+            in
+             model => Cmd.none
 
         CommentDeleted id (Err error) ->
             { model | errors = model.errors ++ [ "Server error while trying to delete comment." ] }
                 => Cmd.none
 
-        DeleteWindow ->
-            let
-                cmdFromAuth authToken =
-                    authToken
-                        |> Request.Window.delete model.window.slug
-                        |> Http.send WindowDeleted
-            in
-            session
-                |> Session.attempt "delete windows" cmdFromAuth
-                |> Tuple.mapFirst (Util.appendErrors model)
+        CloseWindow ->
+            model => Cmd.none
 
-        WindowDeleted (Ok ()) ->
-            model => Route.modifyUrl Route.Home
 
-        WindowDeleted (Err error) ->
-            { model | errors = model.errors ++ [ "Server error while trying to delete window." ] }
-                => Cmd.none
 
 
 
 -- INTERNAL --
 
 
-withoutComment : CommentId -> List Comment -> List Comment
-withoutComment id =
-    List.filter (\comment -> comment.id /= id)
 
-
-favoriteButton : Window a -> Html Msg
-favoriteButton window =
-    let
-        favoriteText =
-            " Favorite Window (" ++ toString window.favoritesCount ++ ")"
-    in
-    Favorite.button (\_ -> ToggleFavorite) window [] [ text favoriteText ]
-
-
-deleteButton : Window a -> Html Msg
-deleteButton window =
-    button [ class "btn btn-outline-danger btn-sm", onClick DeleteWindow ]
+deleteButton : WindowName -> Html Msg
+deleteButton windowName =
+    button [ class "btn btn-outline-danger btn-sm", onClick CloseWindow ]
         [ i [ class "ion-trash-a" ] [], text " Delete Window" ]
 
 
-editButton : Window a -> Html Msg
-editButton window =
-    a [ class "btn btn-outline-secondary btn-sm", Route.href (Route.EditWindow window.slug) ]
+editButton : WindowName -> Html Msg
+editButton windowName =
+    a [ class "btn btn-outline-secondary btn-sm", Route.href (Route.EditWindow windowName.tableName) ]
         [ i [ class "ion-edit" ] [], text " Edit Window" ]
 
 
-followButton : Follow.State record -> Html Msg
-followButton =
-    Follow.button (\_ -> ToggleFollow)

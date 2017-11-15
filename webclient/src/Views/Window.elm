@@ -1,4 +1,4 @@
-module Views.Window exposing (view, viewTimestamp)
+module Views.Window exposing (view)
 
 {-| Viewing a preview of an individual window, excluding its body.
 -}
@@ -11,50 +11,23 @@ import Html.Attributes exposing (attribute, class, classList, href, id, placehol
 import Route exposing (Route)
 import Views.Window.Favorite as Favorite
 import Views.Author
+import Data.Window.GroupedWindow as GroupedWindow exposing (GroupedWindow, WindowName)
+import Data.Window.TableName as TableName exposing (TableName)
 
 
 -- VIEWS --
 
 
-{-| Some pages want to view just the timestamp, not the whole window.
--}
-viewTimestamp : Window a -> Html msg
-viewTimestamp window =
-    span [ class "date" ] [ text (formattedTimestamp window) ]
+        
 
-
-view : (Window a -> msg) -> Window a -> Html msg
+view : (Window -> msg) -> Window -> Html msg
 view toggleFavorite window =
-    let
-        author =
-            window.author
-    in
     div [ class "article-preview" ]
-        [ div [ class "article-meta" ]
-            [ a [ Route.href (Route.Profile author.username) ]
-                [ img [ UserPhoto.src author.image ] [] ]
-            , div [ class "info" ]
-                [ Views.Author.view author.username
-                , span [ class "date" ] [ text (formattedTimestamp window) ]
-                ]
-            , Favorite.button
-                toggleFavorite
-                window
-                [ class "pull-xs-right" ]
-                [ text (" " ++ toString window.favoritesCount) ]
-            ]
-        , a [ class "preview-link", Route.href (Route.Window window.slug) ]
-            [ h1 [] [ text window.title ]
-            , p [] [ text window.description ]
+        [ a [ class "preview-link", Route.href (Route.Window window.mainTab.tableName) ]
+            [ h1 [] [ text window.name ]
+            , p [] [ text <| Maybe.withDefault "" window.description ]
             , span [] [ text "Read more..." ]
             ]
         ]
 
 
-
--- INTERNAL --
-
-
-formattedTimestamp : Window a -> String
-formattedTimestamp window =
-    Date.Format.format "%B %e, %Y" window.createdAt

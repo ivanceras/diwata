@@ -20,6 +20,7 @@ import Route exposing (Route)
 import Task
 import Util exposing ((=>))
 import Views.Page as Page exposing (ActivePage)
+import Data.Window.TableName as TableName exposing (TableName)
 
 
 -- WARNING: Based on discussions around how asset management features
@@ -38,7 +39,7 @@ type Page
     | Register Register.Model
     | Profile Username Profile.Model
     | Window Window.Model
-    | Editor (Maybe Slug) Editor.Model
+    | Editor (Maybe TableName) Editor.Model
 
 
 type PageState
@@ -109,6 +110,8 @@ viewPage session isLoading page =
                 |> frame Page.Other
 
         Errored subModel ->
+            let _ = Debug.log "errored" subModel
+            in
             Errored.view session subModel
                 |> frame Page.Other
 
@@ -228,7 +231,7 @@ type Msg
     | HomeLoaded (Result PageLoadError Home.Model)
     | WindowLoaded (Result PageLoadError Window.Model)
     | ProfileLoaded Username (Result PageLoadError Profile.Model)
-    | EditWindowLoaded Slug (Result PageLoadError Editor.Model)
+    | EditWindowLoaded TableName (Result PageLoadError Editor.Model)
     | HomeMsg Home.Msg
     | SettingsMsg Settings.Msg
     | SetUser (Maybe User)
@@ -261,10 +264,10 @@ setRoute maybeRoute model =
                 Nothing ->
                     errored Page.NewWindow "You must be signed in to post an window."
 
-        Just (Route.EditWindow slug) ->
+        Just (Route.EditWindow tableName) ->
             case model.session.user of
                 Just user ->
-                    transition (EditWindowLoaded slug) (Editor.initEdit model.session slug)
+                    transition (EditWindowLoaded tableName) (Editor.initEdit model.session tableName)
 
                 Nothing ->
                     errored Page.Other "You must be signed in to edit an window."
@@ -300,8 +303,8 @@ setRoute maybeRoute model =
         Just (Route.Profile username) ->
             transition (ProfileLoaded username) (Profile.init model.session username)
 
-        Just (Route.Window slug) ->
-            transition WindowLoaded (Window.init model.session slug)
+        Just (Route.Window tableName) ->
+            transition WindowLoaded (Window.init model.session tableName)
 
 
 pageErrored : Model -> ActivePage -> String -> ( Model, Cmd msg )
