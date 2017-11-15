@@ -4,8 +4,16 @@ version = "0.1.0"
 authors = ["lee"]
 
 [dependencies]
-rustorm = { path = "../rustorm", features = ["with-postgres"] }
 chrono = "0.4.0"
+rocket = "0.3.3"
+rocket_codegen = "0.3.3"
+rocket_contrib = "0.3.3"
+serde = "1.0.15"
+serde_derive = "1.0.15"
+serde_json = "1.0.3"
+lazy_static = "0.2.9"
 dao = {path = "../rustorm/dao"}
+rustorm = { path = "../rustorm", features = ["with-postgres"] }
 rustorm_codegen = {path = "../rustorm/codegen"}
+intel = {path = "../intel"}
 
