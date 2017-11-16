@@ -75,6 +75,7 @@ pub fn get_maintable_data_first_page(em: &EntityManager,
     sql += &format!("LIMIT {}", page_size);
     println!("SQL: {}", sql);
     let result: Result<Rows, DbError> = em.db().execute_sql_with_return(&sql, &[]);
+    println!("result: {:?}", result);
     result
 }
 

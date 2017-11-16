@@ -6,6 +6,7 @@ use rustorm::EntityManager;
 use rustorm::Table;
 use table_intel::TableIntel;
 use table_intel::IndirectTable;
+use table_intel;
 
 #[derive(Debug, Serialize, Clone)]
 pub struct Window {
@@ -82,16 +83,23 @@ pub struct GroupedWindow{
 
 /// get all the schema content and convert to grouped window
 /// for displaying as a list in the client side
-pub fn get_grouped_windows(em: &EntityManager) -> Result<Vec<GroupedWindow>, DbError> {
+/// filter out tablenames that are not window
+pub fn get_grouped_windows(em: &EntityManager, tables: &Vec<Table>) -> Result<Vec<GroupedWindow>, DbError> {
     let schema_content: Vec<SchemaContent> = em.get_grouped_tables()?;
     let mut grouped_windows: Vec<GroupedWindow> = Vec::with_capacity(schema_content.len()); 
     for sc in schema_content{
         let mut window_names = Vec::with_capacity(sc.tablenames.len() + sc.views.len());
         for table_name in sc.tablenames.iter().chain(sc.views.iter()){
-            window_names.push(WindowName{
-                name: table_name.name.to_string(),
-                table_name: table_name.to_owned(),
-            })
+            let table = table_intel::get_table(&table_name, tables);
+            if let Some(table) = table{
+                let table_intel = TableIntel(table);
+                if table_intel.is_window(tables){
+                    window_names.push(WindowName{
+                        name: table_name.name.to_string(),
+                        table_name: table_name.to_owned(),
+                    })
+                }
+            }
         }
         grouped_windows.push(
             GroupedWindow{

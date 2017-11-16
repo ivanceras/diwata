@@ -227,6 +227,7 @@ impl Field{
         let sql_type = &column.specification.sql_type;
         let capacity = &column.specification.capacity;
         let limit = column.specification.get_limit();
+        println!("sql type: {:?}", sql_type);
         if sql_type == &SqlType::Char
             || (sql_type == &SqlType::Varchar
                 && limit == Some(1)
@@ -246,6 +247,26 @@ impl Field{
             }
             && (column_name.ends_with("_price")
                 || column_name.ends_with("_cost"))
+        {
+                Some(Reference::Price)
+        }
+        else if (  sql_type == &SqlType::Numeric
+                || sql_type == &SqlType::Double
+                || sql_type == &SqlType::Float
+               )
+               && (column_name == "price"
+                || column_name == "cost"
+                )
+        {
+                Some(Reference::Price)
+        }
+        else if (  sql_type == &SqlType::Numeric
+                || sql_type == &SqlType::Double
+                || sql_type == &SqlType::Float
+               )
+               && (column_name.ends_with("price")
+                || column_name.ends_with("cost")
+                )
         {
                 Some(Reference::Price)
         }
