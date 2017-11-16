@@ -92,9 +92,9 @@ viewFooter =
         [ div [ class "container" ]
             [ a [ class "logo-font", href "/" ] [ text "curtain" ]
             , span [ class "attribution" ]
-                [ text "An interactive learning project from "
-                , a [ href "https://thinkster.io" ] [ text "Thinkster" ]
-                , text ". Code & design licensed under MIT."
+                [ text " An interactive user-friendly database interface "
+                , a [ href "https://copyleft.no" ] [ text "Copyleft" ]
+                , text ". Code & design licensed under Apache2."
                 ]
             ]
         ]

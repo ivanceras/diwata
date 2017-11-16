@@ -15,6 +15,7 @@ module Data.Window
 
 import Data.Window.Author as Author exposing (Author)
 import Data.Window.TableName as TableName exposing (TableName)
+import Data.Window.Tab as Tab exposing (Tab)
 import Date exposing (Date)
 import Html exposing (Attribute, Html)
 import Json.Decode as Decode exposing (Decoder)
@@ -58,14 +59,6 @@ type alias Window =
     , indirect_tabs : List Tab
     }
 
-type alias Tab = 
-    { tableName: TableName
-    }
-
-tabDecoder : Decoder Tab
-tabDecoder =
-    decode Tab
-        |> required "table_name" TableName.decoder
 
 
 
@@ -79,11 +72,11 @@ baseWindowDecoder =
         |> required "name" Decode.string
         |> required "description" (Decode.nullable Decode.string)
         |> required "group" (Decode.nullable Decode.string)
-        |> required "main_tab" tabDecoder
+        |> required "main_tab" Tab.decoder
         |> required "has_one_tables" (Decode.list TableName.decoder)
-        |> required "one_one_tabs" (Decode.list tabDecoder) 
-        |> required "has_many_tabs" (Decode.list tabDecoder) 
-        |> required "indirect_tabs" (Decode.list tabDecoder) 
+        |> required "one_one_tabs" (Decode.list Tab.decoder) 
+        |> required "has_many_tabs" (Decode.list Tab.decoder) 
+        |> required "indirect_tabs" (Decode.list Tab.decoder) 
 
 
 
