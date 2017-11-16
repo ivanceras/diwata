@@ -21,7 +21,7 @@ before_script:
   - git clone https://github.com/ivanceras/sqlite
   - git clone https://github.com/ivanceras/r2d2-sqlite3
   - git clone https://github.com/ivanceras/bazaar
-  - find . -name '*.rs' -type f -exec sed -i 's/localhost/postgres/g' {} +
+  - sed -i -- 's/localhost/postgres/g' bazaar/scripts/setup.sh
   - cd  bazaar/scripts && sh setup.sh
   - cd ..
   - cd curtain-rewrite
