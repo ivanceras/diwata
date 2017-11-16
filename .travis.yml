@@ -10,7 +10,7 @@ services:
   - postgresql
 
 before_script:
-  - dbscripts/setup.sh
+  - sh ./dbscripts/setup.sh
   - cd ..
   - git clone https://github.com/ivanceras/sqlite
   - git clone https://github.com/ivanceras/r2d2-sqlite3
