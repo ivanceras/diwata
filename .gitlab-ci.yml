@@ -3,6 +3,9 @@ image: rust
 services:
   - postgres:latest
 
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+
 before_script:
   - apt update
   - apt install -y postgresql-client
