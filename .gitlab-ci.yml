@@ -4,7 +4,7 @@ services:
   - postgres:latest
 
 variables:
-  POSTGRES_DB: db1
+  POSTGRES_DB: sakila 
   POSTGRES_USER: postgres 
   POSTGRES_PASSWORD: p0stgr3s
   GIT_SUBMODULE_STRATEGY: recursive
@@ -18,8 +18,13 @@ before_script:
   - psql -U $POSTGRES_USER -h postgres -d $POSTGRES_DB -f ./sakila/postgres-sakila-db/postgres-sakila-data.sql
   - psql -U $POSTGRES_USER -h postgres -c "ALTER USER postgres WITH PASSWORD 'p0stgr3s';"
   - echo `pwd` && ls -la
-  - cd .. && git clone https://github.com/ivanceras/sqlite
+  - cd .. 
+  - git clone https://github.com/ivanceras/sqlite
   - git clone https://github.com/ivanceras/r2d2-sqlite3
+  - git clone https://github.com/ivanceras/bazaar
+  - find . -name '*.rs' -type f -exec sed -i 's/localhost/postgres/g' {} +
+  - cd  bazaar/scripts && sh setup.sh
+  - cd ..
   - cd curtain-rewrite
   - find . -name '*.rs' -type f -exec sed -i 's/localhost/postgres/g' {} +
   - rustup override set nightly
