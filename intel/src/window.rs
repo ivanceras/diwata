@@ -214,7 +214,8 @@ mod tests{
         let em = pool.em(db_url);
         assert!(em.is_ok());
         let em = em.unwrap();
-        let grouped_windows = get_grouped_windows(&em);
+        let tables = em.get_all_tables().unwrap();
+        let grouped_windows = get_grouped_windows(&em, &tables);
         assert!(grouped_windows.is_ok());
         let grouped_windows = grouped_windows.unwrap();
         println!("grouped windows: {:#?}", grouped_windows);
