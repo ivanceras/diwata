@@ -21,6 +21,7 @@ before_script:
   - cd .. && git clone https://github.com/ivanceras/sqlite
   - git clone https://github.com/ivanceras/r2d2-sqlite3
   - cd curtain-rewrite
+  - sed -i -- 's/localhost/postgres/g' '*.rs'
   - rustup override set nightly
 
 stages:
