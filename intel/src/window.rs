@@ -7,6 +7,8 @@ use rustorm::Table;
 use table_intel::TableIntel;
 use table_intel::IndirectTable;
 use table_intel;
+use cache;
+use error::IntelError;
 
 #[derive(Debug, Serialize, Clone)]
 pub struct Window {
@@ -79,12 +81,18 @@ pub struct GroupedWindow{
 
 
 
+pub fn get_grouped_windows_using_cache(em: &EntityManager, db_url: &str) -> Result<Vec<GroupedWindow>, IntelError> {
+    let mut cache_pool = cache::CACHE_POOL.lock().unwrap();
+    let tables = cache_pool.get_cached_tables(em, db_url)?;
+    let grouped_window = get_grouped_windows(em, &tables)?;
+    Ok(grouped_window)
+}
 
 
 /// get all the schema content and convert to grouped window
 /// for displaying as a list in the client side
 /// filter out tablenames that are not window
-pub fn get_grouped_windows(em: &EntityManager, tables: &Vec<Table>) -> Result<Vec<GroupedWindow>, DbError> {
+fn get_grouped_windows(em: &EntityManager, tables: &Vec<Table>) -> Result<Vec<GroupedWindow>, DbError> {
     let schema_content: Vec<SchemaContent> = em.get_grouped_tables()?;
     let mut grouped_windows: Vec<GroupedWindow> = Vec::with_capacity(schema_content.len()); 
     for sc in schema_content{
@@ -109,6 +117,7 @@ pub fn get_grouped_windows(em: &EntityManager, tables: &Vec<Table>) -> Result<Ve
     }
     Ok(grouped_windows)
 }
+
 
 
 /// extract all the tables and create a window object for each that can

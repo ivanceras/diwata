@@ -8,8 +8,11 @@ use rustorm::Table;
 use table_intel;
 use rustorm::Rows;
 use rustorm::DbError;
+use cache;
+use error::IntelError;
 
 pub struct Filter;
+
 
 /// get the data of the window
 /// - first page data of the main table
