@@ -41,13 +41,15 @@ type alias Model =
     , commentInFlight : Bool
     , tableName : TableName 
     , window : Window
-    , comments : Rows
+    , records : Rows
     }
 
 
 init : Session -> TableName -> Task PageLoadError Model
 init session tableName =
     let
+        _ = Debug.log "initiating window" tableName
+
         maybeAuthToken =
             Maybe.map .token session.user
 
@@ -93,7 +95,7 @@ view session model =
                     [ h4 [] [text "Window"]
                     , div [] [text (toString model.window)]
                     , h4 [] [text "Data"]
-                    , div [] [text (toString model.comments)]
+                    , div [] [text (toString model.records)]
                     ]
                 ]
             ]
@@ -109,7 +111,7 @@ viewAddComment postingDisabled maybeUser =
                 [ a [ Route.href Route.Login ] [ text "Sign in" ]
                 , text " or "
                 , a [ Route.href Route.Register ] [ text "sign up" ]
-                , text " to add comments on this window."
+                , text " to add records on this window."
                 ]
 
         Just user ->
@@ -221,7 +223,7 @@ update session msg model =
         CommentPosted (Ok comment) ->
             { model
                 | commentInFlight = False
-                , comments = model.comments
+                , records = model.records
             }
                 => Cmd.none
 
@@ -237,7 +239,7 @@ update session msg model =
                         |> Http.send (CommentDeleted id)
             in
             session
-                |> Session.attempt "delete comments" cmdFromAuth
+                |> Session.attempt "delete records" cmdFromAuth
                 |> Tuple.mapFirst (Util.appendErrors model)
 
         CommentDeleted id (Ok ()) ->

@@ -1,4 +1,4 @@
-module Page.Home exposing (Model, Msg, init, update, view)
+module Page.WindowArena exposing (Model, Msg, init, update, view)
 
 {-| The homepage. You can get here via either the / or /#/ routes.
 -}
@@ -16,37 +16,50 @@ import Task exposing (Task)
 import Util exposing ((=>), onClickStopPropagation)
 import Views.Window.GroupedWindow as GroupedWindow exposing (FeedSource, globalFeed, tagFeed, yourFeed)
 import Views.Page as Page
+import Page.Window as Window
+import Data.Window.TableName as TableName exposing (TableName)
 
 
 -- MODEL --
 
 
 type alias Model =
-    {
-     groupedWindow : GroupedWindow.Model
+    { openedWindow: List Window.Model
+    , activeWindow: Maybe Window.Model
+    , groupedWindow : GroupedWindow.Model
     }
 
 
-init : Session -> Task PageLoadError Model
-init session =
+init : Session -> Maybe TableName -> Task PageLoadError Model
+init session argActiveWindow =
     let
-        _ = Debug.log "" session
         feedSources =
             if session.user == Nothing then
                 SelectList.singleton globalFeed
             else
                 SelectList.fromLists [] yourFeed [ globalFeed ]
 
-        loadSources =
-            GroupedWindow.init session feedSources
+        emptyTable = {name = "", schema= Nothing,alias=Nothing}
+
+        loadActiveWindow =
+            case argActiveWindow of
+                Just activeWindow -> 
+                    Window.init session (Maybe.withDefault emptyTable argActiveWindow)
+                        |> Task.map (\activeWindow -> Just activeWindow)
+                        |> Task.mapError handleLoadError
+                Nothing ->
+                    Task.succeed Nothing
+
+        loadWindowList =
+            GroupedWindow.init session argActiveWindow feedSources
+                |> Task.mapError handleLoadError
 
         handleLoadError e =
             let _ = Debug.log "LoadError" e
             in
-            pageLoadError Page.Home "Homepage is currently unavailable."
+            pageLoadError Page.WindowArena "WindowArena is currently unavailable."
     in
-    Task.map Model loadSources
-        |> Task.mapError handleLoadError
+    Task.map2 (Model [] ) loadActiveWindow loadWindowList 
 
 
 
@@ -60,14 +73,24 @@ view session model =
         , div [ class "window-content" ]
             [ div [ class "pane-group" ]
                 [ div [ class "pane pane-sm sidebar" ] (viewGroupedWindow model.groupedWindow)
-                , div [ class "col-md-3" ]
-                    [ div [ class "sidebar" ]
-                        []
+                , div [ class "pane main_container" ]
+                    [ div [ class "tab-group" ]
+                        [text "tabs here"]
+                    , div []
+                        [viewWindow session model.activeWindow]
                     ]
                 ]
             ]
         ]
 
+viewWindow : Session -> Maybe Window.Model -> Html Msg
+viewWindow session activeWindow =
+    case activeWindow of
+        Just activeWindow ->
+            Window.view session activeWindow
+                |> Html.map WindowMsg
+        Nothing ->
+            text ""
 
 viewBanner : Html msg
 viewBanner =
@@ -82,8 +105,8 @@ viewBanner =
 viewGroupedWindow : GroupedWindow.Model -> List (Html Msg)
 viewGroupedWindow groupedWindow =
     div [ class "groupedWindow-toggle" ]
-        [  GroupedWindow.viewFeedSources groupedWindow |> Html.map FeedMsg ]
-        :: (GroupedWindow.viewWindowNames groupedWindow |> List.map (Html.map FeedMsg))
+        [  GroupedWindow.viewFeedSources groupedWindow |> Html.map GroupedWindowMsg ]
+        :: (GroupedWindow.viewWindowNames groupedWindow |> List.map (Html.map GroupedWindowMsg))
 
 
 viewTags : List Tag -> Html Msg
@@ -106,8 +129,10 @@ viewTag tagName =
 
 
 type Msg
-    = FeedMsg GroupedWindow.Msg
+    = GroupedWindowMsg GroupedWindow.Msg
     | SelectTag Tag
+    | WindowMsg Window.Msg
+
 
 
 update : Session -> Msg -> Model -> ( Model, Cmd Msg )
@@ -115,16 +140,28 @@ update session msg model =
     let _ = Debug.log "msg: " msg
     in
     case msg of
-        FeedMsg subMsg ->
+        GroupedWindowMsg subMsg ->
             let
                 ( newFeed, subCmd ) =
                     GroupedWindow.update session subMsg model.groupedWindow
             in
-            { model | groupedWindow = newFeed } => Cmd.map FeedMsg subCmd
+            { model | groupedWindow = newFeed } => Cmd.map GroupedWindowMsg subCmd
 
         SelectTag tagName ->
             let
                 subCmd =
                     GroupedWindow.selectTag (Maybe.map .token session.user) tagName
             in
-            model => Cmd.map FeedMsg subCmd
+            model => Cmd.map GroupedWindowMsg subCmd
+
+        WindowMsg subMsg -> 
+            case model.activeWindow of
+                Just activeWindow ->
+                    let 
+                        ( newWindow, subCmd ) =
+                            Window.update session subMsg activeWindow
+                    in
+                    { model | activeWindow = Just newWindow } => Cmd.map WindowMsg subCmd
+
+                Nothing ->
+                    model => Cmd.none

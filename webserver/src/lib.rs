@@ -18,8 +18,7 @@ use intel::window::{self,GroupedWindow};
 use rocket::http::Status;
 use rocket::request::{self, FromRequest};
 use rocket::{Request, State, Outcome};
-use std::sync::Mutex;
-use std::sync::Arc;
+use std::sync::{Arc,Mutex};
 use rustorm::TableName;
 use rocket::fairing::AdHoc;
 use rocket::http::hyper::header::AccessControlAllowOrigin;
@@ -28,6 +27,7 @@ use rustorm::Rows;
 use rustorm::error::DbError;
 use rustorm::EntityManager;
 use error::ServiceError;
+use intel::cache;
 
 mod error;
 
@@ -55,11 +55,12 @@ fn get_pool_em() -> Result<EntityManager, ServiceError> {
     }
 }
 
+
 #[get("/windows")]
 fn get_windows() -> Result<Json<Vec<GroupedWindow>>, ServiceError> {
     let em = get_pool_em()?;
-    let tables = em.get_all_tables()?;
-    let grouped_windows: Vec<GroupedWindow> = window::get_grouped_windows(&em, &tables)?;
+    let grouped_windows: Vec<GroupedWindow> 
+        = window::get_grouped_windows_using_cache(&em, DB_URL)?;
     Ok(Json(grouped_windows))
 }
 
@@ -67,8 +68,8 @@ fn get_windows() -> Result<Json<Vec<GroupedWindow>>, ServiceError> {
 #[get("/window/<table_name>")]
 fn get_window(table_name: String) -> Result<Option<Json<Window>>, ServiceError> {
     let em = get_pool_em()?;
-    let tables = em.get_all_tables()?;
-    let windows = window::derive_all_windows(&tables);
+    let mut cache_pool = cache::CACHE_POOL.lock().unwrap();
+    let windows = cache_pool.get_cached_windows(&em, DB_URL)?;
     let table_name = TableName::from(&table_name);
     let window = window::get_window(&table_name, &windows);
     match window{
@@ -80,14 +81,15 @@ fn get_window(table_name: String) -> Result<Option<Json<Window>>, ServiceError> 
 #[get("/window/<table_name>/data")]
 fn get_data(table_name: String) -> Result<Option<Json<Rows>>, ServiceError> {
     let em = get_pool_em()?;
-    let tables = em.get_all_tables()?;
-    let windows = window::derive_all_windows(&tables);
+    let mut cache_pool = cache::CACHE_POOL.lock().unwrap();
+    let windows = cache_pool.get_cached_windows(&em, DB_URL)?;
     let table_name = TableName::from(&table_name);
     let window = window::get_window(&table_name, &windows);
+    let tables = cache_pool.get_cached_tables(&em, DB_URL)?;
     match window{
         Some(window) => {
             let rows: Rows = 
-                data_service::get_maintable_data_first_page(&em, &tables, 
+                data_service::get_maintable_data_first_page(&em, &tables,
                                                         &window, None, 20)?;
             Ok(Some(Json(rows)))
         }

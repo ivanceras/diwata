@@ -23,7 +23,7 @@ import Data.Window.TableName as TableName exposing (TableName)
 view : (Window -> msg) -> Window -> Html msg
 view toggleFavorite window =
     div [ class "article-preview" ]
-        [ a [ class "preview-link", Route.href (Route.Window window.mainTab.tableName) ]
+        [ a [ class "preview-link", Route.href (Route.WindowArena (Just window.mainTab.tableName)) ]
             [ h1 [] [ text window.name ]
             , p [] [ text <| Maybe.withDefault "" window.description ]
             , span [] [ text "Read more..." ]

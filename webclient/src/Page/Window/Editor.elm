@@ -177,7 +177,7 @@ update user msg model =
             { model | body = body } => Cmd.none
 
         CreateCompleted (Ok window) ->
-            Route.Window window.mainTab.tableName
+            Route.WindowArena (Just window.mainTab.tableName)
                 |> Route.modifyUrl
                 |> pair model
 
@@ -186,7 +186,7 @@ update user msg model =
                 => Cmd.none
 
         EditCompleted (Ok window) ->
-            Route.Window window.mainTab.tableName
+            Route.WindowArena (Just window.mainTab.tableName)
                 |> Route.modifyUrl
                 |> pair model
 
@@ -229,6 +229,6 @@ tagsFromString str =
         |> List.filter (not << String.isEmpty)
 
 
-redirectToWindow : TableName -> Cmd msg
+redirectToWindow : Maybe TableName -> Cmd msg
 redirectToWindow =
-    Route.modifyUrl << Route.Window
+    Route.modifyUrl << Route.WindowArena

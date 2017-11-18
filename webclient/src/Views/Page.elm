@@ -22,7 +22,7 @@ under Other.
 -}
 type ActivePage
     = Other
-    | Home
+    | WindowArena
     | Login
     | Register
     | Settings
@@ -52,11 +52,11 @@ viewHeader : ActivePage -> Maybe User -> Bool -> Html msg
 viewHeader page user isLoading =
     nav [ class "navbar navbar-light" ]
         [ div [ class "container" ]
-            [ a [ class "navbar-brand", Route.href Route.Home ]
+            [ a [ class "navbar-brand", Route.href (Route.WindowArena Nothing) ]
                 [ text "curtain" ]
             , ul [ class "nav navbar-nav pull-xs-right" ] <|
                 lazy2 Util.viewIf isLoading spinner
-                    :: navbarLink page Route.Home [ text "Home" ]
+                    :: navbarLink page (Route.WindowArena Nothing) [ text "WindowArena" ]
                     :: viewSignIn page user
             ]
         ]
@@ -109,7 +109,7 @@ navbarLink page route linkContent =
 isActive : ActivePage -> Route -> Bool
 isActive page route =
     case ( page, route ) of
-        ( Home, Route.Home ) ->
+        ( WindowArena, Route.WindowArena Nothing) ->
             True
 
         ( Login, Route.Login ) ->

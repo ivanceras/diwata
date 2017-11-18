@@ -149,7 +149,7 @@ update msg model =
 
         RegisterCompleted (Ok user) ->
             model
-                => Cmd.batch [ storeSession user, Route.modifyUrl Route.Home ]
+                => Cmd.batch [ storeSession user, Route.modifyUrl (Route.WindowArena Nothing)]
                 => SetUser user
 
 

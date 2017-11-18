@@ -400,6 +400,7 @@ dependencies = [
 name = "intel"
 version = "0.1.0"
 dependencies = [
+ "lazy_static 0.2.9 (registry+https://github.com/rust-lang/crates.io-index)",
  "rustorm 0.10.0",
  "serde 1.0.15 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_derive 1.0.15 (registry+https://github.com/rust-lang/crates.io-index)",

@@ -63,28 +63,28 @@ type alias InternalModel =
     { errors : List String
     , groupedWindow : List GroupedWindow
     , feedSources : SelectList FeedSource
-    , activePage : Int
+    , maybeActiveWindow : Maybe TableName
     , isLoading : Bool
     }
 
 
-init : Session -> SelectList FeedSource -> Task Http.Error Model
-init session feedSources =
+init : Session -> Maybe TableName -> SelectList FeedSource -> Task Http.Error Model
+init session maybeActiveWindow feedSources =
     let
         source =
             SelectList.selected feedSources
 
-        toModel ( activePage, groupedWindow ) =
+        toModel ( maybeActiveWindow, groupedWindow ) =
             Model
                 { errors = []
-                , activePage = activePage
+                , maybeActiveWindow = maybeActiveWindow
                 , groupedWindow = groupedWindow
                 , feedSources = feedSources
                 , isLoading = False
                 }
     in
     source
-        |> fetch (Maybe.map .token session.user) 1
+        |> fetch (Maybe.map .token session.user) maybeActiveWindow
         |> Task.map toModel
 
 
@@ -93,7 +93,7 @@ init session feedSources =
 
 viewWindowName: WindowName -> Html msg
 viewWindowName windowName = 
-    a [class "nav-group-item", Route.href (Route.Window windowName.tableName) ]
+    a [class "nav-group-item", Route.href (Route.WindowArena (Just windowName.tableName)) ]
         [span [class "icon icon-list"] []
         ,text windowName.name
         ]
@@ -107,7 +107,7 @@ viewWindowGroup groupedWindow =
 
 
 viewWindowNames : Model -> List (Html Msg)
-viewWindowNames (Model { activePage, groupedWindow, feedSources }) =
+viewWindowNames (Model { maybeActiveWindow, groupedWindow, feedSources }) =
     List.map viewWindowGroup groupedWindow
 
 
@@ -137,7 +137,7 @@ selectTag maybeAuthToken tagName =
             tagFeed tagName
     in
     source
-        |> fetch maybeAuthToken 1
+        |> fetch maybeAuthToken Nothing
         |> Task.attempt (FeedLoadCompleted source)
 
 
@@ -181,7 +181,7 @@ limit feedSource =
 
 
 
-pageLink : Int -> Bool -> Html Msg
+pageLink : Maybe TableName -> Bool -> Html Msg
 pageLink page isActive =
     li [ classList [ "page-item" => True, "active" => isActive ] ]
         [ a
@@ -200,10 +200,10 @@ pageLink page isActive =
 type Msg
     = DismissErrors
     | SelectFeedSource FeedSource
-    | FeedLoadCompleted FeedSource (Result Http.Error ( Int, List GroupedWindow ))
+    | FeedLoadCompleted FeedSource (Result Http.Error ( Maybe TableName, List GroupedWindow ))
     | ToggleFavorite TableName
     | FavoriteCompleted (Result Http.Error TableName)
-    | SelectPage Int
+    | SelectPage (Maybe TableName)
     | SelectWindow TableName
 
 
@@ -221,15 +221,15 @@ updateInternal session msg model =
 
         SelectFeedSource source ->
             source
-                |> fetch (Maybe.map .token session.user) 1
+                |> fetch (Maybe.map .token session.user) Nothing
                 |> Task.attempt (FeedLoadCompleted source)
                 |> pair { model | isLoading = True }
 
-        FeedLoadCompleted source (Ok ( activePage, groupedWindow )) ->
+        FeedLoadCompleted source (Ok ( maybeActiveWindow, groupedWindow )) ->
             { model
                 | groupedWindow = groupedWindow
                 , feedSources = selectFeedSource source model.feedSources
-                , activePage = activePage
+                , maybeActiveWindow = maybeActiveWindow
                 , isLoading = False
             }
                 => Cmd.none
@@ -266,7 +266,6 @@ updateInternal session msg model =
             in
             source
                 |> fetch (Maybe.map .token session.user) page
-                |> Task.andThen (\groupedWindow -> Task.map (\_ -> groupedWindow) scrollToTop)
                 |> Task.attempt (FeedLoadCompleted source)
                 |> pair model
 
@@ -275,17 +274,13 @@ updateInternal session msg model =
             in
             model => Cmd.none
 
-scrollToTop : Task x ()
-scrollToTop =
-    Dom.Scroll.toTop bodyId
-        -- It's not worth showing the user anything special if scrolling fails.
-        -- If anything, we'd log this to an error recording service.
-        |> Task.onError (\_ -> Task.succeed ())
 
 
-fetch : Maybe AuthToken -> Int -> FeedSource -> Task Http.Error ( Int, List GroupedWindow )
-fetch token page feedSource =
+fetch : Maybe AuthToken -> Maybe TableName -> FeedSource -> Task Http.Error ( Maybe TableName, List GroupedWindow )
+fetch token maybeActiveWindow feedSource =
     let
+        page = 1
+
         defaultListConfig =
             Request.Window.defaultListConfig
 
@@ -329,7 +324,7 @@ fetch token page feedSource =
                         |> Http.toTask
     in
     task
-        |> Task.map (\groupedWindow -> ( page, groupedWindow ))
+        |> Task.map (\groupedWindow -> ( maybeActiveWindow, groupedWindow ))
 
 
 

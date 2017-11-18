@@ -3,6 +3,7 @@ module Data.Window.TableName exposing
     , tableNameToString
     , tableNameParser
     , decoder
+    , maybeTableNameParser
     )
 
 import Json.Decode as Decode exposing (Decoder)
@@ -44,6 +45,25 @@ parseTableName arg =
            , alias = Nothing
            }
 
+maybeParseTableName: String -> Result String (Maybe TableName)
+maybeParseTableName arg =
+    if String.isEmpty arg then
+        Ok Nothing
+    else if String.contains "." arg then
+        let splinters = String.split "." arg
+            schema = List.head splinters
+            name = String.join "." <| Maybe.withDefault [] <| List.tail splinters
+        in
+        Ok (Just{ name = name
+                , schema = schema
+                , alias = Nothing
+                })
+    else
+        Ok (Just{ name = arg
+               , schema = Nothing
+               , alias = Nothing
+               })
+
 decoder: Decoder TableName
 decoder = 
     decode TableName 
@@ -57,3 +77,10 @@ tableNameParser =
     UrlParser.custom "TABLENAME" <| \segment -> 
         (parseTableName segment)
 
+
+maybeTableNameParser: UrlParser.Parser (Maybe TableName -> a) a 
+maybeTableNameParser =
+    let _ = Debug.log "Trying to parse tableName from home"
+    in
+    UrlParser.custom "MAYBE_TABLENAME" <| \segment -> 
+        (maybeParseTableName segment)

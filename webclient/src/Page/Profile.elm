@@ -48,7 +48,7 @@ init session username =
                 |> Http.toTask
 
         loadFeedSources =
-            GroupedWindow.init session (defaultFeedSources username)
+            GroupedWindow.init session Nothing (defaultFeedSources username)
 
         handleLoadError _ =
             "Profile is currently unavailable."
