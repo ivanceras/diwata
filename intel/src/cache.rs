@@ -29,6 +29,16 @@ impl CachePool{
         CachePool(BTreeMap::new())
     }
 
+    /// reset all cache content including cache from other DB_URLs
+    fn reset_all(&mut self) {
+        self.0.clear();
+    }
+
+    /// clear the cache on this DB_URL
+    fn clear(&mut self, db_url: &str) -> Option<Cache> {
+        self.0.remove(db_url)
+    }
+
     fn ensure_cache(&mut self, db_url: &str) {
         if !self.0.contains_key(db_url){
             self.0.insert(db_url.to_string(), Cache::new());

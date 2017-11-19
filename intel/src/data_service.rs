@@ -58,7 +58,8 @@ pub fn get_maintable_data_first_page(em: &EntityManager,
         let has1_table = table_intel::get_table(&has1, tables);
         assert!(has1_table.is_some());
         if let Some(has1_table) = has1_table{
-            sql += &format!("   LEFT JOIN {} \n", has1.complete_name());
+            let has1_table_alias = format!("has1_{}", has1_table.name.name);
+            sql += &format!("   LEFT JOIN {} AS {} \n", has1_table.complete_name(), has1_table_alias);
             let foreign_key = main_table.get_foreign_key_to_table(&has1);
             assert!(foreign_key.is_some());
             if let Some(fk) = foreign_key{
@@ -70,7 +71,8 @@ pub fn get_maintable_data_first_page(em: &EntityManager,
                         sql += "        AND ";
                     }
                     let rcol = &fk.referred_columns[i];
-                    sql += &format!("{}.{} = {}.{}\n",main_tablename.name, col.name, has1.name, rcol.name) 
+                    sql += &format!("{}.{} = {}.{}\n",main_tablename.name, col.name, 
+                                    has1_table_alias, rcol.name) 
                 }
             }
         }
