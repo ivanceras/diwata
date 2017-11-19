@@ -109,7 +109,7 @@ navbarLink page route linkContent =
 isActive : ActivePage -> Route -> Bool
 isActive page route =
     case ( page, route ) of
-        ( WindowArena, Route.WindowArena Nothing) ->
+        ( WindowArena, Route.WindowArena Nothing ) ->
             True
 
         ( Login, Route.Login ) ->

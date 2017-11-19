@@ -4,6 +4,9 @@ module Data.Window.TableName exposing
     , tableNameParser
     , decoder
     , maybeTableNameParser
+    , maybeTableNameToString
+    , fromString
+    , fromStringOrBlank
     )
 
 import Json.Decode as Decode exposing (Decoder)
@@ -18,7 +21,43 @@ type alias TableName =
     , alias: Maybe String
     }
 
+maybeTableNameToString: Maybe TableName -> String
+maybeTableNameToString maybeTableName =
+    case maybeTableName of
+        Just tableName ->
+            tableNameToString tableName
+        Nothing -> ""
 
+fromStringOrBlank: String -> TableName
+fromStringOrBlank arg =
+    case fromString arg of
+        Just tableName -> tableName
+        Nothing -> 
+            { name = ""
+            , schema = Nothing
+            , alias = Nothing
+            }
+
+fromString: String -> Maybe TableName
+fromString arg =
+    if String.isEmpty arg then
+        Nothing
+    else if String.contains "." arg then
+        let splinters = String.split "." arg
+            schema = List.head splinters
+            name = String.join "." <| Maybe.withDefault [] <| List.tail splinters
+        in
+        Just
+            { name = name
+            , schema = schema
+            , alias = Nothing
+            }
+    else
+        Just
+            { name = arg
+            , schema = Nothing
+            , alias = Nothing
+            }
 
 tableNameToString : TableName -> String
 tableNameToString tableName =
@@ -30,39 +69,14 @@ tableNameToString tableName =
 
 parseTableName: String -> Result String TableName
 parseTableName arg =
-    if String.contains "." arg then
-        let splinters = String.split "." arg
-            schema = List.head splinters
-            name = String.join "." <| Maybe.withDefault [] <| List.tail splinters
-        in
-        Ok { name = name
-        , schema = schema
-        , alias = Nothing
-        }
-    else
-        Ok { name = arg
-           , schema = Nothing
-           , alias = Nothing
-           }
+    Result.fromMaybe "Can't parse table" (fromString arg)
 
 maybeParseTableName: String -> Result String (Maybe TableName)
 maybeParseTableName arg =
     if String.isEmpty arg then
         Ok Nothing
-    else if String.contains "." arg then
-        let splinters = String.split "." arg
-            schema = List.head splinters
-            name = String.join "." <| Maybe.withDefault [] <| List.tail splinters
-        in
-        Ok (Just{ name = name
-                , schema = schema
-                , alias = Nothing
-                })
-    else
-        Ok (Just{ name = arg
-               , schema = Nothing
-               , alias = Nothing
-               })
+    else 
+        Ok (fromString arg)
 
 decoder: Decoder TableName
 decoder = 

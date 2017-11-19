@@ -12,14 +12,18 @@ import Data.Window.TableName as TableName exposing
     , tableNameToString
     , tableNameParser
     , maybeTableNameParser
+    , maybeTableNameToString
     )
+
+import Data.WindowArena exposing (parseArenaArgs, ArenaArg, argToString)
 
 
 -- ROUTING --
 
 
+
 type Route
-    = WindowArena (Maybe TableName)
+    = WindowArena (Maybe ArenaArg)
     | Login
     | Logout
     | Register
@@ -32,8 +36,7 @@ type Route
 route : Parser (Route -> a) a
 route =
     oneOf
-        [ Url.map WindowArena (s "window" </> maybeTableNameParser) 
-        , Url.map Login (s "login")
+        [ Url.map Login (s "login")
         , Url.map Logout (s "logout")
         , Url.map Settings (s "settings")
         , Url.map Profile (s "profile" </> User.usernameParser)
@@ -52,12 +55,12 @@ routeToString page =
     let
         pieces =
             case page of
-                WindowArena maybeTableName ->
-                    case maybeTableName of
+                WindowArena arenaArgs  ->
+                    case arenaArgs of
                         Nothing ->
                             []
-                        Just tableName ->
-                            ["window", tableNameToString tableName]
+                        Just arenaArgs ->
+                            [argToString arenaArgs]
 
                 Login ->
                     [ "login" ]
@@ -101,7 +104,23 @@ modifyUrl =
 
 fromLocation : Location -> Maybe Route
 fromLocation location =
+    let 
+        _ = Debug.log "location" location
+        _ = Debug.log "location hash" location.hash
+        args = Debug.log "arena args" (parseArenaArgs location.hash)
+    in
     if String.isEmpty location.hash then
         Just (WindowArena Nothing)
     else
-        parseHash route location
+        let 
+            arenaArgs = parseArenaArgs location.hash
+        in
+            case arenaArgs of
+                Just arenaArgs ->
+                    Just (WindowArena (Just arenaArgs))
+                Nothing ->
+                    parseHash route location
+
+
+
+

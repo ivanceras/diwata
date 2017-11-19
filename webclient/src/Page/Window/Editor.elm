@@ -16,6 +16,7 @@ import Util exposing ((=>), pair, viewIf)
 import Validate exposing (ifBlank)
 import Views.Form as Form
 import Views.Page as Page
+import Data.WindowArena as WindowArena
 
 
 -- MODEL --
@@ -177,7 +178,7 @@ update user msg model =
             { model | body = body } => Cmd.none
 
         CreateCompleted (Ok window) ->
-            Route.WindowArena (Just window.mainTab.tableName)
+            Route.WindowArena (Just (WindowArena.initArg window.mainTab.tableName))
                 |> Route.modifyUrl
                 |> pair model
 
@@ -186,7 +187,7 @@ update user msg model =
                 => Cmd.none
 
         EditCompleted (Ok window) ->
-            Route.WindowArena (Just window.mainTab.tableName)
+            Route.WindowArena (Just (WindowArena.initArg window.mainTab.tableName))
                 |> Route.modifyUrl
                 |> pair model
 
@@ -228,7 +229,3 @@ tagsFromString str =
         |> List.map String.trim
         |> List.filter (not << String.isEmpty)
 
-
-redirectToWindow : Maybe TableName -> Cmd msg
-redirectToWindow =
-    Route.modifyUrl << Route.WindowArena

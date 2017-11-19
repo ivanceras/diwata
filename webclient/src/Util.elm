@@ -1,4 +1,4 @@
-module Util exposing ((=>), appendErrors, onClickStopPropagation, pair, viewIf)
+module Util exposing ((=>), appendErrors, onClickStopPropagation, pair, viewIf, trim)
 
 import Html exposing (Attribute, Html)
 import Html.Events exposing (defaultOptions, onWithOptions)
@@ -48,3 +48,27 @@ onClickStopPropagation msg =
 appendErrors : { model | errors : List error } -> List error -> { model | errors : List error }
 appendErrors model errors =
     { model | errors = model.errors ++ errors }
+
+trimFirst: List String -> List String
+trimFirst list =
+    case list of
+        "" :: list ->
+            list
+        list ->
+            list
+
+trimLast: List String -> List String
+trimLast list =
+    let 
+        rev = List.reverse list
+        trimmed = trimFirst rev
+    in
+        List.reverse trimmed
+
+{-|
+    Trim both first and last element if they are empty
+-}
+trim: List String -> List String
+trim list =
+    trimFirst list
+        |> trimLast

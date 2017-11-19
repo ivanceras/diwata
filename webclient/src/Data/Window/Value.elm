@@ -15,6 +15,7 @@ type Value =
     | Double Float
     | Char Char
     | Text String
+    | Json String
     | Uuid String
     | Date String
     | Time String
@@ -32,6 +33,7 @@ decoder =
         , doubleDecoder
         , charDecoder
         , textDecoder
+        , jsonDecoder
         , dateDecoder
         , timeDecoder
         , timestampDecoder
@@ -95,6 +97,11 @@ textDecoder: Decoder Value
 textDecoder = 
     Decode.field "Text" Decode.string
     |> Decode.map Text
+
+jsonDecoder: Decoder Value
+jsonDecoder = 
+    Decode.field "Json" Decode.string
+    |> Decode.map Json
 
 uuidDecoder: Decoder Value
 uuidDecoder = 

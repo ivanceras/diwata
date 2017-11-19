@@ -46,6 +46,7 @@ import Views.Errors as Errors
 import Views.Page exposing (bodyId)
 import Views.Spinner exposing (spinner)
 import Route exposing (Route)
+import Data.WindowArena as WindowArena
 
 
 -- MODEL --
@@ -63,52 +64,62 @@ type alias InternalModel =
     { errors : List String
     , groupedWindow : List GroupedWindow
     , feedSources : SelectList FeedSource
-    , maybeActiveWindow : Maybe TableName
+    , activeWindow : Maybe TableName
     , isLoading : Bool
     }
 
 
 init : Session -> Maybe TableName -> SelectList FeedSource -> Task Http.Error Model
-init session maybeActiveWindow feedSources =
+init session activeWindow feedSources =
     let
         source =
             SelectList.selected feedSources
 
-        toModel ( maybeActiveWindow, groupedWindow ) =
+        toModel ( activeWindow, groupedWindow ) =
             Model
                 { errors = []
-                , maybeActiveWindow = maybeActiveWindow
+                , activeWindow = activeWindow
                 , groupedWindow = groupedWindow
                 , feedSources = feedSources
                 , isLoading = False
                 }
     in
     source
-        |> fetch (Maybe.map .token session.user) maybeActiveWindow
+        |> fetch (Maybe.map .token session.user) activeWindow
         |> Task.map toModel
 
 
 
 -- VIEW --
 
-viewWindowName: WindowName -> Html msg
-viewWindowName windowName = 
-    a [class "nav-group-item", Route.href (Route.WindowArena (Just windowName.tableName)) ]
+viewWindowName: Maybe TableName -> WindowName -> Html msg
+viewWindowName activeWindow windowName = 
+    let isActive = 
+        case activeWindow of
+            Just tableName ->
+                windowName.tableName == tableName
+            Nothing ->
+                False
+    in
+    a [ class "nav-group-item"
+      , classList [("active", isActive)]
+      , Route.href (Route.WindowArena (Just (WindowArena.initArg windowName.tableName))) 
+      ]
         [span [class "icon icon-list"] []
         ,text windowName.name
         ]
 
-viewWindowGroup: GroupedWindow  -> Html msg
-viewWindowGroup groupedWindow = 
+viewWindowGroup: Maybe TableName -> GroupedWindow  -> Html msg
+viewWindowGroup activeWindow groupedWindow = 
     nav [class "nav-group"]
         [ h5 [class "nav-group-title"] [text groupedWindow.group]
-        , div [] <| List.map viewWindowName groupedWindow.windowNames
+        , div [] <| List.map (viewWindowName activeWindow) groupedWindow.windowNames
         ]
 
 
 viewWindowNames : Model -> List (Html Msg)
-viewWindowNames (Model { maybeActiveWindow, groupedWindow, feedSources }) =
-    List.map viewWindowGroup groupedWindow
+viewWindowNames (Model { activeWindow, groupedWindow, feedSources }) =
+    List.map (viewWindowGroup activeWindow) groupedWindow
 
 
 viewFeedSources : Model -> Html Msg
@@ -225,11 +236,11 @@ updateInternal session msg model =
                 |> Task.attempt (FeedLoadCompleted source)
                 |> pair { model | isLoading = True }
 
-        FeedLoadCompleted source (Ok ( maybeActiveWindow, groupedWindow )) ->
+        FeedLoadCompleted source (Ok ( activeWindow, groupedWindow )) ->
             { model
                 | groupedWindow = groupedWindow
                 , feedSources = selectFeedSource source model.feedSources
-                , maybeActiveWindow = maybeActiveWindow
+                , activeWindow = activeWindow
                 , isLoading = False
             }
                 => Cmd.none
@@ -277,7 +288,7 @@ updateInternal session msg model =
 
 
 fetch : Maybe AuthToken -> Maybe TableName -> FeedSource -> Task Http.Error ( Maybe TableName, List GroupedWindow )
-fetch token maybeActiveWindow feedSource =
+fetch token activeWindow feedSource =
     let
         page = 1
 
@@ -324,7 +335,7 @@ fetch token maybeActiveWindow feedSource =
                         |> Http.toTask
     in
     task
-        |> Task.map (\groupedWindow -> ( maybeActiveWindow, groupedWindow ))
+        |> Task.map (\groupedWindow -> ( activeWindow, groupedWindow ))
 
 
 
