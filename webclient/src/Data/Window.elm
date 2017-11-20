@@ -53,10 +53,10 @@ type alias Window =
     , description : Maybe String
     , group : Maybe String
     , mainTab : Tab
-    , has_one_tables : List TableName 
-    , one_one_tabs : List Tab
-    , has_many_tabs : List Tab
-    , indirect_tabs : List Tab
+    , hasOneTables : List TableName 
+    , oneOneTabs : List Tab
+    , hasManyTabs : List Tab
+    , indirectTabs : List Tab
     }
 
 

@@ -9,6 +9,7 @@ module Views.Window.GroupedWindow exposing
     , selectTag
     , tagFeed
     , update
+    , view
     , viewWindowNames
     , viewFeedSources
     , yourFeed)
@@ -91,6 +92,11 @@ init session activeWindow feedSources =
 
 
 -- VIEW --
+
+view: Model -> Html Msg
+view model =
+    div [ class "groupedWindow-toggle" ]
+        (viewWindowNames model)
 
 viewWindowName: Maybe TableName -> WindowName -> Html msg
 viewWindowName activeWindow windowName = 

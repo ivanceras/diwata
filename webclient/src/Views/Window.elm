@@ -15,6 +15,9 @@ import Data.Window.GroupedWindow as GroupedWindow exposing (GroupedWindow, Windo
 import Data.Window.TableName as TableName exposing (TableName)
 
 import Data.WindowArena as WindowArena
+import Data.Window.Record as Record exposing (Rows,Dao)
+import Views.Window.Tab as Tab
+import Data.Window.Tab as Tab exposing (Tab)
 
 
 -- VIEWS --
@@ -22,14 +25,30 @@ import Data.WindowArena as WindowArena
 
         
 
-view : (Window -> msg) -> Window -> Html msg
-view toggleFavorite window =
-    div [ class "article-preview" ]
-        [ a [ class "preview-link", Route.href (Route.WindowArena (Just (WindowArena.initArg window.mainTab.tableName))) ]
-            [ h1 [] [ text window.name ]
-            , p [] [ text <| Maybe.withDefault "" window.description ]
-            , span [] [ text "Read more..." ]
+view : Window -> Rows -> Html msg
+view window rows =
+    let 
+        detailTabs = window.hasManyTabs ++ window.indirectTabs
+        dao = Record.at 0 rows
+    in
+    div [ class "row" ]
+        [ h4 [] [text "Main tab"] 
+        , div [ class "main-tab" ] 
+            [ Tab.view window.mainTab rows
+            , div []
+                (viewOneOneTab dao window.oneOneTabs)
             ]
+        , div [class "hasmany-tab"]
+            (List.map (\tab -> Tab.view tab rows) detailTabs)
         ]
 
-
+viewOneOneTab: Maybe Dao -> List Tab -> List (Html msg)
+viewOneOneTab  maybeDao oneOneTabs =
+    [ text "One One: "
+    , case maybeDao of
+        Just dao ->
+            div [class "one-one-tab"]
+                (List.map (\tab -> Tab.cardView tab dao) oneOneTabs)
+        Nothing ->
+            text ""
+    ]

@@ -72,8 +72,11 @@ view session model =
         [ viewBanner
         , div [ class "window-content" ]
             [ div [ class "pane-group" ]
-                [ div [ class "pane pane-sm sidebar" ] (viewGroupedWindow model.groupedWindow)
-                , div [ class "pane main_container" ]
+                [ div [ class "pane pane-sm sidebar" ] 
+                    [GroupedWindow.view model.groupedWindow
+                        |> Html.map GroupedWindowMsg 
+                    ]
+                , div [ class "pane window-container" ]
                     [ div [ class "tab-group" ]
                         [text "tabs here"]
                     , div []
@@ -90,38 +93,19 @@ viewWindow session activeWindow =
             Window.view session activeWindow
                 |> Html.map WindowMsg
         Nothing ->
-            text ""
+            text "No active window"
 
 viewBanner : Html msg
 viewBanner =
     div [ class "banner" ]
         [ div [ class "container" ]
-            [ h1 [ class "logo-font" ] [ text "curtain" ]
-            , p [] [ text "a user-friendly database interface" ]
+            [ h3 [ class "logo-font" ] [ text "curtain" ]
+            , text "a user-friendly database interface"
             ]
         ]
 
 
-viewGroupedWindow : GroupedWindow.Model -> List (Html Msg)
-viewGroupedWindow groupedWindow =
-    div [ class "groupedWindow-toggle" ]
-        [  GroupedWindow.viewFeedSources groupedWindow |> Html.map GroupedWindowMsg ]
-        :: (GroupedWindow.viewWindowNames groupedWindow |> List.map (Html.map GroupedWindowMsg))
 
-
-viewTags : List Tag -> Html Msg
-viewTags tags =
-    div [ class "tag-list" ] (List.map viewTag tags)
-
-
-viewTag : Tag -> Html Msg
-viewTag tagName =
-    a
-        [ class "tag-pill tag-default"
-        , href "javascript:void(0)"
-        , onClick (SelectTag tagName)
-        ]
-        [ text (Window.tagToString tagName) ]
 
 
 
@@ -130,7 +114,6 @@ viewTag tagName =
 
 type Msg
     = GroupedWindowMsg GroupedWindow.Msg
-    | SelectTag Tag
     | WindowMsg Window.Msg
 
 
@@ -146,13 +129,6 @@ update session msg model =
                     GroupedWindow.update session subMsg model.groupedWindow
             in
             { model | groupedWindow = newFeed } => Cmd.map GroupedWindowMsg subCmd
-
-        SelectTag tagName ->
-            let
-                subCmd =
-                    GroupedWindow.selectTag (Maybe.map .token session.user) tagName
-            in
-            model => Cmd.map GroupedWindowMsg subCmd
 
         WindowMsg subMsg -> 
             case model.activeWindow of

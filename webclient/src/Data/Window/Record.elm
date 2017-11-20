@@ -1,4 +1,4 @@
-module Data.Window.Record exposing (Rows, CommentId, commentIdDecoder, decoder, idToString)
+module Data.Window.Record exposing (Rows, Dao, at, CommentId, commentIdDecoder, decoder, idToString)
 
 import Data.Window.Author as Author exposing (Author)
 import Date exposing (Date)
@@ -13,6 +13,18 @@ type alias Rows =
     , data : List (List Value)
     }
 
+
+at: Int -> Rows -> Maybe Dao
+at index rows =
+    let element = List.drop index rows.data
+                |> List.head
+    in
+    Maybe.map
+        (\ data ->
+            List.map2 (,) rows.columns data
+        ) element
+
+type alias Dao = List (String, Value)
 
 
 -- SERIALIZATION --
