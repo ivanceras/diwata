@@ -97,6 +97,25 @@ fn get_data(table_name: String) -> Result<Option<Json<Rows>>, ServiceError> {
     }
 }
 
+#[get("/window/<table_name>/data/select/<record_id>")]
+fn get_detailed_record(table_name: String, record_id: String) -> Result<Option<Json<Rows>>, ServiceError> {
+    let em = get_pool_em()?;
+    let mut cache_pool = cache::CACHE_POOL.lock().unwrap();
+    let windows = cache_pool.get_cached_windows(&em, DB_URL)?;
+    let table_name = TableName::from(&table_name);
+    let window = window::get_window(&table_name, &windows);
+    let tables = cache_pool.get_cached_tables(&em, DB_URL)?;
+    match window{
+        Some(window) => {
+            let rows: Rows = 
+                data_service::get_selected_record_detail(&em, &tables,
+                                                        &window, &record_id)?;
+            Ok(Some(Json(rows)))
+        }
+        None => Ok(None)
+    }
+}
+
 
 
 
@@ -111,6 +130,7 @@ pub fn rocket() -> Rocket {
                     get_windows,
                     get_window,
                     get_data,
+                    get_detailed_record,
                  ]
         ) 
 }

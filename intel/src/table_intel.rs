@@ -16,7 +16,7 @@ impl<'a> TableIntel<'a>{
     /// that it depends soo much on the primary key columns
     /// on the referred table
     fn is_owned_table(&self) -> bool {
-        let primary = self.0.get_primary_columns();
+        let primary = self.0.get_primary_column_names();
         let foreign = self.0.get_foreign_columns();
         //Note: the order doesn't matter
         //as long as the contain the same
@@ -33,7 +33,7 @@ impl<'a> TableIntel<'a>{
     /// and its foreign keys is also a member of the primary keys
     /// there should only be 2 foreign keys
     fn is_linker_table(&self) -> bool {
-        let primary_columns = self.0.get_primary_columns();
+        let primary_columns = self.0.get_primary_column_names();
         let foreign_columns = self.0.get_foreign_columns();
         self.get_referred_tablenames().len() == 2
             && foreign_columns.iter()
@@ -67,7 +67,7 @@ impl<'a> TableIntel<'a>{
         for fk in foreign_keys{
             let foreign_table = &fk.foreign_table;
             let foreign_columns: &Vec<ColumnName> = &fk.referred_columns;
-            let primary_columns: Vec<&ColumnName> = self.0.get_primary_columns();
+            let primary_columns: Vec<&ColumnName> = self.0.get_primary_column_names();
             let same_column_content = foreign_columns
                             .iter()
                             .all(|c| primary_columns.contains(&c));
@@ -86,7 +86,7 @@ impl<'a> TableIntel<'a>{
         for fk in this_foreign_keys{
             let foreign_table = &fk.foreign_table;
             let foreign_columns: &Vec<ColumnName> = &fk.referred_columns;
-            let arg_primary_columns: Vec<&ColumnName> = arg_table.get_primary_columns();
+            let arg_primary_columns: Vec<&ColumnName> = arg_table.get_primary_column_names();
             let same_column_content = foreign_columns
                 .iter()
                 .all(|c| arg_primary_columns.contains(&c));

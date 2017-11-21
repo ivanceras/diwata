@@ -1,7 +1,7 @@
 [package]
 name = "webserver"
 version = "0.1.0"
-authors = ["lee"]
+authors = ["Jovansonlee Cesar <ivanceras@gmail.com>"]
 
 [dependencies]
 chrono = "0.4.0"
@@ -16,4 +16,19 @@ dao = {path = "../rustorm/dao"}
 rustorm = { path = "../rustorm", features = ["with-postgres"] }
 rustorm_codegen = {path = "../rustorm/codegen"}
 intel = {path = "../intel"}
+
+[package.metadata.deb]
+maintainer = "Jovansonlee Cesar <ivanceras@gmail.com>"
+copyright = "2017, Jovansonlee Cesar <ivanceras@gmail.com>"
+license-file = ["../LICENSE", "4"]
+extended-description = """\
+A user-friendly database interface for \
+PostgreSQL."""
+depends = "$auto"
+section = "utility"
+priority = "optional"
+assets = [
+    ["../target/release/webserver", "usr/bin/", "755"],
+    ["../README.md", "usr/share/doc/cargo-deb/README", "644"],
+]
 

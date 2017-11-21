@@ -10,9 +10,19 @@ use rustorm::Rows;
 use rustorm::DbError;
 use cache;
 use error::IntelError;
+use rustorm::Value;
+use rustorm::Column;
+use rustorm::types::SqlType;
+use uuid::Uuid;
 
 pub struct Filter;
 
+
+fn get_main_table<'a>(window: &Window, tables: &'a Vec<Table>) -> Option<&'a Table> {
+    let main_tablename = &window.main_tab.table_name;
+    let main_table = table_intel::get_table(main_tablename, tables);
+    main_table
+}
 
 /// get the data of the window
 /// - first page data of the main table
@@ -29,7 +39,7 @@ pub fn get_maintable_data_first_page(em: &EntityManager,
                                  page_size: i32) -> Result<Rows, DbError> {
     let mut sql = String::from("SELECT * "); 
     let main_tablename = &window.main_tab.table_name;
-    let main_table = table_intel::get_table(main_tablename, tables);
+    let main_table = get_main_table(window, tables);
     assert!(main_table.is_some());
     let main_table = main_table.unwrap();
     sql += &format!("FROM {} \n",main_tablename.complete_name());
@@ -82,6 +92,63 @@ pub fn get_maintable_data_first_page(em: &EntityManager,
     let result: Result<Rows, DbError> = em.db().execute_sql_with_return(&sql, &[]);
     println!("result: {:?}", result);
     result
+}
+
+/// extract record id from comma separated value
+/// TODO: deal with edge case quoting, when there us comma in individual values
+fn extract_record_id(record_id: &str, pk_types: &Vec<&SqlType> ) -> Result<Vec<Value>, IntelError> {
+    let splinters:Vec<&str> = record_id.split(",").collect();
+    let mut values: Vec<Value> = Vec::with_capacity(splinters.len());
+    assert_eq!(splinters.len(), pk_types.len()); 
+    for (i,splinter) in splinters.iter().enumerate(){
+        let pk_type = pk_types[i];
+        let value = match *pk_type{
+            SqlType::Int => {
+                let v = splinter.parse();
+                match v{
+                    Ok(v) => Value::Int(v),
+                    Err(e) => {
+                        return Err(IntelError::ParamParseError(format!("Invalid for type {:?}: {}",pk_type, splinter)));
+                    }
+                }
+            }
+            SqlType::Uuid => {
+                let uuid = Uuid::parse_str(splinter);
+                match uuid{
+                    Ok(uuid) => Value::Uuid(uuid),
+                    Err(e) => {
+                        return Err(IntelError::ParamParseError(format!("Invalid for type {:?}: {}",pk_type, splinter)));
+                    }
+                }
+            }
+            _ => panic!("primary with type {:?} is not yet covered", pk_type)
+        };
+        values.push(value);
+    }
+    Ok(values)
+}
+
+/// get the detail of the selected record data
+pub fn get_selected_record_detail(em: &EntityManager, tables: &Vec<Table>, 
+                            window: &Window, record_id: &str) -> Result<Rows, IntelError> {
+    let main_table = get_main_table(window, tables);
+    assert!(main_table.is_some());
+    let main_table = main_table.unwrap();
+    let pk_types = main_table.get_primary_column_types();
+    let primary_columns = main_table.get_primary_column_names();
+    let values: Vec<Value> = extract_record_id(record_id, &pk_types)?;
+    println!("arg values: {:#?}", values);
+    let mut sql = format!("
+        SELECT * FROM {} ",main_table.name.complete_name());
+    sql += "WHERE ";
+    for (i,pk) in primary_columns.iter().enumerate(){
+        sql += &pk.complete_name();
+        sql += &format!(" = ${} ",i+1)
+    }
+
+    let result = em.db().execute_sql_with_return(&sql, &values)?;
+    println!("result: {:?}", result);
+    Ok(result)
 }
 
 /// get the next page of the window

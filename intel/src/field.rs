@@ -7,6 +7,7 @@ use rustorm::column::Capacity;
 use rustorm::types::ArrayType;
 use rustorm::Table;
 use widget::ControlWidget;
+use rustorm::ColumnName;
 
 
 #[derive(Debug, Serialize, Clone)]
@@ -17,6 +18,8 @@ pub struct Field {
     description: Option<String>,
     /// derive from lookuped table comment
     info: Option<String>,
+    /// column name
+    column_detail: ColumnDetail,
     /// the interpretation of this column
     /// of the the data it holds based on column specification
     /// column_name, sql_type and limits
@@ -25,16 +28,53 @@ pub struct Field {
     control_widget: ControlWidget,
 }
 
+#[derive(Debug, Serialize, Clone)]
+pub enum ColumnDetail{
+    Simple(ColumnName, SqlType),
+    Compound(Vec<(ColumnName, SqlType)>)
+}
+
+impl<'a> From<&'a Column> for ColumnDetail{
+
+    fn from(column: &Column) -> Self {
+        ColumnDetail::Simple(column.name.to_owned(), 
+                             column.specification.sql_type.clone())
+    }
+}
+
+impl<'a> From<&'a Vec<&'a Column>> for ColumnDetail {
+
+    fn from(columns: &'a Vec<&'a Column>) -> Self {
+        if columns.len() == 1{
+            ColumnDetail::Simple(
+                columns[0].name.to_owned(),
+                columns[0].specification.sql_type.clone()
+            )
+        }
+        else {
+            let compound: Vec<(ColumnName, SqlType)> =
+                columns.iter()
+                    .map(|column|
+                         (column.name.to_owned(), column.specification.sql_type.clone())
+                        )
+                    .collect();
+            ColumnDetail::Compound(compound)
+        }
+    }
+}
+
 impl Field{
 
     /// derive field from supplied column
     pub fn from_column(column: &Column) -> Self {
         let reference = Self::try_derive_reference(column);
         let control_widget = ControlWidget::derive_control_widget(column, &reference);
+        let column_detail:ColumnDetail = ColumnDetail::from(column);
         Field{
             name: column.name.name.to_string(),
             description: column.comment.clone(),
             info: None,
+            column_detail,
             reference,
             control_widget
         }
@@ -49,17 +89,19 @@ impl Field{
     pub fn from_has_one_table(columns: &Vec<&Column>, table: &Table) -> Self {
         let control_widget = ControlWidget::from_has_one_table(columns, table);
         let mut columns_comment = String::new();
-        for col in columns{
-            if let Some(ref comment) = col.comment{
+        for column in columns{
+            if let Some(ref comment) = column.comment{
                 columns_comment.push_str(&comment);
             }
         }
+        let column_detail:ColumnDetail = ColumnDetail::from(columns);
         Field{
             name: table.name.name.to_string(),
             description: if !columns_comment.is_empty(){
                             Some(columns_comment)
                          }else{None},
             info: table.comment.to_owned(),
+            column_detail,
             reference: Some(Reference::TableLookup),
             control_widget
         }
@@ -112,16 +154,9 @@ impl Field{
         }
         else if 
             (
-                (
-                    sql_type == &SqlType::Serial
-                    || sql_type == &SqlType::BigSerial
-                )
-                ||
-                (
-                    (sql_type == &SqlType::Int
-                    || sql_type == &SqlType::Bigint
-                    ) && is_autoincrement
-                )
+                (sql_type == &SqlType::Int
+                || sql_type == &SqlType::Bigint
+                ) && is_autoincrement
             )
             && column_name == "user_id" 
             && (table_name == "users" 

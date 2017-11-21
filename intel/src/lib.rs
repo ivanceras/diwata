@@ -5,6 +5,8 @@ extern crate lazy_static;
 extern crate rustorm;
 #[macro_use]
 extern crate serde_derive;
+extern crate uuid;
+
 mod reference;
 mod widget;
 

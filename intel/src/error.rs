@@ -5,7 +5,9 @@ use rustorm::DbError;
 pub enum IntelError{
     CacheServiceError,
     DbError(DbError),
+    ParamParseError(String),
 }
+
 
 impl From<DbError> for IntelError {
 
@@ -13,3 +15,4 @@ impl From<DbError> for IntelError {
         IntelError::DbError(e)
     }
 }
+
