@@ -29,26 +29,11 @@ view : Window -> Rows -> Html msg
 view window rows =
     let 
         detailTabs = window.hasManyTabs ++ window.indirectTabs
+        _ = Debug.log "main tab" window.mainTab
         dao = Record.at 0 rows
     in
     div [ class "row" ]
         [ h4 [] [text "Main tab"] 
         , div [ class "main-tab" ] 
-            [ Tab.view window.mainTab rows
-            , div []
-                (viewOneOneTab dao window.oneOneTabs)
-            ]
-        , div [class "hasmany-tab"]
-            (List.map (\tab -> Tab.view tab rows) detailTabs)
+            [Tab.view window.mainTab rows]
         ]
-
-viewOneOneTab: Maybe Dao -> List Tab -> List (Html msg)
-viewOneOneTab  maybeDao oneOneTabs =
-    [ text "One One: "
-    , case maybeDao of
-        Just dao ->
-            div [class "one-one-tab"]
-                (List.map (\tab -> Tab.cardView tab dao) oneOneTabs)
-        Nothing ->
-            text ""
-    ]

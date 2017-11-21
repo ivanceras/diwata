@@ -4,22 +4,28 @@ import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Extra
 import Json.Decode.Pipeline as Pipeline exposing (custom, decode, required)
 
-type Value = 
-      Nil
+type Value
+    = Nil
     | Bool Bool
+
     | Tinyint Int
     | Smallint Int
     | Int Int
     | Bigint Int
+
     | Float Float
     | Double Float
+
     | Char Char
     | Text String
     | Json String
+
     | Uuid String
     | Date String
     | Time String
     | Timestamp String
+
+
 
 decoder: Decoder Value
 decoder =
@@ -54,33 +60,33 @@ nilDecoder =
 
 boolDecoder: Decoder Value
 boolDecoder = 
-    Decode.field "Bool" Decode.bool
-    |> Decode.map Bool
+    decode Bool
+        |> required "Bool" Decode.bool
 
 tinyintDecoder: Decoder Value
 tinyintDecoder =
-    Decode.field "Tinyint" Decode.int
-    |> Decode.map Tinyint
+    decode Tinyint
+        |> required "Tinyint" Decode.int
 
 smallintDecoder: Decoder Value
 smallintDecoder =
-    Decode.field "Smallint" Decode.int
-    |> Decode.map Smallint
+    decode Smallint
+    |> required "Smallint" Decode.int
 
 intDecoder: Decoder Value
 intDecoder =
-    Decode.field "Int" Decode.int
-    |> Decode.map Int
+    decode Int
+    |> required "Int" Decode.int
 
 floatDecoder: Decoder Value
 floatDecoder =
-    Decode.field "Float" Decode.float
-    |> Decode.map Float
+    decode Float
+    |> required "Float" Decode.float
 
 doubleDecoder: Decoder Value
 doubleDecoder =
-    Decode.field "Double" Decode.float
-    |> Decode.map Double
+    decode Double
+    |> required "Double" Decode.float
 
 charDecoder: Decoder Value
 charDecoder = 
@@ -95,30 +101,31 @@ charDecoder =
 
 textDecoder: Decoder Value
 textDecoder = 
-    Decode.field "Text" Decode.string
-    |> Decode.map Text
+    decode Text
+    |> required "Text" Decode.string
 
 jsonDecoder: Decoder Value
 jsonDecoder = 
-    Decode.field "Json" Decode.string
-    |> Decode.map Json
+    decode Json
+    |> required "Json" Decode.string
 
 uuidDecoder: Decoder Value
 uuidDecoder = 
-    Decode.field "Uuid" Decode.string
-    |> Decode.map Uuid
+    decode Uuid
+    |> required "Uuid" Decode.string
 
 dateDecoder: Decoder Value
 dateDecoder = 
-    Decode.field "Date" Decode.string
-    |> Decode.map Date
+    decode Date
+    |> required "Date" Decode.string
 
 timeDecoder: Decoder Value
 timeDecoder = 
-    Decode.field "Time" Decode.string
-    |> Decode.map Time
+    decode Time
+    |> required "Time" Decode.string
 
 timestampDecoder: Decoder Value
 timestampDecoder = 
-    Decode.field "Timestamp" Decode.string
-    |> Decode.map Text
+    decode Text
+    |> required "Timestamp" Decode.string
+

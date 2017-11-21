@@ -1,4 +1,4 @@
-module Request.Window.Records exposing (delete, list, post)
+module Request.Window.Records exposing (delete, list, post, fetchSelected)
 
 import Data.Window as Window exposing (Window, Tag, slugToString)
 import Data.Window.Record as Record exposing (Rows, CommentId)
@@ -26,6 +26,14 @@ list maybeToken tableName =
         |> HttpBuilder.get
         |> HttpBuilder.withExpect (Http.expectJson Record.decoder)
         |> withAuthorization maybeToken
+        |> HttpBuilder.toRequest
+
+
+fetchSelected : TableName -> String -> Http.Request Rows
+fetchSelected tableName selectedRow =
+    apiUrl ("/window/" ++ tableNameToString tableName ++ "/data/select/"++selectedRow)
+        |> HttpBuilder.get
+        |> HttpBuilder.withExpect (Http.expectJson Record.decoder)
         |> HttpBuilder.toRequest
 
 

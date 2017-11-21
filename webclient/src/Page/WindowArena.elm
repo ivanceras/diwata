@@ -18,6 +18,8 @@ import Views.Window.GroupedWindow as GroupedWindow exposing (FeedSource, globalF
 import Views.Page as Page
 import Page.Window as Window
 import Data.Window.TableName as TableName exposing (TableName)
+import Data.WindowArena as WindowArena exposing (ArenaArg)
+import Page.Window.DetailedRecord as DetailedRecord
 
 
 -- MODEL --
@@ -27,11 +29,12 @@ type alias Model =
     { openedWindow: List Window.Model
     , activeWindow: Maybe Window.Model
     , groupedWindow : GroupedWindow.Model
+    , selectedRow: Maybe DetailedRecord.Model
     }
 
 
-init : Session -> Maybe TableName -> Task PageLoadError Model
-init session argActiveWindow =
+init : Session -> Maybe ArenaArg -> Task PageLoadError Model
+init session arenaArg =
     let
         feedSources =
             if session.user == Nothing then
@@ -39,27 +42,41 @@ init session argActiveWindow =
             else
                 SelectList.fromLists [] yourFeed [ globalFeed ]
 
-        emptyTable = {name = "", schema= Nothing,alias=Nothing}
-
         loadActiveWindow =
-            case argActiveWindow of
-                Just activeWindow -> 
-                    Window.init session (Maybe.withDefault emptyTable argActiveWindow)
+            case arenaArg of
+                Just arenaArg -> 
+                    Window.init session arenaArg.tableName 
                         |> Task.map (\activeWindow -> Just activeWindow)
                         |> Task.mapError handleLoadError
                 Nothing ->
                     Task.succeed Nothing
 
+        activeWindow = Maybe.map .tableName arenaArg
+
         loadWindowList =
-            GroupedWindow.init session argActiveWindow feedSources
+            GroupedWindow.init session activeWindow feedSources
                 |> Task.mapError handleLoadError
+
+        loadSelectedRecord =
+            case arenaArg of
+                Just arenaArg ->
+                    case arenaArg.selected of
+                        Just selectedRecord ->
+                            DetailedRecord.init arenaArg.tableName selectedRecord
+                                |> Task.map(\selectedRecord -> Just selectedRecord)
+                                |> Task.mapError handleLoadError
+                        Nothing ->
+                            Task.succeed Nothing
+
+                Nothing ->
+                    Task.succeed Nothing
 
         handleLoadError e =
             let _ = Debug.log "LoadError" e
             in
             pageLoadError Page.WindowArena "WindowArena is currently unavailable."
     in
-    Task.map2 (Model [] ) loadActiveWindow loadWindowList 
+    Task.map3 (Model [] ) loadActiveWindow loadWindowList loadSelectedRecord
 
 
 
@@ -80,11 +97,20 @@ view session model =
                     [ div [ class "tab-group" ]
                         [text "tabs here"]
                     , div []
-                        [viewWindow session model.activeWindow]
+                        [viewWindowOrSelectedRow session model]
                     ]
                 ]
             ]
         ]
+
+viewWindowOrSelectedRow: Session -> Model -> Html Msg
+viewWindowOrSelectedRow session model =
+    case Debug.log "model.selectedRow" model.selectedRow of
+        Just selectedRow ->
+            DetailedRecord.view selectedRow
+        Nothing ->
+            viewWindow session model.activeWindow
+
 
 viewWindow : Session -> Maybe Window.Model -> Html Msg
 viewWindow session activeWindow =

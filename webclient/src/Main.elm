@@ -285,7 +285,7 @@ setRoute maybeRoute model =
             transition HomeLoaded (WindowArena.init model.session Nothing)
 
         Just (Route.WindowArena (Just arenaArg)) ->
-            transition HomeLoaded (WindowArena.init model.session (Just arenaArg.tableName))
+            transition HomeLoaded (WindowArena.init model.session (Just arenaArg))
 
 
         Just Route.Login ->

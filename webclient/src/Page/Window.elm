@@ -57,7 +57,7 @@ init session tableName =
             Request.Window.get maybeAuthToken tableName
                 |> Http.toTask
 
-        loadComments =
+        loadRecords =
             Request.Window.Records.list maybeAuthToken tableName
                 |> Http.toTask
 
@@ -66,7 +66,7 @@ init session tableName =
             in
             pageLoadError Page.Other "Window is currently unavailable."
     in
-    Task.map2 (Model [] "" False tableName) loadWindow loadComments
+    Task.map2 (Model [] "" False tableName) loadWindow loadRecords
         |> Task.mapError handleLoadError
 
 
