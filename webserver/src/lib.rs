@@ -30,6 +30,10 @@ use error::ServiceError;
 use intel::cache;
 use intel::data_service::RecordDetail;
 use rustorm::RecordManager;
+use std::path::{Path,PathBuf};
+use rocket::response::NamedFile;
+use rocket::response::Redirect;
+
 
 mod error;
 
@@ -39,11 +43,6 @@ lazy_static!{
     pub static ref POOL: Arc<Mutex<Pool>> = {
         Arc::new(Mutex::new(Pool::new()))
     };
-}
-
-#[get("/")]
-fn index() -> String {
-    "Hello".into()
 }
 
 fn get_pool_em() -> Result<EntityManager, ServiceError> {
@@ -69,7 +68,7 @@ fn get_pool_dm() -> Result<RecordManager, ServiceError> {
 }
 
 
-#[get("/windows")]
+#[get("/")]
 fn get_windows() -> Result<Json<Vec<GroupedWindow>>, ServiceError> {
     let em = get_pool_em()?;
     let grouped_windows: Vec<GroupedWindow> 
@@ -78,7 +77,7 @@ fn get_windows() -> Result<Json<Vec<GroupedWindow>>, ServiceError> {
 }
 
 
-#[get("/window/<table_name>")]
+#[get("/<table_name>")]
 fn get_window(table_name: String) -> Result<Option<Json<Window>>, ServiceError> {
     let em = get_pool_em()?;
     let mut cache_pool = cache::CACHE_POOL.lock().unwrap();
@@ -91,7 +90,7 @@ fn get_window(table_name: String) -> Result<Option<Json<Window>>, ServiceError> 
     }
 }
 
-#[get("/window/<table_name>/data")]
+#[get("/<table_name>/data")]
 fn get_data(table_name: String) -> Result<Option<Json<Rows>>, ServiceError> {
     let em = get_pool_em()?;
     let mut cache_pool = cache::CACHE_POOL.lock().unwrap();
@@ -110,7 +109,7 @@ fn get_data(table_name: String) -> Result<Option<Json<Rows>>, ServiceError> {
     }
 }
 
-#[get("/window/<table_name>/data/select/<record_id>")]
+#[get("/<table_name>/data/select/<record_id>")]
 fn get_detailed_record(table_name: String, record_id: String) -> Result<Option<Json<RecordDetail>>, ServiceError> {
     let dm = get_pool_dm()?;
     let em = get_pool_em()?;
@@ -134,6 +133,24 @@ fn get_detailed_record(table_name: String, record_id: String) -> Result<Option<J
 }
 
 
+#[get("/")]
+fn webclient_index() -> Option<NamedFile> {
+    NamedFile::open(Path::new("./public/index.html")).ok()
+}
+
+#[get("/<file..>")]
+fn webclient(file: PathBuf) -> Option<NamedFile> {
+    NamedFile::open(Path::new("./public/").join(file)).ok()
+}
+
+
+#[get("/")]
+fn redirect_to_web() -> Redirect {
+    Redirect::to("/web/")
+}
+
+
+
 
 
 pub fn rocket() -> Rocket {
@@ -143,11 +160,27 @@ pub fn rocket() -> Rocket {
         }))
         .mount(
             "/", routes![
-                    index,
-                    get_windows,
+                    redirect_to_web,
+                 ]
+        ) 
+        .mount(
+            "/web", routes![
+                    webclient_index,
+                    webclient
+                 ]
+        ) 
+        .mount(
+            "/window",
+                routes![
                     get_window,
                     get_data,
                     get_detailed_record,
-                 ]
-        ) 
+                ]
+        )
+        .mount(
+            "/windows",
+                routes![
+                    get_windows,
+                ]
+        )
 }
