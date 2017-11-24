@@ -188,9 +188,9 @@ mod tests{
         assert_eq!(win.has_many_tabs.len(), 1);
 
         assert_eq!(win.indirect_tabs.len(), 3);
-        assert_eq!(win.indirect_tabs[0].table_name.name, "category");
-        assert_eq!(win.indirect_tabs[1].table_name.name, "photo");
-        assert_eq!(win.indirect_tabs[2].table_name.name, "review");
+        assert_eq!(win.indirect_tabs[0].1.table_name.name, "category");
+        assert_eq!(win.indirect_tabs[1].1.table_name.name, "photo");
+        assert_eq!(win.indirect_tabs[2].1.table_name.name, "review");
 
     }
 
@@ -218,7 +218,7 @@ mod tests{
         assert_eq!(win.has_many_tabs[4].table_name.name, "user_info");
 
         assert_eq!(win.indirect_tabs.len(), 1);
-        assert_eq!(win.indirect_tabs[0].table_name.name, "review");
+        assert_eq!(win.indirect_tabs[0].1.table_name.name, "review");
     }
 
     #[test]
