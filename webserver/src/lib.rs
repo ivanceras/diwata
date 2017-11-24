@@ -28,6 +28,8 @@ use rustorm::error::DbError;
 use rustorm::EntityManager;
 use error::ServiceError;
 use intel::cache;
+use intel::data_service::RecordDetail;
+use rustorm::RecordManager;
 
 mod error;
 
@@ -50,6 +52,17 @@ fn get_pool_em() -> Result<EntityManager, ServiceError> {
         Err(e) => return Err(ServiceError::PoolResourceError)
     };
     match pool.em(DB_URL){
+       Ok(em) => Ok(em),
+       Err(e) => return Err(ServiceError::DbError(e))
+    }
+}
+
+fn get_pool_dm() -> Result<RecordManager, ServiceError> {
+    let mut pool = match POOL.lock(){
+        Ok(pool) => pool,
+        Err(e) => return Err(ServiceError::PoolResourceError)
+    };
+    match pool.dm(DB_URL){
        Ok(em) => Ok(em),
        Err(e) => return Err(ServiceError::DbError(e))
     }
@@ -98,7 +111,8 @@ fn get_data(table_name: String) -> Result<Option<Json<Rows>>, ServiceError> {
 }
 
 #[get("/window/<table_name>/data/select/<record_id>")]
-fn get_detailed_record(table_name: String, record_id: String) -> Result<Option<Json<Rows>>, ServiceError> {
+fn get_detailed_record(table_name: String, record_id: String) -> Result<Option<Json<RecordDetail>>, ServiceError> {
+    let dm = get_pool_dm()?;
     let em = get_pool_em()?;
     let mut cache_pool = cache::CACHE_POOL.lock().unwrap();
     let windows = cache_pool.get_cached_windows(&em, DB_URL)?;
@@ -107,10 +121,13 @@ fn get_detailed_record(table_name: String, record_id: String) -> Result<Option<J
     let tables = cache_pool.get_cached_tables(&em, DB_URL)?;
     match window{
         Some(window) => {
-            let rows: Rows = 
-                data_service::get_selected_record_detail(&em, &tables,
+            let dao: Option<RecordDetail> = 
+                data_service::get_selected_record_detail(&dm, &tables,
                                                         &window, &record_id)?;
-            Ok(Some(Json(rows)))
+            match dao{
+                Some(dao) => Ok(Some(Json(dao))),
+                None => Ok(None)
+            }
         }
         None => Ok(None)
     }
