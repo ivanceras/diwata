@@ -21,6 +21,7 @@ import Task
 import Util exposing ((=>))
 import Views.Page as Page exposing (ActivePage)
 import Data.Window.TableName as TableName exposing (TableName)
+import Settings exposing (Settings)
 
 
 -- WARNING: Based on discussions around how asset management features
@@ -50,11 +51,14 @@ type PageState
 
 -- MODEL --
 
+-- either a user login or a db_url login
 
 type alias Model =
     { session : Session
     , pageState : PageState
+    , settings : Maybe Settings
     }
+
 
 
 init : Value -> Location -> ( Model, Cmd Msg )
@@ -62,6 +66,7 @@ init val location =
     setRoute (Route.fromLocation location)
         { pageState = Loaded initialPage
         , session = { user = decodeUserFromJson val }
+        , settings = Settings.fromJson val
         }
 
 

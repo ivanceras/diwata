@@ -15,7 +15,7 @@ import Data.Window.Tab as Tab exposing (Tab)
 
 {-|
 Example:
-http://localhost:4000/#/window/bazaar.product/select/f7521093-734d-488a-9f60-fc9f11f7e750
+http://localhost:8000/#/window/bazaar.product/select/f7521093-734d-488a-9f60-fc9f11f7e750
 -}
 -- MODEL
 
@@ -61,13 +61,18 @@ viewOneOneTabs model =
         selectedRow = model.selectedRow
     in
     div []
-        (List.map cardView window.oneOneTabs)
+        (List.map (cardView selectedRow) window.oneOneTabs)
 
-cardView: Tab -> Html msg
-cardView tab =
+cardView: RecordDetail -> Tab ->  Html msg
+cardView detail tab =
+    let
+        oneOneRecord = RecordDetail.oneOneRecordOfTable detail tab.tableName
+    in
     div []
         [ h3 [] [text <| "One one tab: " ++ tab.name ]
         , text (toString <| Tab.columnNames tab)
+        , h5 [] [text "Data:"]
+        , text (toString oneOneRecord)
         ]
 
 viewDetailTabs: Model -> Html msg
@@ -76,11 +81,11 @@ viewDetailTabs model =
         window = model.window
         selectedRow = model.selectedRow
         detailTabViews =  
-            (List.map viewTab window.hasManyTabs)
+            (List.map (listView selectedRow.hasMany) window.hasManyTabs)
             ++
             (List.map 
                 (\(linker, indirectTab) ->
-                    viewTab indirectTab
+                    listView selectedRow.indirect indirectTab
                 )
                 window.indirectTabs
             )
@@ -88,9 +93,14 @@ viewDetailTabs model =
     div []
         detailTabViews
 
-viewTab: Tab -> Html msg
-viewTab tab =
+listView: List (TableName, Rows)  -> Tab -> Html msg
+listView detailRows tab =
+    let 
+        detailRecords = RecordDetail.contentInTable detailRows tab.tableName
+    in
     div []
         [ h3 [] [text <| "Detail tab: " ++ tab.name ]
         , text (toString <| Tab.columnNames tab)
+        , h5 [] [text "Data"]
+        , text (toString detailRecords)
         ]
