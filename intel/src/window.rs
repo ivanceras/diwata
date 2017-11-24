@@ -42,7 +42,7 @@ pub struct Window {
     /// an indirect connection to this record
     /// must have an option to remove/show from the list
     /// async loaded?
-    pub indirect_tabs: Vec<Tab>,
+    pub indirect_tabs: Vec<(TableName, Tab)>,
 }
 
 impl Window{
@@ -52,7 +52,12 @@ impl Window{
         let main_tab:Tab = Tab::from_table(main_table, all_tables); 
         let one_one_tabs:Vec<Tab> = one_one.iter().map(|t|Tab::from_table(t, all_tables)).collect();
         let has_many_tabs:Vec<Tab> = has_many.iter().map(|t|Tab::from_table(t, all_tables)).collect();
-        let indirect_tabs:Vec<Tab> = indirect.iter().map(|t|Tab::from_table(t.indirect_table, all_tables)).collect();
+        let indirect_tabs:Vec<(TableName, Tab)> = indirect.iter()
+            .map(|t|
+                 (t.linker.name.clone(), 
+                  Tab::from_table(t.indirect_table, all_tables))
+            )
+            .collect();
         Window{
             name: main_tab.name.to_string(),
             description: main_tab.description.to_owned(),
