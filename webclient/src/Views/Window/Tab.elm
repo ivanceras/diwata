@@ -1,9 +1,9 @@
-module Views.Window.Tab exposing (view, cardView)
+module Views.Window.Tab exposing (view)
 
 import Html exposing (..)
 import Html.Attributes exposing (attribute, class, classList, href, id, placeholder, src)
 import Data.Window.Tab as Tab exposing (Tab)
-import Data.Window.Record as Record exposing (Rows,Row, Dao)
+import Data.Window.Record as Record exposing (Rows,Row)
 import Data.Window.Field as Field exposing (Field)
 import Views.Window.Row as Row
 
@@ -20,13 +20,6 @@ view tab rows =
             [viewRows columnNames rows]
         ]
 
-cardView: Tab -> Dao -> Html msg
-cardView tab dao =
-    div []
-        [ h5 [] [text ("Card View: " ++ tab.name)]
-        , div [class "card-view"]
-            [text (toString dao)]
-        ]
 
 viewColumns: List Field -> Html msg
 viewColumns fields =

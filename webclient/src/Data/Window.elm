@@ -56,7 +56,7 @@ type alias Window =
     , hasOneTables : List TableName 
     , oneOneTabs : List Tab
     , hasManyTabs : List Tab
-    , indirectTabs : List Tab
+    , indirectTabs : List (TableName, Tab)
     }
 
 
@@ -76,9 +76,15 @@ baseWindowDecoder =
         |> required "has_one_tables" (Decode.list TableName.decoder)
         |> required "one_one_tabs" (Decode.list Tab.decoder) 
         |> required "has_many_tabs" (Decode.list Tab.decoder) 
-        |> required "indirect_tabs" (Decode.list Tab.decoder) 
+        |> required "indirect_tabs" (Decode.list indirectTabDecoder) 
 
 
+indirectTabDecoder: Decoder (TableName, Tab)
+indirectTabDecoder = 
+    Decode.map2 (,)
+        (Decode.index 0 TableName.decoder)
+        (Decode.index 1 Tab.decoder)
+    
 
 -- IDENTIFIERS --
 

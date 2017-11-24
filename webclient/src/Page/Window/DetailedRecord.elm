@@ -1,6 +1,6 @@
 module Page.Window.DetailedRecord exposing (init,Model,view)
 
-import Data.Window.Record as Record exposing (Dao)
+import Data.Window.RecordDetail as RecordDetail exposing (RecordDetail)
 import Task exposing (Task)
 import Http
 import Html exposing (..)
@@ -13,11 +13,15 @@ import Data.Window as Window exposing (Window)
 import Request.Window
 import Data.Window.Tab as Tab exposing (Tab)
 
+{-|
+Example:
+http://localhost:4000/#/window/bazaar.product/select/f7521093-734d-488a-9f60-fc9f11f7e750
+-}
 -- MODEL
 
 type alias Model =
     { detailRows: List (TableName, Rows) -- each tabs has rows
-    , selectedRow: Rows -- TODO, convert to Dao 1 only
+    , selectedRow: RecordDetail 
     , window: Window
     }
 
@@ -54,6 +58,7 @@ viewOneOneTabs: Model -> Html msg
 viewOneOneTabs model =
     let 
         window = model.window
+        selectedRow = model.selectedRow
     in
     div []
         (List.map cardView window.oneOneTabs)
@@ -69,11 +74,19 @@ viewDetailTabs: Model -> Html msg
 viewDetailTabs model = 
     let 
         window = model.window
-        detailTabs = window.hasManyTabs ++ window.indirectTabs
-        _ = Debug.log "detailTabs" detailTabs
+        selectedRow = model.selectedRow
+        detailTabViews =  
+            (List.map viewTab window.hasManyTabs)
+            ++
+            (List.map 
+                (\(linker, indirectTab) ->
+                    viewTab indirectTab
+                )
+                window.indirectTabs
+            )
     in
     div []
-        (List.map viewTab detailTabs)
+        detailTabViews
 
 viewTab: Tab -> Html msg
 viewTab tab =

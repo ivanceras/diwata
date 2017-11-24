@@ -2,6 +2,7 @@ module Request.Window.Records exposing (delete, list, post, fetchSelected)
 
 import Data.Window as Window exposing (Window, Tag, slugToString)
 import Data.Window.Record as Record exposing (Rows, CommentId)
+import Data.Window.RecordDetail as RecordDetail exposing (RecordDetail)
 import Data.AuthToken as AuthToken exposing (AuthToken, withAuthorization)
 import Data.Window.GroupedWindow as GroupedWindow exposing (WindowName)
 import Data.Window.TableName as TableName exposing 
@@ -24,16 +25,16 @@ list : Maybe AuthToken -> TableName -> Http.Request Rows
 list maybeToken tableName =
     apiUrl ("/window/" ++ tableNameToString tableName ++ "/data")
         |> HttpBuilder.get
-        |> HttpBuilder.withExpect (Http.expectJson Record.decoder)
+        |> HttpBuilder.withExpect (Http.expectJson Record.rowsDecoder)
         |> withAuthorization maybeToken
         |> HttpBuilder.toRequest
 
 
-fetchSelected : TableName -> String -> Http.Request Rows
+fetchSelected : TableName -> String -> Http.Request RecordDetail
 fetchSelected tableName selectedRow =
     apiUrl ("/window/" ++ tableNameToString tableName ++ "/data/select/"++selectedRow)
         |> HttpBuilder.get
-        |> HttpBuilder.withExpect (Http.expectJson Record.decoder)
+        |> HttpBuilder.withExpect (Http.expectJson RecordDetail.decoder)
         |> HttpBuilder.toRequest
 
 
@@ -46,7 +47,7 @@ post tableName body token =
     apiUrl ("/window/" ++ tableNameToString tableName ++ "/data")
         |> HttpBuilder.post
         |> HttpBuilder.withBody (Http.jsonBody (encodeCommentBody body))
-        |> HttpBuilder.withExpect (Http.expectJson Record.decoder)
+        |> HttpBuilder.withExpect (Http.expectJson Record.rowsDecoder)
         |> withAuthorization (Just token)
         |> HttpBuilder.toRequest
 

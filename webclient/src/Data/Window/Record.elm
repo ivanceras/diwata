@@ -1,13 +1,14 @@
 module Data.Window.Record exposing 
     ( Rows
     , Row
-    , Dao
     , at
     , CommentId
     , commentIdDecoder
-    , decoder
+    , rowsDecoder
     , idToString
     , arrangeRows
+    , Record
+    , decoder
     )
 
 import Data.Window.Author as Author exposing (Author)
@@ -16,6 +17,9 @@ import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Extra
 import Json.Decode.Pipeline as Pipeline exposing (custom, decode, required)
 import Data.Window.Value as Value exposing (Value)
+import Data.Window.TableName as TableName exposing (TableName)
+import Dict exposing (Dict)
+
 
 
 type alias Rows =
@@ -26,23 +30,10 @@ type alias Rows =
 type alias Row = List Value
 
 
-type alias Dao = List (String, Value)
 
-{-|
-    Get the matching first value
-    that match the column name
--}
-value: Dao -> String -> Maybe Value
-value dao column =
-    List.filterMap
-        (\ (col, value) ->
-            case col == column of
-                True ->
-                    Just value
-                False ->
-                    Nothing
-        ) dao
-    |> List.head
+type alias Record = Dict String Value
+
+
 
 
 {-|
@@ -50,11 +41,11 @@ value dao column =
     for the purposed of rearranging the values
     with respect to the rearranging of the columns
 -}
-arrangeRow: Dao -> List String -> Row
-arrangeRow dao columns =
+arrangeRecord: Record -> List String -> Row
+arrangeRecord record columns =
     List.filterMap
         ( \ column ->
-            value dao column
+            Dict.get column record
         ) columns
 
 {-|
@@ -64,27 +55,28 @@ arrangeRow dao columns =
 arrangeRows: Rows -> List String -> List Row
 arrangeRows rows columns =
     let 
-        daoList = rowsToDaoList rows
+        recordList = rowsToRecordList rows
     in
         List.map
-        ( \ dao ->
-            arrangeRow dao columns
-        ) daoList
+        ( \ record ->
+            arrangeRecord record columns
+        ) recordList
 
 
-rowsToDaoList: Rows -> List Dao
-rowsToDaoList rows =
+rowsToRecordList: Rows -> List Record
+rowsToRecordList rows =
     List.map
         (\data ->
            List.map2 (,) rows.columns data 
+            |> Dict.fromList
         ) rows.data
 
-at: Int -> Rows -> Maybe Dao
+at: Int -> Rows -> Maybe Record
 at index rows =
     let 
-        daoList = rowsToDaoList rows
+        recordList = rowsToRecordList rows
      
-        element = List.drop index daoList
+        element = List.drop index recordList
                 |> List.head
     in
         element
@@ -94,8 +86,13 @@ at index rows =
 -- SERIALIZATION --
 
 
-decoder : Decoder Rows
+
+decoder: Decoder Record
 decoder =
+    Decode.dict Value.decoder
+
+rowsDecoder : Decoder Rows
+rowsDecoder =
     decode Rows
         |> required "columns" (Decode.list Decode.string)
         |> required "data" (Decode.list (Decode.list Value.decoder))

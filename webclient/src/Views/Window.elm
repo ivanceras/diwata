@@ -15,7 +15,7 @@ import Data.Window.GroupedWindow as GroupedWindow exposing (GroupedWindow, Windo
 import Data.Window.TableName as TableName exposing (TableName)
 
 import Data.WindowArena as WindowArena
-import Data.Window.Record as Record exposing (Rows,Dao)
+import Data.Window.Record as Record exposing (Rows)
 import Views.Window.Tab as Tab
 import Data.Window.Tab as Tab exposing (Tab)
 
@@ -27,11 +27,6 @@ import Data.Window.Tab as Tab exposing (Tab)
 
 view : Window -> Rows -> Html msg
 view window rows =
-    let 
-        detailTabs = window.hasManyTabs ++ window.indirectTabs
-        _ = Debug.log "main tab" window.mainTab
-        dao = Record.at 0 rows
-    in
     div [ class "row" ]
         [ h4 [] [text "Main tab"] 
         , div [ class "main-tab" ] 
