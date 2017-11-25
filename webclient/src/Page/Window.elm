@@ -5,7 +5,7 @@ module Page.Window exposing (Model, Msg, init, update, view)
 
 import Data.Window as Window exposing (Window, Body)
 import Data.Window.Author as Author exposing (Author)
-import Data.Window.Record as Record exposing (Rows, CommentId)
+import Data.Window.Record as Record exposing (Rows,Record,RecordId)
 import Data.Session as Session exposing (Session)
 import Data.User as User exposing (User)
 import Data.UserPhoto as UserPhoto
@@ -154,8 +154,8 @@ type Msg
     | ToggleFavorite
     | FavoriteCompleted (Result Http.Error TableName)
     | SetCommentText String
-    | DeleteComment CommentId
-    | CommentDeleted CommentId (Result Http.Error ())
+    | DeleteRecord RecordId
+    | RecordDeleted RecordId (Result Http.Error ())
     | PostComment
     | CommentPosted (Result Http.Error Rows)
     | CloseWindow
@@ -226,23 +226,23 @@ update session msg model =
             { model | errors = model.errors ++ [ "Server error while trying to post comment." ] }
                 => Cmd.none
 
-        DeleteComment id ->
+        DeleteRecord id ->
             let
                 cmdFromAuth authToken =
                     authToken
                         |> Request.Window.Records.delete tableName id
-                        |> Http.send (CommentDeleted id)
+                        |> Http.send (RecordDeleted id)
             in
             session
                 |> Session.attempt "delete records" cmdFromAuth
                 |> Tuple.mapFirst (Util.appendErrors model)
 
-        CommentDeleted id (Ok ()) ->
+        RecordDeleted id (Ok ()) ->
             let _ = Debug.log "comment deleted" id
             in
              model => Cmd.none
 
-        CommentDeleted id (Err error) ->
+        RecordDeleted id (Err error) ->
             { model | errors = model.errors ++ [ "Server error while trying to delete comment." ] }
                 => Cmd.none
 

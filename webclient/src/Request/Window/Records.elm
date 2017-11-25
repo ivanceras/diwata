@@ -1,7 +1,7 @@
 module Request.Window.Records exposing (delete, list, post, fetchSelected)
 
 import Data.Window as Window exposing (Window, Tag, slugToString)
-import Data.Window.Record as Record exposing (Rows, CommentId)
+import Data.Window.Record as Record exposing (Rows, RecordId)
 import Data.Window.RecordDetail as RecordDetail exposing (RecordDetail)
 import Data.AuthToken as AuthToken exposing (AuthToken, withAuthorization)
 import Data.Window.GroupedWindow as GroupedWindow exposing (WindowName)
@@ -61,9 +61,9 @@ encodeCommentBody body =
 -- DELETE --
 
 
-delete : TableName -> CommentId -> AuthToken -> Http.Request ()
-delete tableName commentId token =
-    apiUrl ("/window/" ++ tableNameToString tableName ++ "/comments/" ++ Record.idToString commentId)
+delete : TableName -> RecordId -> AuthToken -> Http.Request ()
+delete tableName recordId token =
+    apiUrl ("/window/" ++ tableNameToString tableName ++ "/data/" ++ Record.idToString recordId)
         |> HttpBuilder.delete
         |> withAuthorization (Just token)
         |> HttpBuilder.toRequest

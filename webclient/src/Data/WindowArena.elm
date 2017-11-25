@@ -1,9 +1,16 @@
-module Data.WindowArena exposing (initArg, parseArenaArgs, ArenaArg, argToString)
+module Data.WindowArena exposing 
+    ( initArg
+    , initArgWithRecordId
+    , parseArenaArgs
+    , ArenaArg
+    , argToString
+    )
 
 import Data.Window.TableName as TableName exposing (TableName,fromString,tableNameToString)
 import UrlParser
 import Data.Query as Query exposing (orderClauseParser, maybeFilterParser, orderClauseToString)
 import Util exposing (trim)
+import Data.Window.Record as Record exposing (Record, RecordId)
 
 {-|
 WindowArena is the centerpiece of the app.
@@ -117,7 +124,7 @@ argToString arg =
         appendSelected =
             case arg.selected of
                 Just selected ->
-                    appendOrder ++ ["selected", selected]
+                    appendOrder ++ ["select", selected]
                 Nothing ->
                     appendOrder
 
@@ -153,6 +160,13 @@ initArg tableName =
     , sectionOrder = Nothing
     , sectionSelected = Nothing
     }
+
+initArgWithRecordId: TableName -> String -> ArenaArg
+initArgWithRecordId tableName recordId =
+    let 
+        arenaArg = initArg tableName
+    in
+        { arenaArg | selected = Just recordId}
 
 type Section
     = HasMany

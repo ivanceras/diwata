@@ -1,4 +1,4 @@
-module Data.Window.Field exposing (Field, decoder, columnName)
+module Data.Window.Field exposing (Field, decoder, columnName, fieldDataTypes)
 
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Extra
@@ -10,12 +10,28 @@ type alias Field =
     { name: String
     , description: Maybe String
     , info: Maybe String
+    , isPrimary: Bool
     , columnDetail: ColumnDetail
     }
 
 type ColumnDetail
     = Simple (ColumnName, DataType)
     | Compound (List (ColumnName, DataType))
+
+fieldDataTypes: Field -> List DataType
+fieldDataTypes field =
+    columnDataTypes field.columnDetail
+
+columnDataTypes: ColumnDetail -> List DataType
+columnDataTypes detail =
+    case detail of
+        Simple (columnName, dataType) ->
+            [dataType]
+        Compound listColumnDataType ->
+            List.map
+                (\ (_, dataType) ->
+                    dataType
+                ) listColumnDataType
 
 columnName: Field -> String
 columnName field =
@@ -32,6 +48,7 @@ decoder =
         |> required "name" Decode.string
         |> required "description" (Decode.nullable Decode.string)
         |> required "info" (Decode.nullable Decode.string)
+        |> required "is_primary" Decode.bool
         |> required "column_detail" columnDetailDecoder
 
 

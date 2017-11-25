@@ -30,5 +30,5 @@ view window rows =
     div [ class "row" ]
         [ h4 [] [text "Main tab"] 
         , div [ class "main-tab" ] 
-            [Tab.view window.mainTab rows]
+            [Tab.listView window.mainTab rows]
         ]

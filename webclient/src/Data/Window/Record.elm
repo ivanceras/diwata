@@ -1,14 +1,11 @@
 module Data.Window.Record exposing 
     ( Rows
-    , Row
-    , at
-    , CommentId
-    , commentIdDecoder
+    , RecordId(..)
     , rowsDecoder
     , idToString
-    , arrangeRows
     , Record
     , decoder
+    , rowsToRecordList
     )
 
 import Data.Window.Author as Author exposing (Author)
@@ -19,16 +16,15 @@ import Json.Decode.Pipeline as Pipeline exposing (custom, decode, required)
 import Data.Window.Value as Value exposing (Value)
 import Data.Window.TableName as TableName exposing (TableName)
 import Dict exposing (Dict)
+import Data.Window.DataType as DataType exposing (DataType)
+import Data.Window.Value as Value exposing (Value(..))
 
 
 
 type alias Rows =
     { columns : List String
-    , data : List Row 
+    , data : List (List Value) 
     }
-
-type alias Row = List Value
-
 
 
 type alias Record = Dict String Value
@@ -36,51 +32,16 @@ type alias Record = Dict String Value
 
 
 
-{-|
-    Get the list value that matched the list of string
-    for the purposed of rearranging the values
-    with respect to the rearranging of the columns
--}
-arrangeRecord: Record -> List String -> Row
-arrangeRecord record columns =
-    List.filterMap
-        ( \ column ->
-            Dict.get column record
-        ) columns
-
-{-|
-    each values in these records are arranged according to
-    the column arrangement supplied
--}
-arrangeRows: Rows -> List String -> List Row
-arrangeRows rows columns =
-    let 
-        recordList = rowsToRecordList rows
-    in
-        List.map
-        ( \ record ->
-            arrangeRecord record columns
-        ) recordList
-
 
 rowsToRecordList: Rows -> List Record
 rowsToRecordList rows =
     List.map
         (\data ->
-           List.map2 (,) rows.columns data 
-            |> Dict.fromList
+            let _ = Debug.log "rowsToRecordList mapping in data" data
+            in
+               List.map2 (,) rows.columns data 
+                |> Dict.fromList
         ) rows.data
-
-at: Int -> Rows -> Maybe Record
-at index rows =
-    let 
-        recordList = rowsToRecordList rows
-     
-        element = List.drop index recordList
-                |> List.head
-    in
-        element
-
 
 
 -- SERIALIZATION --
@@ -102,15 +63,77 @@ rowsDecoder =
 -- IDENTIFIERS --
 
 
-type CommentId
-    = CommentId Int
+type RecordId
+    = RecordId (List Value)
 
 
-idToString : CommentId -> String
-idToString (CommentId id) =
-    toString id
 
 
-commentIdDecoder : Decoder CommentId
-commentIdDecoder =
-    Decode.map CommentId Decode.int
+idToString : RecordId -> String
+idToString (RecordId values) =
+    List.map Value.valueToString values
+        |> String.join ","
+
+parseRecordId: String -> List DataType -> Maybe RecordId
+parseRecordId arg dataTypes =
+    let
+        args: List String
+        args = String.split "," arg
+
+        values: List (Maybe Value)
+        values = 
+            List.map2 
+                (\arg dataType ->
+                    let
+                        parsedValues: Maybe Value
+                        parsedValues =
+                            valueFromString arg dataType
+                    in
+                        parsedValues
+                ) args dataTypes
+
+        recordValues: List Value 
+        recordValues =
+            List.filterMap (\v -> v) values
+    in    
+        case List.isEmpty recordValues of
+           False -> 
+               Just (RecordId recordValues)
+           True ->
+               Nothing
+
+
+valueFromString: String -> DataType -> Maybe Value
+valueFromString arg dataType =
+    case dataType of
+        DataType.Tinyint -> 
+            case String.toInt arg of
+                Ok v -> Just (Tinyint v)
+                Err e -> Nothing
+
+        DataType.Smallint -> 
+            case String.toInt arg of
+                Ok v -> Just (Smallint v)
+                Err e -> Nothing
+
+        DataType.Int ->
+            case String.toInt arg of
+                Ok v -> Just (Int v)
+                Err e -> Nothing
+
+        DataType.Bigint ->
+            case String.toInt arg of
+                Ok v -> Just (Bigint v)
+                Err e -> Nothing
+
+        DataType.Text ->
+            case String.isEmpty arg of
+                True -> Nothing
+                False -> Just (Text arg)
+
+        DataType.Uuid ->
+            Just (Uuid arg)
+        
+        _ ->
+            Debug.crash ("This is not dealt with yet: "++arg++ " "++(toString dataType))
+            Nothing

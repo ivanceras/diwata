@@ -4,14 +4,20 @@ import Data.Window.RecordDetail as RecordDetail exposing (RecordDetail)
 import Task exposing (Task)
 import Http
 import Html exposing (..)
+import Html.Attributes exposing (attribute, class, classList, href, id, placeholder, src)
 import Request.Window.Records as Records
 import Page.Errored as Errored exposing (PageLoadError, pageLoadError)
 import Data.Window.TableName as TableName exposing (TableName)
 import Page.Errored as Errored exposing (PageLoadError, pageLoadError)
-import Data.Window.Record as Record exposing (Rows)
+import Data.Window.Record as Record exposing (Record,Rows)
 import Data.Window as Window exposing (Window)
 import Request.Window
 import Data.Window.Tab as Tab exposing (Tab)
+import Views.Window.Tab as Tab
+import Dict
+import Data.Window.Field as Field exposing (Field)
+import Views.Window.Field as Field
+import Data.Window.Value as Value exposing (Value)
 
 {-|
 Example:
@@ -44,12 +50,13 @@ init tableName selectedRow =
 
 view: Model -> Html msg
 view model =
+    let 
+        mainSelectedRecord = model.selectedRow.record
+        mainTab = model.window.mainTab
+    in
     div []
-        [ h2 [] [text ("Main tab: "++model.window.name)]
-        , text (toString (Tab.columnNames model.window.mainTab))
-        , h4 [] [text "selected row"]
-        , text (toString model.selectedRow)
-        , h4 [] [text "One One tabs:"]
+        [ h3 [] [text <| "Main tab: " ++ mainTab.name]
+        , cardViewRecord mainSelectedRecord mainTab
         , viewOneOneTabs model
         , viewDetailTabs model
         ]
@@ -61,18 +68,46 @@ viewOneOneTabs model =
         selectedRow = model.selectedRow
     in
     div []
-        (List.map (cardView selectedRow) window.oneOneTabs)
+        (List.map (oneOneCardView selectedRow) window.oneOneTabs)
 
-cardView: RecordDetail -> Tab ->  Html msg
-cardView detail tab =
+oneOneCardView: RecordDetail -> Tab ->  Html msg
+oneOneCardView detail tab =
     let
-        oneOneRecord = RecordDetail.oneOneRecordOfTable detail tab.tableName
+        record = RecordDetail.oneOneRecordOfTable detail tab.tableName
+    in
+    case record of
+        Just record ->
+            div []
+                [ h2 [] [text <| "One One: "++tab.name]
+                , cardViewRecord record tab
+                ]
+        Nothing ->
+            h4 [] [text <| "Empty card view for: "++tab.name]
+
+cardViewRecord: Record -> Tab -> Html msg
+cardViewRecord record tab =
+    let 
+        recordId = Tab.recordId record tab
+        columnNames = Tab.columnNames tab
+        fieldValuePair : List (Field, Maybe Value)
+        fieldValuePair = 
+            List.map
+                (\ field ->
+                    let 
+                        columnName = Field.columnName field
+                    in
+                        (field, Dict.get columnName record)
+                ) tab.fields
     in
     div []
-        [ h3 [] [text <| "One one tab: " ++ tab.name ]
-        , text (toString <| Tab.columnNames tab)
-        , h5 [] [text "Data:"]
-        , text (toString oneOneRecord)
+        [ a [] [text <| "recordId: "++Record.idToString recordId]
+        , div [class "card-view"]
+              (List.map 
+                  (\ (field, value) ->
+                      Field.view field value
+                  ) 
+                  fieldValuePair 
+              )
         ]
 
 viewDetailTabs: Model -> Html msg
@@ -98,9 +133,8 @@ listView detailRows tab =
     let 
         detailRecords = RecordDetail.contentInTable detailRows tab.tableName
     in
-    div []
-        [ h3 [] [text <| "Detail tab: " ++ tab.name ]
-        , text (toString <| Tab.columnNames tab)
-        , h5 [] [text "Data"]
-        , text (toString detailRecords)
-        ]
+    case detailRecords of
+        Just detailRecords ->
+            Tab.listView tab detailRecords
+        Nothing ->
+            text "Empty tab"

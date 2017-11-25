@@ -1,4 +1,8 @@
-module Data.Window.DataType exposing (DataType, decoder)
+module Data.Window.DataType 
+    exposing 
+    ( DataType(..)
+    , decoder
+    )
 
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Extra
@@ -73,4 +77,6 @@ decoder =
                     "TimeTz" -> Decode.succeed TimeTz
                     _ -> Decode.fail ("not yet dealt with" ++ val)
             )
+
+        
 

@@ -192,3 +192,32 @@ form * {
     height: 30px;
 }
 
+.card-view{
+    display: flex;
+    flex-wrap: wrap;
+    width: 800px;
+}
+
+.field-value {
+    display: flex;
+    width: 250px;
+    border: 1px solid green;
+    padding: 5px 5px;
+}
+
+.field{
+    padding: 0 5px;
+    border: 1px solid #ccc;
+    min-width: 100px;
+    height: 30px;
+    flex: 1;
+}
+
+.card-view-value{
+    padding: 0 5px;
+    border: 1px solid #ccc;
+    min-width: 100px;
+    height: 30px;
+    flex: 1;
+}
+

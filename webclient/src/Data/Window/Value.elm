@@ -1,4 +1,4 @@
-module Data.Window.Value exposing (Value, decoder)
+module Data.Window.Value exposing (Value(..), decoder, valueToString)
 
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Extra
@@ -128,4 +128,25 @@ timestampDecoder: Decoder Value
 timestampDecoder = 
     decode Text
     |> required "Timestamp" Decode.string
+
+
+{-| 
+    make a string representation for the purpose of selected record.
+    Support the most common primary key data_types for now 
+--}
+valueToString: Value -> String
+valueToString value =
+    let 
+        _ = Debug.log "valueToString for: " value
+    in
+    case value of
+        Nil -> ""
+        Tinyint v -> toString v
+        Smallint v -> toString v
+        Int v -> toString v
+        Bigint v -> toString v
+        Text v -> v
+        Uuid v -> v
+        _ -> Debug.crash "not yet supported" value
+
 
