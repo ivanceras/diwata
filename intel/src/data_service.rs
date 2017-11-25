@@ -48,6 +48,7 @@ pub fn get_maintable_data_first_page(em: &EntityManager,
     assert!(main_table.is_some());
     let main_table = main_table.unwrap();
     sql += &format!("FROM {} \n",main_tablename.complete_name());
+    /*
     for one1 in window.one_one_tabs.iter(){
         let one1_table = table_intel::get_table(&one1.table_name, tables);
         assert!(one1_table.is_some());
@@ -92,6 +93,7 @@ pub fn get_maintable_data_first_page(em: &EntityManager,
             }
         }
     }
+    */
     sql += &format!("LIMIT {}", page_size);
     println!("SQL: {}", sql);
     let result: Result<Rows, DbError> = em.db().execute_sql_with_return(&sql, &[]);

@@ -18,6 +18,7 @@ pub struct Field {
     description: Option<String>,
     /// derive from lookuped table comment
     info: Option<String>,
+    is_primary: bool,
     /// column name
     column_detail: ColumnDetail,
     /// the interpretation of this column
@@ -66,14 +67,17 @@ impl<'a> From<&'a Vec<&'a Column>> for ColumnDetail {
 impl Field{
 
     /// derive field from supplied column
-    pub fn from_column(column: &Column) -> Self {
+    pub fn from_column(table: &Table, column: &Column) -> Self {
         let reference = Self::try_derive_reference(column);
         let control_widget = ControlWidget::derive_control_widget(column, &reference);
         let column_detail:ColumnDetail = ColumnDetail::from(column);
+        let primary_columns = table.get_primary_column_names();
+        let in_primary = primary_columns.contains(&&column.name);
         Field{
             name: column.name.name.to_string(),
             description: column.comment.clone(),
             info: None,
+            is_primary: in_primary,
             column_detail,
             reference,
             control_widget
@@ -86,21 +90,25 @@ impl Field{
     /// that uses composite foreign key
     /// the field name will be the table name
     /// it looks up to
-    pub fn from_has_one_table(columns: &Vec<&Column>, table: &Table) -> Self {
-        let control_widget = ControlWidget::from_has_one_table(columns, table);
+    pub fn from_has_one_table(table: &Table, columns: &Vec<&Column>, referred_table: &Table) -> Self {
+        let control_widget = ControlWidget::from_has_one_table(columns, referred_table);
         let mut columns_comment = String::new();
         for column in columns{
             if let Some(ref comment) = column.comment{
                 columns_comment.push_str(&comment);
             }
         }
+        let in_primary = columns.iter().all(|column|
+                table.get_primary_column_names().contains(&&column.name)
+        );
         let column_detail:ColumnDetail = ColumnDetail::from(columns);
         Field{
-            name: table.name.name.to_string(),
+            name: referred_table.name.name.to_string(),
             description: if !columns_comment.is_empty(){
                             Some(columns_comment)
                          }else{None},
-            info: table.comment.to_owned(),
+            info: referred_table.comment.to_owned(),
+            is_primary: in_primary,
             column_detail,
             reference: Some(Reference::TableLookup),
             control_widget

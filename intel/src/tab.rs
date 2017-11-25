@@ -46,7 +46,7 @@ impl Tab{
                 .collect();
         let mut fields: Vec<Field> = Vec::with_capacity(plain_columns.len());
         for pc in plain_columns{
-            let field = Field::from_column(pc);
+            let field = Field::from_column(table, pc);
             fields.push(field)
         }
         fields
@@ -64,7 +64,7 @@ impl Tab{
             }
             let foreign_table = table_intel::get_table(&fk.foreign_table, all_tables);
             if let Some(foreign_table) = foreign_table {
-                let field = Field::from_has_one_table(&columns, foreign_table);
+                let field = Field::from_has_one_table(table, &columns, foreign_table);
                 fields.push(field);
             }
         }
