@@ -3,7 +3,7 @@ module Page.Window exposing (Model, Msg, init, update, view)
 {-| Viewing an individual window.
 -}
 
-import Data.Window as Window exposing (Window, Body)
+import Data.Window as Window exposing (Window)
 import Data.Window.Author as Author exposing (Author)
 import Data.Window.Record as Record exposing (Rows,Record,RecordId)
 import Data.Session as Session exposing (Session)

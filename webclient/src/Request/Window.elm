@@ -13,7 +13,7 @@ module Request.Window
         , update
         )
 
-import Data.Window as Window exposing (Window, Body, Tag, slugToString, baseWindowDecoder)
+import Data.Window as Window exposing (Window, Tag, slugToString, baseWindowDecoder)
 import Data.Window.GroupedWindow as GroupedWindow exposing (GroupedWindow, WindowName)
 import Data.Window.TableName as TableName exposing 
     ( TableName

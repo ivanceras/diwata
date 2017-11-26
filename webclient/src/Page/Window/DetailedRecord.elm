@@ -56,7 +56,7 @@ view model =
     in
     div []
         [ h3 [] [text <| "Main tab: " ++ mainTab.name]
-        , cardViewRecord mainSelectedRecord mainTab
+        , cardViewRecord (Just mainSelectedRecord) mainTab
         , viewOneOneTabs model
         , viewDetailTabs model
         ]
@@ -75,19 +75,14 @@ oneOneCardView detail tab =
     let
         record = RecordDetail.oneOneRecordOfTable detail tab.tableName
     in
-    case record of
-        Just record ->
-            div []
-                [ h2 [] [text <| "One One: "++tab.name]
-                , cardViewRecord record tab
-                ]
-        Nothing ->
-            h4 [] [text <| "Empty card view for: "++tab.name]
+    div []
+        [ h2 [] [text <| "One One: "++tab.name]
+        , cardViewRecord record tab
+        ]
 
-cardViewRecord: Record -> Tab -> Html msg
+cardViewRecord: Maybe Record -> Tab -> Html msg
 cardViewRecord record tab =
     let 
-        recordId = Tab.recordId record tab
         columnNames = Tab.columnNames tab
         fieldValuePair : List (Field, Maybe Value)
         fieldValuePair = 
@@ -95,13 +90,18 @@ cardViewRecord record tab =
                 (\ field ->
                     let 
                         columnName = Field.columnName field
+                        value =
+                            case record of
+                                Just record ->
+                                    Dict.get columnName record
+                                Nothing ->
+                                    Nothing
                     in
-                        (field, Dict.get columnName record)
+                        (field, value)
                 ) tab.fields
     in
     div []
-        [ a [] [text <| "recordId: "++Record.idToString recordId]
-        , div [class "card-view"]
+        [ div [class "card-view"]
               (List.map 
                   (\ (field, value) ->
                       Field.view field value

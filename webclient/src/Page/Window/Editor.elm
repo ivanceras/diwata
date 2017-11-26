@@ -1,6 +1,6 @@
 module Page.Window.Editor exposing (Model, Msg, initEdit, initNew, update, view)
 
-import Data.Window as Window exposing (Window, Body)
+import Data.Window as Window exposing (Window)
 import Data.Window.TableName as TableName exposing (TableName)
 import Data.Session as Session exposing (Session)
 import Data.User as User exposing (User)

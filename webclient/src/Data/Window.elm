@@ -1,11 +1,8 @@
 module Data.Window
     exposing
         ( Window
-        , Body
         , Slug
         , Tag
-        , bodyToHtml
-        , bodyToMarkdownString
         , slugParser
         , slugToString
         , tagDecoder
@@ -85,7 +82,6 @@ indirectTabDecoder =
         (Decode.index 0 TableName.decoder)
         (Decode.index 1 Tab.decoder)
     
-
 -- IDENTIFIERS --
 
 
@@ -122,27 +118,3 @@ tagDecoder =
 
 
 
--- BODY --
-
-
-type Body
-    = Body Markdown
-
-
-type alias Markdown =
-    String
-
-
-bodyToHtml : Body -> List (Attribute msg) -> Html msg
-bodyToHtml (Body markdown) attributes =
-    Markdown.toHtml attributes markdown
-
-
-bodyToMarkdownString : Body -> String
-bodyToMarkdownString (Body markdown) =
-    markdown
-
-
-bodyDecoder : Decoder Body
-bodyDecoder =
-    Decode.map Body Decode.string

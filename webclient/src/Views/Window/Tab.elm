@@ -21,7 +21,6 @@ listView tab rows =
     in
     div [] 
         [ h4 [] [text ("Tab fields: " ++ tab.name)]
-        , div [] [text ("rows: "++toString rows)]
         , div [] [viewColumns tab.fields]
         , div [class "tab-rows"]
             [listViewRows tab recordIdList recordList]
