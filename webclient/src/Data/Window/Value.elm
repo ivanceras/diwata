@@ -138,12 +138,23 @@ valueToString: Value -> String
 valueToString value =
     case value of
         Nil -> ""
+        Bool v -> toString v
+
         Tinyint v -> toString v
         Smallint v -> toString v
         Int v -> toString v
         Bigint v -> toString v
+        
+        Float v -> toString v
+        Double v -> toString v
+
+        Char v -> toString v
         Text v -> v
+        Json v -> v
+
         Uuid v -> v
-        _ -> Debug.crash "not yet supported" value
+        Date v -> v
+        Time v -> v
+        Timestamp v -> v
 
 

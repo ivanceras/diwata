@@ -200,7 +200,7 @@ form * {
 
 .field-value {
     display: flex;
-    width: 250px;
+    width: 350px;
     border: 1px solid green;
     padding: 5px 5px;
 }
@@ -208,15 +208,16 @@ form * {
 .field{
     padding: 0 5px;
     border: 1px solid #ccc;
-    min-width: 100px;
+    width: 100px;
     height: 30px;
     flex: 1;
+    text-align: right;
 }
 
 .card-view-value{
     padding: 0 5px;
     border: 1px solid #ccc;
-    min-width: 100px;
+    min-width: 200px;
     height: 30px;
     flex: 1;
 }
