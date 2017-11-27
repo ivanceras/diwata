@@ -94,7 +94,5 @@ tableNameParser =
 
 maybeTableNameParser: UrlParser.Parser (Maybe TableName -> a) a 
 maybeTableNameParser =
-    let _ = Debug.log "Trying to parse tableName from home"
-    in
     UrlParser.custom "MAYBE_TABLENAME" <| \segment -> 
         (maybeParseTableName segment)

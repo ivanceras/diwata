@@ -1,4 +1,4 @@
-module Page.Window.DetailedRecord exposing (init,Model,view)
+module Page.Window.DetailedRecord exposing (init,Model,view, subscriptions, update, Msg)
 
 import Data.Window.RecordDetail as RecordDetail exposing (RecordDetail)
 import Task exposing (Task)
@@ -18,6 +18,11 @@ import Dict
 import Data.Window.Field as Field exposing (Field)
 import Views.Window.Field as Field
 import Data.Window.Value as Value exposing (Value)
+import Mouse exposing (Position)
+import Data.Session as Session exposing (Session)
+import Util exposing ((=>))
+import Html.Events exposing (on)
+import Json.Decode as Decode
 
 {-|
 Example:
@@ -26,15 +31,20 @@ http://localhost:8000/#/window/bazaar.product/select/f7521093-734d-488a-9f60-fc9
 -- MODEL
 
 type alias Model =
-    { detailRows: List (TableName, Rows) -- each tabs has rows
-    , selectedRow: RecordDetail 
+    { selectedRow: RecordDetail 
     , window: Window
+    , position : Position 
+    , drag : Maybe Drag
+    }
+
+type alias Drag =
+    { start : Position
+    , current : Position
     }
 
 init: TableName -> String -> Task Http.Error Model
 init tableName selectedRow =
     let 
-        _ = Debug.log "initiating detail record view" selectedRow
 
         fetchSelected = 
             Records.fetchSelected tableName selectedRow
@@ -45,10 +55,18 @@ init tableName selectedRow =
                 |> Http.toTask
 
     in
-        Task.map2 (Model []) fetchSelected loadWindow
+        Task.map2 
+            (\detail window ->
+                { selectedRow = detail
+                , window = window
+                , position = Position 0 0
+                , drag = Nothing
+                }
+            ) 
+            fetchSelected loadWindow
 
 
-view: Model -> Html msg
+view: Model -> Html Msg
 view model =
     let 
         mainSelectedRecord = model.selectedRow.record
@@ -58,6 +76,7 @@ view model =
         [ h3 [] [text <| "Main tab: " ++ mainTab.name]
         , cardViewRecord (Just mainSelectedRecord) mainTab
         , viewOneOneTabs model
+        , div [onMouseDown, class "detail-separator"] [text "Separator"]
         , viewDetailTabs model
         ]
 
@@ -138,3 +157,71 @@ listView detailRows tab =
             Tab.listView tab detailRecords
         Nothing ->
             text "Empty tab"
+
+
+getPosition : Model -> Position
+getPosition model =
+    let 
+        position = model.position
+    in
+    case model.drag of
+      Nothing ->
+        position 
+
+      Just {start,current} ->
+        Position
+          (position.x + current.x - start.x)
+          (position.y + current.y - start.y)
+
+
+onMouseDown : Attribute Msg
+onMouseDown =
+  on "mousedown" (Decode.map DragStart Mouse.position)
+
+-- UPDATE
+
+
+type Msg
+    = DragStart Position
+    | DragAt Position
+    | DragEnd Position
+
+
+update: Session -> Msg -> Model -> ( Model, Cmd Msg )
+update session msg model =
+    ( updateDetailHeight msg model, Cmd.none )
+
+
+updateDetailHeight : Msg -> Model -> Model
+updateDetailHeight msg model =
+    let 
+        position = model.position
+        drag = model.drag
+    in
+    case msg of
+      DragStart xy ->
+          {model | drag  = Just (Drag xy xy)}
+
+      DragAt xy ->
+          let 
+            _ = Debug.log "dragging: " xy 
+          in
+          { model | position = position
+                , drag = Maybe.map (\{start} -> Drag start xy) drag
+          }
+
+      DragEnd _ ->
+          { model | position =  getPosition model
+                , drag = Nothing
+          }
+
+-- SUBSCRIPTION --
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+  case model.drag of
+    Nothing ->
+      Sub.none
+
+    Just _ ->
+      Sub.batch [ Mouse.moves DragAt, Mouse.ups DragEnd ]

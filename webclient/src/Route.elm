@@ -97,18 +97,11 @@ href route =
 
 modifyUrl : Route -> Cmd msg
 modifyUrl =
-    let _ = Debug.log "Modifying url"
-    in
     routeToString >> Navigation.modifyUrl
 
 
 fromLocation : Location -> Maybe Route
 fromLocation location =
-    let 
-        _ = Debug.log "location" location
-        _ = Debug.log "location hash" location.hash
-        args = Debug.log "arena args" (parseArenaArgs location.hash)
-    in
     if String.isEmpty location.hash then
         Just (WindowArena Nothing)
     else

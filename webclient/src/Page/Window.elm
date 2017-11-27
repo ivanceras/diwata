@@ -48,8 +48,6 @@ type alias Model =
 init : Session -> TableName -> Task PageLoadError Model
 init session tableName =
     let
-        _ = Debug.log "initiating window" tableName
-
         maybeAuthToken =
             Maybe.map .token session.user
 
@@ -62,8 +60,6 @@ init session tableName =
                 |> Http.toTask
 
         handleLoadError e =
-            let _ = Debug.log "handleLoadError" e
-            in
             pageLoadError Page.Other "Window is currently unavailable."
     in
     Task.map2 (Model [] "" False tableName) loadWindow loadRecords
@@ -238,8 +234,6 @@ update session msg model =
                 |> Tuple.mapFirst (Util.appendErrors model)
 
         RecordDeleted id (Ok ()) ->
-            let _ = Debug.log "comment deleted" id
-            in
              model => Cmd.none
 
         RecordDeleted id (Err error) ->

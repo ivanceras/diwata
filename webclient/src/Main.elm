@@ -34,7 +34,7 @@ type Page
     = Blank
     | NotFound
     | Errored PageLoadError
-    | Home WindowArena.Model
+    | WindowArena WindowArena.Model
     | Settings Settings.Model
     | Login Login.Model
     | Register Register.Model
@@ -115,8 +115,6 @@ viewPage session isLoading page =
                 |> frame Page.Other
 
         Errored subModel ->
-            let _ = Debug.log "errored" subModel
-            in
             Errored.view session subModel
                 |> frame Page.Other
 
@@ -125,10 +123,10 @@ viewPage session isLoading page =
                 |> frame Page.Other
                 |> Html.map SettingsMsg
 
-        Home subModel ->
+        WindowArena subModel ->
             WindowArena.view session subModel
                 |> frame Page.WindowArena
-                |> Html.map HomeMsg
+                |> Html.map WindowArenaMsg
 
         Login subModel ->
             Login.view session subModel
@@ -208,8 +206,8 @@ pageSubscriptions page =
         Settings _ ->
             Sub.none
 
-        Home _ ->
-            Sub.none
+        WindowArena windowArenaModel ->
+            Sub.map WindowArenaMsg (WindowArena.subscriptions windowArenaModel)
 
         Login _ ->
             Sub.none
@@ -237,7 +235,7 @@ type Msg
     | WindowLoaded (Result PageLoadError Window.Model)
     | ProfileLoaded Username (Result PageLoadError Profile.Model)
     | EditWindowLoaded TableName (Result PageLoadError Editor.Model)
-    | HomeMsg WindowArena.Msg
+    | WindowArenaMsg WindowArena.Msg
     | SettingsMsg Settings.Msg
     | SetUser (Maybe User)
     | LoginMsg Login.Msg
@@ -250,7 +248,6 @@ type Msg
 setRoute : Maybe Route -> Model -> ( Model, Cmd Msg )
 setRoute maybeRoute model =
     let
-        _ = Debug.log "route is" maybeRoute
         transition toMsg task =
             { model | pageState = TransitioningFrom (getPage model.pageState) }
                 => Task.attempt toMsg task
@@ -313,10 +310,6 @@ setRoute maybeRoute model =
         Just (Route.Profile username) ->
             transition (ProfileLoaded username) (Profile.init model.session username)
 
-        {-
-        Just (Route.WindowArena tableName) ->
-            transition WindowLoaded (Window.init model.session tableName)
-            -}
 
 
 pageErrored : Model -> ActivePage -> String -> ( Model, Cmd msg )
@@ -354,7 +347,7 @@ updatePage page msg model =
             setRoute route model
 
         ( HomeLoaded (Ok subModel), _ ) ->
-            { model | pageState = Loaded (Home subModel) } => Cmd.none
+            { model | pageState = Loaded (WindowArena subModel) } => Cmd.none
 
         ( HomeLoaded (Err error), _ ) ->
             { model | pageState = Loaded (Errored error) } => Cmd.none
@@ -383,7 +376,7 @@ updatePage page msg model =
                     model.session
 
                 cmd =
-                    -- If we just signed out, then redirect to Home.
+                    -- If we just signed out, then redirect to WindowArena.
                     if session.user /= Nothing && user == Nothing then
                         Route.modifyUrl (Route.WindowArena Nothing)
                     else
@@ -452,8 +445,8 @@ updatePage page msg model =
             { newModel | pageState = Loaded (Register pageModel) }
                 => Cmd.map RegisterMsg cmd
 
-        ( HomeMsg subMsg, Home subModel ) ->
-            toPage Home HomeMsg (WindowArena.update session) subMsg subModel
+        ( WindowArenaMsg subMsg, WindowArena subModel ) ->
+            toPage WindowArena WindowArenaMsg (WindowArena.update session) subMsg subModel
 
         ( ProfileMsg subMsg, Profile username subModel ) ->
             toPage (Profile username) ProfileMsg (Profile.update model.session) subMsg subModel

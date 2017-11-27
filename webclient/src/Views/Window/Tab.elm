@@ -12,9 +12,7 @@ listView: Tab -> Rows -> Html msg
 listView tab rows =
     let 
         columnNames = Tab.columnNames tab
-        _ = Debug.log "rows" rows
         recordList = Record.rowsToRecordList rows
-        _ = Debug.log "recordList" recordList
         recordIdList = 
             List.map (\record -> Tab.recordId record tab) recordList
 

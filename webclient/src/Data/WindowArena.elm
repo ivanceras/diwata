@@ -203,7 +203,7 @@ keyPairs url =
 parseArenaArgs: String -> Maybe ArenaArg 
 parseArenaArgs url = 
     let 
-        pairs = Debug.log "key pairs" <| keyPairs url    
+        pairs = keyPairs url
         head = List.head pairs
         tail = Maybe.withDefault [] (List.tail pairs)
         tableName = 
@@ -215,7 +215,6 @@ parseArenaArgs url =
                         Nothing
                 Nothing ->
                     Nothing
-        _ = Debug.log "tableName: " tableName                
 
         initialArgs = Maybe.map (\tableName -> initArg tableName) tableName
         arenaArgs = 
@@ -270,6 +269,5 @@ parseArenaArgs url =
                         Just detailed
                 Nothing -> initialArgs
 
-        _ = Debug.log "folded arena args" arenaArgs
     in 
         arenaArgs 

@@ -37,8 +37,6 @@ rowsToRecordList: Rows -> List Record
 rowsToRecordList rows =
     List.map
         (\data ->
-            let _ = Debug.log "rowsToRecordList mapping in data" data
-            in
                List.map2 (,) rows.columns data 
                 |> Dict.fromList
         ) rows.data

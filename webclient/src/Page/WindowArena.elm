@@ -1,4 +1,4 @@
-module Page.WindowArena exposing (Model, Msg, init, update, view)
+module Page.WindowArena exposing (Model, Msg, init, update, view, subscriptions)
 
 {-| The homepage. You can get here via either the / or /#/ routes.
 -}
@@ -72,8 +72,6 @@ init session arenaArg =
                     Task.succeed Nothing
 
         handleLoadError e =
-            let _ = Debug.log "LoadError" e
-            in
             pageLoadError Page.WindowArena "WindowArena is currently unavailable."
     in
     Task.map3 (Model [] ) loadActiveWindow loadWindowList loadSelectedRecord
@@ -105,11 +103,11 @@ view session model =
 
 viewWindowOrSelectedRow: Session -> Model -> Html Msg
 viewWindowOrSelectedRow session model =
-    case Debug.log "model.selectedRow" model.selectedRow of
-        Just selectedRow ->
-            DetailedRecord.view selectedRow
-        Nothing ->
-            viewWindow session model.activeWindow
+    case model.selectedRow of
+    Just selectedRow ->
+        Html.map DetailedRecordMsg (DetailedRecord.view selectedRow)
+    Nothing ->
+        viewWindow session model.activeWindow
 
 
 viewWindow : Session -> Maybe Window.Model -> Html Msg
@@ -141,13 +139,12 @@ viewBanner =
 type Msg
     = GroupedWindowMsg GroupedWindow.Msg
     | WindowMsg Window.Msg
+    | DetailedRecordMsg DetailedRecord.Msg
 
 
 
 update : Session -> Msg -> Model -> ( Model, Cmd Msg )
 update session msg model =
-    let _ = Debug.log "msg: " msg
-    in
     case msg of
         GroupedWindowMsg subMsg ->
             let
@@ -167,3 +164,25 @@ update session msg model =
 
                 Nothing ->
                     model => Cmd.none
+
+        DetailedRecordMsg subMsg ->
+            case model.selectedRow of
+                Just selectedRow ->
+                    let 
+                        ( newDetailedRecord, subCmd ) =
+                            DetailedRecord.update session subMsg selectedRow
+                    in
+                    { model | selectedRow = Just newDetailedRecord } => Cmd.map DetailedRecordMsg subCmd
+                Nothing ->
+                    model => Cmd.none
+
+
+subscriptions: Model -> Sub Msg
+subscriptions model =
+    Sub.batch
+        [ case model.selectedRow of
+            Just selectedRow ->
+                Sub.map DetailedRecordMsg (DetailedRecord.subscriptions selectedRow)
+            Nothing ->
+                Sub.none
+        ]

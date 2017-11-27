@@ -136,9 +136,6 @@ timestampDecoder =
 --}
 valueToString: Value -> String
 valueToString value =
-    let 
-        _ = Debug.log "valueToString for: " value
-    in
     case value of
         Nil -> ""
         Tinyint v -> toString v

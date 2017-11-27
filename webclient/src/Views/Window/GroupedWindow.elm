@@ -287,8 +287,6 @@ updateInternal session msg model =
                 |> pair model
 
         SelectWindow tableName ->
-            let _ = Debug.log "select window" (tableNameToString tableName)
-            in
             model => Cmd.none
 
 
