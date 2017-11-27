@@ -42,7 +42,6 @@ import Request.Window
 import SelectList exposing (Position(..), SelectList)
 import Task exposing (Task)
 import Util exposing ((=>), onClickStopPropagation, pair, viewIf)
-import Views.Window
 import Views.Errors as Errors
 import Views.Page exposing (bodyId)
 import Views.Spinner exposing (spinner)

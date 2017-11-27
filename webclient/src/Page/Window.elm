@@ -22,7 +22,7 @@ import Request.Profile
 import Route
 import Task exposing (Task)
 import Util exposing ((=>), pair, viewIf)
-import Views.Window
+--import Views.Window
 import Views.Window.Favorite as Favorite
 import Views.Author
 import Views.Errors
@@ -30,6 +30,7 @@ import Views.Page as Page
 import Views.User.Follow as Follow
 import Data.Window.GroupedWindow as GroupedWindow exposing (GroupedWindow, WindowName)
 import Data.Window.TableName as TableName exposing (TableName)
+import Views.Window.Tab as Tab
 
 
 -- MODEL --
@@ -89,73 +90,27 @@ view session model =
                 ]
             , hr [] []
             , div [] 
-                [Views.Window.view model.window model.records
+                [viewMainTab model.window model.records
                 ]
             ]
         ]
 
 
-
-viewAddComment : Bool -> Maybe User -> Html Msg
-viewAddComment postingDisabled maybeUser =
-    case maybeUser of
-        Nothing ->
-            p []
-                [ a [ Route.href Route.Login ] [ text "Sign in" ]
-                , text " or "
-                , a [ Route.href Route.Register ] [ text "sign up" ]
-                , text " to add records on this window."
-                ]
-
-        Just user ->
-            Html.form [ class "card comment-form", onSubmit PostComment ]
-                [ div [ class "card-block" ]
-                    [ textarea
-                        [ class "form-control"
-                        , placeholder "Write a comment..."
-                        , attribute "rows" "3"
-                        , onInput SetCommentText
-                        ]
-                        []
-                    ]
-                , div [ class "card-footer" ]
-                    [ img [ class "comment-author-img", UserPhoto.src user.image ] []
-                    , button
-                        [ class "btn btn-sm btn-primary"
-                        , disabled postingDisabled
-                        ]
-                        [ text "Post Rows" ]
-                    ]
-                ]
-
-
-viewButtons : WindowName -> Author -> Maybe User -> List (Html Msg)
-viewButtons windowName author maybeUser =
-    [ editButton windowName
-    , deleteButton windowName
-    ]
-
-
-
-
-formatCommentTimestamp : Date -> String
-formatCommentTimestamp =
-    Date.Format.format "%B %e, %Y"
-
-
+viewMainTab : Window -> Rows -> Html msg
+viewMainTab window rows =
+    div [ class "row" ]
+        [ h4 [] [text "Main tab"] 
+        , div [ class "main-tab" ] 
+            [Tab.listView window.mainTab rows]
+        ]
 
 -- UPDATE --
 
 
 type Msg
     = DismissErrors
-    | ToggleFavorite
-    | FavoriteCompleted (Result Http.Error TableName)
-    | SetCommentText String
     | DeleteRecord RecordId
     | RecordDeleted RecordId (Result Http.Error ())
-    | PostComment
-    | CommentPosted (Result Http.Error Rows)
     | CloseWindow
 
 
@@ -169,60 +124,6 @@ update session msg model =
     case msg of
         DismissErrors ->
             { model | errors = [] } => Cmd.none
-
-        ToggleFavorite ->
-            let
-                cmdFromAuth authToken =
-                    Request.Window.toggleFavorite tableName authToken
-                        |> Http.toTask
-                        |> Task.attempt FavoriteCompleted
-            in
-            session
-                |> Session.attempt "favorite" cmdFromAuth
-                |> Tuple.mapFirst (Util.appendErrors model)
-
-        FavoriteCompleted (Ok tableName) ->
-            { model | tableName = tableName } => Cmd.none
-
-        FavoriteCompleted (Err error) ->
-            -- In a serious production application, we would log the error to
-            -- a logging service so we could investigate later.
-            [ "There was a server error trying to record your Favorite. Sorry!" ]
-                |> Util.appendErrors model
-                => Cmd.none
-
-
-        SetCommentText commentText ->
-            { model | commentText = commentText } => Cmd.none
-
-        PostComment ->
-            let
-                comment =
-                    model.commentText
-            in
-            if model.commentInFlight || String.isEmpty comment then
-                model => Cmd.none
-            else
-                let
-                    cmdFromAuth authToken =
-                        authToken
-                            |> Request.Window.Records.post tableName comment
-                            |> Http.send CommentPosted
-                in
-                session
-                    |> Session.attempt "post a comment" cmdFromAuth
-                    |> Tuple.mapFirst (Util.appendErrors { model | commentInFlight = True })
-
-        CommentPosted (Ok comment) ->
-            { model
-                | commentInFlight = False
-                , records = model.records
-            }
-                => Cmd.none
-
-        CommentPosted (Err error) ->
-            { model | errors = model.errors ++ [ "Server error while trying to post comment." ] }
-                => Cmd.none
 
         DeleteRecord id ->
             let
@@ -245,23 +146,5 @@ update session msg model =
         CloseWindow ->
             model => Cmd.none
 
-
-
-
-
--- INTERNAL --
-
-
-
-deleteButton : WindowName -> Html Msg
-deleteButton windowName =
-    button [ class "btn btn-outline-danger btn-sm", onClick CloseWindow ]
-        [ i [ class "ion-trash-a" ] [], text " Delete Window" ]
-
-
-editButton : WindowName -> Html Msg
-editButton windowName =
-    a [ class "btn btn-outline-secondary btn-sm", Route.href (Route.EditWindow windowName.tableName) ]
-        [ i [ class "ion-edit" ] [], text " Edit Window" ]
 
 

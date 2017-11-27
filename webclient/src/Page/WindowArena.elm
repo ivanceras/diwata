@@ -20,6 +20,7 @@ import Page.Window as Window
 import Data.Window.TableName as TableName exposing (TableName)
 import Data.WindowArena as WindowArena exposing (ArenaArg)
 import Page.Window.DetailedRecord as DetailedRecord
+import Window as BrowserWindow
 
 
 -- MODEL --
@@ -140,6 +141,7 @@ type Msg
     = GroupedWindowMsg GroupedWindow.Msg
     | WindowMsg Window.Msg
     | DetailedRecordMsg DetailedRecord.Msg
+    | WindowResized BrowserWindow.Size
 
 
 
@@ -176,13 +178,24 @@ update session msg model =
                 Nothing ->
                     model => Cmd.none
 
+        WindowResized size ->
+            let 
+                _ = Debug.log "Window is resized: " size
+            in 
+                model => Cmd.none
+
 
 subscriptions: Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ case model.selectedRow of
-            Just selectedRow ->
-                Sub.map DetailedRecordMsg (DetailedRecord.subscriptions selectedRow)
-            Nothing ->
-                Sub.none
+        [ detailedRecordSubscriptions model 
+        , BrowserWindow.resizes (\ size -> WindowResized size)
         ]
+
+detailedRecordSubscriptions : Model -> Sub Msg
+detailedRecordSubscriptions model =
+    case model.selectedRow of
+        Just selectedRow ->
+            Sub.map DetailedRecordMsg (DetailedRecord.subscriptions selectedRow)
+        Nothing ->
+            Sub.none

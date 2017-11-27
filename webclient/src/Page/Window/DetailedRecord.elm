@@ -23,6 +23,7 @@ import Data.Session as Session exposing (Session)
 import Util exposing ((=>))
 import Html.Events exposing (on)
 import Json.Decode as Decode
+import Window as BrowserWindow
 
 {-|
 Example:
@@ -185,6 +186,7 @@ type Msg
     = DragStart Position
     | DragAt Position
     | DragEnd Position
+    | WindowResized BrowserWindow.Size
 
 
 update: Session -> Msg -> Model -> ( Model, Cmd Msg )
@@ -215,10 +217,23 @@ updateDetailHeight msg model =
                 , drag = Nothing
           }
 
+      WindowResized size ->
+          let
+              _ = Debug.log "window resize also felt in Detailed record: " size
+          in
+          model
+
 -- SUBSCRIPTION --
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
+    Sub.batch 
+        [ dividerHeightSubscriptions model
+        , BrowserWindow.resizes (\ size -> WindowResized size)
+        ]
+
+dividerHeightSubscriptions : Model -> Sub Msg
+dividerHeightSubscriptions model =
   case model.drag of
     Nothing ->
       Sub.none

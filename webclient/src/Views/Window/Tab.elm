@@ -6,6 +6,7 @@ import Data.Window.Tab as Tab exposing (Tab)
 import Data.Window.Record as Record exposing (Rows, Record, RecordId)
 import Data.Window.Field as Field exposing (Field)
 import Views.Window.Row as Row
+import Window as BrowserWindow
 
 
 listView: Tab -> Rows -> Html msg
@@ -44,4 +45,21 @@ listViewRows tab recordIdList recordList =
             )
             recordIdList recordList
          )
+
+type Msg
+    = WindowResized BrowserWindow.Size
+    | ListRowScrolled Scroll
+
+type alias Scroll =
+    { left: Float
+    , top: Float
+    }
+
+{--
+subscriptions: Model -> Sub Msg
+subscriptions model =
+    Sub.batch
+        [ BrowserWindow.resizes (\ size -> WindowResized size)
+        ] 
+--}
 
