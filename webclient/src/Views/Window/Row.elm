@@ -9,12 +9,15 @@ import Data.Window.Tab as Tab exposing (Tab)
 import Data.WindowArena as WindowArena
 import Dict
 import Views.Window.Value as Value
+import Data.Window.Widget exposing (ControlWidget)
+import Data.Window.Field as Field exposing (Field)
 
 
 view: RecordId -> Record -> Tab -> Html msg
 view recordId record tab =
     let 
         recordIdString = Record.idToString recordId
+        fields = tab.fields -- rearrange fields here if needed
     in
     div [class "tab-row"] 
         ([ a [class "row-id"
@@ -23,9 +26,14 @@ view recordId record tab =
             [text "link"]
         ] ++
         (List.map
-            (\ (column, value) ->
-                Value.viewInList (Just value)
+            (\ field ->
+                let 
+                    columnName  = Field.columnName field
+                    value = Dict.get columnName record
+                in
+                Value.viewInList field.controlWidget value
             )
-            (Dict.toList record))
+            fields
         )
+    )
     

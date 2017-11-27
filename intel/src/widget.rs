@@ -4,14 +4,11 @@ use rustorm::Table;
 
 #[derive(Debug, Serialize, Clone)]
 pub enum Widget {
-    Label,
     Textbox,
     Password,
     TagSelection,
     MultilineText,
     MarkdownHtml,
-    Editor,
-    ReadOnlyEditor,
     CodeHighlighter,
     ColorSelector,
     DatePicker,
@@ -39,7 +36,6 @@ pub enum Widget {
     Checkbox,
     CheckmarkStatusImage, // use check mark such as for "is_active"
     IndicatorStatusImage, // on/off - dull gray/ birght green LED
-    RadioGroup,
     ToggleButton, // switch button with on/off
     UrlLink,
     UrlTextbox,

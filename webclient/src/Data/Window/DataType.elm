@@ -42,9 +42,18 @@ type DataType
     | Time
     | TimeTz
     | Enum (String, List String)
+    | ArrayType DataType
+
 
 decoder: Decoder DataType
 decoder =
+    Decode.oneOf
+        [ simpleDecoder
+        , arrayTypeDecoder
+        ]
+
+simpleDecoder: Decoder DataType
+simpleDecoder =
     Decode.string
         |> Decode.andThen
             (\val ->
@@ -77,6 +86,11 @@ decoder =
                     "TimeTz" -> Decode.succeed TimeTz
                     _ -> Decode.fail ("not yet dealt with" ++ val)
             )
+
+arrayTypeDecoder: Decoder DataType
+arrayTypeDecoder =
+    decode ArrayType
+        |> required "ArrayType" simpleDecoder
 
         
 

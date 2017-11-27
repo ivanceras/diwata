@@ -60,6 +60,8 @@ init session tableName =
                 |> Http.toTask
 
         handleLoadError e =
+            let _ = Debug.log "error in loading window" e
+            in
             pageLoadError Page.Other "Window is currently unavailable."
     in
     Task.map2 (Model [] "" False tableName) loadWindow loadRecords

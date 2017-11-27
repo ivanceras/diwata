@@ -5,6 +5,7 @@ import Json.Decode.Extra
 import Json.Decode.Pipeline as Pipeline exposing (custom, decode, hardcoded, required)
 import Data.Window.ColumnName as ColumnName exposing (ColumnName)
 import Data.Window.DataType as DataType exposing (DataType)
+import Data.Window.Widget as Widget exposing (ControlWidget)
 
 type alias Field =
     { name: String
@@ -12,6 +13,8 @@ type alias Field =
     , info: Maybe String
     , isPrimary: Bool
     , columnDetail: ColumnDetail
+    --, reference: Maybe Reference
+    , controlWidget: ControlWidget
     }
 
 type ColumnDetail
@@ -50,6 +53,7 @@ decoder =
         |> required "info" (Decode.nullable Decode.string)
         |> required "is_primary" Decode.bool
         |> required "column_detail" columnDetailDecoder
+        |> required "control_widget" Widget.controlWidgetDecoder
 
 
 columnDetailDecoder: Decoder ColumnDetail

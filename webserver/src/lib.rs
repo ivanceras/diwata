@@ -37,7 +37,7 @@ use rocket::response::Redirect;
 
 mod error;
 
-static DB_URL: &'static str = "postgres://postgres:p0stgr3s@localhost:5432/bazaar_v8";
+static DB_URL: &'static str = "postgres://postgres:p0stgr3s@localhost:5432/jybapiprod";
 
 lazy_static!{
     pub static ref POOL: Arc<Mutex<Pool>> = {

@@ -11,7 +11,7 @@ view field value =
     div [class "field-value"]
         [ div [class "field"]
             [text (field.name ++ ": ")] 
-        , Value.viewInCard value
+        , Value.viewInCard field.controlWidget value 
         ]
         
 
