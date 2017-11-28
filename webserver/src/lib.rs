@@ -37,7 +37,8 @@ use rocket::response::Redirect;
 
 mod error;
 
-static DB_URL: &'static str = "postgres://postgres:p0stgr3s@localhost:5432/jybapiprod";
+static DB_URL: &'static str = "postgres://postgres:p0stgr3s@localhost:5432/mock";
+static PAGE_SIZE: i32 = 40; 
 
 lazy_static!{
     pub static ref POOL: Arc<Mutex<Pool>> = {
@@ -102,7 +103,7 @@ fn get_data(table_name: String) -> Result<Option<Json<Rows>>, ServiceError> {
         Some(window) => {
             let rows: Rows = 
                 data_service::get_maintable_data_first_page(&em, &tables,
-                                                        &window, None, 20)?;
+                                                        &window, None, PAGE_SIZE)?;
             Ok(Some(Json(rows)))
         }
         None => Ok(None)
