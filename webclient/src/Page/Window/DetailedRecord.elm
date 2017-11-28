@@ -158,7 +158,7 @@ cardViewRecord record tab =
               )
         ]
 
-viewDetailTabs: Model -> Html msg
+viewDetailTabs: Model -> Html Msg
 viewDetailTabs model = 
     let 
         window = model.window
@@ -178,7 +178,7 @@ viewDetailTabs model =
     div []
         detailTabViews
 
-listView: List (TableName, Rows)  -> Tab.Model -> Html msg
+listView: List (TableName, Rows)  -> Tab.Model -> Html Msg
 listView detailRows tab =
     let 
         detailRecords = RecordDetail.contentInTable detailRows tab.tab.tableName
@@ -186,6 +186,7 @@ listView detailRows tab =
     case detailRecords of
         Just detailRecords ->
             Tab.listView tab detailRecords
+                |> Html.map (\tabMsg -> TabMsg (tab, tabMsg))
         Nothing ->
             text "Empty tab"
 
@@ -217,22 +218,18 @@ type Msg
     | DragAt Position
     | DragEnd Position
     | WindowResized BrowserWindow.Size
+    | TabMsg (Tab.Model, Tab.Msg)
 
 
 update: Session -> Msg -> Model -> ( Model, Cmd Msg )
 update session msg model =
-    ( updateDetailHeight msg model, Cmd.none )
-
-
-updateDetailHeight : Msg -> Model -> Model
-updateDetailHeight msg model =
     let 
         position = model.position
         drag = model.drag
     in
     case msg of
       DragStart xy ->
-          {model | drag  = Just (Drag xy xy)}
+          {model | drag  = Just (Drag xy xy)} => Cmd.none
 
       DragAt xy ->
           let 
@@ -240,18 +237,40 @@ updateDetailHeight msg model =
           in
           { model | position = position
                 , drag = Maybe.map (\{start} -> Drag start xy) drag
-          }
+          } => Cmd.none
 
       DragEnd _ ->
           { model | position =  getPosition model
                 , drag = Nothing
-          }
+          } => Cmd.none
 
       WindowResized size ->
           let
               _ = Debug.log "window resize also felt in Detailed record: " size
           in
-          model
+          model => Cmd.none
+     
+      TabMsg (tabModel, tabMsg) ->
+          let 
+              _ = Debug.log ("DetailedRecord: process this tab message here for tabModel: "++tabModel.tab.name) tabMsg
+              (newTabModel, subCmd) = Tab.update tabMsg tabModel
+              updatedHasManyTabs = updateTabModels model.hasManyTabs newTabModel
+              updatedIndirectTabs = updateTabModels model.indirectTabs newTabModel
+          in
+              { model | hasManyTabs = updatedHasManyTabs
+                    , indirectTabs = updatedIndirectTabs
+              } => Cmd.map (\tabMsg -> TabMsg (newTabModel, tabMsg) )subCmd
+
+updateTabModels: List Tab.Model -> Tab.Model -> List Tab.Model
+updateTabModels modelList tabModel =
+    List.map
+        (\model ->
+            if model.tab.tableName == tabModel.tab.tableName then
+                tabModel
+            else
+                model
+        )
+        modelList
 
 -- SUBSCRIPTION --
 

@@ -65,6 +65,9 @@
     height: 300px;
     overflow: hidden;
 }
+.row-shadow-content div {
+    height: 20px;
+}
 
 /* Frozen head columns */
 .frozen-head-columns{
@@ -83,11 +86,13 @@
     min-width: 150px;
 }
 .tab-columns {
-    display: flex;
-    width: 1500px;
+    width: 1200px;
     height: 50px;
     border: solid 1px purple;
     overflow: hidden;
+}
+.tab-columns-content {
+    display: flex;
 }
 
 .tab-column {
@@ -100,8 +105,14 @@
 }
 
 .list-view-rows {
-    width: 1500px;
+    width: 1200px;
     height: 300px;
     border: 1px solid yellow;
     overflow: auto;
+}
+
+.empty-list-view-rows {
+    border: 1px solid cyan;
+    width: 2000px;
+    height: 2000px;
 }

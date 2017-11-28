@@ -112,7 +112,7 @@ view session model =
         ]
 
 
-viewMainTab : Model -> Html msg
+viewMainTab : Model -> Html Msg
 viewMainTab model =
     let 
         mainTab = model.mainTab
@@ -121,7 +121,9 @@ viewMainTab model =
     div [ class "row" ]
         [ h4 [] [text "Main tab"] 
         , div [ class "main-tab" ] 
-            [Tab.listView mainTab records]
+            [Tab.listView mainTab records
+                |> Html.map TabMsg
+            ]
         ]
 
 -- UPDATE --
@@ -133,6 +135,7 @@ type Msg
     | RecordDeleted RecordId (Result Http.Error ())
     | CloseWindow
     | WindowResized BrowserWindow.Size
+    | TabMsg Tab.Msg
 
 
 update : Session -> Msg -> Model -> ( Model, Cmd Msg )
@@ -172,6 +175,13 @@ update session msg model =
                 _ = Debug.log "Browser window resized in Page.Window" size
             in
             model => Cmd.none
+        TabMsg tabMsg ->
+          let
+              _ = Debug.log "From page window: Sent this to tab message" tabMsg
+              ( newMainTab, subCmd )
+                = Tab.update tabMsg model.mainTab
+          in
+              { model | mainTab = newMainTab } => Cmd.map TabMsg subCmd
 
 
 subscriptions: Model -> Sub Msg
