@@ -3,187 +3,8 @@
     user-select: auto;
     -webkit-user-select: auto;
 }
-.fast {
-    animation-duration: 0.25s;
-}
 
 
-.record_detail{
-    box-shadow: -9px 9px 28px 0px rgba(50, 50, 50, 0.73);
-}
-.badge {
-	position: absolute;
-	background: #ff4081;
-	min-width: 15px;
-	text-align: center;
-	border-radius: 50%;
-	color: white;
-	left: 20px;
-	top: -3px;
-    font-size: 9px;
-}
-.badge-changes{
-    background:#5fba7d;
-}
-.alert{
-    background-color:#f2dede;
-    border-radius: 4px;
-    border-color: #ebccd1;
-    padding: 15px;
-}
-button {
-  -webkit-app-region: no-drag;
-  }
-
-.indent {
- margin-left: 222px!important
-}
-
-.flex-center {
-  display: flex;
-  justify-content: center;
-}
-
-.toolbar-footer {
-  padding-top: 10px;
-  padding-bottom: 5px;
-}
-
-
-.uuid {
-  font-size: 12px!important
-}
-
-.tooltip {
-   /*position: absolute;*/
-    display: inline-block;
-}
-
-.tooltip .tooltiptext {
-    margin-top: 20px;
-    visibility: hidden;
-    background-color: black;
-    color: #fff;
-    text-align: center;
-    padding: 4px;
-    border-radius: 2px;
-    position: absolute;
-    z-index: 1000;
-    font-size: 12px; 
-
-}
-
-.tooltip:hover .tooltiptext {
-    visibility: visible;
-}
-
-
-
-td.record_control div{
-    padding: 4px;
-    font-size: 1.2em;
-}
-
-/* override the photon highlighting */
-tr:active{
-    background-color: transparent;
-    color: #333; 
- }
-
-
-.form-action {
-    font-size: 1.3em;
-    font-weight: bold
-}
-
-.tab_filters th {
-   border: 0px 
-}
-
-tr.focused{
-    background-color: #eee; /* no need to highlight */
-}
-tr.clicked{
-    background-color: #efefef!important;/*if selecting modified ones */
-}
-
-tr.selected{
-    background-color: #eee;
-}
-tr.modified{
-    background-color: #fdfedf;
-}
-tr.new_record{
-    background-color: #cf9;
-}
-
-table.frozenControlHead thead th {
-    border: 0px;    
-}
-table.frozenControlHead {
-    border-right: 1px dashed #ccc;
-}
-table.main_table td{
-   border-right: 1px solid #dfdfdf; 
-}
-
-tr,th,td{
-  -webkit-user-select: text;
-}
-
-td * {
-  -webkit-user-select: text;
-}
-
-
-form * {
-  -webkit-user-select: text;
-}
-
-.tab-group{
-    background-color:#b8b6b8;
-}
-.tab-item{
-    flex:none;
-    width: 300px;
-    white-space: nowrap;
-}
-
-.tab-item .icon-close-tab{
-    left: auto; /* set to 5px in photonkit */
-    right: 5px; /* put the icon to the right */
-}
-
-.flex{
-    flex: 1
-}
-
-.tab-item.has-many{
-    flex:none;
-    white-space: nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
-    width: 150px;
-}
-
-.main_container{
-    overflow:hidden;
-}
-
-.tab-columns {
-    display: flex;
-}
-
-.tab-column {
-    padding: 0 5px;
-    border: 1px solid #ccc;
-    min-width: 150px;
-}
-
-.tab-row{
-    display: flex;
-    width: 200px;
-}
 
 .row-value {
     padding: 0 5px;
@@ -226,3 +47,61 @@ form * {
     border: 1px solid red;
 }
 
+
+.tab-row{
+    display: flex;
+    width: 200px;
+}
+
+.frozen-head{
+    border: 1px solid green;
+    min-width: 100px;
+    height: 50px;
+}
+
+.row-shadow{
+    border: 1px solid red;
+    width: 100px;
+    height: 300px;
+    overflow: hidden;
+}
+
+/* Frozen head columns */
+.frozen-head-columns{
+    display: flex;
+}
+
+/* row shadow and the listing of row records */
+.row-shadow-list-rows{
+    display: flex;
+}
+
+
+.tab-column {
+    padding: 0 5px;
+    border: 1px solid #ccc;
+    min-width: 150px;
+}
+.tab-columns {
+    display: flex;
+    width: 1500px;
+    height: 50px;
+    border: solid 1px purple;
+    overflow: hidden;
+}
+
+.tab-column {
+    padding: 0 5px;
+    border: 1px solid #ccc;
+    min-width: 150px;
+}
+.tab-list-view {
+    border: 1px solid blue;
+}
+
+.list-view-rows {
+    width: 1500px;
+    height: 300px;
+    border: 1px solid yellow;
+    overflow: auto;
+}

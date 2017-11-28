@@ -1,4 +1,4 @@
-module Page.Window exposing (Model, Msg, init, update, view)
+module Page.Window exposing (Model, Msg, init, update, view, subscriptions)
 
 {-| Viewing an individual window.
 -}
@@ -31,6 +31,7 @@ import Views.User.Follow as Follow
 import Data.Window.GroupedWindow as GroupedWindow exposing (GroupedWindow, WindowName)
 import Data.Window.TableName as TableName exposing (TableName)
 import Views.Window.Tab as Tab
+import Window as BrowserWindow
 
 
 -- MODEL --
@@ -41,6 +42,7 @@ type alias Model =
     , commentText : String
     , commentInFlight : Bool
     , tableName : TableName 
+    , mainTab : Tab.Model
     , window : Window
     , records : Rows
     }
@@ -55,18 +57,32 @@ init session tableName =
         loadWindow =
             Request.Window.get maybeAuthToken tableName
                 |> Http.toTask
+                |> Task.mapError handleLoadError
 
         loadRecords =
             Request.Window.Records.list maybeAuthToken tableName
                 |> Http.toTask
+                |> Task.mapError handleLoadError
 
         handleLoadError e =
             let _ = Debug.log "error in loading window" e
             in
             pageLoadError Page.Other "Window is currently unavailable."
+
+        mainTabTask = Task.andThen (\window -> Tab.init window.mainTab) loadWindow
     in
-    Task.map2 (Model [] "" False tableName) loadWindow loadRecords
-        |> Task.mapError handleLoadError
+    Task.map3
+        (\window rows mainTab ->
+            { errors = []
+            , commentText = ""
+            , commentInFlight = False
+            , tableName = tableName
+            , mainTab = mainTab
+            , window = window
+            , records = rows
+            }
+        )
+        loadWindow loadRecords mainTabTask
 
 
 
@@ -90,18 +106,22 @@ view session model =
                 ]
             , hr [] []
             , div [] 
-                [viewMainTab model.window model.records
+                [viewMainTab model
                 ]
             ]
         ]
 
 
-viewMainTab : Window -> Rows -> Html msg
-viewMainTab window rows =
+viewMainTab : Model -> Html msg
+viewMainTab model =
+    let 
+        mainTab = model.mainTab
+        records = model.records
+    in
     div [ class "row" ]
         [ h4 [] [text "Main tab"] 
         , div [ class "main-tab" ] 
-            [Tab.listView window.mainTab rows]
+            [Tab.listView mainTab records]
         ]
 
 -- UPDATE --
@@ -112,6 +132,7 @@ type Msg
     | DeleteRecord RecordId
     | RecordDeleted RecordId (Result Http.Error ())
     | CloseWindow
+    | WindowResized BrowserWindow.Size
 
 
 update : Session -> Msg -> Model -> ( Model, Cmd Msg )
@@ -146,5 +167,16 @@ update session msg model =
         CloseWindow ->
             model => Cmd.none
 
+        WindowResized size ->
+            let 
+                _ = Debug.log "Browser window resized in Page.Window" size
+            in
+            model => Cmd.none
 
+
+subscriptions: Model -> Sub Msg
+subscriptions model =
+    Sub.batch
+        [ BrowserWindow.resizes (\ size -> WindowResized size)
+        ]
 

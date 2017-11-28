@@ -189,6 +189,7 @@ subscriptions: Model -> Sub Msg
 subscriptions model =
     Sub.batch
         [ detailedRecordSubscriptions model 
+        , windowSubscriptions model
         , BrowserWindow.resizes (\ size -> WindowResized size)
         ]
 
@@ -197,5 +198,14 @@ detailedRecordSubscriptions model =
     case model.selectedRow of
         Just selectedRow ->
             Sub.map DetailedRecordMsg (DetailedRecord.subscriptions selectedRow)
+        Nothing ->
+            Sub.none
+
+
+windowSubscriptions : Model -> Sub Msg
+windowSubscriptions model =
+    case model.activeWindow of
+        Just activeWindow ->
+            Sub.map WindowMsg (Window.subscriptions activeWindow)
         Nothing ->
             Sub.none

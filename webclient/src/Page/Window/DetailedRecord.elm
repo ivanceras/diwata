@@ -24,6 +24,7 @@ import Util exposing ((=>))
 import Html.Events exposing (on)
 import Json.Decode as Decode
 import Window as BrowserWindow
+import Views.Page as Page
 
 {-|
 Example:
@@ -34,6 +35,8 @@ http://localhost:8000/#/window/bazaar.product/select/f7521093-734d-488a-9f60-fc9
 type alias Model =
     { selectedRow: RecordDetail 
     , window: Window
+    , hasManyTabs: List Tab.Model
+    , indirectTabs: List Tab.Model
     , position : Position 
     , drag : Maybe Drag
     }
@@ -43,28 +46,53 @@ type alias Drag =
     , current : Position
     }
 
-init: TableName -> String -> Task Http.Error Model
+init: TableName -> String -> Task PageLoadError Model
 init tableName selectedRow =
     let 
 
         fetchSelected = 
             Records.fetchSelected tableName selectedRow
                 |> Http.toTask
+                |> Task.mapError handleLoadError
 
         loadWindow =
             Request.Window.get Nothing tableName
                 |> Http.toTask
+                |> Task.mapError handleLoadError
+
+        initHasManyTabs =
+            Task.andThen
+                (\ window ->
+                    List.map Tab.init window.hasManyTabs
+                    |> Task.sequence
+                ) loadWindow
+
+        initIndirectTabs =
+            Task.andThen
+                (\ window ->
+                    List.map 
+                        (\(tableName, indirectTab) ->
+                            Tab.init indirectTab
+                        ) window.indirectTabs
+                    |> Task.sequence
+                ) loadWindow
+
+        handleLoadError e =
+            pageLoadError Page.DetailedRecord "DetailedRecord is currently unavailable."
+
 
     in
-        Task.map2 
-            (\detail window ->
+        Task.map4 
+            (\detail window hasManyTabs indirectTabs ->
                 { selectedRow = detail
                 , window = window
+                , hasManyTabs = hasManyTabs
+                , indirectTabs = indirectTabs
                 , position = Position 0 0
                 , drag = Nothing
                 }
             ) 
-            fetchSelected loadWindow
+            fetchSelected loadWindow initHasManyTabs initIndirectTabs
 
 
 view: Model -> Html Msg
@@ -135,23 +163,25 @@ viewDetailTabs model =
     let 
         window = model.window
         selectedRow = model.selectedRow
+        hasManyTabs = model.hasManyTabs
+        indirectTabs = model.indirectTabs
         detailTabViews =  
-            (List.map (listView selectedRow.hasMany) window.hasManyTabs)
+            (List.map (listView selectedRow.hasMany) hasManyTabs)
             ++
             (List.map 
-                (\(linker, indirectTab) ->
+                (\indirectTab ->
                     listView selectedRow.indirect indirectTab
                 )
-                window.indirectTabs
+                indirectTabs
             )
     in
     div []
         detailTabViews
 
-listView: List (TableName, Rows)  -> Tab -> Html msg
+listView: List (TableName, Rows)  -> Tab.Model -> Html msg
 listView detailRows tab =
     let 
-        detailRecords = RecordDetail.contentInTable detailRows tab.tableName
+        detailRecords = RecordDetail.contentInTable detailRows tab.tab.tableName
     in
     case detailRecords of
         Just detailRecords ->
