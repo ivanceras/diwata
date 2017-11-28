@@ -31,7 +31,8 @@ view recordId record tab =
                     columnName  = Field.columnName field
                     value = Dict.get columnName record
                 in
-                Value.viewInList field.controlWidget value
+                div [class "tab-row-value"]
+                    [Value.viewInList field.controlWidget value]
             )
             fields
         )

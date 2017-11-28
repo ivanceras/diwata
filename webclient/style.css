@@ -50,6 +50,18 @@
 
 .tab-row{
     display: flex;
+}
+
+.tab-row-value {
+    padding: 5px;
+    min-width: 230px;
+}
+
+.tab-row-value input {
+    border-width: 0 0 1px 0;
+    border-style: solid;
+    border-color: #ccc;
+    height: 30px;
     width: 200px;
 }
 
@@ -66,7 +78,7 @@
     overflow: hidden;
 }
 .row-shadow-content div {
-    height: 20px;
+    height: 30px;
 }
 
 /* Frozen head columns */
@@ -80,11 +92,6 @@
 }
 
 
-.tab-column {
-    padding: 0 5px;
-    border: 1px solid #ccc;
-    min-width: 150px;
-}
 .tab-columns {
     width: 1200px;
     height: 50px;
@@ -97,8 +104,9 @@
 
 .tab-column {
     padding: 0 5px;
-    border: 1px solid #ccc;
-    min-width: 150px;
+    border-right: 1px solid #ccc;
+    min-width: 220px;
+    text-align: center;
 }
 .tab-list-view {
     border: 1px solid blue;
@@ -116,3 +124,34 @@
     width: 2000px;
     height: 2000px;
 }
+
+.column-filters {
+    display: flex;
+    padding: 2px;
+}
+
+.column-filter{
+    display: flex;
+    padding: 0 5px;
+    border-right: 1px solid #ccc;
+}
+
+.filter-value{
+    height: 20px;
+    width: 200px;
+    border-color: green;
+    border-width: 1px 1px 1px 0;
+    border-style: solid;
+    border-radius: 0 5px 5px 0;
+}
+
+.filter-value-icon{
+    width: 16px;
+    color: #aaa;
+    padding: 3px 2px 0 3px;
+    border-color: green;
+    border-width: 1px 0 1px 1px;
+    border-style: solid;
+    border-radius: 5px 0 0 5px;
+}
+

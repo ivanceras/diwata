@@ -1,7 +1,7 @@
 module Views.Window.Tab exposing (listView, Model, init, update, Msg)
 
 import Html exposing (..)
-import Html.Attributes exposing (attribute, class, classList, href, id, placeholder, src, property)
+import Html.Attributes exposing (attribute, class, classList, href, id, placeholder, src, property, type_)
 import Data.Window.Tab as Tab exposing (Tab)
 import Data.Window.Record as Record exposing (Rows, Record, RecordId)
 import Data.Window.Field as Field exposing (Field)
@@ -61,7 +61,7 @@ listView model rows =
         ]
 
 
-viewRowShadow: Model -> Html msg
+viewRowShadow: Model -> Html Msg
 viewRowShadow model =
     let 
         scrollTop = model.listRowScroll.top
@@ -78,13 +78,13 @@ viewRowShadow model =
             )
         ]
 
-viewFrozenHead: Model -> Html msg
+viewFrozenHead: Model -> Html Msg
 viewFrozenHead model =
     div [ class "frozen-head"
         ]
         [ text "frozen head"]
 
-viewColumns: Model -> List Field -> Html msg
+viewColumns: Model -> List Field -> Html Msg
 viewColumns model fields =
     let 
         scrollLeft = model.listRowScroll.left
@@ -93,13 +93,32 @@ viewColumns model fields =
         , property "scrollLeft" (Encode.int scrollLeft)
         ]
         [ div [class "tab-columns-content"]
-            (List.map viewColumn fields)
+            (List.map viewColumnWithSearchbox fields)
         ]
 
-viewColumn: Field -> Html msg
+viewColumnWithSearchbox: Field -> Html Msg
+viewColumnWithSearchbox field =
+    div []
+        [ viewColumn field
+        , viewSearchbox
+        ]
+
+viewColumn: Field -> Html Msg
 viewColumn field =
     div [class "tab-column"]
         [text (Field.columnName field)]
+
+viewSearchbox: Html Msg
+viewSearchbox =
+    div [class "column-filter"]
+        [ i [class "fa fa-search filter-value-icon"
+            ][]
+        , input [ class "filter-value"
+                ,type_ "search"
+               ] 
+               []
+        ]
+
 
 listViewRows: Tab -> List RecordId -> List Record -> Html Msg
 listViewRows tab recordIdList recordList =
