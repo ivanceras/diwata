@@ -139,7 +139,7 @@
 .filter-value{
     height: 20px;
     width: 200px;
-    border-color: green;
+    border-color: #aaa;
     border-width: 1px 1px 1px 0;
     border-style: solid;
     border-radius: 0 5px 5px 0;
@@ -149,7 +149,7 @@
     width: 16px;
     color: #aaa;
     padding: 3px 2px 0 3px;
-    border-color: green;
+    border-color: #aaa;
     border-width: 1px 0 1px 1px;
     border-style: solid;
     border-radius: 5px 0 0 5px;

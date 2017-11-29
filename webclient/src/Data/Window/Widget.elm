@@ -1,16 +1,34 @@
-module Data.Window.Widget exposing (Widget(..), decoder, ControlWidget,controlWidgetDecoder)
+module Data.Window.Widget exposing 
+    ( Widget(..)
+    , decoder
+    , ControlWidget
+    , controlWidgetDecoder
+    , alignmentToString
+    )
 
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Extra
 import Json.Decode.Pipeline as Pipeline exposing (custom, decode, hardcoded, required)
 
 type alias ControlWidget =
-    { label: String
-    , widget: Widget
+    { widget: Widget
     , width: Int
     , maxLen: Maybe Int
     , height: Int
+    , alignment: Alignment
     }
+
+type Alignment
+    = Left
+    | Right
+    | Center
+
+alignmentToString: Alignment -> String
+alignmentToString alignment =
+    case alignment of
+        Left -> "left"
+        Right -> "right"
+        Center -> "center"
 
 
 type Widget
@@ -124,10 +142,22 @@ simpleDecoder =
 controlWidgetDecoder: Decoder ControlWidget
 controlWidgetDecoder =
     decode ControlWidget
-        |> required "label" Decode.string
         |> required "widget" decoder
         |> required "width" Decode.int
         |> required "max_len" (Decode.nullable Decode.int)
         |> required "height" Decode.int
+        |> required "alignment" alignmentDecoder
 
+
+alignmentDecoder: Decoder Alignment
+alignmentDecoder =
+    Decode.string
+        |> Decode.andThen
+            (\ val ->
+                case val of
+                    "Left" -> Decode.succeed Left
+                    "Right" -> Decode.succeed Right
+                    "Center" -> Decode.succeed Center
+                    _ -> Decode.fail ("Expecting Left, Right, Center, found: " ++ val)
+            )
 
