@@ -248,7 +248,7 @@ impl Field{
             && (column_name == "is_active"
                 || column_name == "active"
                 ){
-                Some(Reference::UpdatedBy)
+                Some(Reference::IsActive)
         }
         else {
             println!("column '{}' is not yet dealt with", column_name);

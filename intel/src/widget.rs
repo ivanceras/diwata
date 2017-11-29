@@ -1,6 +1,7 @@
 use reference::Reference;
 use rustorm::Column;
 use rustorm::Table;
+use rustorm::types::SqlType;
 
 #[derive(Debug, Serialize, Clone)]
 pub enum Widget {
@@ -69,21 +70,35 @@ pub enum Widget {
 /// and the dropdown data
 #[derive(Debug, Serialize, Clone)]
 pub struct ControlWidget{
-    // the label of the widget
-    label: String,
     widget: Widget,
+
     /// if the widget is Dropdown, DropdownWithImage, AutoCompleteDropdown
     /// DialogDropdown, CountryList, CountrListWithFlag
     dropdown_data: Option<DropdownData>,
+    
     /// width (character wise) of the widget based on
     /// average of the database values on this column
     width: i32,
+
     /// if limit is set in column this will warn the user
     /// if the value is too long
     max_len: Option<i32>,
+
     /// height of the control, character wise
     /// textbox defaults to 1
     height: i32,
+
+    /// text-align left align for text, right align for decimal values
+    /// boolean values align center
+    alignment: Alignment,
+}
+
+
+#[derive(Debug, Serialize, Clone)]
+pub enum Alignment{
+    Left,
+    Right,
+    Center,
 }
 
 
@@ -169,6 +184,8 @@ impl ControlWidget{
     /// from the reference
     pub fn derive_control_widget(column: &Column, reference: &Option<Reference>) -> ControlWidget {
         let limit = column.specification.get_limit();
+        let alignment = Self::derive_alignment(column);
+        let sql_type = &column.specification.sql_type;
         let (width, height) = if let Some(ref stat) = column.stat{
             // wrap at 100 character per line
             if stat.avg_width > 100 {
@@ -186,22 +203,27 @@ impl ControlWidget{
         if let Some(ref reference) = *reference{
             let widget = reference.get_widget_fullview();
             ControlWidget{
-                label: column.name.name.to_string(),
                 widget,
                 dropdown_data: None,
                 width, 
                 max_len: limit,
                 height,
+                alignment,
             }
         }
         else{
+            let widget = if *sql_type == SqlType::Bool{
+                Widget::Checkbox
+            }else{
+                Widget::Textbox
+            };
             ControlWidget{
-                label: column.name.name.to_string(),
-                widget: Widget::Textbox,
+                widget,
                 dropdown_data: None,
                 width,
                 max_len: limit,
                 height,
+                alignment,
             }
         }
     }
@@ -210,12 +232,35 @@ impl ControlWidget{
         let reference = Reference::TableLookup;
         let widget = reference.get_widget_fullview();
         ControlWidget {
-            label: table.name.name.to_string(),
             widget,
             dropdown_data: None, // not yet computed here
             width: 20, // get the average widget of the table record display identifier
             max_len: None,
             height: 1,
+            alignment: Alignment::Left,
+        }
+    }
+
+    fn derive_alignment(column: &Column) -> Alignment {
+         let sql_type = &column.specification.sql_type;
+         match *sql_type{
+            SqlType::Bool => Alignment::Center,
+            SqlType::Tinyint
+                | SqlType::Smallint
+                | SqlType::Int
+                | SqlType::Bigint
+                | SqlType::Real
+                | SqlType::Float
+                | SqlType::Double
+                | SqlType::Numeric => Alignment::Right,
+
+            SqlType::Uuid
+                | SqlType::Date
+                | SqlType::Timestamp
+                | SqlType::TimestampTz
+                | SqlType::Time
+                | SqlType::TimeTz => Alignment::Right,
+            _ => Alignment::Left,
         }
     }
 }
