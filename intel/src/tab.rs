@@ -39,7 +39,7 @@ impl Tab{
 
     fn derive_simple_fields(table: &Table) -> Vec<Field> {
         let columns: &Vec<Column> = &table.columns;
-        let foreign_column_names: Vec<&ColumnName> = table.get_foreign_columns();
+        let foreign_column_names: Vec<&ColumnName> = table.get_foreign_column_names();
         let plain_columns:Vec<&Column> = columns.iter()
                 .filter(|c|
                        !foreign_column_names.contains(&&c.name))

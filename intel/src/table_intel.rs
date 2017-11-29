@@ -17,7 +17,7 @@ impl<'a> TableIntel<'a>{
     /// on the referred table
     fn is_owned_table(&self) -> bool {
         let primary = self.0.get_primary_column_names();
-        let foreign = self.0.get_foreign_columns();
+        let foreign = self.0.get_foreign_column_names();
         //Note: the order doesn't matter
         //as long as the contain the same
         //columnames
@@ -34,7 +34,7 @@ impl<'a> TableIntel<'a>{
     /// there should only be 2 foreign keys
     fn is_linker_table(&self) -> bool {
         let primary_columns = self.0.get_primary_column_names();
-        let foreign_columns = self.0.get_foreign_columns();
+        let foreign_columns = self.0.get_foreign_column_names();
         self.get_referred_tablenames().len() == 2
             && foreign_columns.iter()
                 .all(|c| primary_columns.contains(&c))
