@@ -37,7 +37,9 @@ use rocket::response::Redirect;
 
 mod error;
 
-static DB_URL: &'static str = "postgres://postgres:p0stgr3s@localhost:5432/jybapiprod";
+//static DB_URL: &'static str = "postgres://postgres:p0stgr3s@localhost:5432/jybapiprod";
+static DB_URL: &'static str = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
+
 static PAGE_SIZE: i32 = 40; 
 
 lazy_static!{
