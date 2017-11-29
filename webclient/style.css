@@ -57,7 +57,7 @@
     min-width: 230px;
 }
 
-.tab-row-value input {
+.tab-row-value > input {
     border-width: 0 0 1px 0;
     border-style: solid;
     border-color: #ccc;
@@ -76,6 +76,9 @@
     width: 100px;
     height: 300px;
     overflow: hidden;
+}
+.row-shadow-content{
+    position: relative;
 }
 .row-shadow-content div {
     height: 30px;
@@ -100,6 +103,7 @@
 }
 .tab-columns-content {
     display: flex;
+    position: relative;
 }
 
 .tab-column {

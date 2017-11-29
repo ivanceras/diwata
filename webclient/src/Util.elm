@@ -1,4 +1,4 @@
-module Util exposing ((=>), appendErrors, onClickStopPropagation, pair, viewIf, trim)
+module Util exposing ((=>), px, appendErrors, onClickStopPropagation, pair, viewIf, trim)
 
 import Html exposing (Attribute, Html)
 import Html.Events exposing (defaultOptions, onWithOptions)
@@ -72,3 +72,7 @@ trim: List String -> List String
 trim list =
     trimFirst list
         |> trimLast
+
+px: number -> String
+px n =
+    (toString n) ++ "px"

@@ -3,6 +3,8 @@ module Data.Window.Value exposing (Value(..), decoder, valueToString)
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Extra
 import Json.Decode.Pipeline as Pipeline exposing (custom, decode, required)
+import Date exposing (Date)
+import Date.Format
 
 type Value
     = Nil
@@ -21,9 +23,9 @@ type Value
     | Json String
 
     | Uuid String
-    | Date String
+    | Date Date
     | Time String
-    | Timestamp String
+    | Timestamp Date
 
 
 
@@ -90,14 +92,16 @@ doubleDecoder =
 
 charDecoder: Decoder Value
 charDecoder = 
-    Decode.field "Char" Decode.string
-    |> Decode.andThen 
-        (\s -> 
-            case (String.uncons s) of
-                Just (c,_) -> Decode.succeed c
-                Nothing -> Decode.fail "Can not be empty value in Char"
+    decode Char
+    |> required "Char" 
+        (Decode.string
+            |> Decode.andThen 
+                (\s -> 
+                    case (String.uncons s) of
+                        Just (c,_) -> Decode.succeed c
+                        Nothing -> Decode.fail "Can not be empty value in Char"
+                )
         )
-    |> Decode.map Char
 
 textDecoder: Decoder Value
 textDecoder = 
@@ -117,7 +121,20 @@ uuidDecoder =
 dateDecoder: Decoder Value
 dateDecoder = 
     decode Date
-    |> required "Date" Decode.string
+    |> required "Date" dateValueDecoder
+
+{-- the same as above only longer
+dateDecoder: Decoder Value
+dateDecoder = 
+    Decode.field "Date" Decode.string
+    |> Decode.andThen
+        (\v -> 
+            case Date.fromString v of
+                Ok v -> Decode.succeed v
+                Err e -> Decode.fail "Invalid date"
+        )
+    |> Decode.map Date
+--}
 
 timeDecoder: Decoder Value
 timeDecoder = 
@@ -126,8 +143,19 @@ timeDecoder =
 
 timestampDecoder: Decoder Value
 timestampDecoder = 
-    decode Text
-    |> required "Timestamp" Decode.string
+    decode Timestamp
+    |> required "Timestamp" dateValueDecoder
+
+
+dateValueDecoder : Decoder Date
+dateValueDecoder =
+    Decode.string
+    |> Decode.andThen
+        (\v -> 
+            case Date.fromString v of
+                Ok v -> Decode.succeed v
+                Err e -> Debug.log ("fail to decode date" ++ v ) Decode.fail ("Invalid date:" ++ e)
+     )
 
 
 {-| 
@@ -153,8 +181,8 @@ valueToString value =
         Json v -> v
 
         Uuid v -> v
-        Date v -> v
+        Date v -> Date.Format.format "%Y-%m-%d" v
         Time v -> v
-        Timestamp v -> v
+        Timestamp v -> Date.Format.format "%Y-%m-%d" v
 
 

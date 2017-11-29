@@ -1,7 +1,7 @@
 module Views.Window.Tab exposing (listView, Model, init, update, Msg)
 
 import Html exposing (..)
-import Html.Attributes exposing (attribute, class, classList, href, id, placeholder, src, property, type_)
+import Html.Attributes exposing (attribute, class, classList, href, id, placeholder, src, property, type_, style)
 import Data.Window.Tab as Tab exposing (Tab)
 import Data.Window.Record as Record exposing (Rows, Record, RecordId)
 import Data.Window.Field as Field exposing (Field)
@@ -9,10 +9,10 @@ import Views.Window.Row as Row
 import Window as BrowserWindow
 import Task exposing (Task)
 import Page.Errored as Errored exposing (PageLoadError, pageLoadError)
-import Html.Events exposing (on)
+import Html.Events exposing (on,onWithOptions)
 import Json.Decode as Decode exposing (Decoder)
 import Json.Encode as Encode 
-import Util exposing ((=>))
+import Util exposing ((=>), px)
 
 
 type alias Model =
@@ -22,8 +22,8 @@ type alias Model =
     }
 
 type alias Scroll =
-    { top: Int
-    , left: Int
+    { top: Float
+    , left: Float
     }
 
 init: Tab -> Task PageLoadError Model
@@ -65,11 +65,12 @@ viewRowShadow: Model -> Html Msg
 viewRowShadow model =
     let 
         scrollTop = model.listRowScroll.top
+        topPx = px(-scrollTop)
     in
-    div [ class "row-shadow"
-        , property "scrollTop" (Encode.int scrollTop)
-        ]
-        [ div [class "row-shadow-content"]
+    div [ class "row-shadow" ]
+        [ div [ class "row-shadow-content"
+              , style [("top", topPx)]
+              ]
             (List.map
                 ( \ i ->
                     div []
@@ -88,11 +89,14 @@ viewColumns: Model -> List Field -> Html Msg
 viewColumns model fields =
     let 
         scrollLeft = model.listRowScroll.left
+        leftPx =  px (-scrollLeft)
+        _ = Debug.log "leftPx" leftPx
     in
     div [ class "tab-columns"
-        , property "scrollLeft" (Encode.int scrollLeft)
         ]
-        [ div [class "tab-columns-content"]
+        [ div [ class "tab-columns-content"
+              , style [("left", leftPx)]
+              ]
             (List.map viewColumnWithSearchbox fields)
         ]
 
@@ -122,7 +126,9 @@ viewSearchbox =
 
 listViewRows: Tab -> List RecordId -> List Record -> Html Msg
 listViewRows tab recordIdList recordList =
-    div [class "list-view-rows", onScroll] 
+    div [class "list-view-rows"
+        , onScroll
+        ] 
         (
         if List.length recordList > 0 then
             (List.map2 
@@ -141,11 +147,12 @@ onScroll: Attribute Msg
 onScroll =
     on "scroll" (Decode.map ListRowScrolled scrollDecoder)
 
+
 scrollDecoder: Decoder Scroll
 scrollDecoder =
     Decode.map2 Scroll
-        (Decode.at ["target", "scrollTop"] Decode.int)
-        (Decode.at ["target", "scrollLeft"] Decode.int)
+        (Decode.at ["target", "scrollTop"] Decode.float)
+        (Decode.at ["target", "scrollLeft"] Decode.float)
 
 
 type Msg
@@ -154,14 +161,13 @@ type Msg
 
 update: Msg -> Model ->  (Model, Cmd Msg)
 update msg model =
-    let
-        _ = Debug.log "Update tab msg " msg
-    in
     case msg of
         WindowResized size ->
             { model | browserSize = size } => Cmd.none
 
         ListRowScrolled scroll ->
+            let _ = Debug.log "scrolling" scroll
+            in
             { model | listRowScroll = scroll } => Cmd.none
 
 
