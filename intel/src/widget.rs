@@ -214,7 +214,17 @@ impl ControlWidget{
         else{
             let widget = if *sql_type == SqlType::Bool{
                 Widget::Checkbox
-            }else{
+            }
+            else if *sql_type == SqlType::TimestampTz
+                || *sql_type == SqlType::Timestamp
+                {
+                Widget::DateTimePicker
+            }
+            else if *sql_type == SqlType::Date
+                {
+                Widget::DatePicker
+            }
+            else{
                 Widget::Textbox
             };
             ControlWidget{

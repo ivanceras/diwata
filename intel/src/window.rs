@@ -49,9 +49,11 @@ impl Window{
     
     fn from_tables(main_table: &Table, one_one: &Vec<&Table>, has_one_tables: Vec<TableName>,
                    has_many: &Vec<&Table>, indirect: &Vec<IndirectTable>, all_tables: &Vec<Table>) -> Self  {
+
         let main_tab:Tab = Tab::from_table(main_table, all_tables); 
         let one_one_tabs:Vec<Tab> = one_one.iter().map(|t|Tab::from_table(t, all_tables)).collect();
         let has_many_tabs:Vec<Tab> = has_many.iter().map(|t|Tab::from_table(t, all_tables)).collect();
+
         let indirect_tabs:Vec<(TableName, Tab)> = indirect.iter()
             .map(|t|
                  (t.linker.name.clone(), 
