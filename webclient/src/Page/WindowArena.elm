@@ -73,7 +73,7 @@ init session arenaArg =
                     Task.succeed Nothing
 
         handleLoadError e =
-            pageLoadError Page.WindowArena "WindowArena is currently unavailable."
+            pageLoadError Page.WindowArena ("WindowArena is currently unavailable. Error: "++ (toString e))
     in
     Task.map3 (Model [] ) loadActiveWindow loadWindowList loadSelectedRecord
 

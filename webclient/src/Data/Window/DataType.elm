@@ -33,6 +33,7 @@ type DataType
     | Mediumtext
     | Text
     | Json
+    | TsVector
 
     | Uuid
 
@@ -50,6 +51,7 @@ decoder =
     Decode.oneOf
         [ simpleDecoder
         , arrayTypeDecoder
+        , enumDecoder
         ]
 
 simpleDecoder: Decoder DataType
@@ -78,6 +80,7 @@ simpleDecoder =
                     "Mediumtext" -> Decode.succeed Mediumtext
                     "Text" -> Decode.succeed Text
                     "Json" -> Decode.succeed Json
+                    "TsVector" -> Decode.succeed TsVector
                     "Uuid" -> Decode.succeed Uuid
                     "Date" -> Decode.succeed Date
                     "Timestamp" -> Decode.succeed Timestamp
@@ -86,6 +89,15 @@ simpleDecoder =
                     "TimeTz" -> Decode.succeed TimeTz
                     _ -> Decode.fail ("not yet dealt with" ++ val)
             )
+
+enumDecoder: Decoder DataType
+enumDecoder =
+    decode Enum
+        |> required "Enum"
+        (Decode.map2 (,)
+            (Decode.index 0 Decode.string)
+            (Decode.index 1 (Decode.list Decode.string))
+        )
 
 arrayTypeDecoder: Decoder DataType
 arrayTypeDecoder =

@@ -78,7 +78,7 @@ init tableName selectedRow =
                 ) loadWindow
 
         handleLoadError e =
-            pageLoadError Page.DetailedRecord "DetailedRecord is currently unavailable."
+            pageLoadError Page.DetailedRecord ("DetailedRecord is currently unavailable. Error: "++ (toString e))
 
 
     in

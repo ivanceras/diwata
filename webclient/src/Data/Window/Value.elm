@@ -26,6 +26,7 @@ type Value
     | Date Date
     | Time String
     | Timestamp Date
+    | Blob (List Int)
 
 
 
@@ -46,6 +47,7 @@ decoder =
         , timeDecoder
         , timestampDecoder
         , uuidDecoder
+        , blobDecoder
         ]
 
 
@@ -118,6 +120,11 @@ uuidDecoder =
     decode Uuid
     |> required "Uuid" Decode.string
 
+blobDecoder: Decoder Value
+blobDecoder =
+    decode Blob
+        |> required "Blob" (Decode.list Decode.int)
+
 dateDecoder: Decoder Value
 dateDecoder = 
     decode Date
@@ -184,5 +191,6 @@ valueToString value =
         Date v -> Date.Format.format "%Y-%m-%d" v
         Time v -> v
         Timestamp v -> Date.Format.format "%Y-%m-%d" v
+        Blob v -> toString v
 
 
