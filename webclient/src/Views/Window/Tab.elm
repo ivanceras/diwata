@@ -90,7 +90,6 @@ viewColumns model fields =
     let 
         scrollLeft = model.listRowScroll.left
         leftPx =  px (-scrollLeft)
-        _ = Debug.log "leftPx" leftPx
     in
     div [ class "tab-columns"
         ]
@@ -166,8 +165,6 @@ update msg model =
             { model | browserSize = size } => Cmd.none
 
         ListRowScrolled scroll ->
-            let _ = Debug.log "scrolling" scroll
-            in
             { model | listRowScroll = scroll } => Cmd.none
 
 
