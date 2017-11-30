@@ -17,6 +17,7 @@ type Value
 
     | Float Float
     | Double Float
+    | BigDecimal Float
 
     | Char Char
     | Text String
@@ -27,7 +28,10 @@ type Value
     | Time String
     | Timestamp Date
     | Blob (List Int)
+    | Array ArrayValue
 
+type ArrayValue
+    = TextArray (List String)
 
 
 decoder: Decoder Value
@@ -40,6 +44,7 @@ decoder =
         , intDecoder
         , floatDecoder
         , doubleDecoder
+        , bigDecimalDecoder
         , charDecoder
         , textDecoder
         , jsonDecoder
@@ -48,7 +53,18 @@ decoder =
         , timestampDecoder
         , uuidDecoder
         , blobDecoder
+        , arrayDecoder
         ]
+
+arrayDecoder: Decoder Value
+arrayDecoder =
+    decode Array
+    |> required "Array" textArrayDecoder
+
+textArrayDecoder: Decoder ArrayValue
+textArrayDecoder = 
+    decode TextArray
+    |> required "Text" (Decode.list Decode.string)
 
 
 nilDecoder: Decoder Value
@@ -92,6 +108,19 @@ doubleDecoder =
     decode Double
     |> required "Double" Decode.float
 
+bigDecimalDecoder: Decoder Value
+bigDecimalDecoder =
+    decode BigDecimal
+    |> required "BigDecimal" 
+        (Decode.string 
+            |> Decode.andThen
+                (\v -> 
+                    case String.toFloat v of
+                        Ok v -> Decode.succeed v
+                        Err e -> Decode.fail ("Unable to decode to bigdecimal" ++ e)
+                )
+        )
+
 charDecoder: Decoder Value
 charDecoder = 
     decode Char
@@ -99,7 +128,7 @@ charDecoder =
         (Decode.string
             |> Decode.andThen 
                 (\s -> 
-                    case (String.uncons s) of
+                    case String.uncons s of
                         Just (c,_) -> Decode.succeed c
                         Nothing -> Decode.fail "Can not be empty value in Char"
                 )
@@ -182,6 +211,7 @@ valueToString value =
         
         Float v -> toString v
         Double v -> toString v
+        BigDecimal v -> toString v
 
         Char v -> toString v
         Text v -> v
@@ -192,5 +222,7 @@ valueToString value =
         Time v -> v
         Timestamp v -> Date.Format.format "%Y-%m-%d" v
         Blob v -> toString v
+        Array v -> toString v
+
 
 
