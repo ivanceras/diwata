@@ -38,6 +38,8 @@ viewRowControls recordId tab =
         [ viewSelectionControl 
         , viewFormLinkControl recordId tab
         , viewEditInPlace
+        , viewUndo
+        , viewSave
         ] 
 
 
@@ -53,6 +55,17 @@ viewEditInPlace =
         [ div [ class "icon icon-pencil"] []
         ]
 
+viewUndo: Html msg
+viewUndo =
+    div [ class "row-undo"]
+        [ div [ class "icon icon-block"] []
+        ]
+
+viewSave: Html msg
+viewSave =
+    div [ class "row-save"]
+        [ div [ class "icon icon-floppy"] []
+        ]
 
 viewFormLinkControl: RecordId -> Tab -> Html msg
 viewFormLinkControl recordId tab =

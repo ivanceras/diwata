@@ -82,13 +82,12 @@
 
 .frozen-head{
     border: 1px solid green;
-    min-width: 100px;
+    min-width: 120px;
     height: 50px;
 }
 
 .row-shadow{
-    border: 1px solid red;
-    width: 100px;
+    width: 120px;
     height: 300px;
     overflow: hidden;
 }
@@ -118,8 +117,8 @@
 .row-controls  a {
     color: #333;
 }
-.row-controls .link-to-form .icon{
-    padding: 0 5px;
+.row-controls > div {
+    padding: 0 3px;
 }
 
 .tab-columns {
