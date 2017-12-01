@@ -13,7 +13,6 @@ type alias Field =
     , info: Maybe String
     , isPrimary: Bool
     , columnDetail: ColumnDetail
-    --, reference: Maybe Reference
     , controlWidget: ControlWidget
     }
 

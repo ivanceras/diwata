@@ -19,29 +19,33 @@
     width: 800px;
 }
 
-.field-value {
+.card-field {
     display: flex;
-    width: 350px;
-    border: 1px solid green;
     padding: 5px 5px;
+    width: 350px;
 }
 
-.field{
+.card-view-value{
     padding: 0 5px;
-    border: 1px solid #ccc;
+    min-width: 200px;
+    height: 30px;
+    flex: 1;
+}
+.card-field-value > input {
+    border-width: 0 0 1px 0;
+    border-style: solid;
+    border-color: #ccc;
+    width: 200px;
+}
+
+.card-field-name{
+    padding: 0 5px;
     width: 100px;
     height: 30px;
     flex: 1;
     text-align: right;
 }
 
-.card-view-value{
-    padding: 0 5px;
-    border: 1px solid #ccc;
-    min-width: 200px;
-    height: 30px;
-    flex: 1;
-}
 
 .detail-separator{
     border: 1px solid red;

@@ -8,10 +8,13 @@ import Views.Window.Value as Value
 
 view: Field -> Maybe Value -> Html msg
 view field value =
-    div [class "field-value"]
-        [ div [class "field"]
-            [text (field.name ++ ": ")] 
-        , Value.viewInCard field.controlWidget value 
+    div [class "card-field"]
+        [ div [class "card-field-name"]
+            [label [] 
+                [text (field.name ++ ": ")]
+            ]
+        , div [class "card-field-value"]
+            [Value.viewInCard field.controlWidget value]
         ]
         
 
