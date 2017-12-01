@@ -130,6 +130,15 @@ fn extract_record_id<'a>(record_id: &str, pk_types: &Vec<&SqlType>, pk_columns: 
                     }
                 }
             }
+            SqlType::Smallint => {
+                let v = splinter.parse();
+                match v{
+                    Ok(v) => Value::Smallint(v),
+                    Err(e) => {
+                        return Err(IntelError::ParamParseError(format!("Invalid for type {:?}: {}",pk_type, splinter)));
+                    }
+                }
+            }
             _ => panic!("primary with type {:?} is not yet covered", pk_type)
         };
         record_id.push((pk_column, value));
@@ -159,10 +168,12 @@ pub fn get_selected_record_detail(dm: &RecordManager, tables: &Vec<Table>,
     println!("arg record_id: {:#?}", record_id);
     let mut sql = format!("
         SELECT * FROM {} ",main_table.complete_name());
-    let mut filter = "WHERE ".to_string();
+    let mut filter = "".to_string();
     let mut params: Vec<Value> = Vec::with_capacity(record_id.len());
     for (i, &(pk, ref value)) in record_id.iter().enumerate(){
-        if i > 0 {
+        if i == 0{
+            filter +="WHERE ";
+        }else {
             filter += "AND ";
         }
         filter += &format!("{} = ${} ", pk.complete_name(), i+1);
@@ -249,12 +260,14 @@ fn get_one_one_record(dm: &RecordManager, tables: &Vec<Table>,
     let one_one_pk = one_one_table.get_primary_column_names();
     let one_one_pk_data_types = one_one_table.get_primary_column_types();
 
-    let mut one_one_filter = "WHERE ".to_string();
+    let mut one_one_filter = "".to_string();
     let mut one_one_params = Vec::with_capacity(one_one_pk.len());
 
     for referred_columns in referred_columns_to_main_table.iter(){
         for (i,rc) in referred_columns.iter().enumerate(){
-            if i > 0 {
+            if i == 0{
+                one_one_filter +="WHERE ";
+            }else {
                 one_one_filter += "AND ";
             }
             one_one_filter +=  &format!(" {} = ${} ", one_one_pk[i].complete_name(), i+1);
@@ -286,7 +299,7 @@ fn get_has_many_records(dm: &RecordManager, tables: &Vec<Table>,
     let has_many_fk_data_types = has_many_table.get_foreign_column_types_to_table(&main_table.name);
     assert_eq!(has_many_fk.len(), has_many_fk_data_types.len());
 
-    let mut has_many_filter = "WHERE ".to_string();
+    let mut has_many_filter = "".to_string();
     let mut has_many_params = Vec::with_capacity(has_many_fk.len());
 
     let referred_columns_to_main_table: Option<&Vec<ColumnName>> = has_many_table.get_referred_columns_to_table(&main_table.name);
@@ -297,10 +310,12 @@ fn get_has_many_records(dm: &RecordManager, tables: &Vec<Table>,
     assert_eq!(referred_columns_to_main_table.len(), has_many_fk.len());
 
     for (i, referred_column) in referred_columns_to_main_table.iter().enumerate(){
-        has_many_filter +=  &format!(" {} = ${} ", has_many_fk[i].complete_name(), i+1);
-        if i > 0 {
+        if i == 0{
+            has_many_filter +="WHERE ";
+        }else {
             has_many_filter += "AND ";
         }
+        has_many_filter +=  &format!(" {} = ${} ", has_many_fk[i].complete_name(), i+1);
         let required_type = has_many_fk_data_types[i];
         find_value(referred_column, record_id, required_type)
             .map(|v| has_many_params.push(v.clone()));
@@ -353,9 +368,11 @@ fn get_indirect_records(dm: &RecordManager, tables: &Vec<Table>,
     assert!(linker_rc_to_main_table.is_some());
     let linker_rc_to_main_table = linker_rc_to_main_table.unwrap();
     let mut indirect_params = Vec::with_capacity(linker_rc_to_main_table.iter().count());
-    let mut filter = " WHERE ".to_string();
+    let mut filter = "".to_string();
     for (i,rc) in linker_rc_to_main_table.iter().enumerate(){
-        if i > 0 {
+        if i == 0 {
+            filter += "WHERE ";
+        }else{
             filter += "AND ";
         }
         filter += &format!("{}.{} = ${} ", linker_table.name.name, linker_pk[i].complete_name(), i+1);

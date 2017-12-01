@@ -21,10 +21,6 @@ pub struct Field {
     is_primary: bool,
     /// column name
     column_detail: ColumnDetail,
-    /// the interpretation of this column
-    /// of the the data it holds based on column specification
-    /// column_name, sql_type and limits
-    reference: Option<Reference>,
     /// the control widget based on the api of intellisense
     control_widget: ControlWidget,
 }
@@ -79,7 +75,6 @@ impl Field{
             info: None,
             is_primary: in_primary,
             column_detail,
-            reference,
             control_widget
         }
     }
@@ -110,7 +105,6 @@ impl Field{
             info: referred_table.comment.to_owned(),
             is_primary: in_primary,
             column_detail,
-            reference: Some(Reference::TableLookup),
             control_widget
         }
     }
@@ -252,6 +246,9 @@ impl Field{
             match *sql_type{
                 SqlType::Enum(ref name, ref choices) => {
                     Some(Reference::Enum(name.to_string(), choices.to_vec()))
+                }
+                SqlType::ArrayType(ArrayType::Text) => {
+                    Some(Reference::Tag)
                 }
                 _ =>  {
                     println!("column '{}' is not yet dealt with", column_name);

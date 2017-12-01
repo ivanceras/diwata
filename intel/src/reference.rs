@@ -10,6 +10,10 @@ use widget::Widget;
 ///  - column datatype
 ///  - column data limit
 ///  - actual data content
+///
+/// the interpretation of this column
+/// of the the data it holds based on column specification
+/// column_name, sql_type and limits
 #[derive(Debug, PartialEq, Serialize, Clone)]
 pub enum Reference {
     PersonName,
