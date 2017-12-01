@@ -87,7 +87,9 @@ type Widget
 decoder: Decoder Widget
 decoder =
     Decode.oneOf
-        [simpleDecoder]
+        [ simpleDecoder
+        , dropDownWidgetDecoder
+        ]
         
 simpleDecoder: Decoder Widget
 simpleDecoder =
@@ -161,3 +163,7 @@ alignmentDecoder =
                     _ -> Decode.fail ("Expecting Left, Right, Center, found: " ++ val)
             )
 
+dropDownWidgetDecoder: Decoder Widget
+dropDownWidgetDecoder =
+    decode FixDropdown
+    |> required "FixDropdown" (Decode.list Decode.string)

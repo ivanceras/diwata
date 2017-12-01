@@ -2,7 +2,7 @@ module Views.Window.Value exposing (viewInList, viewInCard)
 
 import Data.Window.Value as Value exposing (Value)
 import Html exposing (..)
-import Html.Attributes exposing (checked, style, attribute, class, classList, href, id, placeholder, src, type_, value)
+import Html.Attributes exposing (selected, checked, style, attribute, class, classList, href, id, placeholder, src, type_, value)
 import Data.Window.Widget as Widget exposing (ControlWidget, Widget(..))
 import Date
 import Date.Format
@@ -69,6 +69,24 @@ widgetView controlWidget maybeValue =
 
         DatePicker ->
             viewDatePicker textAlign maybeValue
+
+        FixDropdown list ->
+            select []
+                (List.map
+                    (\v ->
+                        let
+                            isSelected = case maybeValue of
+                                Just fieldValue ->
+                                    v == (Value.valueToString fieldValue)
+                                Nothing ->
+                                    False
+                        in
+                        option  [ value v
+                                , selected isSelected
+                                ]
+                            [text v]
+                    ) list
+                )
 
         _ ->
             input [ type_ "text"
