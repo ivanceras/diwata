@@ -1,7 +1,7 @@
-module Views.Window.Row exposing (view)
+module Views.Window.Row exposing (view, viewRowControls)
 
 import Html exposing (..)
-import Html.Attributes exposing (attribute, class, classList, href, id, placeholder, src)
+import Html.Attributes exposing (type_, attribute, class, classList, href, id, placeholder, src)
 import Data.Window.Record as Record exposing (Record,RecordId)
 import Data.Window.Value exposing (Value)
 import Route exposing (Route)
@@ -20,11 +20,6 @@ view recordId record tab =
         fields = tab.fields -- rearrange fields here if needed
     in
     div [class "tab-row"] 
-        ([ a [class "row-id"
-             , Route.href (Route.WindowArena (Just (WindowArena.initArgWithRecordId tab.tableName recordIdString))) 
-             ]
-            [text "link"]
-        ] ++
         (List.map
             (\ field ->
                 let 
@@ -36,5 +31,40 @@ view recordId record tab =
             )
             fields
         )
-    )
     
+viewRowControls: RecordId -> Tab -> Html msg
+viewRowControls recordId tab =
+    div [class "row-controls"]
+        [ viewSelectionControl 
+        , viewFormLinkControl recordId tab
+        , viewEditInPlace
+        ] 
+
+
+viewSelectionControl: Html msg
+viewSelectionControl =
+    div [ class "row-select"]
+        [ input [type_ "checkbox"] []
+        ]
+
+viewEditInPlace: Html msg
+viewEditInPlace =
+    div [ class "edit-in-place"]
+        [ div [ class "icon icon-pencil"] []
+        ]
+
+
+viewFormLinkControl: RecordId -> Tab -> Html msg
+viewFormLinkControl recordId tab =
+    let
+        recordIdString = Record.idToString recordId
+    in
+    div [ class "link-to-form"]
+        [ a [ class "row-id"
+            , Route.href (Route.WindowArena (Just (WindowArena.initArgWithRecordId tab.tableName recordIdString))) 
+            ] 
+            [div [class "icon icon-menu"]
+                []
+            ]
+        ]
+

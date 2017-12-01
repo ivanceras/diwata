@@ -95,7 +95,8 @@
 .row-shadow-content{
     position: relative;
 }
-.row-shadow-content div {
+.row-shadow-content {
+    padding: 0 10px;
     height: 30px;
 }
 
@@ -109,6 +110,17 @@
     display: flex;
 }
 
+.row-controls {
+    display: flex;
+    height: 40px;
+}
+
+.row-controls  a {
+    color: #333;
+}
+.row-controls .link-to-form .icon{
+    padding: 0 5px;
+}
 
 .tab-columns {
     width: 1200px;

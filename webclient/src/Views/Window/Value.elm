@@ -71,6 +71,9 @@ widgetView controlWidget maybeValue =
             viewDatePicker textAlign maybeValue
 
         FixDropdown list ->
+            let 
+                listWithBlank = "" :: list
+            in
             select []
                 (List.map
                     (\v ->
@@ -85,7 +88,7 @@ widgetView controlWidget maybeValue =
                                 , selected isSelected
                                 ]
                             [text v]
-                    ) list
+                    ) listWithBlank
                 )
 
         _ ->

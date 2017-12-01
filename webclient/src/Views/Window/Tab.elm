@@ -55,14 +55,14 @@ listView model rows =
             , viewColumns model fields
             ]
         , div [class "row-shadow-list-rows"]
-            [ viewRowShadow model
+            [ viewRowShadow recordIdList tab model
             , listViewRows tab recordIdList recordList
             ]
         ]
 
 
-viewRowShadow: Model -> Html Msg
-viewRowShadow model =
+viewRowShadow: List RecordId -> Tab -> Model -> Html Msg
+viewRowShadow recordIdList tab model =
     let 
         scrollTop = model.listRowScroll.top
         topPx = px(-scrollTop)
@@ -72,12 +72,12 @@ viewRowShadow model =
               , style [("top", topPx)]
               ]
             (List.map
-                ( \ i ->
-                    div []
-                        [text ("Row shadow "++toString i)]
-                ) (List.range  1 40)
+                ( \ recordId ->
+                    Row.viewRowControls recordId tab 
+                ) recordIdList 
             )
         ]
+
 
 viewFrozenHead: Model -> Html Msg
 viewFrozenHead model =
