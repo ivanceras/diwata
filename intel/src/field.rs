@@ -160,12 +160,10 @@ impl Field{
                 ){
                 Some(Reference::Tag)
         }
-        else if 
-            (
-                (sql_type == &SqlType::Int
+        else if ((sql_type == &SqlType::Int
                 || sql_type == &SqlType::Bigint
                 ) && is_autoincrement
-            )
+                 )
             && column_name == "user_id" 
             && (table_name == "users" 
                 || table_name == "user"){
@@ -251,8 +249,15 @@ impl Field{
                 Some(Reference::IsActive)
         }
         else {
-            println!("column '{}' is not yet dealt with", column_name);
-            None
+            match *sql_type{
+                SqlType::Enum(ref name, ref choices) => {
+                    Some(Reference::Enum(name.to_string(), choices.to_vec()))
+                }
+                _ =>  {
+                    println!("column '{}' is not yet dealt with", column_name);
+                    None
+                }
+            }
         }
     }
 
