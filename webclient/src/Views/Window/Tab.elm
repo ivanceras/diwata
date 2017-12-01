@@ -1,4 +1,4 @@
-module Views.Window.Tab exposing (listView, Model, init, update, Msg)
+module Views.Window.Tab exposing (listView, Model, init, update, Msg(..), subscriptions)
 
 import Html exposing (..)
 import Html.Attributes exposing (attribute, class, classList, href, id, placeholder, src, property, type_, style)
@@ -6,7 +6,6 @@ import Data.Window.Tab as Tab exposing (Tab)
 import Data.Window.Record as Record exposing (Rows, Record, RecordId)
 import Data.Window.Field as Field exposing (Field)
 import Views.Window.Row as Row
-import Window as BrowserWindow
 import Task exposing (Task)
 import Page.Errored as Errored exposing (PageLoadError, pageLoadError)
 import Html.Events exposing (on,onWithOptions)
@@ -14,11 +13,10 @@ import Json.Decode as Decode exposing (Decoder)
 import Json.Encode as Encode 
 import Util exposing ((=>), px)
 
-
 type alias Model =
     { tab : Tab
-    , browserSize: BrowserWindow.Size
     , listRowScroll: Scroll
+    , height: Float
     }
 
 type alias Scroll =
@@ -26,21 +24,18 @@ type alias Scroll =
     , left: Float
     }
 
-init: Tab -> Task PageLoadError Model
-init tab =
-    let 
-        browserSize = BrowserWindow.size
-    in
-        Task.map (\size ->
-            { tab = tab
-            , browserSize = size
-            , listRowScroll = Scroll 0 0
-            }
-        ) browserSize
+init: Float -> Tab -> Model
+init height tab =
+    { tab = tab
+    , listRowScroll = Scroll 0 0
+    , height = height
+    }
 
 listView: Model -> Rows -> Html Msg
 listView model rows =
     let 
+        height = model.height
+        _ = Debug.log "calculated list view rows height" height
         tab = model.tab
         columnNames = Tab.columnNames tab
         fields = tab.fields
@@ -49,25 +44,28 @@ listView model rows =
             List.map (\record -> Tab.recordId record tab) recordList
 
     in
-    div [class "tab-list-view"] 
+    div [class "tab-list-view"
+        ] 
         [ div [class "frozen-head-columns"]
             [ viewFrozenHead model
             , viewColumns model fields
             ]
         , div [class "row-shadow-list-rows"]
-            [ viewRowShadow recordIdList tab model
-            , listViewRows tab recordIdList recordList
+            [ viewRowShadow height recordIdList tab model
+            , listViewRows height tab recordIdList recordList
             ]
         ]
 
 
-viewRowShadow: List RecordId -> Tab -> Model -> Html Msg
-viewRowShadow recordIdList tab model =
+viewRowShadow: Float -> List RecordId -> Tab -> Model -> Html Msg
+viewRowShadow height recordIdList tab model =
     let 
         scrollTop = model.listRowScroll.top
         topPx = px(-scrollTop)
     in
-    div [ class "row-shadow" ]
+    div [ class "row-shadow"
+        , style [("height", px height)]
+        ]
         [ div [ class "row-shadow-content"
               , style [("top", topPx)]
               ]
@@ -101,7 +99,7 @@ viewColumns model fields =
 
 viewColumnWithSearchbox: Field -> Html Msg
 viewColumnWithSearchbox field =
-    div []
+    div [class "tab-column-with-filter"]
         [ viewColumn field
         , viewSearchbox
         ]
@@ -123,10 +121,11 @@ viewSearchbox =
         ]
 
 
-listViewRows: Tab -> List RecordId -> List Record -> Html Msg
-listViewRows tab recordIdList recordList =
+listViewRows: Float -> Tab -> List RecordId -> List Record -> Html Msg
+listViewRows height tab recordIdList recordList =
     div [class "list-view-rows"
         , onScroll
+        , style [("height", px height)]
         ] 
         (
         if List.length recordList > 0 then
@@ -155,15 +154,14 @@ scrollDecoder =
 
 
 type Msg
-    = WindowResized BrowserWindow.Size
+    = SetHeight Float
     | ListRowScrolled Scroll
 
 update: Msg -> Model ->  (Model, Cmd Msg)
 update msg model =
     case msg of
-        WindowResized size ->
-            { model | browserSize = size } => Cmd.none
-
+        SetHeight height ->
+            { model | height = height } => Cmd.none
         ListRowScrolled scroll ->
             { model | listRowScroll = scroll } => Cmd.none
 
@@ -171,7 +169,5 @@ update msg model =
 
 subscriptions: Model -> Sub Msg
 subscriptions model =
-    Sub.batch
-        [ BrowserWindow.resizes (\ size -> WindowResized size)
-        ] 
+    Sub.none
 

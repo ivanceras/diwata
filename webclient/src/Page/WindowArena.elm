@@ -122,7 +122,9 @@ viewWindow session activeWindow =
 
 viewBanner : Html msg
 viewBanner =
-    div [ class "banner" ]
+    div [ class "banner"
+        , id "banner"
+        ]
         [ div [ class "container" ]
             [ h3 [ class "logo-font" ] [ text "curtain" ]
             , text "a user-friendly database interface"

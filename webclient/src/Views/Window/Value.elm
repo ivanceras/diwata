@@ -1,11 +1,12 @@
 module Views.Window.Value exposing (viewInList, viewInCard)
 
-import Data.Window.Value as Value exposing (Value)
+import Data.Window.Value as Value exposing (Value(..), ArrayValue(..))
 import Html exposing (..)
 import Html.Attributes exposing (selected, checked, style, attribute, class, classList, href, id, placeholder, src, type_, value)
 import Data.Window.Widget as Widget exposing (ControlWidget, Widget(..))
 import Date
 import Date.Format
+import Widgets.Tagger as Tagger
 
 {-| View value in list record view -}
 viewInList: ControlWidget -> Maybe Value -> Html msg
@@ -90,6 +91,23 @@ widgetView controlWidget maybeValue =
                             [text v]
                     ) listWithBlank
                 )
+
+        TagSelection ->
+            let 
+                tags = case maybeValue of
+                    Just value ->
+                        case value of
+                            Array arrayValue ->
+                                case arrayValue of
+                                    TextArray list -> list
+
+                            _ -> []
+
+                    Nothing ->
+                        []
+            in
+            Tagger.view tags
+
 
         _ ->
             input [ type_ "text"

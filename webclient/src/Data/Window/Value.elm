@@ -1,4 +1,4 @@
-module Data.Window.Value exposing (Value(..), decoder, valueToString)
+module Data.Window.Value exposing (Value(..), ArrayValue(..), decoder, valueToString)
 
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Extra

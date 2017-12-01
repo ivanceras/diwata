@@ -5,6 +5,13 @@
 }
 
 
+#banner{
+    height: 100px;
+}
+
+.tab-group{
+    height: 30px;
+}
 
 .row-value {
     padding: 0 5px;
@@ -81,13 +88,15 @@
 }
 
 .frozen-head{
-    border: 1px solid green;
     min-width: 120px;
-    height: 50px;
+    height: 51px; /* because there is a 1px border on tab-columns and 50px height*/
+    border-width: 0 0 1px 1px;
+    border-style: solid;
+    border-color: #ccc;
 }
 
 .row-shadow{
-    width: 120px;
+    min-width: 120px;
     height: 300px;
     overflow: hidden;
 }
@@ -112,6 +121,7 @@
 .row-controls {
     display: flex;
     height: 40px;
+    font-size: 14px;
 }
 
 .row-controls  a {
@@ -122,10 +132,10 @@
 }
 
 .tab-columns {
-    width: 1200px;
-    height: 50px;
-    border: solid 1px purple;
     overflow: hidden;
+    border-width: 0 1px 1px 1px;
+    border-style: solid;
+    border-color: #ccc;
 }
 .tab-columns-content {
     display: flex;
@@ -134,23 +144,22 @@
 
 .tab-column {
     padding: 0 5px;
-    border-right: 1px solid #ccc;
     min-width: 220px;
     text-align: center;
 }
+.tab-column-with-filter {
+    border-right: 1px solid #ccc;
+    height: 50px;
+}
+
 .tab-list-view {
-    border: 1px solid blue;
 }
 
 .list-view-rows {
-    width: 1200px;
-    height: 300px;
-    border: 1px solid yellow;
     overflow: auto;
 }
 
 .empty-list-view-rows {
-    border: 1px solid cyan;
     width: 2000px;
     height: 2000px;
 }
@@ -163,7 +172,6 @@
 .column-filter{
     display: flex;
     padding: 0 5px;
-    border-right: 1px solid #ccc;
 }
 
 .filter-value{
@@ -183,5 +191,35 @@
     border-width: 1px 0 1px 1px;
     border-style: solid;
     border-radius: 5px 0 0 5px;
+}
+
+.tag-selection{
+    display: flex;
+    border-width: 0 0 1px 0;
+    border-color: #aaa;
+    border-style: solid;
+    outline: 0;
+    height: 30px;
+}
+
+.tag-item-with-control{
+    padding: 5px 5px 0 5px;
+    height: 50px;
+}
+
+.tag-item{
+    display:flex;
+    border: 1px solid #ccc;
+    background-color: #ccc;
+    padding: 0 3px;
+    border-radius: 5px;
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+.tag-item .icon {
+    font-size: 13px;
+    padding-left: 3px;
+    color: #656565;
 }
 

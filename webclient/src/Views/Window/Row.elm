@@ -76,7 +76,7 @@ viewFormLinkControl recordId tab =
         [ a [ class "row-id"
             , Route.href (Route.WindowArena (Just (WindowArena.initArgWithRecordId tab.tableName recordIdString))) 
             ] 
-            [div [class "icon icon-menu"]
+            [div [class "icon icon-doc-text-inv"]
                 []
             ]
         ]

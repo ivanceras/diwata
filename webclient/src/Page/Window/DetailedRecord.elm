@@ -61,20 +61,18 @@ init tableName selectedRow =
                 |> Task.mapError handleLoadError
 
         initHasManyTabs =
-            Task.andThen
+            Task.map
                 (\ window ->
-                    List.map Tab.init window.hasManyTabs
-                    |> Task.sequence
+                    List.map (Tab.init 300.0) window.hasManyTabs
                 ) loadWindow
 
         initIndirectTabs =
-            Task.andThen
+            Task.map
                 (\ window ->
                     List.map 
                         (\(tableName, indirectTab) ->
-                            Tab.init indirectTab
+                            Tab.init 300.0 indirectTab
                         ) window.indirectTabs
-                    |> Task.sequence
                 ) loadWindow
 
         handleLoadError e =
@@ -102,8 +100,7 @@ view model =
         mainTab = model.window.mainTab
     in
     div []
-        [ h3 [] [text <| "Main tab: " ++ mainTab.name]
-        , cardViewRecord (Just mainSelectedRecord) mainTab
+        [ cardViewRecord (Just mainSelectedRecord) mainTab
         , viewOneOneTabs model
         , div [onMouseDown, class "detail-separator"] [text "Separator"]
         , viewDetailTabs model

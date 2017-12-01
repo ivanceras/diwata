@@ -48,11 +48,24 @@ type alias Model =
     }
 
 
+calcMainTabHeight : BrowserWindow.Size -> Float
+calcMainTabHeight browserSize  =
+    let
+        browserHeight = toFloat browserSize.height
+        -- have to hardcode here until the Dom.Size module is exposed https://github.com/elm-lang/dom/issues/15 https://github.com/elm-lang/dom/pull/19
+        totalDeductions = 190.0 -- banner: 100, window-tabs: 30, columns: 50, allowance: 10 (borders etc)
+        height = browserHeight - totalDeductions
+    in
+        height
+
+
 init : Session -> TableName -> Task PageLoadError Model
 init session tableName =
     let
         maybeAuthToken =
             Maybe.map .token session.user
+
+        getBrowserSize = BrowserWindow.size
 
         loadWindow =
             Request.Window.get maybeAuthToken tableName
@@ -69,7 +82,12 @@ init session tableName =
             in
             pageLoadError Page.Other "Window is currently unavailable."
 
-        mainTabTask = Task.andThen (\window -> Tab.init window.mainTab) loadWindow
+        mainTabTask = Task.map2 
+                    (\window size -> 
+                        Tab.init (calcMainTabHeight size) window.mainTab
+                    ) 
+                    loadWindow getBrowserSize
+                |> Task.mapError handleLoadError
     in
     Task.map3
         (\window rows mainTab ->
@@ -98,17 +116,8 @@ view session model =
         postingDisabled =
             model.commentInFlight
     in
-    div [ class "window-page" ]
-        [ div [ class "container page" ]
-            [ div [ class "row window-content" ]
-                [ div [ class "col-md-12" ]
-                    [text tableName.name]
-                ]
-            , hr [] []
-            , div [] 
-                [viewMainTab model
-                ]
-            ]
+    div [] 
+        [viewMainTab model
         ]
 
 
@@ -118,12 +127,9 @@ viewMainTab model =
         mainTab = model.mainTab
         records = model.records
     in
-    div [ class "row" ]
-        [ h4 [] [text "Main tab"] 
-        , div [ class "main-tab" ] 
-            [Tab.listView mainTab records
-                |> Html.map TabMsg
-            ]
+    div [ class "main-tab" ] 
+        [Tab.listView mainTab records
+            |> Html.map TabMsg
         ]
 
 -- UPDATE --
@@ -134,7 +140,6 @@ type Msg
     | DeleteRecord RecordId
     | RecordDeleted RecordId (Result Http.Error ())
     | CloseWindow
-    | WindowResized BrowserWindow.Size
     | TabMsg Tab.Msg
 
 
@@ -170,11 +175,7 @@ update session msg model =
         CloseWindow ->
             model => Cmd.none
 
-        WindowResized size ->
-            let 
-                _ = Debug.log "Browser window resized in Page.Window" size
-            in
-            model => Cmd.none
+
         TabMsg tabMsg ->
           let
               _ = Debug.log "From page window: Sent this to tab message" tabMsg
@@ -187,6 +188,7 @@ update session msg model =
 subscriptions: Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ BrowserWindow.resizes (\ size -> WindowResized size)
+        [ BrowserWindow.resizes (\ size -> TabMsg (Tab.SetHeight (calcMainTabHeight size)))
+        , Sub.map TabMsg (Tab.subscriptions model.mainTab)
         ]
 
