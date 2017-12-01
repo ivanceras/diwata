@@ -4,7 +4,7 @@ import Data.Window.RecordDetail as RecordDetail exposing (RecordDetail)
 import Task exposing (Task)
 import Http
 import Html exposing (..)
-import Html.Attributes exposing (attribute, class, classList, href, id, placeholder, src)
+import Html.Attributes exposing (style, attribute, class, classList, href, id, placeholder, src)
 import Request.Window.Records as Records
 import Page.Errored as Errored exposing (PageLoadError, pageLoadError)
 import Data.Window.TableName as TableName exposing (TableName)
@@ -162,30 +162,64 @@ viewDetailTabs model =
         selectedRow = model.selectedRow
         hasManyTabs = model.hasManyTabs
         indirectTabs = model.indirectTabs
+
+        detailTabs = List.map .tab (hasManyTabs ++ indirectTabs)
+
+        activeTab: Maybe TableName
+        activeTab = List.head detailTabs -- parse the arenaa arg sectionTable and use it as the activeTab
+            |> Maybe.map .tableName
         detailTabViews =  
-            (List.map (listView selectedRow.hasMany) hasManyTabs)
+            (List.map (listView activeTab selectedRow.hasMany) hasManyTabs)
             ++
             (List.map 
                 (\indirectTab ->
-                    listView selectedRow.indirect indirectTab
+                    listView activeTab selectedRow.indirect indirectTab
                 )
                 indirectTabs
             )
     in
     div []
-        detailTabViews
+        [ div [class "detail-tab-names"]
+           (List.map 
+            (\ tab -> 
+                div [class "detail-tab-name"]
+                    [text tab.name]
+            )
+            detailTabs
+           )
+        , div [class "detail-tabs"]
+             detailTabViews
+        ]
 
-listView: List (TableName, Rows)  -> Tab.Model -> Html Msg
-listView detailRows tab =
+listView: Maybe TableName -> List (TableName, Rows)  -> Tab.Model -> Html Msg
+listView activeTab detailRows tab =
     let 
         detailRecords = RecordDetail.contentInTable detailRows tab.tab.tableName
+        isTabActive = 
+            case activeTab of
+                Just activeTab -> activeTab == tab.tab.tableName
+                Nothing -> False
+
+        styleDisplay = 
+            case isTabActive of
+                True ->
+                    style [("display", "block")]
+                False ->
+                    style [("display", "none")]
+
+        detailRecordView =
+            case detailRecords of
+                   Just detailRecords ->
+                       Tab.listView tab detailRecords
+                           |> Html.map (\tabMsg -> TabMsg (tab, tabMsg))
+                   Nothing ->
+                       text "Empty tab"
+        
     in
-    case detailRecords of
-        Just detailRecords ->
-            Tab.listView tab detailRecords
-                |> Html.map (\tabMsg -> TabMsg (tab, tabMsg))
-        Nothing ->
-            text "Empty tab"
+    div [ class "detail-tab"
+        , styleDisplay
+        ]
+        [detailRecordView]
 
 
 getPosition : Model -> Position

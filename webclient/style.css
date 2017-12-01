@@ -90,7 +90,7 @@
 .frozen-head{
     min-width: 120px;
     height: 51px; /* because there is a 1px border on tab-columns and 50px height*/
-    border-width: 0 0 1px 1px;
+    border-width: 0 0 1px 0;
     border-style: solid;
     border-color: #ccc;
 }
@@ -150,6 +150,10 @@
 .tab-column-with-filter {
     border-right: 1px solid #ccc;
     height: 50px;
+}
+
+.tab-columns-content .tab-column-with-filter:last-child {
+    border-right: 0
 }
 
 .tab-list-view {
@@ -223,3 +227,12 @@
     color: #656565;
 }
 
+
+.detail-tab-names {
+    display: flex
+}
+
+.detail-tab-name {
+    border: 1px solid #ccc;
+    padding: 5px 20px;
+}

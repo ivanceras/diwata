@@ -95,6 +95,14 @@ type alias ArenaArg =
     , sectionSelected: Maybe String
     }
 
+type alias DetailArg =
+    { activeSection: Maybe (Section, TableName)
+    , sectionFilter: Maybe String
+    , sectionPage: Maybe Int
+    , selectionOrder: Maybe (List Query.Order)
+    , sectionSelected: Maybe String
+    }
+
 argToString: ArenaArg -> String
 argToString arg = 
     let appendTable = 
