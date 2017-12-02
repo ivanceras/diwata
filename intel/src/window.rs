@@ -43,6 +43,8 @@ pub struct Window {
     /// must have an option to remove/show from the list
     /// async loaded?
     pub indirect_tabs: Vec<(TableName, Tab)>,
+
+    pub is_view: bool,
 }
 
 impl Window{
@@ -53,6 +55,7 @@ impl Window{
         let main_tab:Tab = Tab::from_table(main_table, all_tables); 
         let one_one_tabs:Vec<Tab> = one_one.iter().map(|t|Tab::from_table(t, all_tables)).collect();
         let has_many_tabs:Vec<Tab> = has_many.iter().map(|t|Tab::from_table(t, all_tables)).collect();
+        let is_view = main_tab.is_view;
 
         let indirect_tabs:Vec<(TableName, Tab)> = indirect.iter()
             .map(|t|
@@ -68,7 +71,8 @@ impl Window{
             has_one_tables,
             one_one_tabs,
             has_many_tabs,
-            indirect_tabs
+            indirect_tabs,
+            is_view,
         }
     }
 }
@@ -77,6 +81,7 @@ impl Window{
 pub struct WindowName{
     pub name: String,
     pub table_name: TableName,
+    pub is_view: bool,
 }
 
 
@@ -112,6 +117,7 @@ fn get_grouped_windows(em: &EntityManager, tables: &Vec<Table>) -> Result<Vec<Gr
                     window_names.push(WindowName{
                         name: table_name.name.to_string(),
                         table_name: table_name.to_owned(),
+                        is_view: table.is_view,
                     })
                 }
             }

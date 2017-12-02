@@ -15,6 +15,7 @@ pub struct Tab {
     /// simple fields, the lookup fields are not included
     /// in these
     pub fields: Vec<Field>,
+    pub is_view: bool,
 }
 
 impl Tab{
@@ -25,7 +26,8 @@ impl Tab{
             name: table.name.name.to_string(),
             description: table.comment.to_owned(),
             table_name: table.name.to_owned(),
-            fields: fields
+            fields: fields,
+            is_view: table.is_view,
         }
     }
 
