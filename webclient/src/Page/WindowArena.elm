@@ -37,6 +37,7 @@ type alias Model =
 init : Session -> Maybe ArenaArg -> Task PageLoadError Model
 init session arenaArg =
     let
+        _ = Debug.log "Arena arg: " arenaArg
         feedSources =
             if session.user == Nothing then
                 SelectList.singleton globalFeed

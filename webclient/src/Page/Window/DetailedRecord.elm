@@ -25,6 +25,8 @@ import Html.Events exposing (on)
 import Json.Decode as Decode
 import Window as BrowserWindow
 import Views.Page as Page
+import Page.Window as Window
+import Util exposing (px)
 
 {-|
 Example:
@@ -39,6 +41,7 @@ type alias Model =
     , indirectTabs: List Tab.Model
     , position : Position 
     , drag : Maybe Drag
+    , browserSize: BrowserWindow.Size
     }
 
 type alias Drag =
@@ -46,9 +49,14 @@ type alias Drag =
     , current : Position
     }
 
+initialPosition : BrowserWindow.Size -> Position
+initialPosition browserSize =
+    Position 0 (round (toFloat browserSize.height * 2.0 / 3.0))
+
 init: TableName -> String -> Task PageLoadError Model
 init tableName selectedRow =
     let 
+        browserSize = BrowserWindow.size
 
         fetchSelected = 
             Records.fetchSelected tableName selectedRow
@@ -61,49 +69,84 @@ init tableName selectedRow =
                 |> Task.mapError handleLoadError
 
         initHasManyTabs =
-            Task.map
-                (\ window ->
-                    List.map (Tab.init 300.0) window.hasManyTabs
-                ) loadWindow
+            Task.map2
+                (\ window size ->
+                    let (mainRecordHeight, detailTabHeight) = splitTabHeights (initialPosition size) size
+                    in
+                    List.map (Tab.init detailTabHeight) window.hasManyTabs
+                ) loadWindow browserSize
 
         initIndirectTabs =
-            Task.map
-                (\ window ->
+            Task.map2
+                (\ window size ->
+                    let (mainRecordHeight, detailTabHeight) = splitTabHeights (initialPosition size) size
+                    in
                     List.map 
                         (\(tableName, indirectTab) ->
-                            Tab.init 300.0 indirectTab
+                            Tab.init detailTabHeight indirectTab
                         ) window.indirectTabs
-                ) loadWindow
+                ) loadWindow browserSize
 
         handleLoadError e =
             pageLoadError Page.DetailedRecord ("DetailedRecord is currently unavailable. Error: "++ (toString e))
 
 
     in
-        Task.map4 
-            (\detail window hasManyTabs indirectTabs ->
+        Task.map5 
+            (\detail window hasManyTabs indirectTabs size ->
                 { selectedRow = detail
                 , window = window
                 , hasManyTabs = hasManyTabs
                 , indirectTabs = indirectTabs
-                , position = Position 0 0
+                , position = initialPosition size
                 , drag = Nothing
+                , browserSize = size
                 }
             ) 
-            fetchSelected loadWindow initHasManyTabs initIndirectTabs
+            fetchSelected loadWindow initHasManyTabs initIndirectTabs browserSize
 
+{-| Split tab heights (MainRecordHeight, DetailRecordHeight)
+-}
+
+splitTabHeights: Position -> BrowserWindow.Size -> (Float, Float)
+splitTabHeights position browserSize =
+    let
+        totalAllotedHeight = (Window.calcMainTabHeight browserSize - 60) -- tab-names(40) + detail separator (10) + allowance (10)
+        detailRecordHeight = toFloat (browserSize.height - position.y)
+        mainRecordHeight = totalAllotedHeight - detailRecordHeight
+
+        clampedMainRecordHeight = clamp 0 totalAllotedHeight mainRecordHeight
+        clampedDetailRecordHeight = clamp 0 totalAllotedHeight detailRecordHeight
+        _ = Debug.log ("totalAllotedHeight ("++toString totalAllotedHeight++") - detailRecordHeight ("++toString detailRecordHeight++") =") mainRecordHeight
+    in
+    (clampedMainRecordHeight, clampedDetailRecordHeight)
+
+    
 
 view: Model -> Html Msg
 view model =
     let 
         mainSelectedRecord = model.selectedRow.record
         mainTab = model.window.mainTab
+        realPosition = getPosition model
+        (mainRecordHeight, detailTabHeight) = splitTabHeights realPosition model.browserSize
+        _ = Debug.log "view recalculated" detailTabHeight
     in
     div []
-        [ cardViewRecord (Just mainSelectedRecord) mainTab
-        , viewOneOneTabs model
-        , div [onMouseDown, class "detail-separator"] [text "Separator"]
-        , viewDetailTabs model
+        [ div [ class "main-tab-selected"
+              , style [("height", px(mainRecordHeight))]
+              ]
+            [ cardViewRecord (Just mainSelectedRecord) mainTab
+            , viewOneOneTabs model
+            ]
+        , div [ class "detail-tabs-with-separator"
+              ]
+            [ div [onMouseDown, class "detail-separator"] 
+                  [i [class "icon icon-dot-3"
+                     ] []
+                  ]
+            , viewDetailTabs model
+            ]
         ]
 
 viewOneOneTabs: Model -> Html msg
@@ -250,6 +293,7 @@ type Msg
     | DragEnd Position
     | WindowResized BrowserWindow.Size
     | TabMsg (Tab.Model, Tab.Msg)
+    | TabMsgAll Tab.Msg
 
 
 update: Session -> Msg -> Model -> ( Model, Cmd Msg )
@@ -260,26 +304,49 @@ update session msg model =
     in
     case msg of
       DragStart xy ->
-          {model | drag  = Just (Drag xy xy)} => Cmd.none
+          let
+              newModel = {model | drag  = Just (Drag xy xy)}
+          in
+              updateSizes session newModel
 
       DragAt xy ->
           let 
-            _ = Debug.log "dragging: " xy 
+            newModel = 
+                { model | position = position
+                  , drag = Maybe.map (\{start} -> Drag start xy) drag
+                }
           in
-          { model | position = position
-                , drag = Maybe.map (\{start} -> Drag start xy) drag
-          } => Cmd.none
+              updateSizes session newModel
 
       DragEnd _ ->
-          { model | position =  getPosition model
-                , drag = Nothing
-          } => Cmd.none
+          let
+              newModel =
+                  { model | position =  getPosition model
+                        , drag = Nothing
+                  }
+          in
+             updateSizes session newModel
 
       WindowResized size ->
+           let
+                newModel = {model | browserSize = size}
+            in
+                updateSizes session newModel
+          
+      
+      TabMsgAll tabMsg ->
           let
-              _ = Debug.log "window resize also felt in Detailed record: " size
+              (updatedHasManyTabs, hasManySubCmds) =
+                List.map (Tab.update tabMsg) model.hasManyTabs
+                    |> List.unzip
+
+              (updatedIndirectTabs, indirectSubCmds) =
+                List.map (Tab.update tabMsg) model.indirectTabs
+                    |> List.unzip
           in
-          model => Cmd.none
+              {model | hasManyTabs = updatedHasManyTabs 
+                     , indirectTabs = updatedIndirectTabs
+              } => Cmd.batch (List.map (Cmd.map TabMsgAll)  (hasManySubCmds ++ indirectSubCmds))
      
       TabMsg (tabModel, tabMsg) ->
           let 
@@ -291,6 +358,15 @@ update session msg model =
               { model | hasManyTabs = updatedHasManyTabs
                     , indirectTabs = updatedIndirectTabs
               } => Cmd.map (\tabMsg -> TabMsg (newTabModel, tabMsg) )subCmd
+
+
+updateSizes: Session -> Model -> ( Model, Cmd Msg )
+updateSizes session model =
+  let 
+      realPosition = getPosition model
+      (mainRecordHeight, detailTabHeight) = splitTabHeights realPosition model.browserSize
+  in
+  update session (TabMsgAll (Tab.SetHeight detailTabHeight)) model
 
 updateTabModels: List Tab.Model -> Tab.Model -> List Tab.Model
 updateTabModels modelList tabModel =

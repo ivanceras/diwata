@@ -1,4 +1,4 @@
-module Page.Window exposing (Model, Msg, init, update, view, subscriptions)
+module Page.Window exposing (Model, Msg, init, update, view, subscriptions, calcMainTabHeight)
 
 {-| Viewing an individual window.
 -}
@@ -53,7 +53,7 @@ calcMainTabHeight browserSize  =
     let
         browserHeight = toFloat browserSize.height
         -- have to hardcode here until the Dom.Size module is exposed https://github.com/elm-lang/dom/issues/15 https://github.com/elm-lang/dom/pull/19
-        totalDeductions = 190.0 -- banner: 100, window-tabs: 30, columns: 50, allowance: 10 (borders etc)
+        totalDeductions = 200.0 -- banner: 100, window-tabs: 40, columns: 50, allowance: 10 (borders etc)
         height = browserHeight - totalDeductions
     in
         height
