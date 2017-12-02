@@ -105,12 +105,15 @@ viewWindowName activeWindow windowName =
                 windowName.tableName == tableName
             Nothing ->
                 False
+        isView = windowName.isView
     in
     a [ class "nav-group-item"
-      , classList [("active", isActive)]
+      , classList [("active", isActive), ("is-view-active", isView && isActive)]
       , Route.href (Route.WindowArena (Just (WindowArena.initArg windowName.tableName))) 
       ]
-        [span [class "icon icon-list"] []
+        [span [ class "icon icon-list"
+              , classList [("is-view-icon", isView)] 
+              ] []
         ,text windowName.name
         ]
 

@@ -20,6 +20,7 @@ type alias GroupedWindow =
 type alias WindowName =
     { name: String
     , tableName: TableName
+    , isView : Bool
     }
 
 
@@ -37,4 +38,5 @@ windowNameDecoder =
     decode WindowName 
         |> required "name" Decode.string
         |> required "table_name" TableName.decoder 
+        |> required "is_view" Decode.bool
 

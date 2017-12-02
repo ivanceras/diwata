@@ -81,7 +81,7 @@ viewFrozenHead: Model -> Html Msg
 viewFrozenHead model =
     div [ class "frozen-head"
         ]
-        [ text "frozen head"]
+        []
 
 viewColumns: Model -> List Field -> Html Msg
 viewColumns model fields =

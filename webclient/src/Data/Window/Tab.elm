@@ -20,6 +20,7 @@ type alias Tab =
     , description: Maybe String
     , tableName: TableName
     , fields: List Field
+    , isView: Bool
     }
 
 columnNames: Tab -> List String
@@ -34,6 +35,7 @@ decoder =
         |> required "description" (Decode.nullable Decode.string)
         |> required "table_name" TableName.decoder
         |> required "fields" (Decode.list Field.decoder)
+        |> required "is_view" Decode.bool
 
 
 primaryFields: Tab -> List Field

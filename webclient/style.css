@@ -131,6 +131,11 @@
     padding: 0 3px;
 }
 
+.tab-name {
+    border: 1px solid #ccc;
+    padding: 0 10px;
+}
+
 .tab-columns {
     overflow: hidden;
     border-width: 0 1px 1px 1px;
@@ -235,4 +240,12 @@
 .detail-tab-name {
     border: 1px solid #ccc;
     padding: 5px 20px;
+}
+
+.nav-group .is-view-active {
+    background-color: #cbf35666;
+}
+
+.nav-group-item .is-view-icon {
+    color: #688a02;
 }

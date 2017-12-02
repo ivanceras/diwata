@@ -54,6 +54,7 @@ type alias Window =
     , oneOneTabs : List Tab
     , hasManyTabs : List Tab
     , indirectTabs : List (TableName, Tab)
+    , isView : Bool
     }
 
 
@@ -74,6 +75,7 @@ baseWindowDecoder =
         |> required "one_one_tabs" (Decode.list Tab.decoder) 
         |> required "has_many_tabs" (Decode.list Tab.decoder) 
         |> required "indirect_tabs" (Decode.list indirectTabDecoder) 
+        |> required "is_view" Decode.bool
 
 
 indirectTabDecoder: Decoder (TableName, Tab)

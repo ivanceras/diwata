@@ -137,7 +137,7 @@ simpleDecoder =
                     "VideoPlayer" -> Decode.succeed VideoPlayer
                     "AudioPlayer" -> Decode.succeed AudioPlayer
                     "Viewer3D" -> Decode.succeed Viewer3D
-                    _ -> Decode.fail ("not yet dealth with widget" ++ val)
+                    _ -> Decode.fail ("not yet dealth with widget: " ++ val)
             )
 
 

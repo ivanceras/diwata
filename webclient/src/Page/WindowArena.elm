@@ -94,7 +94,7 @@ view session model =
                     ]
                 , div [ class "pane window-container" ]
                     [ div [ class "tab-group" ]
-                        [text "tabs here"]
+                        [viewTabNames model]
                     , div []
                         [viewWindowOrSelectedRow session model]
                     ]
@@ -119,6 +119,15 @@ viewWindow session activeWindow =
                 |> Html.map WindowMsg
         Nothing ->
             text "No active window"
+
+viewTabNames : Model -> Html msg
+viewTabNames model =
+    case model.activeWindow of
+        Just activeWindow ->
+            div [class "tab-name"]
+                [ text activeWindow.mainTab.tab.name ]
+        Nothing ->
+            text "no tab"
 
 viewBanner : Html msg
 viewBanner =
