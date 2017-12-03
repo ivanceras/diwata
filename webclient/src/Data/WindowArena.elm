@@ -4,6 +4,7 @@ module Data.WindowArena exposing
     , parseArenaArgs
     , ArenaArg
     , argToString
+    , Section(..)
     )
 
 import Data.Window.TableName as TableName exposing (TableName,fromString,tableNameToString)
@@ -92,14 +93,6 @@ type alias ArenaArg =
     , sectionFilter: Maybe String
     , sectionPage: Maybe Int
     , sectionOrder: Maybe (List Query.Order)
-    , sectionSelected: Maybe String
-    }
-
-type alias DetailArg =
-    { activeSection: Maybe (Section, TableName)
-    , sectionFilter: Maybe String
-    , sectionPage: Maybe Int
-    , selectionOrder: Maybe (List Query.Order)
     , sectionSelected: Maybe String
     }
 

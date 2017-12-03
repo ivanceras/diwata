@@ -269,3 +269,7 @@
 .detail-tab-names {
     height: 40px;
 }
+
+.active-detail-tab {
+    border: 1px solid green;
+}

@@ -21,6 +21,7 @@ import Data.Window.TableName as TableName exposing (TableName)
 import Data.WindowArena as WindowArena exposing (ArenaArg)
 import Page.Window.DetailedRecord as DetailedRecord
 import Window as BrowserWindow
+import Route
 
 
 -- MODEL --
@@ -31,6 +32,7 @@ type alias Model =
     , activeWindow: Maybe Window.Model
     , groupedWindow : GroupedWindow.Model
     , selectedRow: Maybe DetailedRecord.Model
+    , arenaArg: Maybe ArenaArg
     }
 
 
@@ -64,7 +66,7 @@ init session arenaArg =
                 Just arenaArg ->
                     case arenaArg.selected of
                         Just selectedRecord ->
-                            DetailedRecord.init arenaArg.tableName selectedRecord
+                            DetailedRecord.init arenaArg.tableName selectedRecord arenaArg
                                 |> Task.map(\selectedRecord -> Just selectedRecord)
                                 |> Task.mapError handleLoadError
                         Nothing ->
@@ -76,7 +78,15 @@ init session arenaArg =
         handleLoadError e =
             pageLoadError Page.WindowArena ("WindowArena is currently unavailable. Error: "++ (toString e))
     in
-    Task.map3 (Model [] ) loadActiveWindow loadWindowList loadSelectedRecord
+    Task.map3 
+        ( \ activeWindow groupedWindow selectedRow ->
+            { openedWindow = []
+            , activeWindow = activeWindow
+            , groupedWindow = groupedWindow
+            , selectedRow = selectedRow
+            , arenaArg = arenaArg
+            }
+        ) loadActiveWindow loadWindowList loadSelectedRecord
 
 
 
@@ -126,7 +136,9 @@ viewTabNames model =
     case model.activeWindow of
         Just activeWindow ->
             div [class "tab-name"]
-                [ text activeWindow.mainTab.tab.name ]
+                [ a [Route.href (Route.WindowArena model.arenaArg)]
+                    [ text activeWindow.mainTab.tab.name ]
+                ]
         Nothing ->
             text "no tab"
 

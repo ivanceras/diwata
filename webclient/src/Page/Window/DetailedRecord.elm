@@ -27,6 +27,8 @@ import Window as BrowserWindow
 import Views.Page as Page
 import Page.Window as Window
 import Util exposing (px)
+import Data.WindowArena exposing (ArenaArg, Section(..))
+import Route
 
 {-|
 Example:
@@ -42,6 +44,7 @@ type alias Model =
     , position : Position 
     , drag : Maybe Drag
     , browserSize: BrowserWindow.Size
+    , arenaArg: ArenaArg
     }
 
 type alias Drag =
@@ -53,8 +56,8 @@ initialPosition : BrowserWindow.Size -> Position
 initialPosition browserSize =
     Position 0 (round (toFloat browserSize.height * 2.0 / 3.0))
 
-init: TableName -> String -> Task PageLoadError Model
-init tableName selectedRow =
+init: TableName -> String -> ArenaArg -> Task PageLoadError Model
+init tableName selectedRow arenaArg =
     let 
         browserSize = BrowserWindow.size
 
@@ -101,6 +104,7 @@ init tableName selectedRow =
                 , position = initialPosition size
                 , drag = Nothing
                 , browserSize = size
+                , arenaArg = arenaArg
                 }
             ) 
             fetchSelected loadWindow initHasManyTabs initIndirectTabs browserSize
@@ -205,14 +209,35 @@ viewDetailTabs model =
         selectedRow = model.selectedRow
         hasManyTabs = model.hasManyTabs
         indirectTabs = model.indirectTabs
+        arenaArg = model.arenaArg
 
-        detailTabs = List.map .tab (hasManyTabs ++ indirectTabs)
+        hasManyDetailTabs = 
+            List.map
+                  (\ tab ->
+                      (HasMany, tab.tab)
+                  ) hasManyTabs
 
-        activeTab: Maybe TableName
-        activeTab = List.head detailTabs -- parse the arenaa arg sectionTable and use it as the activeTab
-            |> Maybe.map .tableName
+        indirectDetailTabs =
+            List.map
+                (\ tab ->
+                    (Indirect, tab.tab)
+                ) indirectTabs
+
+        detailTabs = hasManyDetailTabs ++ indirectDetailTabs
+
+        firstDetailTab = List.head detailTabs 
+                            |> Maybe.map (\(section, tab) -> tab.tableName)
+
+        activeTab = case arenaArg.sectionTable of
+             Just (section, tableName) ->
+                 Just tableName
+             Nothing -> 
+                 firstDetailTab
+
         detailTabViews =  
-            (List.map (listView activeTab selectedRow.hasMany) hasManyTabs)
+            (hasManyTabs
+                |> List.map (listView activeTab selectedRow.hasMany)
+            )
             ++
             (List.map 
                 (\indirectTab ->
@@ -224,9 +249,24 @@ viewDetailTabs model =
     div []
         [ div [class "detail-tab-names"]
            (List.map 
-            (\ tab -> 
-                div [class "detail-tab-name"]
-                    [text tab.name]
+            (\ (section, tab) -> 
+                let isActiveTab =
+                    case activeTab of
+                        Just activeTab ->
+                            activeTab == tab.tableName
+
+                        Nothing ->
+                            False
+                    arenaArg = model.arenaArg
+                    sectionArenaArg = {arenaArg | sectionTable = Just ( section, tab.tableName )}
+                in
+                div [ class "detail-tab-name"
+                    , classList [("active-detail-tab", isActiveTab)]
+                    ]
+                    [ a [Route.href (Route.WindowArena (Just sectionArenaArg))
+                        ]
+                        [text tab.name]
+                    ]
             )
             detailTabs
            )
