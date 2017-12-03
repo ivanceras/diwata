@@ -125,7 +125,7 @@ fn get_detailed_record(table_name: String, record_id: String) -> Result<Option<J
         Some(window) => {
             let dao: Option<RecordDetail> = 
                 data_service::get_selected_record_detail(&dm, &tables,
-                                                        &window, &record_id)?;
+                                                        &window, &record_id, PAGE_SIZE)?;
             match dao{
                 Some(dao) => Ok(Some(Json(dao))),
                 None => Ok(None)

@@ -135,9 +135,9 @@ viewTabNames : Model -> Html msg
 viewTabNames model =
     case model.activeWindow of
         Just activeWindow ->
-            div [class "tab-name"]
-                [ a [Route.href (Route.WindowArena model.arenaArg)]
-                    [ text activeWindow.mainTab.tab.name ]
+             a [Route.href (Route.WindowArena model.arenaArg)]
+                [div [class "tab-name"]
+                     [ text activeWindow.mainTab.tab.name ]
                 ]
         Nothing ->
             text "no tab"
