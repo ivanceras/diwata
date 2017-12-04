@@ -305,6 +305,10 @@
     border-color: #888;
 }
 
+.indirect-tab.active-detail-tab{
+    background-color: #fff4ea;
+}
+
 .active-main-tab {
     background-color: #f5f5f4;
     border-width: 1px 1px 0 1px;
