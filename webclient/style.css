@@ -5,12 +5,14 @@
 }
 
 
+.window-arena{
+    background-color: #f5f5f4;
+}
+
 #banner{
     height: 100px;
 }
 
-.tab-group{
-}
 
 .row-value {
     padding: 0 5px;
@@ -95,6 +97,7 @@
     min-width: 120px;
     height: 300px;
     overflow: hidden;
+    background-color: #f5f5f4;
 }
 .row-shadow-content{
     position: relative;
@@ -107,6 +110,7 @@
 /* Frozen head columns */
 .frozen-head-columns{
     display: flex;
+    background-color: #f5f5f4;
 }
 
 /* row shadow and the listing of row records */
@@ -127,10 +131,24 @@
     padding: 0 3px;
 }
 
+.tab-group{
+    background-color: #ddd;
+    border-bottom: 1px solid #f4f4f5;
+}
+
+.tab-group a {
+    padding-top: 5px;
+    text-decoration: none;
+    display: block;
+    color: #333;
+}
+
 .tab-name {
     border: 1px solid #ccc;
-    padding: 0 10px;
+    padding: 5px 20px;
     height: 40px;
+    border-radius: 5px 5px 0 0;
+    outline: 0;
 }
 
 .tab-columns {
@@ -163,6 +181,7 @@
 
 .list-view-rows {
     overflow: auto;
+    background-color: #fff;
 }
 
 .empty-list-view-rows {
@@ -215,7 +234,6 @@
 
 .tag-item{
     display:flex;
-    border: 1px solid #ccc;
     background-color: #ccc;
     padding: 0 3px;
     border-radius: 5px;
@@ -231,12 +249,22 @@
 
 
 .detail-tab-names {
-    display: flex
+    display: flex;
+    background-color: #ddd;
+}
+
+.indirect-tab {
+    background-color: #eddac9;
 }
 
 .detail-tab-name {
-    border: 1px solid #ccc;
     padding: 5px 20px;
+    border-radius: 5px 5px 0 0;
+    border: 1px solid #888;
+    text-decoration: none;
+    display: block;
+    color: #333;
+    outline: 0;
 }
 
 .nav-group .is-view-active {
@@ -249,10 +277,11 @@
 
 .main-tab-selected {
     overflow: auto;
+    background-color: #fff;
 }
 
 .detail-separator {
-    background-color: #ccc;
+    background-color: #ddd;
     height: 10px;
     cursor: ns-resize;
     text-align: center;
@@ -271,5 +300,13 @@
 }
 
 .active-detail-tab {
-    border: 1px solid green;
+    background-color: #f5f5f4;
+    border-width: 1px 1px 0 1px;
+    border-color: #888;
+}
+
+.active-main-tab {
+    background-color: #f5f5f4;
+    border-width: 1px 1px 0 1px;
+    border-color: #888;
 }

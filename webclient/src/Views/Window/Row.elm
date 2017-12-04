@@ -72,12 +72,10 @@ viewFormLinkControl recordId tab =
     let
         recordIdString = Record.idToString recordId
     in
-    div [ class "link-to-form"]
-        [ a [ class "row-id"
-            , Route.href (Route.WindowArena (Just (WindowArena.initArgWithRecordId tab.tableName recordIdString))) 
-            ] 
-            [div [class "icon icon-doc-text-inv"]
-                []
-            ]
-        ]
+    a [ class "link-to-form"
+      , Route.href (Route.WindowArena (Just (WindowArena.initArgWithRecordId tab.tableName recordIdString))) 
+      ]
+      [div [class "icon icon-doc-text-inv"]
+        []
+      ]
 

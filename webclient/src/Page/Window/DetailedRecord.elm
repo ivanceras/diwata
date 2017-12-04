@@ -260,13 +260,15 @@ viewDetailTabs model =
                     arenaArg = model.arenaArg
                     sectionArenaArg = {arenaArg | sectionTable = Just ( section, tab.tableName )}
                 in
-                div [ class "detail-tab-name"
-                    , classList [("active-detail-tab", isActiveTab)]
-                    ]
-                    [ a [Route.href (Route.WindowArena (Just sectionArenaArg))
+                a [ class "detail-tab-name"
+                    , classList 
+                        [ ("has-many-tab", section == HasMany)
+                        , ("indirect-tab" , section == Indirect)
+                        , ("active-detail-tab", isActiveTab)
                         ]
-                        [text tab.name]
+                    , Route.href (Route.WindowArena (Just sectionArenaArg))
                     ]
+                    [text tab.name]
             )
             detailTabs
            )

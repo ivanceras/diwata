@@ -103,7 +103,7 @@ view session model =
                     [GroupedWindow.view model.groupedWindow
                         |> Html.map GroupedWindowMsg 
                     ]
-                , div [ class "pane window-container" ]
+                , div [ class "pane window-arena" ]
                     [ div [ class "tab-group" ]
                         [viewTabNames model]
                     , div []
@@ -135,10 +135,10 @@ viewTabNames : Model -> Html msg
 viewTabNames model =
     case model.activeWindow of
         Just activeWindow ->
-             a [Route.href (Route.WindowArena model.arenaArg)]
-                [div [class "tab-name"]
-                     [ text activeWindow.mainTab.tab.name ]
-                ]
+             a [ class "tab-name active-main-tab"
+               , Route.href (Route.WindowArena model.arenaArg)
+               ]
+               [ text activeWindow.mainTab.tab.name ]
         Nothing ->
             text "no tab"
 
