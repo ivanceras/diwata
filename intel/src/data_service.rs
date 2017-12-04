@@ -29,72 +29,26 @@ fn get_main_table<'a>(window: &Window, tables: &'a Vec<Table>) -> Option<&'a Tab
     main_table
 }
 
-/// get the data of the window
-/// - first page data of the main table
-/// - each row of the main table also loads each of 
-///    its one_one record
-/// - each record field that has a has_one foreign table
-///    the selected value is also loaded in, additionally
-///    the first page of the lookup table is also loaded
-///    as well.
-pub fn get_maintable_data_first_page(em: &EntityManager, 
+
+fn calc_offset(page: u32, page_size: u32) -> u32 {
+    (page - 1) * page_size + 1
+}
+
+/// get data for the window
+pub fn get_maintable_data(em: &EntityManager, 
                                  tables: &Vec<Table>,  
                                  window: &Window, 
                                  filter: Option<Filter>, 
-                                 page_size: i32) -> Result<Rows, DbError> {
+                                 page: u32,
+                                 page_size: u32) -> Result<Rows, DbError> {
     let mut sql = String::from("SELECT * "); 
     let main_tablename = &window.main_tab.table_name;
     let main_table = get_main_table(window, tables);
     assert!(main_table.is_some());
     let main_table = main_table.unwrap();
     sql += &format!("FROM {} \n",main_tablename.complete_name());
-    /*
-    for one1 in window.one_one_tabs.iter(){
-        let one1_table = table_intel::get_table(&one1.table_name, tables);
-        assert!(one1_table.is_some());
-        if let Some(one1_table) = one1_table{
-            sql += &format!("   LEFT JOIN {} \n", one1.table_name.complete_name());
-            let foreign_key = one1_table.get_foreign_key_to_table(&main_tablename);
-            assert!(foreign_key.is_some());
-            if let Some(fk) = foreign_key{
-                assert_eq!(fk.columns.len(), fk.referred_columns.len());
-                for (i, col) in fk.columns.iter().enumerate(){
-                    if i == 0{
-                        sql += "        ON ";
-                    }else{
-                        sql += "        AND ";
-                    }
-                    let rcol = &fk.referred_columns[i];
-                    sql += &format!("{}.{} = {}.{}\n",one1.table_name.name, col.name, main_tablename.name, rcol.name) 
-                }
-            }
-        }
-    }
-    for has1 in window.has_one_tables.iter(){
-        let has1_table = table_intel::get_table(&has1, tables);
-        assert!(has1_table.is_some());
-        if let Some(has1_table) = has1_table{
-            let has1_table_alias = format!("has1_{}", has1_table.name.name);
-            sql += &format!("   LEFT JOIN {} AS {} \n", has1_table.complete_name(), has1_table_alias);
-            let foreign_key = main_table.get_foreign_key_to_table(&has1);
-            assert!(foreign_key.is_some());
-            if let Some(fk) = foreign_key{
-                assert_eq!(fk.columns.len(), fk.referred_columns.len());
-                for (i, col) in fk.columns.iter().enumerate(){
-                    if i == 0{
-                        sql += "        ON ";
-                    }else{
-                        sql += "        AND ";
-                    }
-                    let rcol = &fk.referred_columns[i];
-                    sql += &format!("{}.{} = {}.{}\n",main_tablename.name, col.name, 
-                                    has1_table_alias, rcol.name) 
-                }
-            }
-        }
-    }
-    */
     sql += &format!("LIMIT {}", page_size);
+    sql += &format!("OFFSET {}", calc_offset(page, page_size));
     println!("SQL: {}", sql);
     let result: Result<Rows, DbError> = em.db().execute_sql_with_return(&sql, &[]);
     println!("result: {:?}", result);
@@ -158,7 +112,7 @@ pub struct RecordDetail{
 
 /// get the detail of the selected record data
 pub fn get_selected_record_detail(dm: &RecordManager, tables: &Vec<Table>, 
-                            window: &Window, record_id: &str, page_size: i32) -> Result<Option<RecordDetail>, IntelError> {
+                            window: &Window, record_id: &str, page_size: u32) -> Result<Option<RecordDetail>, IntelError> {
     let main_table = get_main_table(window, tables);
     assert!(main_table.is_some());
     let main_table = main_table.unwrap();
@@ -250,7 +204,7 @@ fn cast(value: &Value, required_type: &SqlType) -> Value {
 
 fn get_one_one_record(dm: &RecordManager, tables: &Vec<Table>, 
                       main_table: &Table, one_one_tab: &Tab,
-                      record_id: &Vec<(&ColumnName, Value)>, page_size: i32) -> Result<Option<Record>, DbError> {
+                      record_id: &Vec<(&ColumnName, Value)>, page_size: u32) -> Result<Option<Record>, DbError> {
     let one_one_table = table_intel::get_table(&one_one_tab.table_name, tables);
     assert!(one_one_table.is_some());
     let one_one_table = one_one_table.unwrap();
@@ -289,7 +243,7 @@ fn get_one_one_record(dm: &RecordManager, tables: &Vec<Table>,
 
 fn get_has_many_records(dm: &RecordManager, tables: &Vec<Table>, 
                       main_table: &Table, has_many_tab: &Tab,
-                      record_id: &Vec<(&ColumnName, Value)>, page_size: i32) -> Result<Rows, DbError> {
+                      record_id: &Vec<(&ColumnName, Value)>, page_size: u32) -> Result<Rows, DbError> {
     let has_many_table = table_intel::get_table(&has_many_tab.table_name, tables);
     assert!(has_many_table.is_some());
     let has_many_table = has_many_table.unwrap();
@@ -335,7 +289,7 @@ fn get_has_many_records(dm: &RecordManager, tables: &Vec<Table>,
 
 fn get_indirect_records(dm: &RecordManager, tables: &Vec<Table>, 
                       main_table: &Table, indirect_tab: &Tab, linker_table_name: &TableName,
-                      record_id: &Vec<(&ColumnName, Value)>, page_size: i32) -> Result<Rows, DbError> {
+                      record_id: &Vec<(&ColumnName, Value)>, page_size: u32) -> Result<Rows, DbError> {
 
     let indirect_table = table_intel::get_table(&indirect_tab.table_name, tables);
     assert!(indirect_table.is_some());
@@ -392,10 +346,6 @@ fn get_indirect_records(dm: &RecordManager, tables: &Vec<Table>,
 }
 
 
-/// get the next page of the window
-/// the has_one record is not loaded since it is managed differently
-fn get_maintable_data_next_page(em: &EntityManager, window:  &Window, filter: Option<Filter>, page: i32) {
-}
 
 
 /// get the data of this table, no joins

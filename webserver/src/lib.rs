@@ -40,7 +40,7 @@ mod error;
 //static DB_URL: &'static str = "postgres://postgres:p0stgr3s@localhost:5432/jybapiprod";
 static DB_URL: &'static str = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
 
-static PAGE_SIZE: i32 = 40; 
+static PAGE_SIZE: u32 = 40; 
 
 lazy_static!{
     pub static ref POOL: Arc<Mutex<Pool>> = {
@@ -95,6 +95,11 @@ fn get_window(table_name: String) -> Result<Option<Json<Window>>, ServiceError> 
 
 #[get("/<table_name>")]
 fn get_data(table_name: String) -> Result<Option<Json<Rows>>, ServiceError> {
+    get_data_with_page(table_name, 1)
+}
+
+#[get("/<table_name>/<page>")]
+fn get_data_with_page(table_name: String, page: u32) -> Result<Option<Json<Rows>>, ServiceError> {
     let em = get_pool_em()?;
     let mut cache_pool = cache::CACHE_POOL.lock().unwrap();
     let windows = cache_pool.get_cached_windows(&em, DB_URL)?;
@@ -104,8 +109,8 @@ fn get_data(table_name: String) -> Result<Option<Json<Rows>>, ServiceError> {
     match window{
         Some(window) => {
             let rows: Rows = 
-                data_service::get_maintable_data_first_page(&em, &tables,
-                                                        &window, None, PAGE_SIZE)?;
+                data_service::get_maintable_data(&em, &tables,
+                                                        &window, None, page, PAGE_SIZE)?;
             Ok(Some(Json(rows)))
         }
         None => Ok(None)
@@ -175,6 +180,7 @@ pub fn rocket() -> Rocket {
         .mount(
             "/data", routes![
                     get_data,
+                    get_data_with_page,
                     get_detailed_record,
             ]
         )
