@@ -246,35 +246,38 @@ viewDetailTabs model =
                 indirectTabs
             )
     in
-    div []
-        [ div [class "detail-tab-names"]
-           (List.map 
-            (\ (section, tab) -> 
-                let isActiveTab =
-                    case activeTab of
-                        Just activeTab ->
-                            activeTab == tab.tableName
+    if (List.length detailTabs) > 0 then
+        div []
+            [ div [class "detail-tab-names"]
+               (List.map 
+                (\ (section, tab) -> 
+                    let isActiveTab =
+                        case activeTab of
+                            Just activeTab ->
+                                activeTab == tab.tableName
 
-                        Nothing ->
-                            False
-                    arenaArg = model.arenaArg
-                    sectionArenaArg = {arenaArg | sectionTable = Just ( section, tab.tableName )}
-                in
-                a [ class "detail-tab-name"
-                    , classList 
-                        [ ("has-many-tab", section == HasMany)
-                        , ("indirect-tab" , section == Indirect)
-                        , ("active-detail-tab", isActiveTab)
+                            Nothing ->
+                                False
+                        arenaArg = model.arenaArg
+                        sectionArenaArg = {arenaArg | sectionTable = Just ( section, tab.tableName )}
+                    in
+                    a [ class "detail-tab-name"
+                        , classList 
+                            [ ("has-many-tab", section == HasMany)
+                            , ("indirect-tab" , section == Indirect)
+                            , ("active-detail-tab", isActiveTab)
+                            ]
+                        , Route.href (Route.WindowArena (Just sectionArenaArg))
                         ]
-                    , Route.href (Route.WindowArena (Just sectionArenaArg))
-                    ]
-                    [text tab.name]
-            )
-            detailTabs
-           )
-        , div [class "detail-tabs"]
-             detailTabViews
-        ]
+                        [text tab.name]
+                )
+                detailTabs
+               )
+            , div [class "detail-tabs"]
+                 detailTabViews
+            ]
+    else
+        text "No detail tabs"
 
 listView: Maybe TableName -> List (TableName, Rows)  -> Tab.Model -> Html Msg
 listView activeTab detailRows tab =
