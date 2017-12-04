@@ -23,7 +23,7 @@ import Util exposing ((=>))
 
 list : Maybe AuthToken -> TableName -> Http.Request Rows
 list maybeToken tableName =
-    apiUrl ("/window/" ++ tableNameToString tableName ++ "/data")
+    apiUrl ("/data/" ++ tableNameToString tableName)
         |> HttpBuilder.get
         |> HttpBuilder.withExpect (Http.expectJson Record.rowsDecoder)
         |> withAuthorization maybeToken
@@ -32,7 +32,7 @@ list maybeToken tableName =
 
 fetchSelected : TableName -> String -> Http.Request RecordDetail
 fetchSelected tableName selectedRow =
-    apiUrl ("/window/" ++ tableNameToString tableName ++ "/data/select/"++selectedRow)
+    apiUrl ("/data/" ++ tableNameToString tableName ++ "/select/"++selectedRow)
         |> HttpBuilder.get
         |> HttpBuilder.withExpect (Http.expectJson RecordDetail.decoder)
         |> HttpBuilder.toRequest

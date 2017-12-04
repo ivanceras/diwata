@@ -93,7 +93,7 @@ fn get_window(table_name: String) -> Result<Option<Json<Window>>, ServiceError> 
     }
 }
 
-#[get("/<table_name>/data")]
+#[get("/<table_name>")]
 fn get_data(table_name: String) -> Result<Option<Json<Rows>>, ServiceError> {
     let em = get_pool_em()?;
     let mut cache_pool = cache::CACHE_POOL.lock().unwrap();
@@ -112,7 +112,7 @@ fn get_data(table_name: String) -> Result<Option<Json<Rows>>, ServiceError> {
     }
 }
 
-#[get("/<table_name>/data/select/<record_id>")]
+#[get("/<table_name>/select/<record_id>")]
 fn get_detailed_record(table_name: String, record_id: String) -> Result<Option<Json<RecordDetail>>, ServiceError> {
     let dm = get_pool_dm()?;
     let em = get_pool_em()?;
@@ -173,11 +173,15 @@ pub fn rocket() -> Rocket {
                  ]
         ) 
         .mount(
+            "/data", routes![
+                    get_data,
+                    get_detailed_record,
+            ]
+        )
+        .mount(
             "/window",
                 routes![
                     get_window,
-                    get_data,
-                    get_detailed_record,
                 ]
         )
         .mount(
