@@ -72,23 +72,43 @@ init tableName selectedRow arenaArg =
                 |> Task.mapError handleLoadError
 
         initHasManyTabs =
-            Task.map2
-                (\ window size ->
-                    let (mainRecordHeight, detailTabHeight) = splitTabHeights (initialPosition size) size
-                    in
-                    List.map (Tab.init detailTabHeight) window.hasManyTabs
-                ) loadWindow browserSize
-
-        initIndirectTabs =
-            Task.map2
-                (\ window size ->
+            Task.map3
+                (\ window size detailRows->
                     let (mainRecordHeight, detailTabHeight) = splitTabHeights (initialPosition size) size
                     in
                     List.map 
+                        ( \ hasManyTab ->
+                            let 
+                                rows = RecordDetail.contentInTable detailRows.hasMany hasManyTab.tableName
+                            in
+                                case rows of
+                                    Just rows -> 
+                                        Tab.init detailTabHeight hasManyTab rows
+                                    Nothing ->
+                                        Debug.crash "Empty row"
+
+                        ) window.hasManyTabs
+                ) loadWindow browserSize fetchSelected
+
+        initIndirectTabs =
+            Task.map3
+                (\ window size detailRows ->
+                    let 
+                        (mainRecordHeight, detailTabHeight) = splitTabHeights (initialPosition size) size
+                    in
+                    List.map 
                         (\(tableName, indirectTab) ->
-                            Tab.init detailTabHeight indirectTab
+                            let 
+                                rows = RecordDetail.contentInTable detailRows.indirect indirectTab.tableName
+                            in
+                                case rows of
+                                    Just rows ->
+                                        Tab.init detailTabHeight indirectTab rows
+                                    Nothing ->
+                                        Debug.crash "Empty row"
+
                         ) window.indirectTabs
-                ) loadWindow browserSize
+                ) loadWindow browserSize fetchSelected
 
         handleLoadError e =
             pageLoadError Page.DetailedRecord ("DetailedRecord is currently unavailable. Error: "++ (toString e))
@@ -236,12 +256,12 @@ viewDetailTabs model =
 
         detailTabViews =  
             (hasManyTabs
-                |> List.map (listView activeTab selectedRow.hasMany)
+                |> List.map (listView activeTab)
             )
             ++
             (List.map 
                 (\indirectTab ->
-                    listView activeTab selectedRow.indirect indirectTab
+                    listView activeTab indirectTab
                 )
                 indirectTabs
             )
@@ -279,10 +299,9 @@ viewDetailTabs model =
     else
         text "No detail tabs"
 
-listView: Maybe TableName -> List (TableName, Rows)  -> Tab.Model -> Html Msg
-listView activeTab detailRows tab =
+listView: Maybe TableName -> Tab.Model -> Html Msg
+listView activeTab tab =
     let 
-        detailRecords = RecordDetail.contentInTable detailRows tab.tab.tableName
         isTabActive = 
             case activeTab of
                 Just activeTab -> activeTab == tab.tab.tableName
@@ -296,12 +315,8 @@ listView activeTab detailRows tab =
                     style [("display", "none")]
 
         detailRecordView =
-            case detailRecords of
-                   Just detailRecords ->
-                       Tab.listView tab detailRecords
-                           |> Html.map (\tabMsg -> TabMsg (tab, tabMsg))
-                   Nothing ->
-                       text "Empty tab"
+               Tab.listView tab
+                   |> Html.map (\tabMsg -> TabMsg (tab, tabMsg))
         
     in
     div [ class "detail-tab"

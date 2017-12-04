@@ -82,11 +82,11 @@ init session tableName =
             in
             pageLoadError Page.Other "Window is currently unavailable."
 
-        mainTabTask = Task.map2 
-                    (\window size -> 
-                        Tab.init (calcMainTabHeight size) window.mainTab
+        mainTabTask = Task.map3 
+                    (\window records size -> 
+                        Tab.init (calcMainTabHeight size) window.mainTab records
                     ) 
-                    loadWindow getBrowserSize
+                    loadWindow loadRecords getBrowserSize
                 |> Task.mapError handleLoadError
     in
     Task.map3
@@ -125,10 +125,9 @@ viewMainTab : Model -> Html Msg
 viewMainTab model =
     let 
         mainTab = model.mainTab
-        records = model.records
     in
     div [ class "main-tab" ] 
-        [Tab.listView mainTab records
+        [Tab.listView mainTab
             |> Html.map TabMsg
         ]
 

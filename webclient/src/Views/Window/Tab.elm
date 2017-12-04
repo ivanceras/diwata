@@ -15,8 +15,9 @@ import Util exposing ((=>), px)
 
 type alias Model =
     { tab : Tab
-    , listRowScroll: Scroll
+    , scroll: Scroll
     , height: Float
+    , rows: Rows
     }
 
 type alias Scroll =
@@ -24,18 +25,51 @@ type alias Scroll =
     , left: Float
     }
 
-init: Float -> Tab -> Model
-init height tab =
+init: Float -> Tab -> Rows -> Model
+init height tab rows =
     { tab = tab
-    , listRowScroll = Scroll 0 0
+    , scroll = Scroll 0 0
     , height = height
+    , rows = rows
     }
 
-listView: Model -> Rows -> Html Msg
-listView model rows =
+estimatedListHeight: Rows -> Float
+estimatedListHeight rows =
+    let
+        rowHeight = 40.0
+        rowLength = List.length rows.data
+    in
+        rowHeight * (toFloat rowLength)
+
+needMoreRows: Float -> Rows -> Bool
+needMoreRows height rows =
+    let
+        totalRowHeight  = estimatedListHeight rows 
+        bottomAllowance = 100.0
+    in
+        totalRowHeight < height - bottomAllowance
+
+{-| The list is scrolled to Bottom
+when scrollTop + tabHeight > totalListHeight - bottomAllowance
+-}
+isScrolledBottom: Model -> Bool
+isScrolledBottom model =
+    let
+        contentHeight = estimatedListHeight model.rows
+        scrollTop = model.scroll.top
+        bottomAllowance = 50.0
+    in
+        scrollTop + model.height > contentHeight - bottomAllowance 
+        
+
+listView: Model -> Html Msg
+listView model =
     let 
         height = model.height
+        rows = model.rows
         _ = Debug.log "calculated list view rows height" height
+        _ = Debug.log "estimated list height" (estimatedListHeight rows)
+        _ = Debug.log "is scrolled bottom" (isScrolledBottom model)
         tab = model.tab
         columnNames = Tab.columnNames tab
         fields = tab.fields
@@ -60,7 +94,7 @@ listView model rows =
 viewRowShadow: Float -> List RecordId -> Tab -> Model -> Html Msg
 viewRowShadow height recordIdList tab model =
     let 
-        scrollTop = model.listRowScroll.top
+        scrollTop = model.scroll.top
         topPx = px(-scrollTop)
     in
     div [ class "row-shadow"
@@ -86,7 +120,7 @@ viewFrozenHead model =
 viewColumns: Model -> List Field -> Html Msg
 viewColumns model fields =
     let 
-        scrollLeft = model.listRowScroll.left
+        scrollLeft = model.scroll.left
         leftPx =  px (-scrollLeft)
     in
     div [ class "tab-columns"
@@ -127,19 +161,21 @@ listViewRows height tab recordIdList recordList =
         , onScroll
         , style [("height", px height)]
         ] 
-        (
-        if List.length recordList > 0 then
-            (List.map2 
-                (\ recordId record ->
-                    Row.view recordId record tab
-                )
-                recordIdList recordList
-             )
-        else
-            [div [class "empty-list-view-rows"]
-                [text "Empty list view rows"]
-            ]
-        )
+        [ div [class "list-view-rows-content"]
+            (
+            if List.length recordList > 0 then
+                (List.map2 
+                    (\ recordId record ->
+                        Row.view recordId record tab
+                    )
+                    recordIdList recordList
+                 )
+            else
+                [div [class "empty-list-view-rows"]
+                    [text "Empty list view rows"]
+                ]
+            )
+        ]
 
 onScroll: Attribute Msg
 onScroll =
@@ -156,6 +192,7 @@ scrollDecoder =
 type Msg
     = SetHeight Float
     | ListRowScrolled Scroll
+    | RequestNextPage
 
 update: Msg -> Model ->  (Model, Cmd Msg)
 update msg model =
@@ -163,7 +200,17 @@ update msg model =
         SetHeight height ->
             { model | height = height } => Cmd.none
         ListRowScrolled scroll ->
-            { model | listRowScroll = scroll } => Cmd.none
+            let 
+                updatedModel = { model | scroll = scroll }
+            in
+            case isScrolledBottom model of
+                True ->
+                    update RequestNextPage updatedModel
+                False ->
+                    updatedModel => Cmd.none 
+
+        RequestNextPage ->
+            model => Cmd.none
 
 
 
