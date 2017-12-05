@@ -31,7 +31,7 @@ fn get_main_table<'a>(window: &Window, tables: &'a Vec<Table>) -> Option<&'a Tab
 
 
 fn calc_offset(page: u32, page_size: u32) -> u32 {
-    (page - 1) * page_size + 1
+    (page - 1) * page_size
 }
 
 /// get data for the window
@@ -47,8 +47,8 @@ pub fn get_maintable_data(em: &EntityManager,
     assert!(main_table.is_some());
     let main_table = main_table.unwrap();
     sql += &format!("FROM {} \n",main_tablename.complete_name());
-    sql += &format!("LIMIT {}", page_size);
-    sql += &format!("OFFSET {}", calc_offset(page, page_size));
+    sql += &format!("LIMIT {} ", page_size);
+    sql += &format!("OFFSET {} ", calc_offset(page, page_size));
     println!("SQL: {}", sql);
     let result: Result<Rows, DbError> = em.db().execute_sql_with_return(&sql, &[]);
     println!("result: {:?}", result);
