@@ -1,6 +1,7 @@
 
 #![feature(plugin)]
 #![plugin(rocket_codegen)]
+#![feature(match_default_bindings)]
 extern crate rocket;
 extern crate rocket_contrib;
 extern crate rustorm;
@@ -33,6 +34,7 @@ use rustorm::RecordManager;
 use std::path::{Path,PathBuf};
 use rocket::response::NamedFile;
 use rocket::response::Redirect;
+use intel::tab::Tab;
 
 
 mod error;
@@ -140,6 +142,78 @@ fn get_detailed_record(table_name: String, record_id: String) -> Result<Option<J
     }
 }
 
+/// retrieve records from a has_many table based on the selected main records
+/// from the main table
+#[get("/<table_name>/select/<record_id>/has_many/<has_many_table>/<page>")]
+fn get_has_many_records(table_name: String, record_id: String, has_many_table: String, page: u32) -> Result<Option<Json<Rows>>, ServiceError> {
+    let dm = get_pool_dm()?;
+    let em = get_pool_em()?;
+    let mut cache_pool = cache::CACHE_POOL.lock().unwrap();
+    let windows = cache_pool.get_cached_windows(&em, DB_URL)?;
+    let table_name = TableName::from(&table_name);
+    let window = window::get_window(&table_name, &windows);
+    let tables = cache_pool.get_cached_tables(&em, DB_URL)?;
+    let has_many_table_name = TableName::from(&has_many_table);
+    match window{
+        Some(window) => {
+            let main_table = data_service::get_main_table(window, &tables);
+            assert!(main_table.is_some());
+            let main_table = main_table.unwrap();
+            let has_many_tab = data_service::find_tab(&window.has_many_tabs, &has_many_table_name);
+            match has_many_tab{
+                Some(has_many_tab) =>  {
+                    let rows =
+                        data_service::get_has_many_records_service(&dm, &tables,
+                                                                &main_table, &record_id, 
+                                                                has_many_tab,
+                                                                PAGE_SIZE, page)?;
+                        Ok(Some(Json(rows)))
+                }
+                None => Ok(None)
+            }
+        }
+        None => Ok(None)
+    }
+}
+
+/// retrieve records from a has_many table based on the selected main records
+/// from the main table
+#[get("/<table_name>/select/<record_id>/indirect/<indirect_table>/<page>")]
+fn get_indirect_records(table_name: String, record_id: String, indirect_table: String, page: u32) -> Result<Option<Json<Rows>>, ServiceError> {
+    let dm = get_pool_dm()?;
+    let em = get_pool_em()?;
+    let mut cache_pool = cache::CACHE_POOL.lock().unwrap();
+    let windows = cache_pool.get_cached_windows(&em, DB_URL)?;
+    let table_name = TableName::from(&table_name);
+    let window = window::get_window(&table_name, &windows);
+    let tables = cache_pool.get_cached_tables(&em, DB_URL)?;
+    let indirect_table_name = TableName::from(&indirect_table);
+    match window{
+        Some(window) => {
+            let main_table = data_service::get_main_table(window, &tables);
+            assert!(main_table.is_some());
+            let main_table = main_table.unwrap();
+
+            let indirect_tab: Option<&(TableName, Tab)> = 
+                window.indirect_tabs.iter().find(|&(linker_table, tab)| tab.table_name == indirect_table_name);
+
+            match indirect_tab{
+                Some(&(ref linker_table, ref indirect_tab)) =>  {
+                    let rows =
+                        data_service::get_indirect_records_service(&dm, &tables,
+                                                                &main_table, &record_id, 
+                                                                &indirect_tab,
+                                                                &linker_table,
+                                                                PAGE_SIZE, page)?;
+                        Ok(Some(Json(rows)))
+                }
+                None => Ok(None)
+            }
+        }
+        None => Ok(None)
+    }
+}
+
 
 #[get("/")]
 fn webclient_index() -> Option<NamedFile> {
@@ -182,6 +256,8 @@ pub fn rocket() -> Rocket {
                     get_data,
                     get_data_with_page,
                     get_detailed_record,
+                    get_has_many_records,
+                    get_indirect_records,
             ]
         )
         .mount(

@@ -23,7 +23,7 @@ use tab::Tab;
 pub struct Filter;
 
 
-fn get_main_table<'a>(window: &Window, tables: &'a Vec<Table>) -> Option<&'a Table> {
+pub fn get_main_table<'a>(window: &Window, tables: &'a Vec<Table>) -> Option<&'a Table> {
     let main_tablename = &window.main_tab.table_name;
     let main_table = table_intel::get_table(main_tablename, tables);
     main_table
@@ -110,6 +110,7 @@ pub struct RecordDetail{
     pub indirect: Vec<(TableName, Rows)>,
 }
 
+
 /// get the detail of the selected record data
 pub fn get_selected_record_detail(dm: &RecordManager, tables: &Vec<Table>, 
                             window: &Window, record_id: &str, page_size: u32) -> Result<Option<RecordDetail>, IntelError> {
@@ -153,7 +154,7 @@ pub fn get_selected_record_detail(dm: &RecordManager, tables: &Vec<Table>,
             let mut has_many_records: Vec<(TableName, Rows)> = Vec::with_capacity(window.has_many_tabs.iter().count());
             for has_many_tab in window.has_many_tabs.iter(){
                 println!("Getting has many");
-                let many_record = get_has_many_records(dm, tables, main_table, has_many_tab, &record_id, page_size)?;
+                let many_record = get_has_many_records(dm, tables, main_table, has_many_tab, &record_id, page_size, 1)?;
                 println!("about to push many record: {:?}", many_record);
                 has_many_records.push((has_many_tab.table_name.clone(), many_record));
                 println!("pushed");
@@ -161,7 +162,7 @@ pub fn get_selected_record_detail(dm: &RecordManager, tables: &Vec<Table>,
             println!("Getting indirect");
             let mut indirect_records: Vec<(TableName, Rows)> = Vec::with_capacity(window.indirect_tabs.iter().count());
             for &(ref linker_table, ref indirect_tab) in window.indirect_tabs.iter(){
-                let ind_records = get_indirect_records(dm, tables, main_table, indirect_tab, linker_table, &record_id, page_size)?;
+                let ind_records = get_indirect_records(dm, tables, main_table, indirect_tab, linker_table, &record_id, page_size, 1)?;
                 indirect_records.push((indirect_tab.table_name.clone(), ind_records));
             }
             let detail = RecordDetail{
@@ -175,6 +176,8 @@ pub fn get_selected_record_detail(dm: &RecordManager, tables: &Vec<Table>,
         None => Ok(None)
     }
 }
+
+
 
 /// get the value which matches the column name and cast the value to the required data type
 /// supported casting:
@@ -241,9 +244,31 @@ fn get_one_one_record(dm: &RecordManager, tables: &Vec<Table>,
     Ok(one_record)
 }
 
-fn get_has_many_records(dm: &RecordManager, tables: &Vec<Table>, 
-                      main_table: &Table, has_many_tab: &Tab,
-                      record_id: &Vec<(&ColumnName, Value)>, page_size: u32) -> Result<Rows, DbError> {
+pub fn find_tab<'a>(tabs: &'a Vec<Tab>, table_name: &TableName) -> Option<&'a Tab> {
+    tabs.iter()
+        .find(|tab| tab.table_name == *table_name)
+}
+
+
+pub fn get_has_many_records_service(dm: &RecordManager, tables: &Vec<Table>, 
+                                main_table: &Table,
+                                record_id: &str, 
+                                has_many_tab: &Tab,
+                                page_size: u32, page: u32) -> Result<Rows, IntelError > {
+    let pk_types = main_table.get_primary_column_types();
+    let primary_columns = main_table.get_primary_column_names();
+    let record_id = extract_record_id(record_id, &pk_types, &primary_columns)?;
+    let rows = get_has_many_records(dm, tables, main_table, has_many_tab, &record_id, page_size, page)?;
+    Ok(rows)
+}
+
+
+
+fn get_has_many_records(dm: &RecordManager, tables: &Vec<Table>,
+                    main_table: &Table, 
+                    has_many_tab: &Tab,
+                    main_record_id: &Vec<(&ColumnName, Value)>, 
+                    page_size: u32, page: u32 ) -> Result<Rows, DbError> {
     let has_many_table = table_intel::get_table(&has_many_tab.table_name, tables);
     assert!(has_many_table.is_some());
     let has_many_table = has_many_table.unwrap();
@@ -260,8 +285,6 @@ fn get_has_many_records(dm: &RecordManager, tables: &Vec<Table>,
     let referred_columns_to_main_table: Option<&Vec<ColumnName>> = has_many_table.get_referred_columns_to_table(&main_table.name);
     assert!(referred_columns_to_main_table.is_some());
     let referred_columns_to_main_table = referred_columns_to_main_table.unwrap();
-    //TODO: Issue: has_many table may not necessarily have primary keys, but does required to have
-    //foreign keys
     assert_eq!(referred_columns_to_main_table.len(), has_many_fk.len());
 
     for (i, referred_column) in referred_columns_to_main_table.iter().enumerate(){
@@ -272,12 +295,13 @@ fn get_has_many_records(dm: &RecordManager, tables: &Vec<Table>,
         }
         has_many_filter +=  &format!(" {} = ${} ", has_many_fk[i].complete_name(), i+1);
         let required_type = has_many_fk_data_types[i];
-        find_value(referred_column, record_id, required_type)
+        find_value(referred_column, main_record_id, required_type)
             .map(|v| has_many_params.push(v.clone()));
     }
 
     has_many_sql += &has_many_filter;
     has_many_sql += &format!("LIMIT {} ", page_size);
+    has_many_sql += &format!("OFFSET {} ", calc_offset(page, page_size));
     println!("referred column to main table: {:?}", referred_columns_to_main_table);
     println!("has_many fk: {:?}", has_many_fk);
     println!("HAS_MANY SQL: {}", has_many_sql);
@@ -287,9 +311,24 @@ fn get_has_many_records(dm: &RecordManager, tables: &Vec<Table>,
     Ok(rows)
 }
 
+pub fn get_indirect_records_service(dm: &RecordManager, tables: &Vec<Table>, 
+                                main_table: &Table,
+                                record_id: &str, 
+                                indirect_tab: &Tab,
+                                linker_table_name: &TableName,
+                                page_size: u32, page: u32) -> Result<Rows, IntelError > {
+
+    let pk_types = main_table.get_primary_column_types();
+    let primary_columns = main_table.get_primary_column_names();
+    let record_id = extract_record_id(record_id, &pk_types, &primary_columns)?;
+    let rows = get_indirect_records(dm, tables, main_table, indirect_tab, linker_table_name, &record_id, page_size, page)?;
+    Ok(rows)
+}
+
+
 fn get_indirect_records(dm: &RecordManager, tables: &Vec<Table>, 
                       main_table: &Table, indirect_tab: &Tab, linker_table_name: &TableName,
-                      record_id: &Vec<(&ColumnName, Value)>, page_size: u32) -> Result<Rows, DbError> {
+                      record_id: &Vec<(&ColumnName, Value)>, page_size: u32, page: u32) -> Result<Rows, DbError> {
 
     let indirect_table = table_intel::get_table(&indirect_tab.table_name, tables);
     assert!(indirect_table.is_some());
@@ -338,6 +377,7 @@ fn get_indirect_records(dm: &RecordManager, tables: &Vec<Table>,
     }
     indirect_sql += &filter;
     indirect_sql += &format!("LIMIT {} ", page_size);
+    indirect_sql += &format!("OFFSET {} ", calc_offset(page, page_size));
     println!("INDIRECT SQL: {}", indirect_sql);
     println!("INDIRECT PARAMS: {:?}", indirect_params);
     let rows = dm.execute_sql_with_return(&indirect_sql, &indirect_params)?;

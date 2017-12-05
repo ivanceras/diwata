@@ -44,8 +44,6 @@ type alias Model =
     , tableName : TableName 
     , mainTab : Tab.Model
     , window : Window
-    , currentPage: Int
-    , pageRequestInFlight: Bool
     }
 
 
@@ -98,8 +96,6 @@ init session tableName =
             , tableName = tableName
             , mainTab = mainTab
             , window = window
-            , currentPage = 1
-            , pageRequestInFlight = False
             }
         )
         loadWindow mainTabTask
@@ -142,8 +138,6 @@ type Msg
     | RecordDeleted RecordId (Result Http.Error ())
     | CloseWindow
     | TabMsg Tab.Msg
-    | NextPageReceived Rows
-    | NextPageError Http.Error
 
 
 update : Session -> Msg -> Model -> ( Model, Cmd Msg )
@@ -181,52 +175,33 @@ update session msg model =
 
         TabMsg tabMsg ->
             let
+               _ = Debug.log "Processing TabMsg in Page.Window: " tabMsg
                ( newMainTab, subCmd ) = Tab.update tabMsg model.mainTab 
-               _ = Debug.log "page request needed in mainTab: " (Tab.isScrolledBottom newMainTab)
-               
-               (updatedModel, tabCmd ) = 
-                   case Tab.isScrolledBottom newMainTab 
-                        && not model.pageRequestInFlight of
+               (updatedMainTab, tabCmd ) = 
+                   case Tab.pageRequestNeeded newMainTab of
                        True ->
-                           { model | pageRequestInFlight = True}
-                            => requestNextPage model
+                           { newMainTab | pageRequestInFlight = True}
+                            => requestNextPage newMainTab 
                        False ->
-                           model => Cmd.none
+                           newMainTab => Cmd.none
 
           in
-              { updatedModel | mainTab = newMainTab } => tabCmd 
-
-        NextPageReceived rows ->
-            if List.length rows.data > 0 then
-                let
-                    _ = Debug.log "next page received" rows
-                    ( newMainTab, subCmd ) = Tab.update (Tab.NextPageReceived rows) model.mainTab
-                in 
-                    { model | mainTab = newMainTab 
-                            , currentPage = model.currentPage + 1
-                            , pageRequestInFlight = False
-                    } => Cmd.map TabMsg subCmd
-            else
-                let _ = Debug.log "no more rows" rows
-                in
-                model => Cmd.none
-
-        NextPageError e ->
-            let _ = Debug.log "Error requesting next page" e
-            in
-            {model | pageRequestInFlight = False } => Cmd.none
+              { model | mainTab = updatedMainTab } => Cmd.batch [Cmd.map TabMsg subCmd, tabCmd]
+        
 
 
-
-requestNextPage: Model -> Cmd Msg 
-requestNextPage model =
-    Request.Window.Records.listPage (model.currentPage + 1)  Nothing model.mainTab.tab.tableName
+requestNextPage: Tab.Model -> Cmd Msg 
+requestNextPage tab =
+    let 
+        tabPage = tab.currentPage
+    in
+    Request.Window.Records.listPage (tabPage + 1)  Nothing tab.tab.tableName
     |> Http.toTask
     |> Task.attempt
         (\result ->
             case result of
-                Ok rows -> NextPageReceived rows
-                Err e -> NextPageError e
+                Ok rows -> TabMsg (Tab.NextPageReceived rows)
+                Err e -> TabMsg (Tab.NextPageError (toString e))
         )
 
 subscriptions: Model -> Sub Msg

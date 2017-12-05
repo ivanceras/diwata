@@ -97,7 +97,7 @@ init tableName selectedRow arenaArg =
                         (mainRecordHeight, detailTabHeight) = splitTabHeights (initialPosition size) size
                     in
                     List.map 
-                        (\(tableName, indirectTab) ->
+                        (\(_, indirectTab) ->
                             let 
                                 rows = RecordDetail.contentInTable detailRows.indirect indirectTab.tableName
                             in
@@ -141,7 +141,6 @@ splitTabHeights position browserSize =
 
         clampedMainRecordHeight = clamp 0 totalAllotedHeight mainRecordHeight
         clampedDetailRecordHeight = clamp 0 totalAllotedHeight detailRecordHeight
-        _ = Debug.log ("totalAllotedHeight ("++toString totalAllotedHeight++") - detailRecordHeight ("++toString detailRecordHeight++") =") mainRecordHeight
     in
     (clampedMainRecordHeight, clampedDetailRecordHeight)
 
@@ -154,7 +153,6 @@ view model =
         mainTab = model.window.mainTab
         realPosition = getPosition model
         (mainRecordHeight, detailTabHeight) = splitTabHeights realPosition model.browserSize
-        _ = Debug.log "view recalculated" detailTabHeight
     in
     div []
         [ div [ class "main-tab-selected"
@@ -256,12 +254,12 @@ viewDetailTabs model =
 
         detailTabViews =  
             (hasManyTabs
-                |> List.map (listView activeTab)
+                |> List.map (listView HasMany activeTab)
             )
             ++
             (List.map 
                 (\indirectTab ->
-                    listView activeTab indirectTab
+                    listView Indirect activeTab indirectTab
                 )
                 indirectTabs
             )
@@ -299,8 +297,8 @@ viewDetailTabs model =
     else
         text "No detail tabs"
 
-listView: Maybe TableName -> Tab.Model -> Html Msg
-listView activeTab tab =
+listView: Section -> Maybe TableName -> Tab.Model -> Html Msg
+listView section activeTab tab =
     let 
         isTabActive = 
             case activeTab of
@@ -316,7 +314,7 @@ listView activeTab tab =
 
         detailRecordView =
                Tab.listView tab
-                   |> Html.map (\tabMsg -> TabMsg (tab, tabMsg))
+                   |> Html.map (\tabMsg -> TabMsg (section, tab, tabMsg))
         
     in
     div [ class "detail-tab"
@@ -352,7 +350,7 @@ type Msg
     | DragAt Position
     | DragEnd Position
     | WindowResized BrowserWindow.Size
-    | TabMsg (Tab.Model, Tab.Msg)
+    | TabMsg (Section, Tab.Model, Tab.Msg)
     | TabMsgAll Tab.Msg
 
 
@@ -408,17 +406,54 @@ update session msg model =
                      , indirectTabs = updatedIndirectTabs
               } => Cmd.batch (List.map (Cmd.map TabMsgAll)  (hasManySubCmds ++ indirectSubCmds))
      
-      TabMsg (tabModel, tabMsg) ->
+      TabMsg (section, tabModel, tabMsg) ->
           let 
-              _ = Debug.log ("DetailedRecord: process this tab message here for tabModel: "++tabModel.tab.name) tabMsg
+              _ = Debug.log "Processing TabMsg in DetailedRecords " tabMsg
               (newTabModel, subCmd) = Tab.update tabMsg tabModel
-              updatedHasManyTabs = updateTabModels model.hasManyTabs newTabModel
-              updatedIndirectTabs = updateTabModels model.indirectTabs newTabModel
+              _ = Debug.log "DetailedRecord: Tab page request needed " (Tab.pageRequestNeeded newTabModel)
+
+              (updatedTabModel, tabCmd) = 
+                  case Tab.pageRequestNeeded newTabModel of
+                        True ->
+                            { newTabModel | pageRequestInFlight = True }
+                            => requestNextPage section newTabModel model
+
+                        False ->
+                            newTabModel => Cmd.none
+
+              updatedHasManyTabs = updateTabModels model.hasManyTabs updatedTabModel
+              updatedIndirectTabs = updateTabModels model.indirectTabs updatedTabModel
+
           in
               { model | hasManyTabs = updatedHasManyTabs
                     , indirectTabs = updatedIndirectTabs
-              } => Cmd.map (\tabMsg -> TabMsg (newTabModel, tabMsg) )subCmd
+              } =>  
+              Cmd.batch [ tabCmd
+                        , Cmd.map (\tabMsg -> TabMsg (section, updatedTabModel, tabMsg) )subCmd
+                        ]
 
+requestNextPage: Section -> Tab.Model -> Model -> Cmd Msg
+requestNextPage section tab model =
+    let 
+        mainTable = model.window.mainTab.tableName
+        recordId = model.arenaArg.selected |> Maybe.withDefault ""
+        tabPage = tab.currentPage
+        sectionTable = tab.tab.tableName
+        httpRequest = case section of
+            HasMany ->
+                Records.fetchHasManyRecords mainTable recordId sectionTable (tabPage + 1)
+            Indirect ->
+                Records.fetchIndirectRecords mainTable recordId sectionTable (tabPage + 1)
+    in
+    httpRequest
+    |> Http.toTask
+    |> Task.attempt
+        (\result ->
+            case result of
+                Ok rows -> TabMsg (section, tab, (Tab.NextPageReceived rows))
+                Err e -> TabMsg (section, tab, (Tab.NextPageError (toString e)))
+        )
+        
 
 updateSizes: Session -> Model -> ( Model, Cmd Msg )
 updateSizes session model =

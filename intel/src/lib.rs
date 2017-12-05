@@ -11,7 +11,7 @@ mod reference;
 mod widget;
 
 pub mod window;
-mod tab;
+pub mod tab;
 mod field;
 mod table_intel;
 mod service;

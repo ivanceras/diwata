@@ -50,7 +50,7 @@ init session arenaArg =
             case arenaArg of
                 Just arenaArg -> 
                     Window.init session arenaArg.tableName 
-                        |> Task.map (\activeWindow -> Just activeWindow)
+                        |> Task.map Just 
                         |> Task.mapError handleLoadError
                 Nothing ->
                     Task.succeed Nothing
@@ -67,7 +67,7 @@ init session arenaArg =
                     case arenaArg.selected of
                         Just selectedRecord ->
                             DetailedRecord.init arenaArg.tableName selectedRecord arenaArg
-                                |> Task.map(\selectedRecord -> Just selectedRecord)
+                                |> Task.map Just
                                 |> Task.mapError handleLoadError
                         Nothing ->
                             Task.succeed Nothing

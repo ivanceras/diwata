@@ -2,7 +2,7 @@ module Views.Window.Tab exposing
     (listView
     , Model, init, update, Msg(..)
     , subscriptions
-    , isScrolledBottom)
+    , pageRequestNeeded)
 
 import Html exposing (..)
 import Html.Attributes exposing (attribute, class, classList, href, id, placeholder, src, property, type_, style)
@@ -22,6 +22,9 @@ type alias Model =
     , scroll: Scroll
     , height: Float
     , pages: List Rows
+    , pageRequestInFlight: Bool
+    , currentPage: Int
+    , reachedLastPage: Bool
     }
 
 type alias Scroll =
@@ -35,6 +38,9 @@ init height tab rows =
     , scroll = Scroll 0 0
     , height = height
     , pages = [rows]
+    , pageRequestInFlight = False
+    , currentPage = 1
+    , reachedLastPage = False
     }
 
 
@@ -63,6 +69,12 @@ isScrolledBottom model =
         bottomAllowance = 50.0
     in
         scrollTop + model.height > contentHeight - bottomAllowance 
+
+pageRequestNeeded: Model -> Bool
+pageRequestNeeded model =
+    isScrolledBottom model
+    && not model.pageRequestInFlight
+    && not model.reachedLastPage
 
 
 listView: Model -> Html Msg
@@ -224,6 +236,7 @@ type Msg
     = SetHeight Float
     | ListRowScrolled Scroll
     | NextPageReceived Rows
+    | NextPageError String
 
 update: Msg -> Model ->  (Model, Cmd Msg)
 update msg model =
@@ -234,7 +247,17 @@ update msg model =
             { model | scroll = scroll } => Cmd.none
 
         NextPageReceived rows ->
-           { model | pages =  model.pages ++ [rows] } => Cmd.none
+            if List.length rows.data > 0 then
+               { model | pages =  model.pages ++ [rows] 
+                       , pageRequestInFlight = False
+                       , currentPage = model.currentPage + 1
+               } => Cmd.none
+            else
+               { model | reachedLastPage = True } => Cmd.none
+        NextPageError e ->
+            let _ = Debug.log "Error receiving next page"
+            in
+            model => Cmd.none
 
 
 subscriptions: Model -> Sub Msg

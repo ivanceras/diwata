@@ -1,4 +1,4 @@
-module Request.Window.Records exposing (delete, list, listPage, post, fetchSelected)
+module Request.Window.Records exposing (delete, list, listPage, post, fetchSelected, fetchHasManyRecords, fetchIndirectRecords)
 
 import Data.Window as Window exposing (Window, Tag, slugToString)
 import Data.Window.Record as Record exposing (Rows, RecordId)
@@ -41,7 +41,22 @@ fetchSelected tableName selectedRow =
         |> HttpBuilder.withExpect (Http.expectJson RecordDetail.decoder)
         |> HttpBuilder.toRequest
 
+fetchHasManyRecords : TableName -> String -> TableName -> Int -> Http.Request Rows
+fetchHasManyRecords tableName selectedRow hasManyTable hasManyPage =
+    apiUrl ("/data/" ++ tableNameToString tableName ++ "/select/" ++ selectedRow
+            ++ "/has_many/" ++ tableNameToString hasManyTable ++ "/" ++ toString hasManyPage)
+        |> HttpBuilder.get
+        |> HttpBuilder.withExpect (Http.expectJson Record.rowsDecoder)
+        |> HttpBuilder.toRequest
 
+
+fetchIndirectRecords : TableName -> String -> TableName -> Int -> Http.Request Rows
+fetchIndirectRecords tableName selectedRow hasManyTable hasManyPage =
+    apiUrl ("/data/" ++ tableNameToString tableName ++ "/select/" ++ selectedRow
+            ++ "/indirect/" ++ tableNameToString hasManyTable ++ "/" ++ toString hasManyPage)
+        |> HttpBuilder.get
+        |> HttpBuilder.withExpect (Http.expectJson Record.rowsDecoder)
+        |> HttpBuilder.toRequest
 
 -- POST --
 
