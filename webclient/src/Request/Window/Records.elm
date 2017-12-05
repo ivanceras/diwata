@@ -1,4 +1,4 @@
-module Request.Window.Records exposing (delete, list, post, fetchSelected)
+module Request.Window.Records exposing (delete, list, listPage, post, fetchSelected)
 
 import Data.Window as Window exposing (Window, Tag, slugToString)
 import Data.Window.Record as Record exposing (Rows, RecordId)
@@ -23,7 +23,11 @@ import Util exposing ((=>))
 
 list : Maybe AuthToken -> TableName -> Http.Request Rows
 list maybeToken tableName =
-    apiUrl ("/data/" ++ tableNameToString tableName)
+    listPage 1 maybeToken tableName
+
+listPage : Int -> Maybe AuthToken -> TableName -> Http.Request Rows
+listPage page maybeToken tableName =
+    apiUrl ("/data/" ++ tableNameToString tableName ++ "/" ++ toString page)
         |> HttpBuilder.get
         |> HttpBuilder.withExpect (Http.expectJson Record.rowsDecoder)
         |> withAuthorization maybeToken

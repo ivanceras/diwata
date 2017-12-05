@@ -1,4 +1,8 @@
-module Views.Window.Tab exposing (listView, Model, init, update, Msg(..), subscriptions)
+module Views.Window.Tab exposing 
+    (listView
+    , Model, init, update, Msg(..)
+    , subscriptions
+    , isScrolledBottom)
 
 import Html exposing (..)
 import Html.Attributes exposing (attribute, class, classList, href, id, placeholder, src, property, type_, style)
@@ -17,7 +21,7 @@ type alias Model =
     { tab : Tab
     , scroll: Scroll
     , height: Float
-    , rows: Rows
+    , pages: List Rows
     }
 
 type alias Scroll =
@@ -30,24 +34,23 @@ init height tab rows =
     { tab = tab
     , scroll = Scroll 0 0
     , height = height
-    , rows = rows
+    , pages = [rows]
     }
 
-estimatedListHeight: Rows -> Float
-estimatedListHeight rows =
+
+
+estimatedListHeight: Model -> Float
+estimatedListHeight model =
     let
         rowHeight = 40.0
-        rowLength = List.length rows.data
+        rowLength =
+            List.foldl
+                (\rows len->
+                    len + List.length rows.data
+                ) 0 model.pages
     in
         rowHeight * (toFloat rowLength)
 
-needMoreRows: Float -> Rows -> Bool
-needMoreRows height rows =
-    let
-        totalRowHeight  = estimatedListHeight rows 
-        bottomAllowance = 100.0
-    in
-        totalRowHeight < height - bottomAllowance
 
 {-| The list is scrolled to Bottom
 when scrollTop + tabHeight > totalListHeight - bottomAllowance
@@ -55,28 +58,19 @@ when scrollTop + tabHeight > totalListHeight - bottomAllowance
 isScrolledBottom: Model -> Bool
 isScrolledBottom model =
     let
-        contentHeight = estimatedListHeight model.rows
+        contentHeight = estimatedListHeight model
         scrollTop = model.scroll.top
         bottomAllowance = 50.0
     in
         scrollTop + model.height > contentHeight - bottomAllowance 
-        
+
 
 listView: Model -> Html Msg
 listView model =
     let 
-        height = model.height
-        rows = model.rows
-        _ = Debug.log "calculated list view rows height" height
-        _ = Debug.log "estimated list height" (estimatedListHeight rows)
-        _ = Debug.log "is scrolled bottom" (isScrolledBottom model)
         tab = model.tab
-        columnNames = Tab.columnNames tab
         fields = tab.fields
-        recordList = Record.rowsToRecordList rows
-        recordIdList = 
-            List.map (\record -> Tab.recordId record tab) recordList
-
+        height = model.height
     in
     div [class "tab-list-view"
         ] 
@@ -84,31 +78,73 @@ listView model =
             [ viewFrozenHead model
             , viewColumns model fields
             ]
-        , div [class "row-shadow-list-rows"]
-            [ viewRowShadow height recordIdList tab model
-            , listViewRows height tab recordIdList recordList
+        , div [class "page-shadow-and-list-rows"]
+            [ viewPageShadow model
+            , div [class "list-view-rows"
+                  , onScroll
+                  , style [("height", px height)]
+                  ] 
+                  (List.map
+                      (\page -> 
+                          div [class "tab-page"]
+                              [ div [class "row-shadow-list-rows"]
+                                    [listViewPage page model]
+                              ]
+                      )
+                      model.pages
+                  )
             ]
         ]
 
+listViewPage: Rows -> Model -> Html Msg
+listViewPage rows model =
+    let 
+        height = model.height
+        tab = model.tab
+        columnNames = Tab.columnNames tab
+        recordList = Record.rowsToRecordList rows
+        recordIdList = 
+            List.map (\record -> Tab.recordId record tab) recordList
 
-viewRowShadow: Float -> List RecordId -> Tab -> Model -> Html Msg
-viewRowShadow height recordIdList tab model =
+    in
+        listViewRows tab recordIdList recordList
+
+
+viewPageShadow: Model -> Html Msg
+viewPageShadow model =
     let 
         scrollTop = model.scroll.top
         topPx = px(-scrollTop)
+        tab = model.tab
+        height = model.height
     in
-    div [ class "row-shadow"
+    div [ class "page-shadow"
         , style [("height", px height)]
         ]
-        [ div [ class "row-shadow-content"
+        [ div [ class "page-shadow-content"
               , style [("top", topPx)]
               ]
-            (List.map
-                ( \ recordId ->
-                    Row.viewRowControls recordId tab 
-                ) recordIdList 
-            )
+              (List.map
+                  (\ rows ->
+                      let
+                        recordList = Record.rowsToRecordList rows
+                        recordIdList = 
+                            List.map (\record -> Tab.recordId record tab) recordList
+                      in
+                      div [class "shadow-page"]
+                          [viewRowShadow recordIdList tab model]
+                  ) model.pages
+              )
         ]
+
+viewRowShadow: List RecordId -> Tab -> Model -> Html Msg
+viewRowShadow recordIdList tab model =
+    div [ class "row-shadow"]
+        (List.map
+            ( \ recordId ->
+                Row.viewRowControls recordId tab 
+            ) recordIdList 
+        )
 
 
 viewFrozenHead: Model -> Html Msg
@@ -155,13 +191,9 @@ viewSearchbox =
         ]
 
 
-listViewRows: Float -> Tab -> List RecordId -> List Record -> Html Msg
-listViewRows height tab recordIdList recordList =
-    div [class "list-view-rows"
-        , onScroll
-        , style [("height", px height)]
-        ] 
-        [ div [class "list-view-rows-content"]
+listViewRows: Tab -> List RecordId -> List Record -> Html Msg
+listViewRows tab recordIdList recordList =
+        div []
             (
             if List.length recordList > 0 then
                 (List.map2 
@@ -175,7 +207,6 @@ listViewRows height tab recordIdList recordList =
                     [text "Empty list view rows"]
                 ]
             )
-        ]
 
 onScroll: Attribute Msg
 onScroll =
@@ -192,7 +223,7 @@ scrollDecoder =
 type Msg
     = SetHeight Float
     | ListRowScrolled Scroll
-    | RequestNextPage
+    | NextPageReceived Rows
 
 update: Msg -> Model ->  (Model, Cmd Msg)
 update msg model =
@@ -200,18 +231,10 @@ update msg model =
         SetHeight height ->
             { model | height = height } => Cmd.none
         ListRowScrolled scroll ->
-            let 
-                updatedModel = { model | scroll = scroll }
-            in
-            case isScrolledBottom model of
-                True ->
-                    update RequestNextPage updatedModel
-                False ->
-                    updatedModel => Cmd.none 
+            { model | scroll = scroll } => Cmd.none
 
-        RequestNextPage ->
-            model => Cmd.none
-
+        NextPageReceived rows ->
+           { model | pages =  model.pages ++ [rows] } => Cmd.none
 
 
 subscriptions: Model -> Sub Msg

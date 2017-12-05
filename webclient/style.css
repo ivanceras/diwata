@@ -93,18 +93,20 @@
     border-color: #ccc;
 }
 
-.row-shadow{
+.page-shadow{
     min-width: 120px;
-    height: 300px;
     overflow: hidden;
     background-color: #f5f5f4;
 }
-.row-shadow-content{
+.page-shadow-content{
     position: relative;
 }
 .row-shadow-content {
     padding: 0 10px;
     height: 30px;
+}
+.shadow-page {
+    border: 1px solid orange;
 }
 
 /* Frozen head columns */
@@ -114,7 +116,7 @@
 }
 
 /* row shadow and the listing of row records */
-.row-shadow-list-rows{
+.page-shadow-and-list-rows{
     display: flex;
 }
 
@@ -313,4 +315,8 @@
     background-color: #f5f5f4;
     border-width: 1px 1px 0 1px;
     border-color: #888;
+}
+
+.tab-page {
+    border: 1px solid green;
 }
