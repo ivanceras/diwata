@@ -408,9 +408,7 @@ update session msg model =
      
       TabMsg (section, tabModel, tabMsg) ->
           let 
-              _ = Debug.log "Processing TabMsg in DetailedRecords " tabMsg
               (newTabModel, subCmd) = Tab.update tabMsg tabModel
-              _ = Debug.log "DetailedRecord: Tab page request needed " (Tab.pageRequestNeeded newTabModel)
 
               (updatedTabModel, tabCmd) = 
                   case Tab.pageRequestNeeded newTabModel of

@@ -175,7 +175,6 @@ update session msg model =
 
         TabMsg tabMsg ->
             let
-               _ = Debug.log "Processing TabMsg in Page.Window: " tabMsg
                ( newMainTab, subCmd ) = Tab.update tabMsg model.mainTab 
                (updatedMainTab, tabCmd ) = 
                    case Tab.pageRequestNeeded newMainTab of
