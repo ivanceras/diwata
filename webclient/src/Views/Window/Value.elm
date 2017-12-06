@@ -7,20 +7,30 @@ import Data.Window.Widget as Widget exposing (ControlWidget, Widget(..))
 import Date
 import Date.Format
 import Widgets.Tagger as Tagger
+import Data.Window.Field as Field exposing (Field)
+import Util exposing (px)
 
 {-| View value in list record view -}
-viewInList: ControlWidget -> Maybe Value -> Html msg
-viewInList widget value =
-    widgetView widget value
+viewInList: Field -> Maybe Value -> Html msg
+viewInList field value =
+    let
+        widgetWidth = Field.widgetWidthListValue field
+    in
+    widgetView widgetWidth field value
 
 {-| view value in card view -}
-viewInCard: ControlWidget -> Maybe Value -> Html msg
-viewInCard widget value =
-    widgetView widget value
+viewInCard: Field -> Maybe Value -> Html msg
+viewInCard field value =
+    let
+        widgetWidth = Field.shortOrLongWidth field
+    in
+    widgetView widgetWidth field value
 
-widgetView: ControlWidget -> Maybe Value -> Html msg
-widgetView controlWidget maybeValue =
+
+widgetView: Int -> Field -> Maybe Value -> Html msg
+widgetView widgetWidth field maybeValue =
     let 
+        controlWidget = field.controlWidget
         valueString = 
             case maybeValue of
                 Just argValue -> 
@@ -31,17 +41,20 @@ widgetView controlWidget maybeValue =
             controlWidget.alignment
                 |> Widget.alignmentToString
 
-        textAlign = style [("text-align", alignment)]
+
+        styles = style [("text-align", alignment)
+                       ,("width", px widgetWidth)
+                       ]
     in
     case controlWidget.widget of
         Textbox ->
             input [ type_ "text"
-                  , textAlign
+                  , styles
                   , value valueString
                   ] []
         Password ->
             input [ type_ "password"
-                  , textAlign
+                  , styles
                   , value valueString
                   ] []
         Checkbox ->
@@ -61,21 +74,21 @@ widgetView controlWidget maybeValue =
                               ] []
             in
             div [ class "checkbox-value"
-                , textAlign
+                , styles
                 ]
                [viewCheckbox]
 
         DateTimePicker ->
-            viewDatePicker textAlign maybeValue
+            viewDatePicker styles maybeValue
 
         DatePicker ->
-            viewDatePicker textAlign maybeValue
+            viewDatePicker styles maybeValue
 
         FixDropdown list ->
             let 
                 listWithBlank = "" :: list
             in
-            select []
+            select [ styles ]
                 (List.map
                     (\v ->
                         let
@@ -107,18 +120,18 @@ widgetView controlWidget maybeValue =
                     Nothing ->
                         []
             in
-            Tagger.view tags
+            Tagger.view styles tags
 
 
         _ ->
             input [ type_ "text"
-                  , textAlign
+                  , styles
                   , value valueString
                   ] []
 
 
 viewDatePicker: Attribute msg -> Maybe Value -> Html msg    
-viewDatePicker textAlign maybeValue =
+viewDatePicker styles maybeValue =
     let
         dateString = 
             case maybeValue of
@@ -137,6 +150,6 @@ viewDatePicker textAlign maybeValue =
 
     in
     input [ type_ "date"
-          , textAlign
+          , styles
           , value dateString
           ] []

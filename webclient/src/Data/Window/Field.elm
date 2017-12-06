@@ -1,4 +1,7 @@
-module Data.Window.Field exposing (Field, decoder, columnName, fieldDataTypes)
+module Data.Window.Field exposing 
+    ( Field, decoder, columnName, fieldDataTypes
+    , widgetWidthListColumn, widgetWidthListValue
+    , shortOrLongWidth)
 
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Extra
@@ -78,3 +81,37 @@ columnPairDecoder =
      Decode.map2 (,)
         (Decode.index 0 ColumnName.decoder)
         (Decode.index 1 DataType.decoder)    
+
+{-|
+Calculate the width, minimum 100, maximum 800
+-}
+widgetWidthListColumn: Field -> Int
+widgetWidthListColumn field =
+    let 
+        columnLen = String.length (columnName field)
+        maxLen = max columnLen field.controlWidget.width
+        fontWidth = 12
+        calcWidth = maxLen * fontWidth
+    in
+        clamp 100 800 calcWidth
+
+widgetWidthListValue: Field -> Int
+widgetWidthListValue field = 
+    let
+        searchIconWidth = 16 + 1 -- 1 for border right on the tab-column, icon-search is 16px
+    in
+    widgetWidthListColumn field + searchIconWidth
+
+{-|
+    0 to 40 - 200px
+    41 to ~ - 800px
+-}
+shortOrLongWidth: Field -> Int
+shortOrLongWidth field =
+    let
+        width = field.controlWidget.width
+    in
+    if width < 40 then
+        200
+    else
+        800

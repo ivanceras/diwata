@@ -4,10 +4,11 @@ import Html exposing (..)
 import Html.Attributes exposing (contenteditable, attribute, class, classList, href, id, placeholder, src)
 
 
-view: List String -> Html msg
-view list =
+view: Attribute msg -> List String -> Html msg
+view styles list =
     div [ class "tag-selection"
         , contenteditable True
+        , styles
         ]
         (List.map viewTag list)
         

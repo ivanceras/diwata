@@ -209,12 +209,20 @@ cardViewRecord record tab =
                     in
                         (field, value)
                 ) tab.fields
+        maxColumnLen = List.map String.length columnNames
+                            |> List.maximum
+        fieldLabelWidth = 
+            case maxColumnLen of
+                Just len ->
+                    len * 12
+                Nothing -> 
+                    200
     in
     div []
         [ div [class "card-view"]
               (List.map 
                   (\ (field, value) ->
-                      Field.view field value
+                      Field.view fieldLabelWidth field value
                   ) 
                   fieldValuePair 
               )

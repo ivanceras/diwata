@@ -44,7 +44,10 @@ init height tab rows =
     }
 
 
-
+{-| IMPORTANT: rowHeight 40 is based on the
+computed tab-row css class, not matching the rowHeight will make the load-page-on-deman upon
+scoll not trigger since isScrolledBottom does not measure the actual value
+-}
 estimatedListHeight: Model -> Float
 estimatedListHeight model =
     let
@@ -58,7 +61,8 @@ estimatedListHeight model =
         rowHeight * (toFloat rowLength)
 
 
-{-| The list is scrolled to Bottom
+{-| The list is scrolled to Bottom, this is an estimated calculation
+based on content list height and the scroll of content
 when scrollTop + tabHeight > totalListHeight - bottomAllowance
 -}
 isScrolledBottom: Model -> Bool
@@ -68,7 +72,8 @@ isScrolledBottom model =
         scrollTop = model.scroll.top
         bottomAllowance = 50.0
     in
-        scrollTop + model.height > contentHeight - bottomAllowance 
+        --Debug.log ("scrollTop("++toString scrollTop++") + model.height("++toString model.height ++") > contentHeight("++toString contentHeight++") - bottomAllowance("++toString bottomAllowance++")")
+        (scrollTop + model.height > contentHeight - bottomAllowance)
 
 pageRequestNeeded: Model -> Bool
 pageRequestNeeded model =
@@ -183,7 +188,7 @@ viewColumnWithSearchbox: Field -> Html Msg
 viewColumnWithSearchbox field =
     div [class "tab-column-with-filter"]
         [ viewColumn field
-        , viewSearchbox
+        , viewSearchbox field
         ]
 
 viewColumn: Field -> Html Msg
@@ -191,13 +196,17 @@ viewColumn field =
     div [class "tab-column"]
         [text (Field.columnName field)]
 
-viewSearchbox: Html Msg
-viewSearchbox =
+viewSearchbox: Field -> Html Msg
+viewSearchbox field =
+    let
+        styles = style [("width", px (Field.widgetWidthListColumn field))]
+    in
     div [class "column-filter"]
         [ i [class "fa fa-search filter-value-icon"
             ][]
         , input [ class "filter-value"
-                ,type_ "search"
+                , styles
+                , type_ "search"
                ] 
                []
         ]

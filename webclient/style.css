@@ -17,7 +17,6 @@
 .row-value {
     padding: 0 5px;
     border: 1px solid #ccc;
-    min-width: 150px;
     height: 30px;
 }
 
@@ -29,13 +28,11 @@
 
 .card-field {
     display: flex;
-    padding: 5px 5px;
-    width: 350px;
+    padding: 10px 20px;
 }
 
 .card-view-value{
     padding: 0 5px;
-    min-width: 200px;
     height: 30px;
     flex: 1;
 }
@@ -43,15 +40,17 @@
     border-width: 0 0 1px 0;
     border-style: solid;
     border-color: #ccc;
-    width: 200px;
 }
 
 .card-field-name{
     padding: 0 5px;
-    width: 100px;
     height: 30px;
     flex: 1;
     text-align: right;
+}
+
+.card-field-label {
+    padding-right: 20px;
 }
 
 
@@ -62,8 +61,8 @@
 }
 
 .tab-row-value {
-    padding: 5px;
-    min-width: 227px;
+    padding: 5px 5px;
+    height: 40px;
 }
 
 .tab-row-value > input
@@ -72,7 +71,6 @@
     border-style: solid;
     border-color: #ccc;
     height: 30px;
-    width: 200px;
 }
 
 .tab-row-value > select
@@ -81,7 +79,6 @@
     border-style: solid;
     border-color: #ccc;
     height: 30px;
-    width: 200px;
     background-color: transparent;
 }
 
@@ -106,7 +103,6 @@
     height: 30px;
 }
 .shadow-page {
-    border: 1px solid orange;
 }
 
 /* Frozen head columns */
@@ -124,6 +120,7 @@
     display: flex;
     height: 40px;
     font-size: 14px;
+    padding-top: 10px;
 }
 
 .row-controls  a {
@@ -166,7 +163,6 @@
 
 .tab-column {
     padding: 0 5px;
-    min-width: 220px;
     text-align: center;
 }
 .tab-column-with-filter {
@@ -203,7 +199,6 @@
 
 .filter-value{
     height: 20px;
-    width: 200px;
     border-color: #aaa;
     border-width: 1px 1px 1px 0;
     border-style: solid;
@@ -318,5 +313,9 @@
 }
 
 .tab-page {
-    border: 1px solid green;
 }
+
+.primary-link-wrapper {
+    padding: 5px 20px; 
+}
+
