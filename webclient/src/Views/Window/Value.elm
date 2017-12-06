@@ -100,6 +100,7 @@ widgetView controlWidget maybeValue =
                             Array arrayValue ->
                                 case arrayValue of
                                     TextArray list -> list
+                                    IntArray list -> List.map (toString) list
 
                             _ -> []
 

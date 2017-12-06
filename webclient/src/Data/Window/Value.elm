@@ -32,6 +32,7 @@ type Value
 
 type ArrayValue
     = TextArray (List String)
+    | IntArray (List Int)
 
 
 decoder: Decoder Value
@@ -59,13 +60,21 @@ decoder =
 arrayDecoder: Decoder Value
 arrayDecoder =
     decode Array
-    |> required "Array" textArrayDecoder
+    |> required "Array" 
+        (Decode.oneOf 
+            [ textArrayDecoder
+            , intArrayDecoder
+            ])
 
 textArrayDecoder: Decoder ArrayValue
 textArrayDecoder = 
     decode TextArray
     |> required "Text" (Decode.list Decode.string)
 
+intArrayDecoder: Decoder ArrayValue
+intArrayDecoder = 
+    decode IntArray
+    |> required "Int" (Decode.list Decode.int)
 
 nilDecoder: Decoder Value
 nilDecoder =
