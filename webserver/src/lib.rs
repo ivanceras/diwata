@@ -39,8 +39,8 @@ use intel::tab::Tab;
 
 mod error;
 
-static DB_URL: &'static str = "postgres://postgres:p0stgr3s@localhost:5432/jybapiprod";
-//static DB_URL: &'static str = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
+//static DB_URL: &'static str = "postgres://postgres:p0stgr3s@localhost:5432/jybapiprod";
+static DB_URL: &'static str = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
 
 static PAGE_SIZE: u32 = 40; 
 

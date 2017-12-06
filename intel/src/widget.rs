@@ -38,6 +38,7 @@ pub enum Widget {
     CheckmarkStatusImage, // use check mark such as for "is_active"
     IndicatorStatusImage, // on/off - dull gray/ birght green LED
     ToggleButton, // switch button with on/off
+    PrimaryUrlLink,
     UrlLink,
     UrlTextbox,
 
