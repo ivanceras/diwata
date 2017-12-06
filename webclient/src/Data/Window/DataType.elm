@@ -36,6 +36,7 @@ type DataType
     | TsVector
 
     | Uuid
+    | IpAddress
 
     | Date
     | Timestamp
@@ -82,12 +83,13 @@ simpleDecoder =
                     "Json" -> Decode.succeed Json
                     "TsVector" -> Decode.succeed TsVector
                     "Uuid" -> Decode.succeed Uuid
+                    "IpAddress" -> Decode.succeed IpAddress
                     "Date" -> Decode.succeed Date
                     "Timestamp" -> Decode.succeed Timestamp
                     "TimestampTz" -> Decode.succeed Timestamp
                     "Time" -> Decode.succeed Time
                     "TimeTz" -> Decode.succeed TimeTz
-                    _ -> Decode.fail ("not yet dealt with" ++ val)
+                    _ -> Decode.fail ("not yet dealt with: " ++ val)
             )
 
 enumDecoder: Decoder DataType
