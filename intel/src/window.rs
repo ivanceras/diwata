@@ -173,7 +173,8 @@ mod tests{
         let em = em.unwrap();
         let tables = em.get_all_tables().unwrap();
         let windows = derive_all_windows(&tables);
-        assert_eq!(windows.len(), 12);
+        //assert_eq!(windows.len(), 12); // 12 when not including owned windows
+        assert_eq!(windows.len(), 26); // 26 when owned tables can be windows too
     }
 
     #[test]

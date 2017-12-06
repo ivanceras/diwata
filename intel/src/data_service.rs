@@ -426,7 +426,7 @@ mod tests{
         let window = window::get_window(&table_name, &windows);
         assert!(window.is_some());
         let window  = window.unwrap();
-        let data = get_maintable_data_first_page(&em, &tables, &window, None, 200);
+        let data = get_maintable_data(&em, &tables, &window, None, 200, 1);
         println!("data: {:#?}", data);
         assert!(data.is_ok());
         let data = data.unwrap();
