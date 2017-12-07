@@ -6,6 +6,7 @@ use rustorm::types::SqlType;
 #[derive(Debug, Serialize, Clone)]
 pub enum Widget {
     Textbox,
+    UuidTextbox,
     Password,
     TagSelection,
     MultilineText,
@@ -187,7 +188,7 @@ impl ControlWidget{
         let limit = column.specification.get_limit();
         let alignment = Self::derive_alignment(column);
         let sql_type = &column.specification.sql_type;
-        let (width, height) = if let Some(ref stat) = column.stat{
+        let (mut width, height) = if let Some(ref stat) = column.stat{
             // wrap at 100 character per line
             if stat.avg_width > 100 {
                 let width = 100;
@@ -201,6 +202,9 @@ impl ControlWidget{
         else{
             (20, 1)
         };
+        if *sql_type == SqlType::Uuid {
+            width = 36;
+        }
         if let Some(ref reference) = *reference{
             let widget = reference.get_widget_fullview();
             ControlWidget{
@@ -217,13 +221,14 @@ impl ControlWidget{
                 Widget::Checkbox
             }
             else if *sql_type == SqlType::TimestampTz
-                || *sql_type == SqlType::Timestamp
-                {
+                || *sql_type == SqlType::Timestamp {
                 Widget::DateTimePicker
             }
-            else if *sql_type == SqlType::Date
-                {
+            else if *sql_type == SqlType::Date {
                 Widget::DatePicker
+            }
+            else if *sql_type == SqlType::Uuid {
+                Widget::UuidTextbox
             }
             else{
                 Widget::Textbox
