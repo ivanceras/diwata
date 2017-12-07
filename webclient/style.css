@@ -23,7 +23,7 @@
 .card-view{
     display: flex;
     flex-wrap: wrap;
-    width: 800px;
+    width: 1200px;
 }
 
 .card-field {
@@ -121,6 +121,7 @@
     height: 40px;
     font-size: 14px;
     padding-top: 10px;
+    padding-left: 40px;
 }
 
 .row-controls  a {
@@ -317,5 +318,17 @@
 
 .primary-link-wrapper {
     padding: 5px 20px; 
+}
+
+.one-one-tab {
+    border: 1px solid #ccc;
+    width: 1000px;
+    margin-left: 40px;
+}
+
+
+.one-one-tab-separator {
+    background-color: #ddd;
+    padding-left: 10px;
 }
 

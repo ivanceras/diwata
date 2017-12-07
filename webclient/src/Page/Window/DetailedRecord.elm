@@ -185,8 +185,8 @@ oneOneCardView detail tab =
     let
         record = RecordDetail.oneOneRecordOfTable detail tab.tableName
     in
-    div []
-        [ h2 [] [text <| "One One: "++tab.name]
+    div [class "one-one-tab"]
+        [ div [class "one-one-tab-separator"] [text tab.name]
         , cardViewRecord record tab
         ]
 
