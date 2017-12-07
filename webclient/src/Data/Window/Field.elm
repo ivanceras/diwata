@@ -1,7 +1,8 @@
 module Data.Window.Field exposing 
     ( Field, decoder, columnName, fieldDataTypes
     , widgetWidthListColumn, widgetWidthListValue
-    , shortOrLongWidth)
+    , shortOrLongWidth, simpleDataType
+    )
 
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Extra
@@ -26,6 +27,14 @@ type ColumnDetail
 fieldDataTypes: Field -> List DataType
 fieldDataTypes field =
     columnDataTypes field.columnDetail
+
+simpleDataType: Field -> Maybe DataType
+simpleDataType field =
+    case field.columnDetail of
+        Simple (columnName, dataType) ->
+            Just dataType
+        Compound _ ->
+            Nothing
 
 columnDataTypes: ColumnDetail -> List DataType
 columnDataTypes detail =

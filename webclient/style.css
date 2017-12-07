@@ -4,6 +4,10 @@
     -webkit-user-select: auto;
 }
 
+.window {
+    background-color: #ddd;
+}
+
 
 .window-arena{
     background-color: #f5f5f4;
@@ -71,6 +75,14 @@
     border-style: solid;
     border-color: #ccc;
     height: 30px;
+}
+
+input.uuid-textbox{
+    font-family: monospace;
+}
+
+a.primary-link {
+    font-family: monospace;
 }
 
 .tab-row-value > select
@@ -278,6 +290,9 @@
     background-color: #fff;
 }
 
+.detail-tabs-with-separator {
+}
+
 .detail-separator {
     background-color: #ddd;
     height: 10px;
@@ -295,6 +310,7 @@
 
 .detail-tab-names {
     height: 40px;
+    padding-left: 40px;
 }
 
 .active-detail-tab {
@@ -321,9 +337,12 @@
 }
 
 .one-one-tab {
-    border: 1px solid #ccc;
+    border-width: 1px 1px 1px 1px;
+    border-style: solid;
+    border-color: #ccc;
     width: 1000px;
     margin-left: 40px;
+    margin-bottom: 40px;
 }
 
 

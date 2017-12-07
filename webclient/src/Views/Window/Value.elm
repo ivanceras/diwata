@@ -9,6 +9,7 @@ import Date.Format
 import Widgets.Tagger as Tagger
 import Data.Window.Field as Field exposing (Field)
 import Util exposing (px)
+import Data.Window.DataType as DataType exposing (DataType)
 
 {-| View value in list record view -}
 viewInList: Field -> Maybe Value -> Html msg
@@ -41,7 +42,6 @@ widgetView widgetWidth field maybeValue =
             controlWidget.alignment
                 |> Widget.alignmentToString
 
-
         styles = style [("text-align", alignment)
                        ,("width", px widgetWidth)
                        ]
@@ -50,7 +50,12 @@ widgetView widgetWidth field maybeValue =
         Textbox ->
             input [ type_ "text"
                   , styles
+                  ] []
+        UuidTextbox ->
+            input [ type_ "text"
+                  , styles
                   , value valueString
+                  , class "uuid-textbox"
                   ] []
         Password ->
             input [ type_ "password"

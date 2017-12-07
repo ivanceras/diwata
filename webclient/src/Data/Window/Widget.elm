@@ -33,6 +33,7 @@ alignmentToString alignment =
 
 type Widget
     = Textbox
+    | UuidTextbox
     | Password
     | TagSelection
     | MultilineText
@@ -98,6 +99,7 @@ simpleDecoder =
             (\val ->
                 case val of
                     "Textbox" -> Decode.succeed Textbox
+                    "UuidTextbox" -> Decode.succeed UuidTextbox
                     "Password" -> Decode.succeed Password
                     "TagSelection" -> Decode.succeed TagSelection
                     "MultilineText" -> Decode.succeed MultilineText
