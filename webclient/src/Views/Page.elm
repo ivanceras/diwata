@@ -54,7 +54,7 @@ viewHeader page user isLoading =
     nav [ class "navbar navbar-light" ]
         [ div [ class "container" ]
             [ a [ class "navbar-brand", Route.href (Route.WindowArena Nothing) ]
-                [ text "curtain" ]
+                [ text "Diwata" ]
             , ul [ class "nav navbar-nav pull-xs-right" ] <|
                 lazy2 Util.viewIf isLoading spinner
                     :: navbarLink page (Route.WindowArena Nothing) [ text "WindowArena" ]
@@ -91,7 +91,7 @@ viewFooter : Html msg
 viewFooter =
     footer []
         [ div [ class "container" ]
-            [ a [ class "logo-font", href "/" ] [ text "curtain" ]
+            [ a [ class "logo-font", href "/" ] [ text "diwata" ]
             , span [ class "attribution" ]
                 [ text " An interactive user-friendly database interface "
                 , a [ href "https://copyleft.no" ] [ text "Copyleft" ]

@@ -1,7 +1,7 @@
 {
     "version": "1.0.0",
-    "summary": "A webclient for curtain using elm",
-    "repository": "https://github.com/user/project.git",
+    "summary": "A webclient for diwata using elm",
+    "repository": "https://github.com/ivanceras/diwata.git",
     "license": "BSD3",
     "source-directories": [
         "src"

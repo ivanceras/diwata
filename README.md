@@ -13,10 +13,10 @@ we need a high static typing compiler that
 
 ## Overall design infastructure
 * The intelisense feature has been decoupled away from rustorm
-    and is more specific to curtain than to an orm.
+    and is more specific to diwata than to an orm.
 * Intelisense data needs to stored in a separate database (sqlite) in 
     such a way it doesn't mess around with the user database
-* The curtain app will be able to handle multiple database with 
+* Diwata will be able to handle multiple database with 
     each specific configurations and are highly sensitive.
     Diwata needs a way to protect the app, so a login/password
     may be employed and synced into the cloud

@@ -169,7 +169,7 @@ viewBanner =
         , id "banner"
         ]
         [ div [ class "container" ]
-            [ h3 [ class "logo-font" ] [ text "curtain" ]
+            [ h3 [ class "logo-font" ] [ text "Diwata" ]
             , text "a user-friendly database interface"
             ]
         ]
