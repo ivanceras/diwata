@@ -50,6 +50,7 @@ widgetView widgetWidth field maybeValue =
         Textbox ->
             input [ type_ "text"
                   , styles
+                  , value valueString
                   ] []
         UuidTextbox ->
             input [ type_ "text"
