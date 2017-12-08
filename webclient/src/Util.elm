@@ -1,4 +1,7 @@
-module Util exposing ((=>), px, appendErrors, onClickStopPropagation, pair, viewIf, trim)
+module Util exposing 
+    ((=>), px, appendErrors
+    , onClickStopPropagation, pair
+    , viewIf, trim, isJust)
 
 import Html exposing (Attribute, Html)
 import Html.Events exposing (defaultOptions, onWithOptions)
@@ -76,3 +79,9 @@ trim list =
 px: number -> String
 px n =
     (toString n) ++ "px"
+
+isJust: Maybe a -> Bool
+isJust value =
+    case value of
+        Just a -> True
+        Nothing -> False

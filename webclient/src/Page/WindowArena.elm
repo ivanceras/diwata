@@ -104,7 +104,7 @@ view session model =
                         |> Html.map GroupedWindowMsg 
                     ]
                 , div [ class "pane window-arena" ]
-                    [ div [ class "tab-group" ]
+                    [ div [ class "tab-names" ]
                         [viewTabNames model]
                     , div []
                         [viewWindowOrSelectedRow session model]
@@ -133,9 +133,13 @@ viewWindow session activeWindow =
 
 viewTabNames : Model -> Html msg
 viewTabNames model =
+    let
+        inDetail = Util.isJust model.selectedRow
+    in
     case model.activeWindow of
         Just activeWindow ->
              a [ class "tab-name active-main-tab"
+               , classList [("in-selected-record", inDetail)]
                , Route.href (Route.WindowArena model.arenaArg)
                ]
                [ text activeWindow.mainTab.tab.name ]
