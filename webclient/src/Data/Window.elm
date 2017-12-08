@@ -8,6 +8,7 @@ module Data.Window
         , tagDecoder
         , tagToString
         , baseWindowDecoder
+        , hasDetails
         )
 
 import Data.Window.Author as Author exposing (Author)
@@ -84,6 +85,12 @@ indirectTabDecoder =
         (Decode.index 0 TableName.decoder)
         (Decode.index 1 Tab.decoder)
     
+
+hasDetails: Window -> Bool
+hasDetails window = 
+    List.length window.hasManyTabs > 0 
+        || List.length window.indirectTabs > 0
+
 -- IDENTIFIERS --
 
 

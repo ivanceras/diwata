@@ -26,7 +26,7 @@ import Json.Decode as Decode
 import Window as BrowserWindow
 import Views.Page as Page
 import Page.Window as Window
-import Util exposing (px)
+import Util exposing (px,viewIf)
 import Data.WindowArena exposing (ArenaArg, Section(..))
 import Route
 
@@ -54,7 +54,10 @@ type alias Drag =
 
 initialPosition : BrowserWindow.Size -> Position
 initialPosition browserSize =
-    Position 0 (round (toFloat browserSize.height * 2.0 / 3.0))
+    let
+        allocateMain = round (availableHeight browserSize * 0.60 ) -- 60% main tab, 40% detail tabs
+    in
+    Position 0 allocateMain 
 
 init: TableName -> String -> ArenaArg -> Task PageLoadError Model
 init tableName selectedRow arenaArg =
@@ -74,7 +77,7 @@ init tableName selectedRow arenaArg =
         initHasManyTabs =
             Task.map3
                 (\ window size detailRows->
-                    let (mainRecordHeight, detailTabHeight) = splitTabHeights (initialPosition size) size
+                    let (mainRecordHeight, detailTabHeight) = splitTabHeights window (initialPosition size) size
                     in
                     List.map 
                         ( \ hasManyTab ->
@@ -94,7 +97,7 @@ init tableName selectedRow arenaArg =
             Task.map3
                 (\ window size detailRows ->
                     let 
-                        (mainRecordHeight, detailTabHeight) = splitTabHeights (initialPosition size) size
+                        (mainRecordHeight, detailTabHeight) = splitTabHeights window (initialPosition size) size
                     in
                     List.map 
                         (\(_, indirectTab) ->
@@ -129,20 +132,36 @@ init tableName selectedRow arenaArg =
             ) 
             fetchSelected loadWindow initHasManyTabs initIndirectTabs browserSize
 
+
+availableHeight : BrowserWindow.Size -> Float
+availableHeight browserSize =
+    Window.calcMainTabHeight browserSize
+
+
 {-| Split tab heights (MainRecordHeight, DetailRecordHeight)
 -}
 
-splitTabHeights: Position -> BrowserWindow.Size -> (Float, Float)
-splitTabHeights position browserSize =
+splitTabHeights: Window -> Position -> BrowserWindow.Size -> (Float, Float)
+splitTabHeights window position browserSize =
     let
-        totalAllotedHeight = (Window.calcMainTabHeight browserSize - 60) -- tab-names(40) + detail separator (10) + allowance (10)
-        detailRecordHeight = toFloat (browserSize.height - position.y)
-        mainRecordHeight = totalAllotedHeight - detailRecordHeight
+        allotedHeight = 
+            if Window.hasDetails window then
+                availableHeight browserSize - 60
+            else
+                availableHeight browserSize + 60
 
-        clampedMainRecordHeight = clamp 0 totalAllotedHeight mainRecordHeight
-        clampedDetailRecordHeight = clamp 0 totalAllotedHeight detailRecordHeight
+        detailRecordHeight = allotedHeight - toFloat position.y
+
+        mainRecordHeight = 
+            if Window.hasDetails window then
+                allotedHeight - detailRecordHeight
+            else 
+                allotedHeight
+
+        clampMainRecordHeight = clamp 0 allotedHeight mainRecordHeight
+        clampDetailRecordHeight = clamp 0 allotedHeight detailRecordHeight
     in
-    (clampedMainRecordHeight, clampedDetailRecordHeight)
+    (clampMainRecordHeight, clampDetailRecordHeight)
 
     
 
@@ -150,9 +169,11 @@ view: Model -> Html Msg
 view model =
     let 
         mainSelectedRecord = model.selectedRow.record
-        mainTab = model.window.mainTab
+        window = model.window
+        mainTab = window.mainTab
+        browserSize = model.browserSize
         realPosition = getPosition model
-        (mainRecordHeight, detailTabHeight) = splitTabHeights realPosition model.browserSize
+        (mainRecordHeight, detailTabHeight) = splitTabHeights window realPosition browserSize
     in
     div []
         [ div [ class "main-tab-selected"
@@ -161,14 +182,16 @@ view model =
             [ cardViewRecord (Just mainSelectedRecord) mainTab
             , viewOneOneTabs model
             ]
-        , div [ class "detail-tabs-with-separator"
-              ]
-            [ div [onMouseDown, class "detail-separator"] 
-                  [i [class "icon icon-dot-3"
-                     ] []
+        , viewIf (Window.hasDetails model.window)
+            (div [ class "detail-tabs-with-separator"
                   ]
-            , viewDetailTabs model
-            ]
+                [ div [onMouseDown, class "detail-separator"] 
+                      [i [class "icon icon-dot-3"
+                         ] []
+                      ]
+                , viewDetailTabs model
+                ]
+            )
         ]
 
 viewOneOneTabs: Model -> Html msg
@@ -465,7 +488,8 @@ updateSizes: Session -> Model -> ( Model, Cmd Msg )
 updateSizes session model =
   let 
       realPosition = getPosition model
-      (mainRecordHeight, detailTabHeight) = splitTabHeights realPosition model.browserSize
+      window = model.window
+      (mainRecordHeight, detailTabHeight) = splitTabHeights window realPosition model.browserSize
   in
   update session (TabMsgAll (Tab.SetHeight detailTabHeight)) model
 
