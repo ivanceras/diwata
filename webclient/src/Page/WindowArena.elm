@@ -233,7 +233,7 @@ subscriptions model =
     Sub.batch
         [ detailedRecordSubscriptions model
         , windowSubscriptions model
-        , BrowserWindow.resizes (\size -> WindowResized size)
+        , BrowserWindow.resizes WindowResized
         ]
 
 

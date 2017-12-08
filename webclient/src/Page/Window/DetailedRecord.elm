@@ -635,7 +635,7 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
         [ dividerHeightSubscriptions model
-        , BrowserWindow.resizes (\size -> WindowResized size)
+        , BrowserWindow.resizes WindowResized
         ]
 
 
