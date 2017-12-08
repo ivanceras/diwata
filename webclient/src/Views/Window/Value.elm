@@ -11,151 +11,196 @@ import Data.Window.Field as Field exposing (Field)
 import Util exposing (px)
 import Data.Window.DataType as DataType exposing (DataType)
 
-{-| View value in list record view -}
-viewInList: Field -> Maybe Value -> Html msg
+
+{-| View value in list record view
+-}
+viewInList : Field -> Maybe Value -> Html msg
 viewInList field value =
     let
-        widgetWidth = Field.widgetWidthListValue field
+        widgetWidth =
+            Field.widgetWidthListValue field
     in
-    widgetView widgetWidth field value
+        widgetView widgetWidth field value
 
-{-| view value in card view -}
-viewInCard: Field -> Maybe Value -> Html msg
+
+{-| view value in card view
+-}
+viewInCard : Field -> Maybe Value -> Html msg
 viewInCard field value =
     let
-        widgetWidth = Field.shortOrLongWidth field
+        widgetWidth =
+            Field.shortOrLongWidth field
     in
-    widgetView widgetWidth field value
+        widgetView widgetWidth field value
 
 
-widgetView: Int -> Field -> Maybe Value -> Html msg
+widgetView : Int -> Field -> Maybe Value -> Html msg
 widgetView widgetWidth field maybeValue =
-    let 
-        controlWidget = field.controlWidget
-        valueString = 
+    let
+        controlWidget =
+            field.controlWidget
+
+        valueString =
             case maybeValue of
-                Just argValue -> 
+                Just argValue ->
                     Value.valueToString argValue
+
                 Nothing ->
                     ""
-        alignment = 
+
+        alignment =
             controlWidget.alignment
                 |> Widget.alignmentToString
 
-        styles = style [("text-align", alignment)
-                       ,("width", px widgetWidth)
-                       ]
-    in
-    case controlWidget.widget of
-        Textbox ->
-            input [ type_ "text"
-                  , styles
-                  , value valueString
-                  ] []
-        UuidTextbox ->
-            input [ type_ "text"
-                  , styles
-                  , value valueString
-                  , class "uuid-textbox"
-                  ] []
-        Password ->
-            input [ type_ "password"
-                  , styles
-                  , value valueString
-                  ] []
-        Checkbox ->
-            let viewCheckbox = 
-                case maybeValue of
-                    Just argValue ->
-                        let checkedValue =
-                            case argValue of
-                                Value.Bool v -> checked v
-                                _ -> checked False
-                        in
-                        input [ type_ "checkbox"
-                              , checkedValue 
-                              ] []
-                    Nothing ->
-                        input [ type_ "checkbox"
-                              ] []
-            in
-            div [ class "checkbox-value"
-                , styles
+        styles =
+            style
+                [ ( "text-align", alignment )
+                , ( "width", px widgetWidth )
                 ]
-               [viewCheckbox]
+    in
+        case controlWidget.widget of
+            Textbox ->
+                input
+                    [ type_ "text"
+                    , styles
+                    , value valueString
+                    ]
+                    []
 
-        DateTimePicker ->
-            viewDatePicker styles maybeValue
+            UuidTextbox ->
+                input
+                    [ type_ "text"
+                    , styles
+                    , value valueString
+                    , class "uuid-textbox"
+                    ]
+                    []
 
-        DatePicker ->
-            viewDatePicker styles maybeValue
+            Password ->
+                input
+                    [ type_ "password"
+                    , styles
+                    , value valueString
+                    ]
+                    []
 
-        FixDropdown list ->
-            let 
-                listWithBlank = "" :: list
-            in
-            select [ styles ]
-                (List.map
-                    (\v ->
-                        let
-                            isSelected = case maybeValue of
-                                Just fieldValue ->
-                                    v == (Value.valueToString fieldValue)
-                                Nothing ->
-                                    False
-                        in
-                        option  [ value v
-                                , selected isSelected
-                                ]
-                            [text v]
-                    ) listWithBlank
-                )
+            Checkbox ->
+                let
+                    viewCheckbox =
+                        case maybeValue of
+                            Just argValue ->
+                                let
+                                    checkedValue =
+                                        case argValue of
+                                            Value.Bool v ->
+                                                checked v
 
-        TagSelection ->
-            let 
-                tags = case maybeValue of
-                    Just value ->
-                        case value of
-                            Array arrayValue ->
-                                case arrayValue of
-                                    TextArray list -> list
-                                    IntArray list -> List.map (toString) list
+                                            _ ->
+                                                checked False
+                                in
+                                    input
+                                        [ type_ "checkbox"
+                                        , checkedValue
+                                        ]
+                                        []
 
-                            _ -> []
+                            Nothing ->
+                                input
+                                    [ type_ "checkbox"
+                                    ]
+                                    []
+                in
+                    div
+                        [ class "checkbox-value"
+                        , styles
+                        ]
+                        [ viewCheckbox ]
 
-                    Nothing ->
-                        []
-            in
-            Tagger.view styles tags
+            DateTimePicker ->
+                viewDatePicker styles maybeValue
+
+            DatePicker ->
+                viewDatePicker styles maybeValue
+
+            FixDropdown list ->
+                let
+                    listWithBlank =
+                        "" :: list
+                in
+                    select [ styles ]
+                        (List.map
+                            (\v ->
+                                let
+                                    isSelected =
+                                        case maybeValue of
+                                            Just fieldValue ->
+                                                v == (Value.valueToString fieldValue)
+
+                                            Nothing ->
+                                                False
+                                in
+                                    option
+                                        [ value v
+                                        , selected isSelected
+                                        ]
+                                        [ text v ]
+                            )
+                            listWithBlank
+                        )
+
+            TagSelection ->
+                let
+                    tags =
+                        case maybeValue of
+                            Just value ->
+                                case value of
+                                    Array arrayValue ->
+                                        case arrayValue of
+                                            TextArray list ->
+                                                list
+
+                                            IntArray list ->
+                                                List.map (toString) list
+
+                                    _ ->
+                                        []
+
+                            Nothing ->
+                                []
+                in
+                    Tagger.view styles tags
+
+            _ ->
+                input
+                    [ type_ "text"
+                    , styles
+                    , value valueString
+                    ]
+                    []
 
 
-        _ ->
-            input [ type_ "text"
-                  , styles
-                  , value valueString
-                  ] []
-
-
-viewDatePicker: Attribute msg -> Maybe Value -> Html msg    
+viewDatePicker : Attribute msg -> Maybe Value -> Html msg
 viewDatePicker styles maybeValue =
     let
-        dateString = 
+        dateString =
             case maybeValue of
                 Just value ->
-                    case value of 
+                    case value of
                         Value.Timestamp v ->
                             Date.Format.format "%Y-%m-%d" v
 
                         Value.Date v ->
                             Date.Format.format "%Y-%m-%d" v
 
-                        _ -> ""
+                        _ ->
+                            ""
 
                 Nothing ->
                     ""
-
     in
-    input [ type_ "date"
-          , styles
-          , value dateString
-          ] []
+        input
+            [ type_ "date"
+            , styles
+            , value dateString
+            ]
+            []

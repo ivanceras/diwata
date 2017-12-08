@@ -15,11 +15,12 @@ module Request.Window
 
 import Data.Window as Window exposing (Window, Tag, slugToString, baseWindowDecoder)
 import Data.Window.GroupedWindow as GroupedWindow exposing (GroupedWindow, WindowName)
-import Data.Window.TableName as TableName exposing 
-    ( TableName
-    , tableNameToString
-    , tableNameParser
-    )
+import Data.Window.TableName as TableName
+    exposing
+        ( TableName
+        , tableNameToString
+        , tableNameParser
+        )
 import Data.AuthToken as AuthToken exposing (AuthToken, withAuthorization)
 import Data.User as User exposing (Username)
 import Http
@@ -40,11 +41,11 @@ get maybeToken tableName =
             Window.baseWindowDecoder
                 |> Http.expectJson
     in
-    apiUrl ("/window/" ++ tableNameToString tableName)
-        |> HttpBuilder.get
-        |> HttpBuilder.withExpect expect
-        |> withAuthorization maybeToken
-        |> HttpBuilder.toRequest
+        apiUrl ("/window/" ++ tableNameToString tableName)
+            |> HttpBuilder.get
+            |> HttpBuilder.withExpect expect
+            |> withAuthorization maybeToken
+            |> HttpBuilder.toRequest
 
 
 
@@ -113,12 +114,10 @@ groupedWindow config token =
 
 
 
-
-
 -- FAVORITE --
 
 
-toggleFavorite : TableName -> AuthToken -> Http.Request TableName 
+toggleFavorite : TableName -> AuthToken -> Http.Request TableName
 toggleFavorite tableName authToken =
     favorite tableName authToken
 
@@ -135,7 +134,7 @@ unfavorite =
 
 buildFavorite :
     (String -> RequestBuilder a)
-    -> TableName 
+    -> TableName
     -> AuthToken
     -> Http.Request TableName
 buildFavorite builderFromUrl tableName token =
@@ -144,12 +143,12 @@ buildFavorite builderFromUrl tableName token =
             TableName.decoder
                 |> Http.expectJson
     in
-    [ apiUrl "/windows", tableNameToString tableName, "favorite" ]
-        |> String.join "/"
-        |> builderFromUrl
-        |> withAuthorization (Just token)
-        |> withExpect expect
-        |> HttpBuilder.toRequest
+        [ apiUrl "/windows", tableNameToString tableName, "favorite" ]
+            |> String.join "/"
+            |> builderFromUrl
+            |> withAuthorization (Just token)
+            |> withExpect expect
+            |> HttpBuilder.toRequest
 
 
 
@@ -192,12 +191,12 @@ create config token =
             Encode.object [ "article" => window ]
                 |> Http.jsonBody
     in
-    apiUrl "/windows"
-        |> HttpBuilder.post
-        |> withAuthorization (Just token)
-        |> withBody body
-        |> withExpect expect
-        |> HttpBuilder.toRequest
+        apiUrl "/windows"
+            |> HttpBuilder.post
+            |> withAuthorization (Just token)
+            |> withBody body
+            |> withExpect expect
+            |> HttpBuilder.toRequest
 
 
 update : TableName -> EditConfig record -> AuthToken -> Http.Request Window
@@ -218,12 +217,12 @@ update tableName config token =
             Encode.object [ "article" => window ]
                 |> Http.jsonBody
     in
-    apiUrl ("/articles/" ++ tableNameToString tableName)
-        |> HttpBuilder.put
-        |> withAuthorization (Just token)
-        |> withBody body
-        |> withExpect expect
-        |> HttpBuilder.toRequest
+        apiUrl ("/articles/" ++ tableNameToString tableName)
+            |> HttpBuilder.put
+            |> withAuthorization (Just token)
+            |> withBody body
+            |> withExpect expect
+            |> HttpBuilder.toRequest
 
 
 

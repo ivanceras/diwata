@@ -35,7 +35,7 @@ button toggleFollow { following, username } =
                 |> String.join " "
                 |> class
     in
-    Html.button [ classes, onClick (toggleFollow username) ]
-        [ i [ class "ion-plus-round" ] []
-        , text (" " ++ prefix ++ " " ++ User.usernameToString username)
-        ]
+        Html.button [ classes, onClick (toggleFollow username) ]
+            [ i [ class "ion-plus-round" ] []
+            , text (" " ++ prefix ++ " " ++ User.usernameToString username)
+            ]

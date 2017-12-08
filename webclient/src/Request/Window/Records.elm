@@ -5,11 +5,12 @@ import Data.Window.Record as Record exposing (Rows, RecordId)
 import Data.Window.RecordDetail as RecordDetail exposing (RecordDetail)
 import Data.AuthToken as AuthToken exposing (AuthToken, withAuthorization)
 import Data.Window.GroupedWindow as GroupedWindow exposing (WindowName)
-import Data.Window.TableName as TableName exposing 
-    ( TableName
-    , tableNameToString
-    , tableNameParser
-    )
+import Data.Window.TableName as TableName
+    exposing
+        ( TableName
+        , tableNameToString
+        , tableNameParser
+        )
 import Http
 import HttpBuilder exposing (RequestBuilder, withExpect, withQueryParams)
 import Json.Decode as Decode
@@ -25,6 +26,7 @@ list : Maybe AuthToken -> TableName -> Http.Request Rows
 list maybeToken tableName =
     listPage 1 maybeToken tableName
 
+
 listPage : Int -> Maybe AuthToken -> TableName -> Http.Request Rows
 listPage page maybeToken tableName =
     apiUrl ("/data/" ++ tableNameToString tableName ++ "/" ++ toString page)
@@ -36,15 +38,24 @@ listPage page maybeToken tableName =
 
 fetchSelected : TableName -> String -> Http.Request RecordDetail
 fetchSelected tableName selectedRow =
-    apiUrl ("/data/" ++ tableNameToString tableName ++ "/select/"++selectedRow)
+    apiUrl ("/data/" ++ tableNameToString tableName ++ "/select/" ++ selectedRow)
         |> HttpBuilder.get
         |> HttpBuilder.withExpect (Http.expectJson RecordDetail.decoder)
         |> HttpBuilder.toRequest
 
+
 fetchHasManyRecords : TableName -> String -> TableName -> Int -> Http.Request Rows
 fetchHasManyRecords tableName selectedRow hasManyTable hasManyPage =
-    apiUrl ("/data/" ++ tableNameToString tableName ++ "/select/" ++ selectedRow
-            ++ "/has_many/" ++ tableNameToString hasManyTable ++ "/" ++ toString hasManyPage)
+    apiUrl
+        ("/data/"
+            ++ tableNameToString tableName
+            ++ "/select/"
+            ++ selectedRow
+            ++ "/has_many/"
+            ++ tableNameToString hasManyTable
+            ++ "/"
+            ++ toString hasManyPage
+        )
         |> HttpBuilder.get
         |> HttpBuilder.withExpect (Http.expectJson Record.rowsDecoder)
         |> HttpBuilder.toRequest
@@ -52,11 +63,21 @@ fetchHasManyRecords tableName selectedRow hasManyTable hasManyPage =
 
 fetchIndirectRecords : TableName -> String -> TableName -> Int -> Http.Request Rows
 fetchIndirectRecords tableName selectedRow hasManyTable hasManyPage =
-    apiUrl ("/data/" ++ tableNameToString tableName ++ "/select/" ++ selectedRow
-            ++ "/indirect/" ++ tableNameToString hasManyTable ++ "/" ++ toString hasManyPage)
+    apiUrl
+        ("/data/"
+            ++ tableNameToString tableName
+            ++ "/select/"
+            ++ selectedRow
+            ++ "/indirect/"
+            ++ tableNameToString hasManyTable
+            ++ "/"
+            ++ toString hasManyPage
+        )
         |> HttpBuilder.get
         |> HttpBuilder.withExpect (Http.expectJson Record.rowsDecoder)
         |> HttpBuilder.toRequest
+
+
 
 -- POST --
 

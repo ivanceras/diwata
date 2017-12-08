@@ -1,9 +1,10 @@
-module Data.Window.GroupedWindow exposing 
-    ( GroupedWindow
-    , decoder
-    , WindowName
-    , windowNameDecoder
-    )
+module Data.Window.GroupedWindow
+    exposing
+        ( GroupedWindow
+        , decoder
+        , WindowName
+        , windowNameDecoder
+        )
 
 import Data.Window as Window exposing (Window)
 import Data.Window.TableName as TableName exposing (TableName)
@@ -13,15 +14,17 @@ import UrlParser
 
 
 type alias GroupedWindow =
-    { group: String
-    , windowNames: List WindowName
+    { group : String
+    , windowNames : List WindowName
     }
 
+
 type alias WindowName =
-    { name: String
-    , tableName: TableName
+    { name : String
+    , tableName : TableName
     , isView : Bool
     }
+
 
 
 -- SERIALIZATION --
@@ -33,10 +36,10 @@ decoder =
         |> required "group" Decode.string
         |> required "window_names" (Decode.list windowNameDecoder)
 
-windowNameDecoder: Decoder WindowName
-windowNameDecoder = 
-    decode WindowName 
-        |> required "name" Decode.string
-        |> required "table_name" TableName.decoder 
-        |> required "is_view" Decode.bool
 
+windowNameDecoder : Decoder WindowName
+windowNameDecoder =
+    decode WindowName
+        |> required "name" Decode.string
+        |> required "table_name" TableName.decoder
+        |> required "is_view" Decode.bool

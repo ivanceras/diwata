@@ -33,8 +33,8 @@ login { email, password } =
             Encode.object [ "user" => user ]
                 |> Http.jsonBody
     in
-    Decode.field "user" User.decoder
-        |> Http.post (apiUrl "/users/login") body
+        Decode.field "user" User.decoder
+            |> Http.post (apiUrl "/users/login") body
 
 
 register : { r | username : String, email : String, password : String } -> Http.Request User
@@ -51,8 +51,8 @@ register { username, email, password } =
             Encode.object [ "user" => user ]
                 |> Http.jsonBody
     in
-    Decode.field "user" User.decoder
-        |> Http.post (apiUrl "/users") body
+        Decode.field "user" User.decoder
+            |> Http.post (apiUrl "/users") body
 
 
 edit :
@@ -87,9 +87,9 @@ edit { username, email, bio, password, image } maybeToken =
                 |> Decode.field "user"
                 |> Http.expectJson
     in
-    apiUrl "/user"
-        |> HttpBuilder.put
-        |> HttpBuilder.withExpect expect
-        |> HttpBuilder.withBody body
-        |> withAuthorization maybeToken
-        |> HttpBuilder.toRequest
+        apiUrl "/user"
+            |> HttpBuilder.put
+            |> HttpBuilder.withExpect expect
+            |> HttpBuilder.withBody body
+            |> withAuthorization maybeToken
+            |> HttpBuilder.toRequest

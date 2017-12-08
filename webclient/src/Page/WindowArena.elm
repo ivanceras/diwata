@@ -28,18 +28,20 @@ import Route
 
 
 type alias Model =
-    { openedWindow: List Window.Model
-    , activeWindow: Maybe Window.Model
+    { openedWindow : List Window.Model
+    , activeWindow : Maybe Window.Model
     , groupedWindow : GroupedWindow.Model
-    , selectedRow: Maybe DetailedRecord.Model
-    , arenaArg: Maybe ArenaArg
+    , selectedRow : Maybe DetailedRecord.Model
+    , arenaArg : Maybe ArenaArg
     }
 
 
 init : Session -> Maybe ArenaArg -> Task PageLoadError Model
 init session arenaArg =
     let
-        _ = Debug.log "Arena arg: " arenaArg
+        _ =
+            Debug.log "Arena arg: " arenaArg
+
         feedSources =
             if session.user == Nothing then
                 SelectList.singleton globalFeed
@@ -48,14 +50,16 @@ init session arenaArg =
 
         loadActiveWindow =
             case arenaArg of
-                Just arenaArg -> 
-                    Window.init session arenaArg.tableName 
-                        |> Task.map Just 
+                Just arenaArg ->
+                    Window.init session arenaArg.tableName
+                        |> Task.map Just
                         |> Task.mapError handleLoadError
+
                 Nothing ->
                     Task.succeed Nothing
 
-        activeWindow = Maybe.map .tableName arenaArg
+        activeWindow =
+            Maybe.map .tableName arenaArg
 
         loadWindowList =
             GroupedWindow.init session activeWindow feedSources
@@ -69,6 +73,7 @@ init session arenaArg =
                             DetailedRecord.init arenaArg.tableName selectedRecord arenaArg
                                 |> Task.map Just
                                 |> Task.mapError handleLoadError
+
                         Nothing ->
                             Task.succeed Nothing
 
@@ -76,17 +81,20 @@ init session arenaArg =
                     Task.succeed Nothing
 
         handleLoadError e =
-            pageLoadError Page.WindowArena ("WindowArena is currently unavailable. Error: "++ (toString e))
+            pageLoadError Page.WindowArena ("WindowArena is currently unavailable. Error: " ++ (toString e))
     in
-    Task.map3 
-        ( \ activeWindow groupedWindow selectedRow ->
-            { openedWindow = []
-            , activeWindow = activeWindow
-            , groupedWindow = groupedWindow
-            , selectedRow = selectedRow
-            , arenaArg = arenaArg
-            }
-        ) loadActiveWindow loadWindowList loadSelectedRecord
+        Task.map3
+            (\activeWindow groupedWindow selectedRow ->
+                { openedWindow = []
+                , activeWindow = activeWindow
+                , groupedWindow = groupedWindow
+                , selectedRow = selectedRow
+                , arenaArg = arenaArg
+                }
+            )
+            loadActiveWindow
+            loadWindowList
+            loadSelectedRecord
 
 
 
@@ -99,27 +107,29 @@ view session model =
         [ viewBanner
         , div [ class "window-content" ]
             [ div [ class "pane-group" ]
-                [ div [ class "pane pane-sm sidebar" ] 
-                    [GroupedWindow.view model.groupedWindow
-                        |> Html.map GroupedWindowMsg 
+                [ div [ class "pane pane-sm sidebar" ]
+                    [ GroupedWindow.view model.groupedWindow
+                        |> Html.map GroupedWindowMsg
                     ]
                 , div [ class "pane window-arena" ]
                     [ div [ class "tab-names" ]
-                        [viewTabNames model]
+                        [ viewTabNames model ]
                     , div []
-                        [viewWindowOrSelectedRow session model]
+                        [ viewWindowOrSelectedRow session model ]
                     ]
                 ]
             ]
         ]
 
-viewWindowOrSelectedRow: Session -> Model -> Html Msg
+
+viewWindowOrSelectedRow : Session -> Model -> Html Msg
 viewWindowOrSelectedRow session model =
     case model.selectedRow of
-    Just selectedRow ->
-        Html.map DetailedRecordMsg (DetailedRecord.view selectedRow)
-    Nothing ->
-        viewWindow session model.activeWindow
+        Just selectedRow ->
+            Html.map DetailedRecordMsg (DetailedRecord.view selectedRow)
+
+        Nothing ->
+            viewWindow session model.activeWindow
 
 
 viewWindow : Session -> Maybe Window.Model -> Html Msg
@@ -128,27 +138,34 @@ viewWindow session activeWindow =
         Just activeWindow ->
             Window.view session activeWindow
                 |> Html.map WindowMsg
+
         Nothing ->
             text "No active window"
+
 
 viewTabNames : Model -> Html msg
 viewTabNames model =
     let
-        inDetail = Util.isJust model.selectedRow
+        inDetail =
+            Util.isJust model.selectedRow
     in
-    case model.activeWindow of
-        Just activeWindow ->
-             a [ class "tab-name active-main-tab"
-               , classList [("in-selected-record", inDetail)]
-               , Route.href (Route.WindowArena model.arenaArg)
-               ]
-               [ text activeWindow.mainTab.tab.name ]
-        Nothing ->
-            text "no tab"
+        case model.activeWindow of
+            Just activeWindow ->
+                a
+                    [ class "tab-name active-main-tab"
+                    , classList [ ( "in-selected-record", inDetail ) ]
+                    , Route.href (Route.WindowArena model.arenaArg)
+                    ]
+                    [ text activeWindow.mainTab.tab.name ]
+
+            Nothing ->
+                text "no tab"
+
 
 viewBanner : Html msg
 viewBanner =
-    div [ class "banner"
+    div
+        [ class "banner"
         , id "banner"
         ]
         [ div [ class "container" ]
@@ -156,9 +173,6 @@ viewBanner =
             , text "a user-friendly database interface"
             ]
         ]
-
-
-
 
 
 
@@ -172,7 +186,6 @@ type Msg
     | WindowResized BrowserWindow.Size
 
 
-
 update : Session -> Msg -> Model -> ( Model, Cmd Msg )
 update session msg model =
     case msg of
@@ -181,16 +194,16 @@ update session msg model =
                 ( newFeed, subCmd ) =
                     GroupedWindow.update session subMsg model.groupedWindow
             in
-            { model | groupedWindow = newFeed } => Cmd.map GroupedWindowMsg subCmd
+                { model | groupedWindow = newFeed } => Cmd.map GroupedWindowMsg subCmd
 
-        WindowMsg subMsg -> 
+        WindowMsg subMsg ->
             case model.activeWindow of
                 Just activeWindow ->
-                    let 
+                    let
                         ( newWindow, subCmd ) =
                             Window.update session subMsg activeWindow
                     in
-                    { model | activeWindow = Just newWindow } => Cmd.map WindowMsg subCmd
+                        { model | activeWindow = Just newWindow } => Cmd.map WindowMsg subCmd
 
                 Nothing ->
                     model => Cmd.none
@@ -198,34 +211,38 @@ update session msg model =
         DetailedRecordMsg subMsg ->
             case model.selectedRow of
                 Just selectedRow ->
-                    let 
+                    let
                         ( newDetailedRecord, subCmd ) =
                             DetailedRecord.update session subMsg selectedRow
                     in
-                    { model | selectedRow = Just newDetailedRecord } => Cmd.map DetailedRecordMsg subCmd
+                        { model | selectedRow = Just newDetailedRecord } => Cmd.map DetailedRecordMsg subCmd
+
                 Nothing ->
                     model => Cmd.none
 
         WindowResized size ->
-            let 
-                _ = Debug.log "Window is resized: " size
-            in 
+            let
+                _ =
+                    Debug.log "Window is resized: " size
+            in
                 model => Cmd.none
 
 
-subscriptions: Model -> Sub Msg
+subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ detailedRecordSubscriptions model 
+        [ detailedRecordSubscriptions model
         , windowSubscriptions model
-        , BrowserWindow.resizes (\ size -> WindowResized size)
+        , BrowserWindow.resizes (\size -> WindowResized size)
         ]
+
 
 detailedRecordSubscriptions : Model -> Sub Msg
 detailedRecordSubscriptions model =
     case model.selectedRow of
         Just selectedRow ->
             Sub.map DetailedRecordMsg (DetailedRecord.subscriptions selectedRow)
+
         Nothing ->
             Sub.none
 
@@ -235,5 +252,6 @@ windowSubscriptions model =
     case model.activeWindow of
         Just activeWindow ->
             Sub.map WindowMsg (Window.subscriptions activeWindow)
+
         Nothing ->
             Sub.none

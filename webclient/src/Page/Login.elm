@@ -132,13 +132,13 @@ update msg model =
                         _ ->
                             [ "unable to process registration" ]
             in
-            { model | errors = List.map (\errorMessage -> Form => errorMessage) errorMessages }
-                => Cmd.none
-                => NoOp
+                { model | errors = List.map (\errorMessage -> Form => errorMessage) errorMessages }
+                    => Cmd.none
+                    => NoOp
 
         LoginCompleted (Ok user) ->
             model
-                => Cmd.batch [ storeSession user, Route.modifyUrl (Route.WindowArena Nothing)]
+                => Cmd.batch [ storeSession user, Route.modifyUrl (Route.WindowArena Nothing) ]
                 => SetUser user
 
 
@@ -199,4 +199,4 @@ optionalError fieldName =
         errorToString errorMessage =
             String.join " " [ fieldName, errorMessage ]
     in
-    optional fieldName (Decode.list (Decode.map errorToString string)) []
+        optional fieldName (Decode.list (Decode.map errorToString string)) []

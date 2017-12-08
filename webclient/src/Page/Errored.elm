@@ -30,9 +30,10 @@ type alias Model =
 pageLoadError : ActivePage -> String -> PageLoadError
 pageLoadError activePage errorMessage =
     let
-        _ = Debug.log ("pageLoadError, Error loading page" ++ (toString activePage)) errorMessage
+        _ =
+            Debug.log ("pageLoadError, Error loading page" ++ (toString activePage)) errorMessage
     in
-    PageLoadError { activePage = activePage, errorMessage = errorMessage }
+        PageLoadError { activePage = activePage, errorMessage = errorMessage }
 
 
 

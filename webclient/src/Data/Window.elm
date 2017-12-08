@@ -35,7 +35,7 @@ This definition for `Window` means we can write:
 viewWindow : Window Body -> Html msg
 viewFeed : List (Window ()) -> Html msg
 
-This indicates that `viewWindow` requires an window _with a `body` present_,
+This indicates that `viewWindow` requires an window *with a `body` present*,
 wereas `viewFeed` accepts windows with no bodies. (We could also have written
 it as `List (Window a)` to specify that feeds can accept either windows that
 have `body` present or not. Either work, given that feeds do not attempt to
@@ -51,14 +51,12 @@ type alias Window =
     , description : Maybe String
     , group : Maybe String
     , mainTab : Tab
-    , hasOneTables : List TableName 
+    , hasOneTables : List TableName
     , oneOneTabs : List Tab
     , hasManyTabs : List Tab
-    , indirectTabs : List (TableName, Tab)
+    , indirectTabs : List ( TableName, Tab )
     , isView : Bool
     }
-
-
 
 
 
@@ -73,23 +71,27 @@ baseWindowDecoder =
         |> required "group" (Decode.nullable Decode.string)
         |> required "main_tab" Tab.decoder
         |> required "has_one_tables" (Decode.list TableName.decoder)
-        |> required "one_one_tabs" (Decode.list Tab.decoder) 
-        |> required "has_many_tabs" (Decode.list Tab.decoder) 
-        |> required "indirect_tabs" (Decode.list indirectTabDecoder) 
+        |> required "one_one_tabs" (Decode.list Tab.decoder)
+        |> required "has_many_tabs" (Decode.list Tab.decoder)
+        |> required "indirect_tabs" (Decode.list indirectTabDecoder)
         |> required "is_view" Decode.bool
 
 
-indirectTabDecoder: Decoder (TableName, Tab)
-indirectTabDecoder = 
+indirectTabDecoder : Decoder ( TableName, Tab )
+indirectTabDecoder =
     Decode.map2 (,)
         (Decode.index 0 TableName.decoder)
         (Decode.index 1 Tab.decoder)
-    
 
-hasDetails: Window -> Bool
-hasDetails window = 
-    List.length window.hasManyTabs > 0 
-        || List.length window.indirectTabs > 0
+
+hasDetails : Window -> Bool
+hasDetails window =
+    List.length window.hasManyTabs
+        > 0
+        || List.length window.indirectTabs
+        > 0
+
+
 
 -- IDENTIFIERS --
 
@@ -124,6 +126,3 @@ tagToString (Tag slug) =
 tagDecoder : Decoder Tag
 tagDecoder =
     Decode.map Tag Decode.string
-
-
-

@@ -1,18 +1,20 @@
-module Views.Window.GroupedWindow exposing 
-    ( FeedSource
-    , Model
-    , Msg
-    , authorFeed
-    , favoritedFeed
-    , globalFeed
-    , init
-    , selectTag
-    , tagFeed
-    , update
-    , view
-    , viewWindowNames
-    , viewFeedSources
-    , yourFeed)
+module Views.Window.GroupedWindow
+    exposing
+        ( FeedSource
+        , Model
+        , Msg
+        , authorFeed
+        , favoritedFeed
+        , globalFeed
+        , init
+        , selectTag
+        , tagFeed
+        , update
+        , view
+        , viewWindowNames
+        , viewFeedSources
+        , yourFeed
+        )
 
 {-| The reusable Window Feed that appears on both the Home page as well as on
 the Profile page. There's a lot of logic here, so it's more convenient to use
@@ -29,7 +31,7 @@ overkill, so we use simpler APIs instead.
 
 import Data.Window as Window exposing (Window, Tag)
 import Data.Window.GroupedWindow as GroupedWindow exposing (GroupedWindow, WindowName)
-import Data.Window.TableName as TableName exposing (TableName,tableNameToString)
+import Data.Window.TableName as TableName exposing (TableName, tableNameToString)
 import Data.AuthToken as AuthToken exposing (AuthToken)
 import Data.Session as Session exposing (Session)
 import Data.User as User exposing (Username)
@@ -84,43 +86,53 @@ init session activeWindow feedSources =
                 , isLoading = False
                 }
     in
-    source
-        |> fetch (Maybe.map .token session.user) activeWindow
-        |> Task.map toModel
+        source
+            |> fetch (Maybe.map .token session.user) activeWindow
+            |> Task.map toModel
 
 
 
 -- VIEW --
 
-view: Model -> Html Msg
+
+view : Model -> Html Msg
 view model =
     div [ class "groupedWindow-toggle" ]
         (viewWindowNames model)
 
-viewWindowName: Maybe TableName -> WindowName -> Html msg
-viewWindowName activeWindow windowName = 
-    let isActive = 
-        case activeWindow of
-            Just tableName ->
-                windowName.tableName == tableName
-            Nothing ->
-                False
-        isView = windowName.isView
-    in
-    a [ class "nav-group-item"
-      , classList [("active", isActive), ("is-view-active", isView && isActive)]
-      , Route.href (Route.WindowArena (Just (WindowArena.initArg windowName.tableName))) 
-      ]
-        [span [ class "icon icon-list"
-              , classList [("is-view-icon", isView)] 
-              ] []
-        ,text windowName.name
-        ]
 
-viewWindowGroup: Maybe TableName -> GroupedWindow  -> Html msg
-viewWindowGroup activeWindow groupedWindow = 
-    nav [class "nav-group"]
-        [ h5 [class "nav-group-title"] [text groupedWindow.group]
+viewWindowName : Maybe TableName -> WindowName -> Html msg
+viewWindowName activeWindow windowName =
+    let
+        isActive =
+            case activeWindow of
+                Just tableName ->
+                    windowName.tableName == tableName
+
+                Nothing ->
+                    False
+
+        isView =
+            windowName.isView
+    in
+        a
+            [ class "nav-group-item"
+            , classList [ ( "active", isActive ), ( "is-view-active", isView && isActive ) ]
+            , Route.href (Route.WindowArena (Just (WindowArena.initArg windowName.tableName)))
+            ]
+            [ span
+                [ class "icon icon-list"
+                , classList [ ( "is-view-icon", isView ) ]
+                ]
+                []
+            , text windowName.name
+            ]
+
+
+viewWindowGroup : Maybe TableName -> GroupedWindow -> Html msg
+viewWindowGroup activeWindow groupedWindow =
+    nav [ class "nav-group" ]
+        [ h5 [ class "nav-group-title" ] [ text groupedWindow.group ]
         , div [] <| List.map (viewWindowName activeWindow) groupedWindow.windowNames
         ]
 
@@ -155,9 +167,9 @@ selectTag maybeAuthToken tagName =
         source =
             tagFeed tagName
     in
-    source
-        |> fetch maybeAuthToken Nothing
-        |> Task.attempt (FeedLoadCompleted source)
+        source
+            |> fetch maybeAuthToken Nothing
+            |> Task.attempt (FeedLoadCompleted source)
 
 
 sourceName : FeedSource -> String
@@ -196,8 +208,6 @@ limit feedSource =
 
         AuthorFeed username ->
             5
-
-
 
 
 pageLink : Maybe TableName -> Bool -> Html Msg
@@ -272,7 +282,7 @@ updateInternal session msg model =
                         |> pair model
 
         FavoriteCompleted (Ok window) ->
-             model => Cmd.none
+            model => Cmd.none
 
         FavoriteCompleted (Err error) ->
             { model | errors = model.errors ++ [ "Server error while trying to favorite window." ] }
@@ -283,20 +293,20 @@ updateInternal session msg model =
                 source =
                     SelectList.selected model.feedSources
             in
-            source
-                |> fetch (Maybe.map .token session.user) page
-                |> Task.attempt (FeedLoadCompleted source)
-                |> pair model
+                source
+                    |> fetch (Maybe.map .token session.user) page
+                    |> Task.attempt (FeedLoadCompleted source)
+                    |> pair model
 
         SelectWindow tableName ->
             model => Cmd.none
 
 
-
 fetch : Maybe AuthToken -> Maybe TableName -> FeedSource -> Task Http.Error ( Maybe TableName, List GroupedWindow )
 fetch token activeWindow feedSource =
     let
-        page = 1
+        page =
+            1
 
         defaultListConfig =
             Request.Window.defaultListConfig
@@ -320,9 +330,9 @@ fetch token activeWindow feedSource =
                         feedConfig =
                             { defaultFeedConfig | offset = offset, limit = windowsPerPage }
                     in
-                    token
-                        |> Maybe.map (Request.Window.groupedWindow feedConfig >> Http.toTask)
-                        |> Maybe.withDefault (Task.fail (Http.BadUrl "You need to be signed in to view your groupedWindow."))
+                        token
+                            |> Maybe.map (Request.Window.groupedWindow feedConfig >> Http.toTask)
+                            |> Maybe.withDefault (Task.fail (Http.BadUrl "You need to be signed in to view your groupedWindow."))
 
                 GlobalFeed ->
                     Request.Window.list listConfig token
@@ -340,9 +350,8 @@ fetch token activeWindow feedSource =
                     Request.Window.list { listConfig | author = Just username } token
                         |> Http.toTask
     in
-    task
-        |> Task.map (\groupedWindow -> ( activeWindow, groupedWindow ))
-
+        task
+            |> Task.map (\groupedWindow -> ( activeWindow, groupedWindow ))
 
 
 selectFeedSource : FeedSource -> SelectList FeedSource -> SelectList FeedSource
@@ -370,15 +379,15 @@ selectFeedSource source sources =
                 TagFeed _ ->
                     withoutTags ++ [ source ]
     in
-    case newSources of
-        [] ->
-            -- This should never happen. If we had a logging service set up,
-            -- we would definitely want to report if it somehow did happen!
-            sources
+        case newSources of
+            [] ->
+                -- This should never happen. If we had a logging service set up,
+                -- we would definitely want to report if it somehow did happen!
+                sources
 
-        first :: rest ->
-            SelectList.fromLists [] first rest
-                |> SelectList.select ((==) source)
+            first :: rest ->
+                SelectList.fromLists [] first rest
+                    |> SelectList.select ((==) source)
 
 
 isTagFeed : FeedSource -> Bool

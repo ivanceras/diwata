@@ -1,7 +1,14 @@
-module Util exposing 
-    ((=>), px, appendErrors
-    , onClickStopPropagation, pair
-    , viewIf, trim, isJust)
+module Util
+    exposing
+        ( (=>)
+        , px
+        , appendErrors
+        , onClickStopPropagation
+        , pair
+        , viewIf
+        , trim
+        , isJust
+        )
 
 import Html exposing (Attribute, Html)
 import Html.Events exposing (defaultOptions, onWithOptions)
@@ -52,36 +59,49 @@ appendErrors : { model | errors : List error } -> List error -> { model | errors
 appendErrors model errors =
     { model | errors = model.errors ++ errors }
 
-trimFirst: List String -> List String
+
+trimFirst : List String -> List String
 trimFirst list =
     case list of
         "" :: list ->
             list
+
         list ->
             list
 
-trimLast: List String -> List String
+
+trimLast : List String -> List String
 trimLast list =
-    let 
-        rev = List.reverse list
-        trimmed = trimFirst rev
+    let
+        rev =
+            List.reverse list
+
+        trimmed =
+            trimFirst rev
     in
         List.reverse trimmed
 
+
 {-|
+
     Trim both first and last element if they are empty
 -}
-trim: List String -> List String
+trim : List String -> List String
 trim list =
     trimFirst list
         |> trimLast
 
-px: number -> String
+
+px : number -> String
 px n =
     (toString n) ++ "px"
 
-isJust: Maybe a -> Bool
+
+isJust : Maybe a -> Bool
 isJust value =
     case value of
-        Just a -> True
-        Nothing -> False
+        Just a ->
+            True
+
+        Nothing ->
+            False

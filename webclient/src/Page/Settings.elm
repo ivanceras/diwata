@@ -160,9 +160,9 @@ update session msg model =
                     else
                         Just passwordStr
             in
-            { model | password = password }
-                => Cmd.none
-                => NoOp
+                { model | password = password }
+                    => Cmd.none
+                    => NoOp
 
         SetBio bio ->
             { model | bio = bio }
@@ -177,9 +177,9 @@ update session msg model =
                     else
                         Just imageStr
             in
-            { model | image = image }
-                => Cmd.none
-                => NoOp
+                { model | image = image }
+                    => Cmd.none
+                    => NoOp
 
         SaveCompleted (Err error) ->
             let
@@ -197,9 +197,9 @@ update session msg model =
                     errorMessages
                         |> List.map (\errorMessage -> Form => errorMessage)
             in
-            { model | errors = errors }
-                => Cmd.none
-                => NoOp
+                { model | errors = errors }
+                    => Cmd.none
+                    => NoOp
 
         SaveCompleted (Ok user) ->
             model
@@ -246,4 +246,4 @@ optionalError fieldName =
         errorToString errorMessage =
             String.join " " [ fieldName, errorMessage ]
     in
-    optional fieldName (list (Decode.map errorToString string)) []
+        optional fieldName (list (Decode.map errorToString string)) []

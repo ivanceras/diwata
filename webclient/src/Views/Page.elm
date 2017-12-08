@@ -69,22 +69,22 @@ viewSignIn page user =
         linkTo =
             navbarLink page
     in
-    case user of
-        Nothing ->
-            [ linkTo Route.Login [ text "Sign in" ]
-            , linkTo Route.Register [ text "Sign up" ]
-            ]
-
-        Just user ->
-            [ linkTo Route.NewWindow [ i [ class "ion-compose" ] [], text " New Post" ]
-            , linkTo Route.Settings [ i [ class "ion-gear-a" ] [], text " Settings" ]
-            , linkTo
-                (Route.Profile user.username)
-                [ img [ class "user-pic", UserPhoto.src user.image ] []
-                , User.usernameToHtml user.username
+        case user of
+            Nothing ->
+                [ linkTo Route.Login [ text "Sign in" ]
+                , linkTo Route.Register [ text "Sign up" ]
                 ]
-            , linkTo Route.Logout [ text "Sign out" ]
-            ]
+
+            Just user ->
+                [ linkTo Route.NewWindow [ i [ class "ion-compose" ] [], text " New Post" ]
+                , linkTo Route.Settings [ i [ class "ion-gear-a" ] [], text " Settings" ]
+                , linkTo
+                    (Route.Profile user.username)
+                    [ img [ class "user-pic", UserPhoto.src user.image ] []
+                    , User.usernameToHtml user.username
+                    ]
+                , linkTo Route.Logout [ text "Sign out" ]
+                ]
 
 
 viewFooter : Html msg

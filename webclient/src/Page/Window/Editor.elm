@@ -24,7 +24,7 @@ import Data.WindowArena as WindowArena
 
 type alias Model =
     { errors : List Error
-    , editingWindow : Maybe TableName 
+    , editingWindow : Maybe TableName
     , title : String
     , body : String
     , description : String
@@ -50,19 +50,19 @@ initEdit session tableName =
             session.user
                 |> Maybe.map .token
     in
-    Request.Window.get maybeAuthToken tableName
-        |> Http.toTask
-        |> Task.mapError (\_ -> pageLoadError Page.Other "Window is currently unavailable.")
-        |> Task.map
-            (\window ->
-                { errors = []
-                , editingWindow = Just tableName 
-                , title = window.name
-                , body = "Hello" 
-                , description = Maybe.withDefault "" window.description
-                , tags = []
-                }
-            )
+        Request.Window.get maybeAuthToken tableName
+            |> Http.toTask
+            |> Task.mapError (\_ -> pageLoadError Page.Other "Window is currently unavailable.")
+            |> Task.map
+                (\window ->
+                    { errors = []
+                    , editingWindow = Just tableName
+                    , title = window.name
+                    , body = "Hello"
+                    , description = Maybe.withDefault "" window.description
+                    , tags = []
+                    }
+                )
 
 
 
@@ -95,38 +95,38 @@ viewForm model =
             else
                 "Publish Window"
     in
-    Html.form [ onSubmit Save ]
-        [ fieldset []
-            [ Form.input
-                [ class "form-control-lg"
-                , placeholder "Window Title"
-                , onInput SetTitle
-                , defaultValue model.title
+        Html.form [ onSubmit Save ]
+            [ fieldset []
+                [ Form.input
+                    [ class "form-control-lg"
+                    , placeholder "Window Title"
+                    , onInput SetTitle
+                    , defaultValue model.title
+                    ]
+                    []
+                , Form.input
+                    [ placeholder "What's this window about?"
+                    , onInput SetDescription
+                    , defaultValue model.description
+                    ]
+                    []
+                , Form.textarea
+                    [ placeholder "Write your window (in markdown)"
+                    , attribute "rows" "8"
+                    , onInput SetBody
+                    , defaultValue model.body
+                    ]
+                    []
+                , Form.input
+                    [ placeholder "Enter tags"
+                    , onInput SetTags
+                    , defaultValue (String.join " " model.tags)
+                    ]
+                    []
+                , button [ class "btn btn-lg pull-xs-right btn-primary" ]
+                    [ text saveButtonText ]
                 ]
-                []
-            , Form.input
-                [ placeholder "What's this window about?"
-                , onInput SetDescription
-                , defaultValue model.description
-                ]
-                []
-            , Form.textarea
-                [ placeholder "Write your window (in markdown)"
-                , attribute "rows" "8"
-                , onInput SetBody
-                , defaultValue model.body
-                ]
-                []
-            , Form.input
-                [ placeholder "Enter tags"
-                , onInput SetTags
-                , defaultValue (String.join " " model.tags)
-                ]
-                []
-            , button [ class "btn btn-lg pull-xs-right btn-primary" ]
-                [ text saveButtonText ]
             ]
-        ]
 
 
 
@@ -228,4 +228,3 @@ tagsFromString str =
         |> String.split " "
         |> List.map String.trim
         |> List.filter (not << String.isEmpty)
-

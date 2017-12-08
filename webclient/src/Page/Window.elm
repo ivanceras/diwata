@@ -5,7 +5,7 @@ module Page.Window exposing (Model, Msg, init, update, view, subscriptions, calc
 
 import Data.Window as Window exposing (Window)
 import Data.Window.Author as Author exposing (Author)
-import Data.Window.Record as Record exposing (Rows,Record,RecordId)
+import Data.Window.Record as Record exposing (Rows, Record, RecordId)
 import Data.Session as Session exposing (Session)
 import Data.User as User exposing (User)
 import Data.UserPhoto as UserPhoto
@@ -22,7 +22,10 @@ import Request.Profile
 import Route
 import Task exposing (Task)
 import Util exposing ((=>), pair, viewIf)
+
+
 --import Views.Window
+
 import Views.Window.Favorite as Favorite
 import Views.Author
 import Views.Errors
@@ -41,19 +44,25 @@ type alias Model =
     { errors : List String
     , commentText : String
     , commentInFlight : Bool
-    , tableName : TableName 
+    , tableName : TableName
     , mainTab : Tab.Model
     , window : Window
     }
 
 
 calcMainTabHeight : BrowserWindow.Size -> Float
-calcMainTabHeight browserSize  =
+calcMainTabHeight browserSize =
     let
-        browserHeight = toFloat browserSize.height
+        browserHeight =
+            toFloat browserSize.height
+
         -- have to hardcode here until the Dom.Size module is exposed https://github.com/elm-lang/dom/issues/15 https://github.com/elm-lang/dom/pull/19
-        totalDeductions = 200.0 -- banner: 100, window-tabs: 40, columns: 50, allowance: 10 (borders etc)
-        height = browserHeight - totalDeductions
+        totalDeductions =
+            200.0
+
+        -- banner: 100, window-tabs: 40, columns: 50, allowance: 10 (borders etc)
+        height =
+            browserHeight - totalDeductions
     in
         height
 
@@ -64,7 +73,8 @@ init session tableName =
         maybeAuthToken =
             Maybe.map .token session.user
 
-        getBrowserSize = BrowserWindow.size
+        getBrowserSize =
+            BrowserWindow.size
 
         loadWindow =
             Request.Window.get maybeAuthToken tableName
@@ -77,28 +87,34 @@ init session tableName =
                 |> Task.mapError handleLoadError
 
         handleLoadError e =
-            let _ = Debug.log "error in loading window" e
+            let
+                _ =
+                    Debug.log "error in loading window" e
             in
-            pageLoadError Page.Other "Window is currently unavailable."
+                pageLoadError Page.Other "Window is currently unavailable."
 
-        mainTabTask = Task.map3 
-                    (\window records size -> 
-                        Tab.init (calcMainTabHeight size) window.mainTab records
-                    ) 
-                    loadWindow loadRecords getBrowserSize
+        mainTabTask =
+            Task.map3
+                (\window records size ->
+                    Tab.init (calcMainTabHeight size) window.mainTab records
+                )
+                loadWindow
+                loadRecords
+                getBrowserSize
                 |> Task.mapError handleLoadError
     in
-    Task.map2
-        (\window mainTab ->
-            { errors = []
-            , commentText = ""
-            , commentInFlight = False
-            , tableName = tableName
-            , mainTab = mainTab
-            , window = window
-            }
-        )
-        loadWindow mainTabTask
+        Task.map2
+            (\window mainTab ->
+                { errors = []
+                , commentText = ""
+                , commentInFlight = False
+                , tableName = tableName
+                , mainTab = mainTab
+                , window = window
+                }
+            )
+            loadWindow
+            mainTabTask
 
 
 
@@ -114,20 +130,23 @@ view session model =
         postingDisabled =
             model.commentInFlight
     in
-    div [] 
-        [viewMainTab model
-        ]
+        div []
+            [ viewMainTab model
+            ]
 
 
 viewMainTab : Model -> Html Msg
 viewMainTab model =
-    let 
-        mainTab = model.mainTab
+    let
+        mainTab =
+            model.mainTab
     in
-    div [ class "main-tab" ] 
-        [Tab.listView mainTab
-            |> Html.map TabMsg
-        ]
+        div [ class "main-tab" ]
+            [ Tab.listView mainTab
+                |> Html.map TabMsg
+            ]
+
+
 
 -- UPDATE --
 
@@ -145,68 +164,71 @@ update session msg model =
     let
         tableName =
             model.tableName
-
     in
-    case msg of
-        DismissErrors ->
-            { model | errors = [] } => Cmd.none
+        case msg of
+            DismissErrors ->
+                { model | errors = [] } => Cmd.none
 
-        DeleteRecord id ->
-            let
-                cmdFromAuth authToken =
-                    authToken
-                        |> Request.Window.Records.delete tableName id
-                        |> Http.send (RecordDeleted id)
-            in
-            session
-                |> Session.attempt "delete records" cmdFromAuth
-                |> Tuple.mapFirst (Util.appendErrors model)
+            DeleteRecord id ->
+                let
+                    cmdFromAuth authToken =
+                        authToken
+                            |> Request.Window.Records.delete tableName id
+                            |> Http.send (RecordDeleted id)
+                in
+                    session
+                        |> Session.attempt "delete records" cmdFromAuth
+                        |> Tuple.mapFirst (Util.appendErrors model)
 
-        RecordDeleted id (Ok ()) ->
-             model => Cmd.none
+            RecordDeleted id (Ok ()) ->
+                model => Cmd.none
 
-        RecordDeleted id (Err error) ->
-            { model | errors = model.errors ++ [ "Server error while trying to delete comment." ] }
-                => Cmd.none
+            RecordDeleted id (Err error) ->
+                { model | errors = model.errors ++ [ "Server error while trying to delete comment." ] }
+                    => Cmd.none
 
-        CloseWindow ->
-            model => Cmd.none
+            CloseWindow ->
+                model => Cmd.none
+
+            TabMsg tabMsg ->
+                let
+                    ( newMainTab, subCmd ) =
+                        Tab.update tabMsg model.mainTab
+
+                    ( updatedMainTab, tabCmd ) =
+                        case Tab.pageRequestNeeded newMainTab of
+                            True ->
+                                { newMainTab | pageRequestInFlight = True }
+                                    => requestNextPage newMainTab
+
+                            False ->
+                                newMainTab => Cmd.none
+                in
+                    { model | mainTab = updatedMainTab } => Cmd.batch [ Cmd.map TabMsg subCmd, tabCmd ]
 
 
-        TabMsg tabMsg ->
-            let
-               ( newMainTab, subCmd ) = Tab.update tabMsg model.mainTab 
-               (updatedMainTab, tabCmd ) = 
-                   case Tab.pageRequestNeeded newMainTab of
-                       True ->
-                           { newMainTab | pageRequestInFlight = True}
-                            => requestNextPage newMainTab 
-                       False ->
-                           newMainTab => Cmd.none
-
-          in
-              { model | mainTab = updatedMainTab } => Cmd.batch [Cmd.map TabMsg subCmd, tabCmd]
-        
-
-
-requestNextPage: Tab.Model -> Cmd Msg 
+requestNextPage : Tab.Model -> Cmd Msg
 requestNextPage tab =
-    let 
-        tabPage = tab.currentPage
+    let
+        tabPage =
+            tab.currentPage
     in
-    Request.Window.Records.listPage (tabPage + 1)  Nothing tab.tab.tableName
-    |> Http.toTask
-    |> Task.attempt
-        (\result ->
-            case result of
-                Ok rows -> TabMsg (Tab.NextPageReceived rows)
-                Err e -> TabMsg (Tab.NextPageError (toString e))
-        )
+        Request.Window.Records.listPage (tabPage + 1) Nothing tab.tab.tableName
+            |> Http.toTask
+            |> Task.attempt
+                (\result ->
+                    case result of
+                        Ok rows ->
+                            TabMsg (Tab.NextPageReceived rows)
 
-subscriptions: Model -> Sub Msg
+                        Err e ->
+                            TabMsg (Tab.NextPageError (toString e))
+                )
+
+
+subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ BrowserWindow.resizes (\ size -> TabMsg (Tab.SetHeight (calcMainTabHeight size)))
+        [ BrowserWindow.resizes (\size -> TabMsg (Tab.SetHeight (calcMainTabHeight size)))
         , Sub.map TabMsg (Tab.subscriptions model.mainTab)
         ]
-

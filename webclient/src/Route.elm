@@ -7,19 +7,18 @@ import Html.Attributes as Attr
 import Navigation exposing (Location)
 import UrlParser as Url exposing ((</>), Parser, oneOf, parseHash, s, string)
 import Data.Window.GroupedWindow as GroupedWindow exposing (WindowName)
-import Data.Window.TableName as TableName exposing 
-    ( TableName
-    , tableNameToString
-    , tableNameParser
-    , maybeTableNameParser
-    , maybeTableNameToString
-    )
-
+import Data.Window.TableName as TableName
+    exposing
+        ( TableName
+        , tableNameToString
+        , tableNameParser
+        , maybeTableNameParser
+        , maybeTableNameToString
+        )
 import Data.WindowArena exposing (parseArenaArgs, ArenaArg, argToString)
 
 
 -- ROUTING --
-
 
 
 type Route
@@ -55,12 +54,13 @@ routeToString page =
     let
         pieces =
             case page of
-                WindowArena arenaArgs  ->
+                WindowArena arenaArgs ->
                     case arenaArgs of
                         Nothing ->
                             []
+
                         Just arenaArgs ->
-                            [argToString arenaArgs]
+                            [ argToString arenaArgs ]
 
                 Login ->
                     [ "login" ]
@@ -83,7 +83,7 @@ routeToString page =
                 EditWindow tableName ->
                     [ "editor", tableNameToString tableName ]
     in
-    "#/" ++ String.join "/" pieces
+        "#/" ++ String.join "/" pieces
 
 
 
@@ -105,15 +105,13 @@ fromLocation location =
     if String.isEmpty location.hash then
         Just (WindowArena Nothing)
     else
-        let 
-            arenaArgs = parseArenaArgs location.hash
+        let
+            arenaArgs =
+                parseArenaArgs location.hash
         in
             case arenaArgs of
                 Just arenaArgs ->
                     Just (WindowArena (Just arenaArgs))
+
                 Nothing ->
                     parseHash route location
-
-
-
-

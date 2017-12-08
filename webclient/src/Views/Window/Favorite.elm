@@ -24,7 +24,7 @@ button :
 button toggleFavorite window extraAttributes extraChildren =
     let
         favoriteButtonClass =
-                "btn-outline-primary"
+            "btn-outline-primary"
 
         attributes =
             [ class ("btn btn-sm " ++ favoriteButtonClass)
@@ -36,4 +36,4 @@ button toggleFavorite window extraAttributes extraChildren =
             [ i [ class "ion-heart" ] [] ]
                 ++ extraChildren
     in
-    Html.button attributes children
+        Html.button attributes children
