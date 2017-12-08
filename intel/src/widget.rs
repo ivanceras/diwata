@@ -188,23 +188,7 @@ impl ControlWidget{
         let limit = column.specification.get_limit();
         let alignment = Self::derive_alignment(column);
         let sql_type = &column.specification.sql_type;
-        let (mut width, height) = if let Some(ref stat) = column.stat{
-            // wrap at 100 character per line
-            if stat.avg_width > 100 {
-                let width = 100;
-                let height = (stat.avg_width - 1) / 100 + 1;
-                (width, height)
-            }
-            else{
-                (stat.avg_width, 1)
-            }
-        }
-        else{
-            (20, 1)
-        };
-        if *sql_type == SqlType::Uuid {
-            width = 36;
-        }
+        let width = Self::get_width(column).unwrap_or(20);
         if let Some(ref reference) = *reference{
             let widget = reference.get_widget_fullview();
             ControlWidget{
@@ -212,7 +196,7 @@ impl ControlWidget{
                 dropdown_data: None,
                 width, 
                 max_len: limit,
-                height,
+                height: 1,
                 alignment,
             }
         }
@@ -238,19 +222,44 @@ impl ControlWidget{
                 dropdown_data: None,
                 width,
                 max_len: limit,
-                height,
+                height: 1,
                 alignment,
             }
+        }
+    }
+
+    fn get_width(column: &Column) -> Option<i32> {
+        let sql_type = &column.specification.sql_type;
+        if let Some(ref stat) = column.stat{
+           Some(stat.avg_width)
+           
+        }
+        else if *sql_type == SqlType::Uuid {
+            Some(36)
+        }
+        else{
+            None
         }
     }
 
     pub fn from_has_one_table(columns: &Vec<&Column>, table: &Table) -> Self {
         let reference = Reference::TableLookup;
         let widget = reference.get_widget_fullview();
+        let width  = 
+            columns.iter()
+            .map(|col|
+                 match Self::get_width(col){
+                     Some(width) => width,
+                     None => 0
+                }
+            )
+            .max()
+            .unwrap_or(0);
+
         ControlWidget {
             widget,
             dropdown_data: None, // not yet computed here
-            width: 20, // get the average widget of the table record display identifier
+            width,
             max_len: None,
             height: 1,
             alignment: Alignment::Left,
