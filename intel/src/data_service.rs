@@ -2,19 +2,14 @@
 use rustorm::EntityManager;
 use rustorm::TableName;
 use window::Window;
-use window;
-use rustorm::Dao;
 use rustorm::Table;
 use table_intel;
 use rustorm::Rows;
 use rustorm::DbError;
-use cache;
 use error::IntelError;
 use rustorm::Value;
-use rustorm::Column;
 use rustorm::types::SqlType;
 use uuid::Uuid;
-use std::collections::BTreeMap;
 use rustorm::Record;
 use rustorm::RecordManager;
 use rustorm::ColumnName;
@@ -36,16 +31,13 @@ fn calc_offset(page: u32, page_size: u32) -> u32 {
 
 /// get data for the window
 pub fn get_maintable_data(em: &EntityManager, 
-                                 tables: &Vec<Table>,  
+                                 _tables: &Vec<Table>,  
                                  window: &Window, 
-                                 filter: Option<Filter>, 
+                                 _filter: Option<Filter>, 
                                  page: u32,
                                  page_size: u32) -> Result<Rows, DbError> {
     let mut sql = String::from("SELECT * "); 
     let main_tablename = &window.main_tab.table_name;
-    let main_table = get_main_table(window, tables);
-    assert!(main_table.is_some());
-    let main_table = main_table.unwrap();
     sql += &format!("FROM {} \n",main_tablename.complete_name());
     sql += &format!("LIMIT {} ", page_size);
     sql += &format!("OFFSET {} ", calc_offset(page, page_size));
@@ -71,7 +63,7 @@ fn extract_record_id<'a>(record_id: &str, pk_types: &Vec<&SqlType>, pk_columns: 
                 match v{
                     Ok(v) => Value::Int(v),
                     Err(e) => {
-                        return Err(IntelError::ParamParseError(format!("Invalid for type {:?}: {}",pk_type, splinter)));
+                        return Err(IntelError::ParamParseError(format!("Invalid for type {:?}: {}, Error: {}",pk_type, splinter, e)));
                     }
                 }
             }
@@ -80,7 +72,7 @@ fn extract_record_id<'a>(record_id: &str, pk_types: &Vec<&SqlType>, pk_columns: 
                 match uuid{
                     Ok(uuid) => Value::Uuid(uuid),
                     Err(e) => {
-                        return Err(IntelError::ParamParseError(format!("Invalid for type {:?}: {}",pk_type, splinter)));
+                        return Err(IntelError::ParamParseError(format!("Invalid for type {:?}: {}, Error: {}",pk_type, splinter, e)));
                     }
                 }
             }
@@ -89,7 +81,7 @@ fn extract_record_id<'a>(record_id: &str, pk_types: &Vec<&SqlType>, pk_columns: 
                 match v{
                     Ok(v) => Value::Smallint(v),
                     Err(e) => {
-                        return Err(IntelError::ParamParseError(format!("Invalid for type {:?}: {}",pk_type, splinter)));
+                        return Err(IntelError::ParamParseError(format!("Invalid for type {:?}: {}, Error: {}",pk_type, splinter, e)));
                     }
                 }
             }
@@ -211,7 +203,6 @@ fn get_one_one_record(dm: &RecordManager, tables: &Vec<Table>,
     let one_one_table = table_intel::get_table(&one_one_tab.table_name, tables);
     assert!(one_one_table.is_some());
     let one_one_table = one_one_table.unwrap();
-    let one_one_tablename = &one_one_table.name;
     let mut one_one_sql = format!("SELECT * FROM {} ",one_one_table.complete_name());
     let referred_columns_to_main_table = one_one_table.get_referred_columns_to_table(&main_table.name);
     let one_one_pk = one_one_table.get_primary_column_names();
@@ -273,7 +264,6 @@ fn get_has_many_records(dm: &RecordManager, tables: &Vec<Table>,
     assert!(has_many_table.is_some());
     let has_many_table = has_many_table.unwrap();
     println!("has many table: {} ", has_many_table.name.name);
-    let has_many_tablename = &has_many_table.name;
     let mut has_many_sql = format!("SELECT * FROM {} ", has_many_table.complete_name());
     let has_many_fk = has_many_table.get_foreign_column_names_to_table(&main_table.name);
     let has_many_fk_data_types = has_many_table.get_foreign_column_types_to_table(&main_table.name);
@@ -392,26 +382,17 @@ fn get_indirect_records(dm: &RecordManager, tables: &Vec<Table>,
 /// since it is only used as lookup from some other table
 /// most likely don't request the first page since it has
 /// been preloaded
-fn get_lookup_data(em: &EntityManager, table_name: &TableName, 
-                   filter: Option<Filter>, page: i32){
+fn get_lookup_data(_em: &EntityManager, _table_name: &TableName, 
+                   _filter: Option<Filter>, _page: i32){
 }
 
-/// load data to a has_many tab from this window 
-/// window is the window this table belongs
-/// selected_record is the record on focused
-/// of the main table which will be used as a filter for 
-/// retrieving the data from the has_many table
-/// has_many_filter is the filter for the has_many table
-fn get_has_many_data(_em: &EntityManager, window: &Window, table_name: &TableName, 
-                     selected_record: Dao,
-                   has_many_filter: Option<Filter>,  page: i32){
-}
 
 
 #[cfg(test)]
 mod tests{
     use super::*;
     use rustorm::Pool;
+    use window;
 
     #[test]
     fn first_page(){
@@ -429,7 +410,6 @@ mod tests{
         let data = get_maintable_data(&em, &tables, &window, None, 200, 1);
         println!("data: {:#?}", data);
         assert!(data.is_ok());
-        let data = data.unwrap();
     }
 }
 

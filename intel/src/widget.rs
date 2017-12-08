@@ -242,7 +242,7 @@ impl ControlWidget{
         }
     }
 
-    pub fn from_has_one_table(columns: &Vec<&Column>, table: &Table) -> Self {
+    pub fn from_has_one_table(columns: &Vec<&Column>, _table: &Table) -> Self {
         let reference = Reference::TableLookup;
         let widget = reference.get_widget_fullview();
         let width  = 

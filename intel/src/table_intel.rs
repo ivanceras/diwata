@@ -188,7 +188,7 @@ impl<'a> TableIntel<'a>{
     /// algorithm: if it has no referring tables
     /// tip: linkers and owned tables has no referring tables
     /// so no need to check for them 
-    pub fn is_window(&self, tables: &Vec<Table>) -> bool {
+    pub fn is_window(&self, _tables: &Vec<Table>) -> bool {
         //self.get_referring_tables(tables).len() > 0
         !self.is_linker_table() 
     }

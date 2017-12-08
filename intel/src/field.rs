@@ -1,6 +1,5 @@
 use rustorm::Column;
 
-use widget::Widget;
 use reference::Reference;
 use rustorm::types::SqlType;
 use rustorm::column::Capacity;

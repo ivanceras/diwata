@@ -4,7 +4,6 @@ use window;
 use rustorm::EntityManager;
 use std::collections::BTreeMap;
 use error::IntelError;
-use rustorm::DbError;
 use std::sync::{Arc,Mutex};
 
 
@@ -81,7 +80,7 @@ impl CachePool{
         else{
             // do a caching and try again
             println!("Performing a TABLE caching and trying again");
-            self.perform_table_caching(em, db_url);
+            self.perform_table_caching(em, db_url)?;
             self.get_cached_tables(em, db_url)
         }
     }
@@ -108,7 +107,7 @@ impl CachePool{
         else{
             // do a caching and try again
             println!("Performing a WINDOW caching and trying again");
-            self.perform_window_caching(em, db_url);
+            self.perform_window_caching(em, db_url)?;
             self.get_cached_windows(em, db_url)
         }
     }
@@ -116,7 +115,7 @@ impl CachePool{
     fn perform_table_caching(&mut self, em: &EntityManager, db_url: &str) -> Result<(), IntelError> {
         let cache = self.0.get_mut(db_url);
         match cache{
-            Some(mut cache) => cache.perform_table_caching(em),
+            Some(cache) => cache.perform_table_caching(em),
             None => Err(IntelError::CacheServiceError) 
         }
     }
@@ -124,7 +123,7 @@ impl CachePool{
     fn perform_window_caching(&mut self, em: &EntityManager, db_url: &str) -> Result<(), IntelError> {
         let cache = self.0.get_mut(db_url);
         match cache{
-            Some(mut cache) => cache.perform_window_caching(em),
+            Some(cache) => cache.perform_window_caching(em),
             None => Err(IntelError::CacheServiceError) 
         }
     }
@@ -173,7 +172,7 @@ impl Cache {
             }
             None => {
                 self.perform_table_caching(em)?;
-                self.perform_window_caching(em);
+                self.perform_window_caching(em)?;
                 Ok(())
             }
         }
