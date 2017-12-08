@@ -17,7 +17,7 @@ before_script:
   - git clone https://github.com/ivanceras/bazaar
   - cd bazaar/scripts && sh setup.sh
   - cd .. && cd ..
-  - cd curtain
+  - cd diwata
 
   
 script:

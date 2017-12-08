@@ -20,7 +20,7 @@ before_script:
   - cd  bazaar/scripts && sh setup.sh
   - pwd && ls -la
   - cd .. && cd ..
-  - cd curtain-rewrite
+  - cd diwata
   - find . -name '*.rs' -type f -exec sed -i 's/localhost/postgres/g' {} +
   - rustup override set nightly
 
