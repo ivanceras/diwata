@@ -1,5 +1,7 @@
 ## Diwata is a database interface with the goal of being usable, user-friendly with its basic and advanced functionality be discoverable by the user.
 
+[![](https://travis-ci.org/ivanceras/diwata.svg?branch=master)](https://travis-ci.org/ivanceras/diwata)
+
 Diwata comprised of 3 major components:
 1. The client side UI.
 2. The orm
