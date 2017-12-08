@@ -20,38 +20,38 @@ pub enum Reference {
     Firstname,
     Lastname,
     MiddleName,
-    Salutation, // Engr, Mr,
+    Salutation,   // Engr, Mr,
     EmailAddress, // user@provider.ext
     Username,
     CompanyName, //google, pepsi, spacex
-    Name, // generic name
-    Password, // password control
-    Tag, // tags of, ie: cheap, sale, easy, solved, nsfw
+    Name,        // generic name
+    Password,    // password control
+    Tag,         // tags of, ie: cheap, sale, easy, solved, nsfw
     /// should not be in country table
     CountryNameLookup, // Norway, Argentina, Mexico, etc
     /// should not be in country table
     CountryCodeLookup, //ph,gb,eu,jp
-    Color,  //red, gree, blue, and webcolors #CCFFAA
-    Timezone, // so I can display the timezone selector widget
+    Color,       //red, gree, blue, and webcolors #CCFFAA
+    Timezone,    // so I can display the timezone selector widget
 
-    Title, // title column
+    Title,       // title column
     Description, // description of the record
 
-    TableLookup, // generic table lookup
-    PrimaryUserId, // user_id on users table
-    PrimaryUserUuid, // user_id in uuid in users table
-    ReferredUserId, // user_id referred from other table
-    ReferredUserUuid,// referred user in uuid
-    PrimaryUuid, // it is a primary key value and uuid type
-    PrimaryInt, // it is a primary key value and int type
-    ReferredUuid, // a foreign key uuid referring to another record from some other table
-    Created, // indicates a date the record was created
-    Updated, // indicates a date the record was updated
-    CreatedBy, // indicated the user who created the record
-    UpdatedBy, // indicates the user who updated the record
-    IsActive, // a boolean indicates whether the record is active or not
-    Date, // generic date
-    DateTime, // generic date time
+    TableLookup,      // generic table lookup
+    PrimaryUserId,    // user_id on users table
+    PrimaryUserUuid,  // user_id in uuid in users table
+    ReferredUserId,   // user_id referred from other table
+    ReferredUserUuid, // referred user in uuid
+    PrimaryUuid,      // it is a primary key value and uuid type
+    PrimaryInt,       // it is a primary key value and int type
+    ReferredUuid,     // a foreign key uuid referring to another record from some other table
+    Created,          // indicates a date the record was created
+    Updated,          // indicates a date the record was updated
+    CreatedBy,        // indicated the user who created the record
+    UpdatedBy,        // indicates the user who updated the record
+    IsActive,         // a boolean indicates whether the record is active or not
+    Date,             // generic date
+    DateTime,         // generic date time
 
     Url,       //url links, could be linked/summarized (ie: starts with https:// and or wwww )
     VideoLink, // link to videos
@@ -85,7 +85,7 @@ pub enum Reference {
     SortOrder, // a column that describes the sort order of the item, if present then reordering capability will be displayed
     Selection, // bool, an item could be selected
 
-    Enum(String, Vec<String>),// enum list
+    Enum(String, Vec<String>), // enum list
 
     MarkdownBlogEntry,    // a markdown formatted text content
     MarkdownCommentEntry, // a markdown formatted text comment
@@ -100,7 +100,7 @@ pub enum Reference {
     SvgImage,             // an svg image
     BinaryExecutable,     // an executable binary data
     Document(Document),   // a blob attached document
-    GenericBlob,  // generic blob, the data type is not identified
+    GenericBlob,          // generic blob, the data type is not identified
 
     Model3D, // a 3D object
     Video,   // a video
@@ -179,12 +179,12 @@ impl Reference {
                 // if there are 3 choices, radio group
                 // 4 choices, radio group
                 // 5 or more it will be a dropdownlist
-                match choices.len(){
+                match choices.len() {
                     1...4 => Widget::Radiogroup(choices.to_owned()),
                     _ => Widget::FixDropdown(choices.to_owned()),
                 }
             }
-            _ => Widget::Textbox
+            _ => Widget::Textbox,
         }
     }
 }

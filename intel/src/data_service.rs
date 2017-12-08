@@ -30,15 +30,17 @@ fn calc_offset(page: u32, page_size: u32) -> u32 {
 }
 
 /// get data for the window
-pub fn get_maintable_data(em: &EntityManager, 
-                                 _tables: &Vec<Table>,  
-                                 window: &Window, 
-                                 _filter: Option<Filter>, 
-                                 page: u32,
-                                 page_size: u32) -> Result<Rows, DbError> {
-    let mut sql = String::from("SELECT * "); 
+pub fn get_maintable_data(
+    em: &EntityManager,
+    _tables: &Vec<Table>,
+    window: &Window,
+    _filter: Option<Filter>,
+    page: u32,
+    page_size: u32,
+) -> Result<Rows, DbError> {
+    let mut sql = String::from("SELECT * ");
     let main_tablename = &window.main_tab.table_name;
-    sql += &format!("FROM {} \n",main_tablename.complete_name());
+    sql += &format!("FROM {} \n", main_tablename.complete_name());
     sql += &format!("LIMIT {} ", page_size);
     sql += &format!("OFFSET {} ", calc_offset(page, page_size));
     println!("SQL: {}", sql);
@@ -49,43 +51,62 @@ pub fn get_maintable_data(em: &EntityManager,
 
 /// extract record id from comma separated value
 /// TODO: deal with edge case quoting, when there us comma in individual values
-fn extract_record_id<'a>(record_id: &str, pk_types: &Vec<&SqlType>, pk_columns: &Vec<&'a ColumnName> ) -> Result<Vec<(&'a ColumnName,Value)>, IntelError> {
-    let splinters:Vec<&str> = record_id.split(",").collect();
+fn extract_record_id<'a>(
+    record_id: &str,
+    pk_types: &Vec<&SqlType>,
+    pk_columns: &Vec<&'a ColumnName>,
+) -> Result<Vec<(&'a ColumnName, Value)>, IntelError> {
+    let splinters: Vec<&str> = record_id.split(",").collect();
     let mut record_id = Vec::with_capacity(splinters.len());
-    assert_eq!(splinters.len(), pk_types.len()); 
-    assert_eq!(pk_columns.len(), pk_types.len()); 
-    for (i,splinter) in splinters.iter().enumerate(){
+    assert_eq!(splinters.len(), pk_types.len());
+    assert_eq!(pk_columns.len(), pk_types.len());
+    for (i, splinter) in splinters.iter().enumerate() {
         let pk_type = pk_types[i];
         let pk_column = pk_columns[i];
-        let value = match *pk_type{
+        let value = match *pk_type {
             SqlType::Int => {
                 let v = splinter.parse();
-                match v{
+                match v {
                     Ok(v) => Value::Int(v),
                     Err(e) => {
-                        return Err(IntelError::ParamParseError(format!("Invalid for type {:?}: {}, Error: {}",pk_type, splinter, e)));
+                        return Err(IntelError::ParamParseError(format!(
+                            "Invalid for type {:?}: {}, Error: {}",
+                            pk_type,
+                            splinter,
+                            e
+                        )));
                     }
                 }
             }
             SqlType::Uuid => {
                 let uuid = Uuid::parse_str(splinter);
-                match uuid{
+                match uuid {
                     Ok(uuid) => Value::Uuid(uuid),
                     Err(e) => {
-                        return Err(IntelError::ParamParseError(format!("Invalid for type {:?}: {}, Error: {}",pk_type, splinter, e)));
+                        return Err(IntelError::ParamParseError(format!(
+                            "Invalid for type {:?}: {}, Error: {}",
+                            pk_type,
+                            splinter,
+                            e
+                        )));
                     }
                 }
             }
             SqlType::Smallint => {
                 let v = splinter.parse();
-                match v{
+                match v {
                     Ok(v) => Value::Smallint(v),
                     Err(e) => {
-                        return Err(IntelError::ParamParseError(format!("Invalid for type {:?}: {}, Error: {}",pk_type, splinter, e)));
+                        return Err(IntelError::ParamParseError(format!(
+                            "Invalid for type {:?}: {}, Error: {}",
+                            pk_type,
+                            splinter,
+                            e
+                        )));
                     }
                 }
             }
-            _ => panic!("primary with type {:?} is not yet covered", pk_type)
+            _ => panic!("primary with type {:?} is not yet covered", pk_type),
         };
         record_id.push((pk_column, value));
     }
@@ -95,7 +116,7 @@ fn extract_record_id<'a>(record_id: &str, pk_types: &Vec<&SqlType>, pk_columns: 
 
 
 #[derive(Debug, Serialize)]
-pub struct RecordDetail{
+pub struct RecordDetail {
     pub record: Record,
     pub one_ones: Vec<(TableName, Option<Record>)>,
     pub has_many: Vec<(TableName, Rows)>,
@@ -104,8 +125,13 @@ pub struct RecordDetail{
 
 
 /// get the detail of the selected record data
-pub fn get_selected_record_detail(dm: &RecordManager, tables: &Vec<Table>, 
-                            window: &Window, record_id: &str, page_size: u32) -> Result<Option<RecordDetail>, IntelError> {
+pub fn get_selected_record_detail(
+    dm: &RecordManager,
+    tables: &Vec<Table>,
+    window: &Window,
+    record_id: &str,
+    page_size: u32,
+) -> Result<Option<RecordDetail>, IntelError> {
     let main_table = get_main_table(window, tables);
     assert!(main_table.is_some());
     let main_table = main_table.unwrap();
@@ -113,17 +139,20 @@ pub fn get_selected_record_detail(dm: &RecordManager, tables: &Vec<Table>,
     let primary_columns = main_table.get_primary_column_names();
     let record_id = extract_record_id(record_id, &pk_types, &primary_columns)?;
     println!("arg record_id: {:#?}", record_id);
-    let mut sql = format!("
-        SELECT * FROM {} ",main_table.complete_name());
+    let mut sql = format!(
+        "
+        SELECT * FROM {} ",
+        main_table.complete_name()
+    );
     let mut filter = "".to_string();
     let mut params: Vec<Value> = Vec::with_capacity(record_id.len());
-    for (i, &(pk, ref value)) in record_id.iter().enumerate(){
-        if i == 0{
-            filter +="WHERE ";
-        }else {
+    for (i, &(pk, ref value)) in record_id.iter().enumerate() {
+        if i == 0 {
+            filter += "WHERE ";
+        } else {
             filter += "AND ";
         }
-        filter += &format!("{} = ${} ", pk.complete_name(), i+1);
+        filter += &format!("{} = ${} ", pk.complete_name(), i + 1);
         params.push(value.clone());
     }
     sql += &filter;
@@ -135,37 +164,58 @@ pub fn get_selected_record_detail(dm: &RecordManager, tables: &Vec<Table>,
     let record: Option<Record> = dm.execute_sql_with_maybe_one_return(&sql, &params)?;
 
 
-    match record{
+    match record {
         Some(record) => {
             println!("Getting one ones");
-            let mut one_one_records: Vec<(TableName, Option<Record>)> = Vec::with_capacity(window.one_one_tabs.iter().count());
-            for one_one_tab in window.one_one_tabs.iter(){
-                let one_record = get_one_one_record(dm, tables, main_table, one_one_tab, &record_id, page_size)?;
+            let mut one_one_records: Vec<(TableName, Option<Record>)> =
+                Vec::with_capacity(window.one_one_tabs.iter().count());
+            for one_one_tab in window.one_one_tabs.iter() {
+                let one_record =
+                    get_one_one_record(dm, tables, main_table, one_one_tab, &record_id, page_size)?;
                 one_one_records.push((one_one_tab.table_name.clone(), one_record))
             }
-            let mut has_many_records: Vec<(TableName, Rows)> = Vec::with_capacity(window.has_many_tabs.iter().count());
-            for has_many_tab in window.has_many_tabs.iter(){
+            let mut has_many_records: Vec<(TableName, Rows)> =
+                Vec::with_capacity(window.has_many_tabs.iter().count());
+            for has_many_tab in window.has_many_tabs.iter() {
                 println!("Getting has many");
-                let many_record = get_has_many_records(dm, tables, main_table, has_many_tab, &record_id, page_size, 1)?;
+                let many_record = get_has_many_records(
+                    dm,
+                    tables,
+                    main_table,
+                    has_many_tab,
+                    &record_id,
+                    page_size,
+                    1,
+                )?;
                 println!("about to push many record: {:?}", many_record);
                 has_many_records.push((has_many_tab.table_name.clone(), many_record));
                 println!("pushed");
             }
             println!("Getting indirect");
-            let mut indirect_records: Vec<(TableName, Rows)> = Vec::with_capacity(window.indirect_tabs.iter().count());
-            for &(ref linker_table, ref indirect_tab) in window.indirect_tabs.iter(){
-                let ind_records = get_indirect_records(dm, tables, main_table, indirect_tab, linker_table, &record_id, page_size, 1)?;
+            let mut indirect_records: Vec<(TableName, Rows)> =
+                Vec::with_capacity(window.indirect_tabs.iter().count());
+            for &(ref linker_table, ref indirect_tab) in window.indirect_tabs.iter() {
+                let ind_records = get_indirect_records(
+                    dm,
+                    tables,
+                    main_table,
+                    indirect_tab,
+                    linker_table,
+                    &record_id,
+                    page_size,
+                    1,
+                )?;
                 indirect_records.push((indirect_tab.table_name.clone(), ind_records));
             }
-            let detail = RecordDetail{
+            let detail = RecordDetail {
                 record: record,
-                one_ones: one_one_records, 
-                has_many: has_many_records, 
+                one_ones: one_one_records,
+                has_many: has_many_records,
                 indirect: indirect_records,
             };
             Ok(Some(detail))
         }
-        None => Ok(None)
+        None => Ok(None),
     }
 }
 
@@ -174,59 +224,79 @@ pub fn get_selected_record_detail(dm: &RecordManager, tables: &Vec<Table>,
 /// get the value which matches the column name and cast the value to the required data type
 /// supported casting:
 /// Int -> SmallInt
-/// 
-fn find_value<'a>(needle: &ColumnName, record_id: &'a Vec<(&ColumnName, Value)>, required_type: &SqlType) -> Option<Value> {
-    record_id.iter()
-        .find(|&&(ref column_name, _)| *column_name == needle )
+///
+fn find_value<'a>(
+    needle: &ColumnName,
+    record_id: &'a Vec<(&ColumnName, Value)>,
+    required_type: &SqlType,
+) -> Option<Value> {
+    record_id
+        .iter()
+        .find(|&&(ref column_name, _)| *column_name == needle)
         .map(|&(_, ref value)| cast(value, required_type))
 }
 
 fn cast(value: &Value, required_type: &SqlType) -> Value {
     if required_type.same_type(value) {
         value.to_owned()
-    }
-    else{
-        match *value{
-            Value::Int(v) => match *required_type{
+    } else {
+        match *value {
+            Value::Int(v) => match *required_type {
                 SqlType::Smallint => Value::Smallint(v as i16),
-                _ => panic!("unsupported conversion from {:?} to {:?}", value, required_type)
-            }
-            _ => panic!("unsupported conversion from {:?} to {:?}", value, required_type)
+                _ => panic!(
+                    "unsupported conversion from {:?} to {:?}",
+                    value,
+                    required_type
+                ),
+            },
+            _ => panic!(
+                "unsupported conversion from {:?} to {:?}",
+                value,
+                required_type
+            ),
         }
     }
 }
 
 
-fn get_one_one_record(dm: &RecordManager, tables: &Vec<Table>, 
-                      main_table: &Table, one_one_tab: &Tab,
-                      record_id: &Vec<(&ColumnName, Value)>, page_size: u32) -> Result<Option<Record>, DbError> {
+fn get_one_one_record(
+    dm: &RecordManager,
+    tables: &Vec<Table>,
+    main_table: &Table,
+    one_one_tab: &Tab,
+    record_id: &Vec<(&ColumnName, Value)>,
+    page_size: u32,
+) -> Result<Option<Record>, DbError> {
     let one_one_table = table_intel::get_table(&one_one_tab.table_name, tables);
     assert!(one_one_table.is_some());
     let one_one_table = one_one_table.unwrap();
-    let mut one_one_sql = format!("SELECT * FROM {} ",one_one_table.complete_name());
-    let referred_columns_to_main_table = one_one_table.get_referred_columns_to_table(&main_table.name);
+    let mut one_one_sql = format!("SELECT * FROM {} ", one_one_table.complete_name());
+    let referred_columns_to_main_table =
+        one_one_table.get_referred_columns_to_table(&main_table.name);
     let one_one_pk = one_one_table.get_primary_column_names();
     let one_one_pk_data_types = one_one_table.get_primary_column_types();
 
     let mut one_one_filter = "".to_string();
     let mut one_one_params = Vec::with_capacity(one_one_pk.len());
 
-    for referred_columns in referred_columns_to_main_table.iter(){
-        for (i,rc) in referred_columns.iter().enumerate(){
-            if i == 0{
-                one_one_filter +="WHERE ";
-            }else {
+    for referred_columns in referred_columns_to_main_table.iter() {
+        for (i, rc) in referred_columns.iter().enumerate() {
+            if i == 0 {
+                one_one_filter += "WHERE ";
+            } else {
                 one_one_filter += "AND ";
             }
-            one_one_filter +=  &format!(" {} = ${} ", one_one_pk[i].complete_name(), i+1);
-            let required_type =  one_one_pk_data_types[i];
-            find_value(rc, record_id, required_type)
-                .map(|v| one_one_params.push(v.clone()));
+            one_one_filter += &format!(" {} = ${} ", one_one_pk[i].complete_name(), i + 1);
+            let required_type = one_one_pk_data_types[i];
+            find_value(rc, record_id, required_type).map(|v| one_one_params.push(v.clone()));
         }
     }
     one_one_sql += &one_one_filter;
     one_one_sql += &format!("LIMIT {} ", page_size);
-    println!("referred column to main table: {:?}", referred_columns_to_main_table);
+    println!(
+        "referred column to main table: {:?}",
+        referred_columns_to_main_table
+    );
     println!("one one pk: {:?}", one_one_pk);
     println!("ONE ONE SQL: {}", one_one_sql);
     println!("ONE_ONE_PARAMS: {:?}", one_one_params);
@@ -236,30 +306,45 @@ fn get_one_one_record(dm: &RecordManager, tables: &Vec<Table>,
 }
 
 pub fn find_tab<'a>(tabs: &'a Vec<Tab>, table_name: &TableName) -> Option<&'a Tab> {
-    tabs.iter()
-        .find(|tab| tab.table_name == *table_name)
+    tabs.iter().find(|tab| tab.table_name == *table_name)
 }
 
 
-pub fn get_has_many_records_service(dm: &RecordManager, tables: &Vec<Table>, 
-                                main_table: &Table,
-                                record_id: &str, 
-                                has_many_tab: &Tab,
-                                page_size: u32, page: u32) -> Result<Rows, IntelError > {
+pub fn get_has_many_records_service(
+    dm: &RecordManager,
+    tables: &Vec<Table>,
+    main_table: &Table,
+    record_id: &str,
+    has_many_tab: &Tab,
+    page_size: u32,
+    page: u32,
+) -> Result<Rows, IntelError> {
     let pk_types = main_table.get_primary_column_types();
     let primary_columns = main_table.get_primary_column_names();
     let record_id = extract_record_id(record_id, &pk_types, &primary_columns)?;
-    let rows = get_has_many_records(dm, tables, main_table, has_many_tab, &record_id, page_size, page)?;
+    let rows = get_has_many_records(
+        dm,
+        tables,
+        main_table,
+        has_many_tab,
+        &record_id,
+        page_size,
+        page,
+    )?;
     Ok(rows)
 }
 
 
 
-fn get_has_many_records(dm: &RecordManager, tables: &Vec<Table>,
-                    main_table: &Table, 
-                    has_many_tab: &Tab,
-                    main_record_id: &Vec<(&ColumnName, Value)>, 
-                    page_size: u32, page: u32 ) -> Result<Rows, DbError> {
+fn get_has_many_records(
+    dm: &RecordManager,
+    tables: &Vec<Table>,
+    main_table: &Table,
+    has_many_tab: &Tab,
+    main_record_id: &Vec<(&ColumnName, Value)>,
+    page_size: u32,
+    page: u32,
+) -> Result<Rows, DbError> {
     let has_many_table = table_intel::get_table(&has_many_tab.table_name, tables);
     assert!(has_many_table.is_some());
     let has_many_table = has_many_table.unwrap();
@@ -272,18 +357,19 @@ fn get_has_many_records(dm: &RecordManager, tables: &Vec<Table>,
     let mut has_many_filter = "".to_string();
     let mut has_many_params = Vec::with_capacity(has_many_fk.len());
 
-    let referred_columns_to_main_table: Option<&Vec<ColumnName>> = has_many_table.get_referred_columns_to_table(&main_table.name);
+    let referred_columns_to_main_table: Option<&Vec<ColumnName>> =
+        has_many_table.get_referred_columns_to_table(&main_table.name);
     assert!(referred_columns_to_main_table.is_some());
     let referred_columns_to_main_table = referred_columns_to_main_table.unwrap();
     assert_eq!(referred_columns_to_main_table.len(), has_many_fk.len());
 
-    for (i, referred_column) in referred_columns_to_main_table.iter().enumerate(){
-        if i == 0{
-            has_many_filter +="WHERE ";
-        }else {
+    for (i, referred_column) in referred_columns_to_main_table.iter().enumerate() {
+        if i == 0 {
+            has_many_filter += "WHERE ";
+        } else {
             has_many_filter += "AND ";
         }
-        has_many_filter +=  &format!(" {} = ${} ", has_many_fk[i].complete_name(), i+1);
+        has_many_filter += &format!(" {} = ${} ", has_many_fk[i].complete_name(), i + 1);
         let required_type = has_many_fk_data_types[i];
         find_value(referred_column, main_record_id, required_type)
             .map(|v| has_many_params.push(v.clone()));
@@ -292,7 +378,10 @@ fn get_has_many_records(dm: &RecordManager, tables: &Vec<Table>,
     has_many_sql += &has_many_filter;
     has_many_sql += &format!("LIMIT {} ", page_size);
     has_many_sql += &format!("OFFSET {} ", calc_offset(page, page_size));
-    println!("referred column to main table: {:?}", referred_columns_to_main_table);
+    println!(
+        "referred column to main table: {:?}",
+        referred_columns_to_main_table
+    );
     println!("has_many fk: {:?}", has_many_fk);
     println!("HAS_MANY SQL: {}", has_many_sql);
     println!("HAS_MANY_PARAMS: {:?}", has_many_params);
@@ -301,25 +390,43 @@ fn get_has_many_records(dm: &RecordManager, tables: &Vec<Table>,
     Ok(rows)
 }
 
-pub fn get_indirect_records_service(dm: &RecordManager, tables: &Vec<Table>, 
-                                main_table: &Table,
-                                record_id: &str, 
-                                indirect_tab: &Tab,
-                                linker_table_name: &TableName,
-                                page_size: u32, page: u32) -> Result<Rows, IntelError > {
-
+pub fn get_indirect_records_service(
+    dm: &RecordManager,
+    tables: &Vec<Table>,
+    main_table: &Table,
+    record_id: &str,
+    indirect_tab: &Tab,
+    linker_table_name: &TableName,
+    page_size: u32,
+    page: u32,
+) -> Result<Rows, IntelError> {
     let pk_types = main_table.get_primary_column_types();
     let primary_columns = main_table.get_primary_column_names();
     let record_id = extract_record_id(record_id, &pk_types, &primary_columns)?;
-    let rows = get_indirect_records(dm, tables, main_table, indirect_tab, linker_table_name, &record_id, page_size, page)?;
+    let rows = get_indirect_records(
+        dm,
+        tables,
+        main_table,
+        indirect_tab,
+        linker_table_name,
+        &record_id,
+        page_size,
+        page,
+    )?;
     Ok(rows)
 }
 
 
-fn get_indirect_records(dm: &RecordManager, tables: &Vec<Table>, 
-                      main_table: &Table, indirect_tab: &Tab, linker_table_name: &TableName,
-                      record_id: &Vec<(&ColumnName, Value)>, page_size: u32, page: u32) -> Result<Rows, DbError> {
-
+fn get_indirect_records(
+    dm: &RecordManager,
+    tables: &Vec<Table>,
+    main_table: &Table,
+    indirect_tab: &Tab,
+    linker_table_name: &TableName,
+    record_id: &Vec<(&ColumnName, Value)>,
+    page_size: u32,
+    page: u32,
+) -> Result<Rows, DbError> {
     let indirect_table = table_intel::get_table(&indirect_tab.table_name, tables);
     assert!(indirect_table.is_some());
     let indirect_table = indirect_table.unwrap();
@@ -333,37 +440,55 @@ fn get_indirect_records(dm: &RecordManager, tables: &Vec<Table>,
 
     let indirect_tablename = &indirect_table.name;
 
-    let mut indirect_sql = format!("SELECT {}.* FROM {} ", indirect_tablename.name, linker_table.complete_name());
-    indirect_sql += &format!("LEFT JOIN {} ",  indirect_table.complete_name());
+    let mut indirect_sql = format!(
+        "SELECT {}.* FROM {} ",
+        indirect_tablename.name,
+        linker_table.complete_name()
+    );
+    indirect_sql += &format!("LEFT JOIN {} ", indirect_table.complete_name());
     println!("indirect table: {:?}", indirect_table.complete_name());
-    let linker_rc_to_indirect_table = linker_table.get_referred_columns_to_table(indirect_tablename);
-    println!("indirect table referred columns to linker table: {:?} --> {:?}", linker_table_name.complete_name(), linker_rc_to_indirect_table);
+    let linker_rc_to_indirect_table =
+        linker_table.get_referred_columns_to_table(indirect_tablename);
+    println!(
+        "indirect table referred columns to linker table: {:?} --> {:?}",
+        linker_table_name.complete_name(),
+        linker_rc_to_indirect_table
+    );
     assert!(linker_rc_to_indirect_table.is_some());
     let linker_rc_to_indirect_table = linker_rc_to_indirect_table.unwrap();
-    for (i, rc) in linker_rc_to_indirect_table.iter().enumerate(){
+    for (i, rc) in linker_rc_to_indirect_table.iter().enumerate() {
         if i == 0 {
-            indirect_sql +=  "ON "
-        }else{
+            indirect_sql += "ON "
+        } else {
             indirect_sql += "AND "
         }
-        indirect_sql += &format!(" {}.{} = {}.{} ", linker_table.name.name, rc.complete_name()
-                                 , indirect_table.name.name, indirect_pk[i].complete_name());
+        indirect_sql += &format!(
+            " {}.{} = {}.{} ",
+            linker_table.name.name,
+            rc.complete_name(),
+            indirect_table.name.name,
+            indirect_pk[i].complete_name()
+        );
     }
     let linker_rc_to_main_table = linker_table.get_referred_columns_to_table(&main_table.name);
     assert!(linker_rc_to_main_table.is_some());
     let linker_rc_to_main_table = linker_rc_to_main_table.unwrap();
     let mut indirect_params = Vec::with_capacity(linker_rc_to_main_table.iter().count());
     let mut filter = "".to_string();
-    for (i,rc) in linker_rc_to_main_table.iter().enumerate(){
+    for (i, rc) in linker_rc_to_main_table.iter().enumerate() {
         if i == 0 {
             filter += "WHERE ";
-        }else{
+        } else {
             filter += "AND ";
         }
-        filter += &format!("{}.{} = ${} ", linker_table.name.name, linker_pk[i].complete_name(), i+1);
+        filter += &format!(
+            "{}.{} = ${} ",
+            linker_table.name.name,
+            linker_pk[i].complete_name(),
+            i + 1
+        );
         let required_type: &SqlType = linker_pk_data_types[i];
-        find_value(rc, record_id, required_type)
-            .map(|v| indirect_params.push(v.clone()));
+        find_value(rc, record_id, required_type).map(|v| indirect_params.push(v.clone()));
     }
     indirect_sql += &filter;
     indirect_sql += &format!("LIMIT {} ", page_size);
@@ -382,20 +507,24 @@ fn get_indirect_records(dm: &RecordManager, tables: &Vec<Table>,
 /// since it is only used as lookup from some other table
 /// most likely don't request the first page since it has
 /// been preloaded
-fn get_lookup_data(_em: &EntityManager, _table_name: &TableName, 
-                   _filter: Option<Filter>, _page: i32){
+fn get_lookup_data(
+    _em: &EntityManager,
+    _table_name: &TableName,
+    _filter: Option<Filter>,
+    _page: i32,
+) {
 }
 
 
 
 #[cfg(test)]
-mod tests{
+mod tests {
     use super::*;
     use rustorm::Pool;
     use window;
 
     #[test]
-    fn first_page(){
+    fn first_page() {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/bazaar_v8";
         let mut pool = Pool::new();
         let em = pool.em(db_url);
@@ -406,10 +535,9 @@ mod tests{
         let table_name = TableName::from("bazaar.address");
         let window = window::get_window(&table_name, &windows);
         assert!(window.is_some());
-        let window  = window.unwrap();
+        let window = window.unwrap();
         let data = get_maintable_data(&em, &tables, &window, None, 200, 1);
         println!("data: {:#?}", data);
         assert!(data.is_ok());
     }
 }
-

@@ -4,7 +4,7 @@ use window;
 use rustorm::EntityManager;
 use std::collections::BTreeMap;
 use error::IntelError;
-use std::sync::{Arc,Mutex};
+use std::sync::{Arc, Mutex};
 
 
 lazy_static!{
@@ -20,10 +20,9 @@ lazy_static!{
 /// puposedly for DB_URL, there will
 /// be a separate cache for each DB_URL
 /// that tries to connect to the service
-pub struct CachePool(BTreeMap<String,Cache>);
+pub struct CachePool(BTreeMap<String, Cache>);
 
-impl CachePool{
-
+impl CachePool {
     fn new() -> Self {
         CachePool(BTreeMap::new())
     }
@@ -39,45 +38,44 @@ impl CachePool{
     }
 
     fn ensure_cache(&mut self, db_url: &str) {
-        if !self.0.contains_key(db_url){
+        if !self.0.contains_key(db_url) {
             self.0.insert(db_url.to_string(), Cache::new());
         }
     }
 
     fn has_table_cache(&self, db_url: &str) -> bool {
-        match self.0.get(db_url){
+        match self.0.get(db_url) {
             Some(cache) => cache.has_table_cache(),
-            None => false
+            None => false,
         }
     }
 
     fn has_window_cache(&self, db_url: &str) -> bool {
-        match self.0.get(db_url){
+        match self.0.get(db_url) {
             Some(cache) => cache.has_window_cache(),
-            None => false
+            None => false,
         }
     }
 
-    pub fn get_cached_tables(&mut self, em: &EntityManager, db_url: &str) -> Result<Vec<Table>, IntelError> {
+    pub fn get_cached_tables(
+        &mut self,
+        em: &EntityManager,
+        db_url: &str,
+    ) -> Result<Vec<Table>, IntelError> {
         self.ensure_cache(db_url);
-        if self.has_table_cache(db_url){
-           let cache = self.0.get(db_url); 
-           match cache{
-               Some(cache) => {
-                   match cache.tables{
-                       Some(ref tables) => {
-                           println!("TABLE CACHE HIT!");
-                           Ok(tables.clone())
-                       }
-                       None => Err(IntelError::CacheServiceError)
-                   }
-                }
-               None => {
-                   Err(IntelError::CacheServiceError)
-               }
+        if self.has_table_cache(db_url) {
+            let cache = self.0.get(db_url);
+            match cache {
+                Some(cache) => match cache.tables {
+                    Some(ref tables) => {
+                        println!("TABLE CACHE HIT!");
+                        Ok(tables.clone())
+                    }
+                    None => Err(IntelError::CacheServiceError),
+                },
+                None => Err(IntelError::CacheServiceError),
             }
-        }
-        else{
+        } else {
             // do a caching and try again
             println!("Performing a TABLE caching and trying again");
             self.perform_table_caching(em, db_url)?;
@@ -85,26 +83,25 @@ impl CachePool{
         }
     }
 
-    pub fn get_cached_windows(&mut self, em: &EntityManager, db_url: &str) -> Result<Vec<Window>, IntelError> {
+    pub fn get_cached_windows(
+        &mut self,
+        em: &EntityManager,
+        db_url: &str,
+    ) -> Result<Vec<Window>, IntelError> {
         self.ensure_cache(db_url);
-        if self.has_window_cache(db_url){
-           let cache = self.0.get(db_url); 
-           match cache{
-               Some(cache) => {
-                   match cache.windows{
-                       Some(ref windows) => {
-                           println!("WINDOW CACHE HIT!");
-                           Ok(windows.clone())
-                       }
-                       None => Err(IntelError::CacheServiceError)
-                   }
-                }
-               None => {
-                   Err(IntelError::CacheServiceError)
-               }
+        if self.has_window_cache(db_url) {
+            let cache = self.0.get(db_url);
+            match cache {
+                Some(cache) => match cache.windows {
+                    Some(ref windows) => {
+                        println!("WINDOW CACHE HIT!");
+                        Ok(windows.clone())
+                    }
+                    None => Err(IntelError::CacheServiceError),
+                },
+                None => Err(IntelError::CacheServiceError),
             }
-        }
-        else{
+        } else {
             // do a caching and try again
             println!("Performing a WINDOW caching and trying again");
             self.perform_window_caching(em, db_url)?;
@@ -112,23 +109,29 @@ impl CachePool{
         }
     }
 
-    fn perform_table_caching(&mut self, em: &EntityManager, db_url: &str) -> Result<(), IntelError> {
+    fn perform_table_caching(
+        &mut self,
+        em: &EntityManager,
+        db_url: &str,
+    ) -> Result<(), IntelError> {
         let cache = self.0.get_mut(db_url);
-        match cache{
+        match cache {
             Some(cache) => cache.perform_table_caching(em),
-            None => Err(IntelError::CacheServiceError) 
+            None => Err(IntelError::CacheServiceError),
         }
     }
 
-    fn perform_window_caching(&mut self, em: &EntityManager, db_url: &str) -> Result<(), IntelError> {
+    fn perform_window_caching(
+        &mut self,
+        em: &EntityManager,
+        db_url: &str,
+    ) -> Result<(), IntelError> {
         let cache = self.0.get_mut(db_url);
-        match cache{
+        match cache {
             Some(cache) => cache.perform_window_caching(em),
-            None => Err(IntelError::CacheServiceError) 
+            None => Err(IntelError::CacheServiceError),
         }
     }
-
-
 }
 
 /// items cached, unique for each db_url connection
@@ -156,16 +159,16 @@ impl Cache {
         self.windows.is_some()
     }
 
-    fn perform_table_caching(&mut self, em: &EntityManager) -> Result<(), IntelError>{
+    fn perform_table_caching(&mut self, em: &EntityManager) -> Result<(), IntelError> {
         println!("----> ACTUAL TABLE CACHING");
         let tables = em.get_all_tables()?;
         self.tables = Some(tables);
         Ok(())
     }
 
-    fn perform_window_caching(&mut self, em: &EntityManager) -> Result<(), IntelError>{
+    fn perform_window_caching(&mut self, em: &EntityManager) -> Result<(), IntelError> {
         println!("----> ACTUAL WINDOW CACHING");
-        match self.tables{
+        match self.tables {
             Some(ref tables) => {
                 self.windows = Some(window::derive_all_windows(&tables));
                 Ok(())
@@ -177,5 +180,4 @@ impl Cache {
             }
         }
     }
-
 }

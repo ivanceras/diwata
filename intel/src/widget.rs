@@ -20,10 +20,10 @@ pub enum Widget {
     MediumImage,
     LargeImageEmbed,
 
-    /// dropdown where there is no need 
+    /// dropdown where there is no need
     /// to fetch for more data
     /// for enums
-    /// where there is only 
+    /// where there is only
     /// a few choices
     FixDropdown(Vec<String>),
     Radiogroup(Vec<String>),
@@ -38,7 +38,7 @@ pub enum Widget {
     Checkbox,
     CheckmarkStatusImage, // use check mark such as for "is_active"
     IndicatorStatusImage, // on/off - dull gray/ birght green LED
-    ToggleButton, // switch button with on/off
+    ToggleButton,         // switch button with on/off
     PrimaryUrlLink,
     UrlLink,
     UrlTextbox,
@@ -68,16 +68,16 @@ pub enum Widget {
 }
 
 
-/// contains the widget 
+/// contains the widget
 /// and the dropdown data
 #[derive(Debug, Serialize, Clone)]
-pub struct ControlWidget{
+pub struct ControlWidget {
     widget: Widget,
 
     /// if the widget is Dropdown, DropdownWithImage, AutoCompleteDropdown
     /// DialogDropdown, CountryList, CountrListWithFlag
     dropdown_data: Option<DropdownData>,
-    
+
     /// width (character wise) of the widget based on
     /// average of the database values on this column
     width: i32,
@@ -97,7 +97,7 @@ pub struct ControlWidget{
 
 
 #[derive(Debug, Serialize, Clone)]
-pub enum Alignment{
+pub enum Alignment {
     Left,
     Right,
     Center,
@@ -106,13 +106,13 @@ pub enum Alignment{
 
 /// a simple downdown list in string
 #[derive(Debug, Serialize, Clone)]
-pub struct DropdownRecord{
+pub struct DropdownRecord {
     identifier: String,
     display: String,
 }
 
 #[derive(Debug, Serialize, Clone)]
-pub struct DropdownList{
+pub struct DropdownList {
     /// api url for the next page to be loaded
     api_url: String,
     /// the selected value of the record
@@ -125,7 +125,7 @@ pub struct DropdownList{
 }
 
 #[derive(Debug, Serialize, Clone)]
-pub enum Image{
+pub enum Image {
     Url(String),
     DataUrl(String),
     /// image type, blob
@@ -135,7 +135,7 @@ pub enum Image{
 
 
 #[derive(Debug, Serialize, Clone)]
-pub struct DropdownRecordWithImage{
+pub struct DropdownRecordWithImage {
     identifier: String,
     display: String,
     /// the url image of the record display
@@ -143,7 +143,7 @@ pub struct DropdownRecordWithImage{
 }
 
 #[derive(Debug, Serialize, Clone)]
-pub struct DropdownListWithImage{
+pub struct DropdownListWithImage {
     /// api url for the next page to be loaded
     api_url: String,
     /// the selected value of the record
@@ -156,7 +156,7 @@ pub struct DropdownListWithImage{
 }
 
 #[derive(Debug, Serialize, Clone)]
-pub struct DropdownListWithAutoComplete{
+pub struct DropdownListWithAutoComplete {
     /// api url for the next page to be loaded
     api_url: String,
     /// the selected value of the record
@@ -170,7 +170,7 @@ pub struct DropdownListWithAutoComplete{
 
 
 #[derive(Debug, Serialize, Clone)]
-pub enum DropdownData{
+pub enum DropdownData {
     DropdownList(DropdownList),
     /// whatever the image shape displayed as is
     DropdownListWithImage(DropdownListWithImage),
@@ -180,7 +180,7 @@ pub enum DropdownData{
 }
 
 
-impl ControlWidget{
+impl ControlWidget {
     /// derive widget base from column
     /// reference is derived first then the widget is based
     /// from the reference
@@ -189,35 +189,29 @@ impl ControlWidget{
         let alignment = Self::derive_alignment(column);
         let sql_type = &column.specification.sql_type;
         let width = Self::get_width(column).unwrap_or(20);
-        if let Some(ref reference) = *reference{
+        if let Some(ref reference) = *reference {
             let widget = reference.get_widget_fullview();
-            ControlWidget{
+            ControlWidget {
                 widget,
                 dropdown_data: None,
-                width, 
+                width,
                 max_len: limit,
                 height: 1,
                 alignment,
             }
-        }
-        else{
-            let widget = if *sql_type == SqlType::Bool{
+        } else {
+            let widget = if *sql_type == SqlType::Bool {
                 Widget::Checkbox
-            }
-            else if *sql_type == SqlType::TimestampTz
-                || *sql_type == SqlType::Timestamp {
+            } else if *sql_type == SqlType::TimestampTz || *sql_type == SqlType::Timestamp {
                 Widget::DateTimePicker
-            }
-            else if *sql_type == SqlType::Date {
+            } else if *sql_type == SqlType::Date {
                 Widget::DatePicker
-            }
-            else if *sql_type == SqlType::Uuid {
+            } else if *sql_type == SqlType::Uuid {
                 Widget::UuidTextbox
-            }
-            else{
+            } else {
                 Widget::Textbox
             };
-            ControlWidget{
+            ControlWidget {
                 widget,
                 dropdown_data: None,
                 width,
@@ -230,14 +224,11 @@ impl ControlWidget{
 
     fn get_width(column: &Column) -> Option<i32> {
         let sql_type = &column.specification.sql_type;
-        if let Some(ref stat) = column.stat{
-           Some(stat.avg_width)
-           
-        }
-        else if *sql_type == SqlType::Uuid {
+        if let Some(ref stat) = column.stat {
+            Some(stat.avg_width)
+        } else if *sql_type == SqlType::Uuid {
             Some(36)
-        }
-        else{
+        } else {
             None
         }
     }
@@ -245,14 +236,12 @@ impl ControlWidget{
     pub fn from_has_one_table(columns: &Vec<&Column>, _table: &Table) -> Self {
         let reference = Reference::TableLookup;
         let widget = reference.get_widget_fullview();
-        let width  = 
-            columns.iter()
-            .map(|col|
-                 match Self::get_width(col){
-                     Some(width) => width,
-                     None => 0
-                }
-            )
+        let width = columns
+            .iter()
+            .map(|col| match Self::get_width(col) {
+                Some(width) => width,
+                None => 0,
+            })
             .max()
             .unwrap_or(0);
 
@@ -267,24 +256,24 @@ impl ControlWidget{
     }
 
     fn derive_alignment(column: &Column) -> Alignment {
-         let sql_type = &column.specification.sql_type;
-         match *sql_type{
+        let sql_type = &column.specification.sql_type;
+        match *sql_type {
             SqlType::Bool => Alignment::Center,
             SqlType::Tinyint
-                | SqlType::Smallint
-                | SqlType::Int
-                | SqlType::Bigint
-                | SqlType::Real
-                | SqlType::Float
-                | SqlType::Double
-                | SqlType::Numeric => Alignment::Right,
+            | SqlType::Smallint
+            | SqlType::Int
+            | SqlType::Bigint
+            | SqlType::Real
+            | SqlType::Float
+            | SqlType::Double
+            | SqlType::Numeric => Alignment::Right,
 
             SqlType::Uuid
-                | SqlType::Date
-                | SqlType::Timestamp
-                | SqlType::TimestampTz
-                | SqlType::Time
-                | SqlType::TimeTz => Alignment::Right,
+            | SqlType::Date
+            | SqlType::Timestamp
+            | SqlType::TimestampTz
+            | SqlType::Time
+            | SqlType::TimeTz => Alignment::Right,
             _ => Alignment::Left,
         }
     }

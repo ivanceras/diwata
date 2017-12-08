@@ -18,11 +18,10 @@ pub struct Tab {
     pub is_view: bool,
 }
 
-impl Tab{
-
+impl Tab {
     pub fn from_table(table: &Table, tables: &Vec<Table>) -> Self {
         let fields = Tab::derive_fields(table, tables);
-        Tab{
+        Tab {
             name: table.name.name.to_string(),
             description: table.comment.to_owned(),
             table_name: table.name.to_owned(),
@@ -42,25 +41,25 @@ impl Tab{
     fn derive_simple_fields(table: &Table) -> Vec<Field> {
         let columns: &Vec<Column> = &table.columns;
         let foreign_column_names: Vec<&ColumnName> = table.get_foreign_column_names();
-        let plain_columns:Vec<&Column> = columns.iter()
-                .filter(|c|
-                       !foreign_column_names.contains(&&c.name))
-                .collect();
+        let plain_columns: Vec<&Column> = columns
+            .iter()
+            .filter(|c| !foreign_column_names.contains(&&c.name))
+            .collect();
         let mut fields: Vec<Field> = Vec::with_capacity(plain_columns.len());
-        for pc in plain_columns{
+        for pc in plain_columns {
             let field = Field::from_column(table, pc);
             fields.push(field)
         }
         fields
     }
-    
+
     fn derive_foreign_fields(table: &Table, all_tables: &Vec<Table>) -> Vec<Field> {
-        let foreign_keys:Vec<&ForeignKey> = table.get_foreign_keys();
+        let foreign_keys: Vec<&ForeignKey> = table.get_foreign_keys();
         let mut fields: Vec<Field> = Vec::with_capacity(foreign_keys.len());
-        for fk in foreign_keys{
-            let mut columns:Vec<&Column> = Vec::with_capacity(fk.columns.len());
-            for fc in &fk.columns{
-                if let Some(col) = table.get_column(fc){
+        for fk in foreign_keys {
+            let mut columns: Vec<&Column> = Vec::with_capacity(fk.columns.len());
+            for fc in &fk.columns {
+                if let Some(col) = table.get_column(fc) {
                     columns.push(col);
                 }
             }
@@ -72,6 +71,4 @@ impl Tab{
         }
         fields
     }
-
 }
-

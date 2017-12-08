@@ -12,7 +12,6 @@ use error::IntelError;
 
 #[derive(Debug, Serialize, Clone)]
 pub struct Window {
-
     /// maps to main table name
     pub name: String,
 
@@ -23,7 +22,7 @@ pub struct Window {
     /// maps to table schema
     pub group: Option<String>,
 
-    /// corresponds to the main table 
+    /// corresponds to the main table
     pub main_tab: Tab,
 
     /// table names that is referred by fields from the main table
@@ -47,26 +46,39 @@ pub struct Window {
     pub is_view: bool,
 }
 
-impl Window{
-    
-    fn from_tables(main_table: &Table, one_one: &Vec<&Table>, has_one_tables: Vec<TableName>,
-                   has_many: &Vec<&Table>, indirect: &Vec<IndirectTable>, all_tables: &Vec<Table>) -> Self  {
-
-        let main_tab:Tab = Tab::from_table(main_table, all_tables); 
-        let one_one_tabs:Vec<Tab> = one_one.iter().map(|t|Tab::from_table(t, all_tables)).collect();
-        let has_many_tabs:Vec<Tab> = has_many.iter().map(|t|Tab::from_table(t, all_tables)).collect();
+impl Window {
+    fn from_tables(
+        main_table: &Table,
+        one_one: &Vec<&Table>,
+        has_one_tables: Vec<TableName>,
+        has_many: &Vec<&Table>,
+        indirect: &Vec<IndirectTable>,
+        all_tables: &Vec<Table>,
+    ) -> Self {
+        let main_tab: Tab = Tab::from_table(main_table, all_tables);
+        let one_one_tabs: Vec<Tab> = one_one
+            .iter()
+            .map(|t| Tab::from_table(t, all_tables))
+            .collect();
+        let has_many_tabs: Vec<Tab> = has_many
+            .iter()
+            .map(|t| Tab::from_table(t, all_tables))
+            .collect();
         let is_view = main_tab.is_view;
 
-        let indirect_tabs:Vec<(TableName, Tab)> = indirect.iter()
-            .map(|t|
-                 (t.linker.name.clone(), 
-                  Tab::from_table(t.indirect_table, all_tables))
-            )
+        let indirect_tabs: Vec<(TableName, Tab)> = indirect
+            .iter()
+            .map(|t| {
+                (
+                    t.linker.name.clone(),
+                    Tab::from_table(t.indirect_table, all_tables),
+                )
+            })
             .collect();
-        Window{
+        Window {
             name: main_tab.name.to_string(),
             description: main_tab.description.to_owned(),
-            group: main_tab.table_name.schema.to_owned(), 
+            group: main_tab.table_name.schema.to_owned(),
             main_tab,
             has_one_tables,
             one_one_tabs,
@@ -78,7 +90,7 @@ impl Window{
 }
 
 #[derive(Debug, Serialize)]
-pub struct WindowName{
+pub struct WindowName {
     pub name: String,
     pub table_name: TableName,
     pub is_view: bool,
@@ -86,14 +98,17 @@ pub struct WindowName{
 
 
 #[derive(Debug, Serialize)]
-pub struct GroupedWindow{
+pub struct GroupedWindow {
     group: String,
-    window_names: Vec<WindowName>
+    window_names: Vec<WindowName>,
 }
 
 
 
-pub fn get_grouped_windows_using_cache(em: &EntityManager, db_url: &str) -> Result<Vec<GroupedWindow>, IntelError> {
+pub fn get_grouped_windows_using_cache(
+    em: &EntityManager,
+    db_url: &str,
+) -> Result<Vec<GroupedWindow>, IntelError> {
     let mut cache_pool = cache::CACHE_POOL.lock().unwrap();
     let tables = cache_pool.get_cached_tables(em, db_url)?;
     let grouped_window = get_grouped_windows(em, &tables)?;
@@ -104,17 +119,20 @@ pub fn get_grouped_windows_using_cache(em: &EntityManager, db_url: &str) -> Resu
 /// get all the schema content and convert to grouped window
 /// for displaying as a list in the client side
 /// filter out tablenames that are not window
-fn get_grouped_windows(em: &EntityManager, tables: &Vec<Table>) -> Result<Vec<GroupedWindow>, DbError> {
+fn get_grouped_windows(
+    em: &EntityManager,
+    tables: &Vec<Table>,
+) -> Result<Vec<GroupedWindow>, DbError> {
     let schema_content: Vec<SchemaContent> = em.get_grouped_tables()?;
-    let mut grouped_windows: Vec<GroupedWindow> = Vec::with_capacity(schema_content.len()); 
-    for sc in schema_content{
+    let mut grouped_windows: Vec<GroupedWindow> = Vec::with_capacity(schema_content.len());
+    for sc in schema_content {
         let mut window_names = Vec::with_capacity(sc.tablenames.len() + sc.views.len());
-        for table_name in sc.tablenames.iter().chain(sc.views.iter()){
+        for table_name in sc.tablenames.iter().chain(sc.views.iter()) {
             let table = table_intel::get_table(&table_name, tables);
-            if let Some(table) = table{
+            if let Some(table) = table {
                 let table_intel = TableIntel(table);
-                if table_intel.is_window(tables){
-                    window_names.push(WindowName{
+                if table_intel.is_window(tables) {
+                    window_names.push(WindowName {
                         name: table_name.name.to_string(),
                         table_name: table_name.to_owned(),
                         is_view: table.is_view,
@@ -122,11 +140,10 @@ fn get_grouped_windows(em: &EntityManager, tables: &Vec<Table>) -> Result<Vec<Gr
                 }
             }
         }
-        grouped_windows.push(
-            GroupedWindow{
-                group: sc.schema.to_string(),
-                window_names: window_names
-            });
+        grouped_windows.push(GroupedWindow {
+            group: sc.schema.to_string(),
+            window_names: window_names,
+        });
     }
     Ok(grouped_windows)
 }
@@ -134,20 +151,26 @@ fn get_grouped_windows(em: &EntityManager, tables: &Vec<Table>) -> Result<Vec<Gr
 
 
 /// extract all the tables and create a window object for each that can
-/// be a window, cache them for later use, so as not to keeping redoing 
+/// be a window, cache them for later use, so as not to keeping redoing
 /// analytical and calculations
 pub fn derive_all_windows(tables: &Vec<Table>) -> Vec<Window> {
     let mut all_windows = Vec::with_capacity(tables.len());
-    for table in tables{
+    for table in tables {
         let table_intel = TableIntel(table);
-        if table_intel.is_window(&tables){
-            let one_one_tables:Vec<&Table> = table_intel.get_one_one_tables(&tables);
+        if table_intel.is_window(&tables) {
+            let one_one_tables: Vec<&Table> = table_intel.get_one_one_tables(&tables);
             let has_one_tables: Vec<TableName> = table_intel.get_has_one_tablenames(&tables);
-            let has_many_tables:Vec<&Table> = table_intel.get_has_many_tables(&tables);
-            let indirect_tables:Vec<IndirectTable> = table_intel.get_indirect_tables(&tables);
+            let has_many_tables: Vec<&Table> = table_intel.get_has_many_tables(&tables);
+            let indirect_tables: Vec<IndirectTable> = table_intel.get_indirect_tables(&tables);
             println!("window: {}", table.name.name);
-            let window = Window::from_tables(&table, &one_one_tables, has_one_tables,
-                                             &has_many_tables, &indirect_tables, &tables);
+            let window = Window::from_tables(
+                &table,
+                &one_one_tables,
+                has_one_tables,
+                &has_many_tables,
+                &indirect_tables,
+                &tables,
+            );
             all_windows.push(window);
         }
     }
@@ -155,17 +178,18 @@ pub fn derive_all_windows(tables: &Vec<Table>) -> Vec<Window> {
 }
 
 pub fn get_window<'t>(table_name: &TableName, windows: &'t Vec<Window>) -> Option<&'t Window> {
-    windows.iter()
-        .find(|w|w.main_tab.table_name == *table_name)
+    windows
+        .iter()
+        .find(|w| w.main_tab.table_name == *table_name)
 }
 
 #[cfg(test)]
-mod tests{
+mod tests {
     use super::*;
     use rustorm::Pool;
 
     #[test]
-    fn all_windows(){
+    fn all_windows() {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/bazaar_v8";
         let mut pool = Pool::new();
         let em = pool.em(db_url);
@@ -178,7 +202,7 @@ mod tests{
     }
 
     #[test]
-    fn product_window(){
+    fn product_window() {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/bazaar_v8";
         let mut pool = Pool::new();
         let em = pool.em(db_url);
@@ -200,11 +224,10 @@ mod tests{
         assert_eq!(win.indirect_tabs[0].1.table_name.name, "category");
         assert_eq!(win.indirect_tabs[1].1.table_name.name, "photo");
         assert_eq!(win.indirect_tabs[2].1.table_name.name, "review");
-
     }
 
     #[test]
-    fn user_window(){
+    fn user_window() {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/bazaar_v8";
         let mut pool = Pool::new();
         let em = pool.em(db_url);
@@ -231,7 +254,7 @@ mod tests{
     }
 
     #[test]
-    fn grouped_windows(){
+    fn grouped_windows() {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/bazaar_v8";
         let mut pool = Pool::new();
         let em = pool.em(db_url);

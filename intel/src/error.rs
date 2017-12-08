@@ -2,7 +2,7 @@ use rustorm::DbError;
 
 
 #[derive(Debug)]
-pub enum IntelError{
+pub enum IntelError {
     CacheServiceError,
     DbError(DbError),
     ParamParseError(String),
@@ -10,9 +10,7 @@ pub enum IntelError{
 
 
 impl From<DbError> for IntelError {
-
     fn from(e: DbError) -> Self {
         IntelError::DbError(e)
     }
 }
-

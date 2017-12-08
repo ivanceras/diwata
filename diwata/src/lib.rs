@@ -2,19 +2,19 @@
 #![feature(plugin)]
 #![plugin(rocket_codegen)]
 #![feature(match_default_bindings)]
-extern crate rocket;
-extern crate rocket_contrib;
-extern crate rustorm;
 extern crate intel;
 #[macro_use]
 extern crate lazy_static;
+extern crate rocket;
+extern crate rocket_contrib;
+extern crate rustorm;
 use rocket::Rocket;
 use rustorm::Pool;
 use rocket_contrib::Json;
 use intel::Window;
 use intel::data_service;
-use intel::window::{self,GroupedWindow};
-use std::sync::{Arc,Mutex};
+use intel::window::{self, GroupedWindow};
+use std::sync::{Arc, Mutex};
 use rustorm::TableName;
 use rocket::fairing::AdHoc;
 use rocket::http::hyper::header::AccessControlAllowOrigin;
@@ -24,7 +24,7 @@ use error::ServiceError;
 use intel::cache;
 use intel::data_service::RecordDetail;
 use rustorm::RecordManager;
-use std::path::{Path,PathBuf};
+use std::path::{Path, PathBuf};
 use rocket::response::NamedFile;
 use rocket::response::Redirect;
 use intel::tab::Tab;
@@ -35,7 +35,7 @@ mod error;
 static DB_URL: &'static str = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
 //static DB_URL: &'static str = "postgres://postgres:p0stgr3s@localhost:5432/bazaar_v8";
 
-static PAGE_SIZE: u32 = 40; 
+static PAGE_SIZE: u32 = 40;
 
 lazy_static!{
     pub static ref POOL: Arc<Mutex<Pool>> = {
@@ -44,24 +44,24 @@ lazy_static!{
 }
 
 fn get_pool_em() -> Result<EntityManager, ServiceError> {
-    let mut pool = match POOL.lock(){
+    let mut pool = match POOL.lock() {
         Ok(pool) => pool,
-        Err(_e) => return Err(ServiceError::PoolResourceError)
+        Err(_e) => return Err(ServiceError::PoolResourceError),
     };
-    match pool.em(DB_URL){
-       Ok(em) => Ok(em),
-       Err(e) => return Err(ServiceError::DbError(e))
+    match pool.em(DB_URL) {
+        Ok(em) => Ok(em),
+        Err(e) => return Err(ServiceError::DbError(e)),
     }
 }
 
 fn get_pool_dm() -> Result<RecordManager, ServiceError> {
-    let mut pool = match POOL.lock(){
+    let mut pool = match POOL.lock() {
         Ok(pool) => pool,
-        Err(_e) => return Err(ServiceError::PoolResourceError)
+        Err(_e) => return Err(ServiceError::PoolResourceError),
     };
-    match pool.dm(DB_URL){
-       Ok(em) => Ok(em),
-       Err(e) => return Err(ServiceError::DbError(e))
+    match pool.dm(DB_URL) {
+        Ok(em) => Ok(em),
+        Err(e) => return Err(ServiceError::DbError(e)),
     }
 }
 
@@ -69,8 +69,7 @@ fn get_pool_dm() -> Result<RecordManager, ServiceError> {
 #[get("/")]
 fn get_windows() -> Result<Json<Vec<GroupedWindow>>, ServiceError> {
     let em = get_pool_em()?;
-    let grouped_windows: Vec<GroupedWindow> 
-        = window::get_grouped_windows_using_cache(&em, DB_URL)?;
+    let grouped_windows: Vec<GroupedWindow> = window::get_grouped_windows_using_cache(&em, DB_URL)?;
     Ok(Json(grouped_windows))
 }
 
@@ -82,9 +81,9 @@ fn get_window(table_name: String) -> Result<Option<Json<Window>>, ServiceError> 
     let windows = cache_pool.get_cached_windows(&em, DB_URL)?;
     let table_name = TableName::from(&table_name);
     let window = window::get_window(&table_name, &windows);
-    match window{
+    match window {
         Some(window) => Ok(Some(Json(window.to_owned()))),
-        None => Ok(None)
+        None => Ok(None),
     }
 }
 
@@ -101,19 +100,21 @@ fn get_data_with_page(table_name: String, page: u32) -> Result<Option<Json<Rows>
     let table_name = TableName::from(&table_name);
     let window = window::get_window(&table_name, &windows);
     let tables = cache_pool.get_cached_tables(&em, DB_URL)?;
-    match window{
+    match window {
         Some(window) => {
-            let rows: Rows = 
-                data_service::get_maintable_data(&em, &tables,
-                                                        &window, None, page, PAGE_SIZE)?;
+            let rows: Rows =
+                data_service::get_maintable_data(&em, &tables, &window, None, page, PAGE_SIZE)?;
             Ok(Some(Json(rows)))
         }
-        None => Ok(None)
+        None => Ok(None),
     }
 }
 
 #[get("/<table_name>/select/<record_id>")]
-fn get_detailed_record(table_name: String, record_id: String) -> Result<Option<Json<RecordDetail>>, ServiceError> {
+fn get_detailed_record(
+    table_name: String,
+    record_id: String,
+) -> Result<Option<Json<RecordDetail>>, ServiceError> {
     let dm = get_pool_dm()?;
     let em = get_pool_em()?;
     let mut cache_pool = cache::CACHE_POOL.lock().unwrap();
@@ -121,24 +122,33 @@ fn get_detailed_record(table_name: String, record_id: String) -> Result<Option<J
     let table_name = TableName::from(&table_name);
     let window = window::get_window(&table_name, &windows);
     let tables = cache_pool.get_cached_tables(&em, DB_URL)?;
-    match window{
+    match window {
         Some(window) => {
-            let dao: Option<RecordDetail> = 
-                data_service::get_selected_record_detail(&dm, &tables,
-                                                        &window, &record_id, PAGE_SIZE)?;
-            match dao{
+            let dao: Option<RecordDetail> = data_service::get_selected_record_detail(
+                &dm,
+                &tables,
+                &window,
+                &record_id,
+                PAGE_SIZE,
+            )?;
+            match dao {
                 Some(dao) => Ok(Some(Json(dao))),
-                None => Ok(None)
+                None => Ok(None),
             }
         }
-        None => Ok(None)
+        None => Ok(None),
     }
 }
 
 /// retrieve records from a has_many table based on the selected main records
 /// from the main table
 #[get("/<table_name>/select/<record_id>/has_many/<has_many_table>/<page>")]
-fn get_has_many_records(table_name: String, record_id: String, has_many_table: String, page: u32) -> Result<Option<Json<Rows>>, ServiceError> {
+fn get_has_many_records(
+    table_name: String,
+    record_id: String,
+    has_many_table: String,
+    page: u32,
+) -> Result<Option<Json<Rows>>, ServiceError> {
     let dm = get_pool_dm()?;
     let em = get_pool_em()?;
     let mut cache_pool = cache::CACHE_POOL.lock().unwrap();
@@ -147,32 +157,41 @@ fn get_has_many_records(table_name: String, record_id: String, has_many_table: S
     let window = window::get_window(&table_name, &windows);
     let tables = cache_pool.get_cached_tables(&em, DB_URL)?;
     let has_many_table_name = TableName::from(&has_many_table);
-    match window{
+    match window {
         Some(window) => {
             let main_table = data_service::get_main_table(window, &tables);
             assert!(main_table.is_some());
             let main_table = main_table.unwrap();
             let has_many_tab = data_service::find_tab(&window.has_many_tabs, &has_many_table_name);
-            match has_many_tab{
-                Some(has_many_tab) =>  {
-                    let rows =
-                        data_service::get_has_many_records_service(&dm, &tables,
-                                                                &main_table, &record_id, 
-                                                                has_many_tab,
-                                                                PAGE_SIZE, page)?;
-                        Ok(Some(Json(rows)))
+            match has_many_tab {
+                Some(has_many_tab) => {
+                    let rows = data_service::get_has_many_records_service(
+                        &dm,
+                        &tables,
+                        &main_table,
+                        &record_id,
+                        has_many_tab,
+                        PAGE_SIZE,
+                        page,
+                    )?;
+                    Ok(Some(Json(rows)))
                 }
-                None => Ok(None)
+                None => Ok(None),
             }
         }
-        None => Ok(None)
+        None => Ok(None),
     }
 }
 
 /// retrieve records from a has_many table based on the selected main records
 /// from the main table
 #[get("/<table_name>/select/<record_id>/indirect/<indirect_table>/<page>")]
-fn get_indirect_records(table_name: String, record_id: String, indirect_table: String, page: u32) -> Result<Option<Json<Rows>>, ServiceError> {
+fn get_indirect_records(
+    table_name: String,
+    record_id: String,
+    indirect_table: String,
+    page: u32,
+) -> Result<Option<Json<Rows>>, ServiceError> {
     let dm = get_pool_dm()?;
     let em = get_pool_em()?;
     let mut cache_pool = cache::CACHE_POOL.lock().unwrap();
@@ -181,29 +200,35 @@ fn get_indirect_records(table_name: String, record_id: String, indirect_table: S
     let window = window::get_window(&table_name, &windows);
     let tables = cache_pool.get_cached_tables(&em, DB_URL)?;
     let indirect_table_name = TableName::from(&indirect_table);
-    match window{
+    match window {
         Some(window) => {
             let main_table = data_service::get_main_table(window, &tables);
             assert!(main_table.is_some());
             let main_table = main_table.unwrap();
 
-            let indirect_tab: Option<&(TableName, Tab)> = 
-                window.indirect_tabs.iter().find(|&(_linker_table, tab)| tab.table_name == indirect_table_name);
+            let indirect_tab: Option<&(TableName, Tab)> = window
+                .indirect_tabs
+                .iter()
+                .find(|&(_linker_table, tab)| tab.table_name == indirect_table_name);
 
-            match indirect_tab{
-                Some(&(ref linker_table, ref indirect_tab)) =>  {
-                    let rows =
-                        data_service::get_indirect_records_service(&dm, &tables,
-                                                                &main_table, &record_id, 
-                                                                &indirect_tab,
-                                                                &linker_table,
-                                                                PAGE_SIZE, page)?;
-                        Ok(Some(Json(rows)))
+            match indirect_tab {
+                Some(&(ref linker_table, ref indirect_tab)) => {
+                    let rows = data_service::get_indirect_records_service(
+                        &dm,
+                        &tables,
+                        &main_table,
+                        &record_id,
+                        &indirect_tab,
+                        &linker_table,
+                        PAGE_SIZE,
+                        page,
+                    )?;
+                    Ok(Some(Json(rows)))
                 }
-                None => Ok(None)
+                None => Ok(None),
             }
         }
-        None => Ok(None)
+        None => Ok(None),
     }
 }
 
@@ -233,36 +258,18 @@ pub fn rocket() -> Rocket {
         .attach(AdHoc::on_response(|_req, resp| {
             resp.set_header(AccessControlAllowOrigin::Any);
         }))
+        .mount("/", routes![redirect_to_web,])
+        .mount("/web", routes![webclient_index, webclient])
         .mount(
-            "/", routes![
-                    redirect_to_web,
-                 ]
-        ) 
-        .mount(
-            "/web", routes![
-                    webclient_index,
-                    webclient
-                 ]
-        ) 
-        .mount(
-            "/data", routes![
-                    get_data,
-                    get_data_with_page,
-                    get_detailed_record,
-                    get_has_many_records,
-                    get_indirect_records,
-            ]
+            "/data",
+            routes![
+                get_data,
+                get_data_with_page,
+                get_detailed_record,
+                get_has_many_records,
+                get_indirect_records,
+            ],
         )
-        .mount(
-            "/window",
-                routes![
-                    get_window,
-                ]
-        )
-        .mount(
-            "/windows",
-                routes![
-                    get_windows,
-                ]
-        )
+        .mount("/window", routes![get_window,])
+        .mount("/windows", routes![get_windows,])
 }

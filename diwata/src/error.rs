@@ -2,21 +2,19 @@ use rustorm::error::DbError;
 use intel::error::IntelError;
 
 #[derive(Debug)]
-pub enum ServiceError{
+pub enum ServiceError {
     PoolResourceError,
     IntelError(IntelError),
-    DbError(DbError)
+    DbError(DbError),
 }
 
-impl From<DbError> for ServiceError{
-    
+impl From<DbError> for ServiceError {
     fn from(e: DbError) -> ServiceError {
         ServiceError::DbError(e)
     }
 }
 
-impl From<IntelError> for ServiceError{
-    
+impl From<IntelError> for ServiceError {
     fn from(e: IntelError) -> ServiceError {
         ServiceError::IntelError(e)
     }
