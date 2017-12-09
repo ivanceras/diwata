@@ -20,7 +20,7 @@ viewInList field value =
         widgetWidth =
             Field.widgetWidthListValue field
     in
-        widgetView ( widgetWidth, 1 ) field value
+        widgetView InList ( widgetWidth, 1 ) field value
 
 
 {-| view value in card view
@@ -34,11 +34,16 @@ viewInCard field value =
         controlWidget =
             field.controlWidget
     in
-        widgetView ( width, height ) field value
+        widgetView InCard ( width, height ) field value
 
 
-widgetView : ( Int, Int ) -> Field -> Maybe Value -> Html msg
-widgetView ( widgetWidth, widgetHeight ) field maybeValue =
+type Presentation
+    = InList
+    | InCard
+
+
+widgetView : Presentation -> ( Int, Int ) -> Field -> Maybe Value -> Html msg
+widgetView presentation ( widgetWidth, widgetHeight ) field maybeValue =
     let
         controlWidget =
             field.controlWidget
@@ -63,22 +68,32 @@ widgetView ( widgetWidth, widgetHeight ) field maybeValue =
     in
         case controlWidget.widget of
             Textbox ->
-                if widgetHeight > 1 then
-                    textarea
-                        [ styles
-                        , value valueString
-                        , style [ ( "height", px (widgetHeight * 24) ) ]
-                        , style [ ( "min-height", px 24 ) ]
-                        , style [ ( "min-width", px 100 ) ]
-                        ]
-                        []
-                else
-                    input
-                        [ type_ "text"
-                        , styles
-                        , value valueString
-                        ]
-                        []
+                input
+                    [ type_ "text"
+                    , styles
+                    , value valueString
+                    ]
+                    []
+
+            MultilineText ->
+                case presentation of
+                    InCard ->
+                        textarea
+                            [ styles
+                            , value valueString
+                            , style [ ( "height", px widgetHeight ) ]
+                            , style [ ( "min-height", px 24 ) ]
+                            , style [ ( "min-width", px 100 ) ]
+                            ]
+                            []
+
+                    InList ->
+                        input
+                            [ type_ "text"
+                            , styles
+                            , value valueString
+                            ]
+                            []
 
             UuidTextbox ->
                 input
@@ -183,13 +198,16 @@ widgetView ( widgetWidth, widgetHeight ) field maybeValue =
                 in
                     Tagger.view styles tags
 
-            _ ->
+            TableLookupDropdown ->
                 input
                     [ type_ "text"
                     , styles
                     , value valueString
                     ]
                     []
+
+            _ ->
+                Debug.crash ("unable to handle widget:" ++ toString controlWidget)
 
 
 viewDatePicker : Attribute msg -> Maybe Value -> Html msg

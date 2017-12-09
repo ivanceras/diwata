@@ -110,22 +110,33 @@ columnPairDecoder =
         (Decode.index 1 DataType.decoder)
 
 
+widgetCharacterWidth : Field -> Int
+widgetCharacterWidth field =
+    let
+        columnLen =
+            String.length (columnName field)
+
+        charWidth =
+            max columnLen field.controlWidget.width
+    in
+        charWidth
+
+
+fontSize : ( Int, Int )
+fontSize =
+    ( 12, 24 )
+
+
 {-| Calculate the width, minimum 100, maximum 800
 -}
 widgetWidthListColumn : Field -> Int
 widgetWidthListColumn field =
     let
-        columnLen =
-            String.length (columnName field)
-
-        maxLen =
-            max columnLen field.controlWidget.width
-
-        fontWidth =
-            12
+        ( fontWidth, _ ) =
+            fontSize
 
         calcWidth =
-            maxLen * fontWidth
+            (widgetCharacterWidth field) * fontWidth
     in
         clamp 100 800 calcWidth
 
@@ -152,10 +163,13 @@ shortOrLongWidth field =
         width =
             field.controlWidget.width
 
+        ( fontWidth, fontHeight ) =
+            fontSize
+
         lines =
-            round (toFloat width / 100) + 2
+            round (toFloat width / 100) + 1
     in
         if width < 40 then
-            ( 200, 1 )
+            ( 200, fontHeight )
         else
-            ( 800, lines )
+            ( 800, lines * fontHeight )
