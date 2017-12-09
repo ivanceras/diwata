@@ -16,25 +16,106 @@ pub struct Tab {
     /// in these
     pub fields: Vec<Field>,
     pub is_view: bool,
+    /// the displayable column name, serves as identifier to human vision
+    /// this would be name, title, first_name - lastname
+    pub display: Option<IdentifierDisplay>,
+}
+
+
+#[derive(Debug, Serialize, Clone)]
+pub struct IdentifierDisplay {
+    columns: Vec<ColumnName>,
+    separator: Option<String>,
 }
 
 impl Tab {
     pub fn from_table(table: &Table, tables: &Vec<Table>) -> Self {
-        let fields = Tab::derive_fields(table, tables);
+        let fields = Self::derive_fields(table, tables);
+        let display = Self::derive_display(table);
         Tab {
             name: table.name.name.to_string(),
             description: table.comment.to_owned(),
             table_name: table.name.to_owned(),
             fields: fields,
             is_view: table.is_view,
+            display,
         }
     }
 
     fn derive_fields(table: &Table, tables: &Vec<Table>) -> Vec<Field> {
         let mut fields = Vec::with_capacity(table.columns.len());
-        fields.extend(Tab::derive_simple_fields(table));
-        fields.extend(Tab::derive_foreign_fields(table, tables));
+        fields.extend(Self::derive_simple_fields(table));
+        fields.extend(Self::derive_foreign_fields(table, tables));
         fields
+    }
+
+    fn derive_display(table: &Table) -> Option<IdentifierDisplay> {
+        let table_name = &table.name.name;
+        let columns = &table.columns;
+        let display = if table_name == "user" ||
+            table_name == "users" {
+            let found_column = 
+                columns.iter() 
+                    .find(|column| {
+                        let column_name = &column.name.name;
+                        *column_name == "username"
+                            || *column_name == "email"
+                    });
+            found_column.map(|column|{
+                IdentifierDisplay{
+                    columns: vec![column.name.clone()],
+                    separator: None
+                }
+            })
+        }
+        // match the column name regardless of the table name
+        else {
+            let found_column = 
+                columns.iter() 
+                    .find(|column| {
+                        let column_name = &column.name.name;
+                        *column_name == "name"
+                            || *column_name == "title"
+                    });
+            found_column.map(|column|{
+                IdentifierDisplay{
+                    columns: vec![column.name.clone()],
+                    separator: None,
+                }
+            })
+        };
+
+        display.or_else(|| {
+            let maybe_firstname = 
+                columns.iter()
+                    .find(|column|{
+                        let column_name = &column.name.name;
+                            *column_name == "first_name"
+                                || *column_name == "firstname"
+                    });
+
+            let maybe_lastname = 
+                columns.iter()
+                    .find(|column| {
+                        let column_name = &column.name.name;
+                        *column_name == "last_name"
+                            || *column_name == "lastname"
+                    });
+            if let Some(lastname) = maybe_lastname {
+                if let Some(firstname) = maybe_firstname {
+                    Some(IdentifierDisplay{
+                        columns: vec![lastname.name.clone(), firstname.name.clone()],
+                        separator: Some(",".into())
+                    })
+                }
+                else{
+                    None
+                }
+            }
+            else{
+                None
+            }
+        })
     }
 
 

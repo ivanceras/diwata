@@ -199,12 +199,14 @@ impl ControlWidget {
         } else {
             let widget = if *sql_type == SqlType::Bool {
                 Widget::Checkbox
-            } else if *sql_type == SqlType::TimestampTz || *sql_type == SqlType::Timestamp {
+            }else if *sql_type == SqlType::TimestampTz || *sql_type == SqlType::Timestamp {
                 Widget::DateTimePicker
             } else if *sql_type == SqlType::Date {
                 Widget::DatePicker
             } else if *sql_type == SqlType::Uuid {
                 Widget::UuidTextbox
+            }else if width > 100 {
+                Widget::MultilineText
             } else {
                 Widget::Textbox
             };
