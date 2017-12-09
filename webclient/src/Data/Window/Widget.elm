@@ -5,20 +5,27 @@ module Data.Window.Widget
         , ControlWidget
         , controlWidgetDecoder
         , alignmentToString
+        , Dropdown
         )
 
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Extra
 import Json.Decode.Pipeline as Pipeline exposing (custom, decode, hardcoded, required)
+import Data.Window.TableName as TableName exposing (TableName)
 
 
 type alias ControlWidget =
     { widget : Widget
+    , dropdown : Maybe Dropdown
     , width : Int
     , maxLen : Maybe Int
     , height : Int
     , alignment : Alignment
     }
+
+
+type Dropdown
+    = TableDropdown TableName
 
 
 type Alignment
@@ -237,10 +244,24 @@ controlWidgetDecoder : Decoder ControlWidget
 controlWidgetDecoder =
     decode ControlWidget
         |> required "widget" decoder
+        |> required "dropdown" (Decode.nullable dropdownDecoder)
         |> required "width" Decode.int
         |> required "max_len" (Decode.nullable Decode.int)
         |> required "height" Decode.int
         |> required "alignment" alignmentDecoder
+
+
+dropdownDecoder : Decoder Dropdown
+dropdownDecoder =
+    Decode.oneOf
+        [ tableDropdownDecoder
+        ]
+
+
+tableDropdownDecoder : Decoder Dropdown
+tableDropdownDecoder =
+    decode TableDropdown
+        |> required "TableDropdown" TableName.decoder
 
 
 alignmentDecoder : Decoder Alignment

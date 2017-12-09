@@ -2,6 +2,7 @@
 #![feature(plugin)]
 #![plugin(rocket_codegen)]
 #![feature(match_default_bindings)]
+
 extern crate intel;
 #[macro_use]
 extern crate lazy_static;
@@ -140,6 +141,36 @@ fn get_detailed_record(
     }
 }
 
+#[get("/<table_name>/<record_id>/<page>")]
+fn get_lookup_data(
+    table_name: String,
+    record_id: String,
+    page: u32
+) -> Result<Option<Json<Rows>>, ServiceError> {
+    let dm = get_pool_dm()?;
+    let em = get_pool_em()?;
+    let mut cache_pool = cache::CACHE_POOL.lock().unwrap();
+    let windows = cache_pool.get_cached_windows(&em, DB_URL)?;
+    let table_name = TableName::from(&table_name);
+    let window = window::get_window(&table_name, &windows);
+    let tables = cache_pool.get_cached_tables(&em, DB_URL)?;
+    match window {
+        Some(window) => {
+            let rows: Rows = data_service::get_lookup_data(
+                &dm,
+                &tables,
+                &window.main_tab,
+                &record_id,
+                PAGE_SIZE,
+                page,
+            )?;
+            Ok(Some(Json(rows)))
+        }
+        None => Ok(None),
+    }
+}
+
+
 /// retrieve records from a has_many table based on the selected main records
 /// from the main table
 #[get("/<table_name>/select/<record_id>/has_many/<has_many_table>/<page>")]
@@ -270,6 +301,7 @@ pub fn rocket() -> Rocket {
                 get_indirect_records,
             ],
         )
+        .mount("/lookup", routes![get_lookup_data])
         .mount("/window", routes![get_window,])
         .mount("/windows", routes![get_windows,])
 }

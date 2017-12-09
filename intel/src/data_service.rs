@@ -505,14 +505,97 @@ fn get_indirect_records(
 
 /// get the data of this table, no joins
 /// since it is only used as lookup from some other table
-/// most likely don't request the first page since it has
-/// been preloaded
-fn get_lookup_data(
-    _em: &EntityManager,
-    _table_name: &TableName,
-    _filter: Option<Filter>,
-    _page: i32,
-) {
+/// record_id is the value that is selected in the lookup
+/// ensure that the value is included in the first page
+/// this table must have it's own window too
+pub fn get_lookup_data(
+    dm: &RecordManager,
+    tables: &Vec<Table>,
+    tab: &Tab,
+    record_id: &str,
+    page_size: u32,
+    page: u32,
+) -> Result<Rows, IntelError> {
+   
+    let table_name = &tab.table_name;
+    let table = table_intel::get_table(table_name, tables);
+    assert!(table.is_some());
+    let table = table.unwrap();
+
+    let pk_types = table.get_primary_column_types();
+    let primary_columns = table.get_primary_column_names();
+    let record_id = extract_record_id(record_id, &pk_types, &primary_columns)?;
+
+    let ident_columns = match tab.display {
+        Some(ref display) => display.columns.iter().map(|ref col|*col).collect::<Vec<&ColumnName>>(),
+        None => vec![]
+    };
+    
+
+    let column_display: String = match tab.display{
+        Some(ref display) => {
+            let mut buff = "".to_string();
+            let chained = primary_columns.iter()
+                            .map(|col|*col)
+                            .chain(display.columns.iter());
+            for (i,column) in chained.enumerate(){
+                if i > 0 {
+                    buff += ", ";
+                }
+                buff += &column.name ;
+            }
+            buff
+        }
+        None => {
+            "*".to_string()
+        }
+    };
+    let mut record_sql = format!("SELECT {} FROM {} ", column_display, table_name.complete_name());
+    let mut params = vec![];
+    for (i, pk) in primary_columns.iter().enumerate() {
+        if i == 0 {
+            record_sql += "WHERE ";
+        } else {
+            record_sql += "AND ";
+        }
+        record_sql += &format!(" {} = ${} ", pk.complete_name(), i + 1);
+        let required_type = pk_types[i];
+        find_value(pk, &record_id, required_type)
+            .map(|v| params.push(v.clone()));
+    }
+
+    let page_sql = format!("SELECT {} FROM {} ",column_display, table_name.complete_name());
+    let limit_sql = &format!("LIMIT {} OFFSET {} ", page_size, calc_offset(page, page_size));
+    let page_sql_with_limit = "".to_string() + &page_sql + &limit_sql;
+    let mut ensured_sql = format!("WITH _$record AS ({}) ", record_sql);
+    ensured_sql += &format!(", _$page AS ({})", page_sql_with_limit );
+    ensured_sql += &format!(", _$ensured_page AS (
+            SELECT {} FROM _$page
+            UNION
+            SELECT {} FROM _$record
+        )", column_display, column_display);
+    ensured_sql += &format!("SELECT DISTINCT {} FROM _$ensured_page ", column_display);
+
+    let mut order_sql = "".to_string();
+    for (i,column) in ident_columns.iter().enumerate(){
+        if i == 0 {
+            order_sql += "ORDER BY "
+        }else{
+            order_sql += ", ";
+        }
+        order_sql += &format!("{} ASC ", column.name);
+    }
+    
+    let (sql,params) = if page == 1 {
+       (ensured_sql + &order_sql , params)
+    }
+    else {
+       (page_sql + &order_sql + &limit_sql, vec![])
+    };
+    println!("sql: {}", sql);
+    let rows = dm.execute_sql_with_return(&sql, &params)?;
+    println!("rows: {:?}", rows);
+    Ok(rows)
 }
 
 

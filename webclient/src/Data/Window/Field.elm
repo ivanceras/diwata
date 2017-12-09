@@ -8,6 +8,7 @@ module Data.Window.Field
         , widgetWidthListValue
         , shortOrLongWidth
         , simpleDataType
+        , dropdown
         )
 
 import Json.Decode as Decode exposing (Decoder)
@@ -15,7 +16,7 @@ import Json.Decode.Extra
 import Json.Decode.Pipeline as Pipeline exposing (custom, decode, hardcoded, required)
 import Data.Window.ColumnName as ColumnName exposing (ColumnName)
 import Data.Window.DataType as DataType exposing (DataType)
-import Data.Window.Widget as Widget exposing (ControlWidget)
+import Data.Window.Widget as Widget exposing (ControlWidget, Dropdown)
 
 
 type alias Field =
@@ -26,6 +27,11 @@ type alias Field =
     , columnDetail : ColumnDetail
     , controlWidget : ControlWidget
     }
+
+
+dropdown : Field -> Maybe Dropdown
+dropdown field =
+    field.controlWidget.dropdown
 
 
 type ColumnDetail
@@ -68,8 +74,13 @@ columnName field =
         Simple ( columnName, _ ) ->
             ColumnName.completeName columnName
 
-        Compound _ ->
-            "compound <-- fix these"
+        Compound detailList ->
+            List.map
+                (\( columnName, _ ) ->
+                    ColumnName.completeName columnName
+                )
+                detailList
+                |> String.join " - "
 
 
 decoder : Decoder Field

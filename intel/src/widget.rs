@@ -1,5 +1,6 @@
 use reference::Reference;
 use rustorm::Column;
+use rustorm::TableName;
 use rustorm::Table;
 use rustorm::types::SqlType;
 
@@ -76,7 +77,7 @@ pub struct ControlWidget {
 
     /// if the widget is Dropdown, DropdownWithImage, AutoCompleteDropdown
     /// DialogDropdown, CountryList, CountrListWithFlag
-    dropdown_data: Option<DropdownData>,
+    dropdown: Option<Dropdown>,
 
     /// width (character wise) of the widget based on
     /// average of the database values on this column
@@ -104,76 +105,10 @@ pub enum Alignment {
 }
 
 
-/// a simple downdown list in string
-#[derive(Debug, Serialize, Clone)]
-pub struct DropdownRecord {
-    identifier: String,
-    display: String,
-}
 
 #[derive(Debug, Serialize, Clone)]
-pub struct DropdownList {
-    /// api url for the next page to be loaded
-    api_url: String,
-    /// the selected value of the record
-    selected: Option<DropdownRecord>,
-    /// the selection, autoloads on scroll till reaches the last page
-    selection: Vec<DropdownRecord>,
-    /// whether or not all the items of the page has been loaded
-    reached_last_page: bool,
-}
-
-#[derive(Debug, Serialize, Clone)]
-pub enum Image {
-    Url(String),
-    DataUrl(String),
-    /// image type, blob
-    Blob(String, Vec<u8>),
-    CssClass(String),
-}
-
-
-#[derive(Debug, Serialize, Clone)]
-pub struct DropdownRecordWithImage {
-    identifier: String,
-    display: String,
-    /// the url image of the record display
-    image: Image,
-}
-
-#[derive(Debug, Serialize, Clone)]
-pub struct DropdownListWithImage {
-    /// api url for the next page to be loaded
-    api_url: String,
-    /// the selected value of the record
-    selected: Option<DropdownRecordWithImage>,
-    /// the selection, autoloads on scroll till reaches the last page
-    choices: Vec<DropdownRecordWithImage>,
-    /// whether or not all the items of the page has been loaded
-    reached_last_page: bool,
-}
-
-#[derive(Debug, Serialize, Clone)]
-pub struct DropdownListWithAutocomplete {
-    /// api url for the next page to be loaded
-    api_url: String,
-    /// the selected value of the record
-    selected: Option<DropdownRecord>,
-    /// the selection, autoloads on scroll till reaches the last page
-    choices: Vec<DropdownRecord>,
-    /// whether or not all the items of the page has been loaded
-    reached_last_page: bool,
-}
-
-
-#[derive(Debug, Serialize, Clone)]
-pub enum DropdownData {
-    DropdownList(DropdownList),
-    /// whatever the image shape displayed as is
-    DropdownListWithImage(DropdownListWithImage),
-    /// images in rounded corner
-    DropdownListWithRoundedImage(DropdownListWithImage),
-    DropdownListWithAutocomplete(DropdownListWithAutocomplete),
+pub enum Dropdown {
+    TableDropdown(TableName),
 }
 
 
@@ -190,7 +125,7 @@ impl ControlWidget {
             let widget = reference.get_widget_fullview();
             ControlWidget {
                 widget,
-                dropdown_data: None,
+                dropdown: None,
                 width,
                 max_len: limit,
                 height: 1,
@@ -212,7 +147,7 @@ impl ControlWidget {
             };
             ControlWidget {
                 widget,
-                dropdown_data: None,
+                dropdown: None,
                 width,
                 max_len: limit,
                 height: 1,
@@ -232,7 +167,7 @@ impl ControlWidget {
         }
     }
 
-    pub fn from_has_one_table(columns: &Vec<&Column>, _table: &Table) -> Self {
+    pub fn from_has_one_table(columns: &Vec<&Column>, table: &Table) -> Self {
         let reference = Reference::TableLookup;
         let widget = reference.get_widget_fullview();
         let width = columns
@@ -244,9 +179,13 @@ impl ControlWidget {
             .max()
             .unwrap_or(0);
 
+        let dropdown = Some(
+            Dropdown::TableDropdown(table.name.clone())
+        );
+
         ControlWidget {
             widget,
-            dropdown_data: None, // not yet computed here
+            dropdown, 
             width,
             max_len: None,
             height: 1,

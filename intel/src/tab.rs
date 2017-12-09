@@ -24,7 +24,7 @@ pub struct Tab {
 
 #[derive(Debug, Serialize, Clone)]
 pub struct IdentifierDisplay {
-    columns: Vec<ColumnName>,
+    pub columns: Vec<ColumnName>,
     separator: Option<String>,
 }
 
@@ -49,6 +49,8 @@ impl Tab {
         fields
     }
 
+    // TODO: also make a function to do derive_image_display to detect
+    // images that are displayeable
     fn derive_display(table: &Table) -> Option<IdentifierDisplay> {
         let table_name = &table.name.name;
         let columns = &table.columns;

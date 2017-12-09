@@ -86,6 +86,11 @@ init session tableName =
                 |> Http.toTask
                 |> Task.mapError handleLoadError
 
+        loadLookups =
+            Request.Window.Records.lookups maybeAuthToken tableName
+                |> Http.toTask
+                |> Task.mapError handleLoadError
+
         handleLoadError e =
             let
                 _ =

@@ -15,6 +15,8 @@ import Data.Window.Field as Field exposing (Field)
 import Data.Window.DataType as DataType exposing (DataType)
 import Dict
 import Data.Window.Record as Record exposing (Record, RecordId)
+import Data.Window.ColumnName as ColumnName exposing (ColumnName)
+import Data.Window.Widget as Widget exposing (Dropdown)
 
 
 type alias Tab =
@@ -23,6 +25,13 @@ type alias Tab =
     , tableName : TableName
     , fields : List Field
     , isView : Bool
+    , display : Maybe IdentifierDisplay
+    }
+
+
+type alias IdentifierDisplay =
+    { columns : List ColumnName
+    , separator : Maybe String
     }
 
 
@@ -39,6 +48,14 @@ decoder =
         |> required "table_name" TableName.decoder
         |> required "fields" (Decode.list Field.decoder)
         |> required "is_view" Decode.bool
+        |> required "display" (Decode.nullable displayDecoder)
+
+
+displayDecoder : Decoder IdentifierDisplay
+displayDecoder =
+    decode IdentifierDisplay
+        |> required "columns" (Decode.list ColumnName.decoder)
+        |> required "separator" (Decode.nullable Decode.string)
 
 
 primaryFields : Tab -> List Field
