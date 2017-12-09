@@ -142,7 +142,7 @@ impl Reference {
             Reference::Name => Widget::Textbox,
             Reference::Password => Widget::Password,
             Reference::Tag => Widget::TagSelection,
-            Reference::CountryNameLookup => Widget::AutoCompleteDropdown,
+            Reference::CountryNameLookup => Widget::AutocompleteDropdown,
             Reference::CountryCodeLookup => Widget::DropdownWithImage,
             Reference::Color => Widget::ColorSelector,
             Reference::Timezone => Widget::TimezoneLookup,

@@ -31,7 +31,7 @@ pub enum Widget {
 
     Dropdown,
     DropdownWithImage,
-    AutoCompleteDropdown,
+    AutocompleteDropdown,
     DialogDropdown,
     TableLookupDropdown,
 
@@ -119,7 +119,6 @@ pub struct DropdownList {
     selected: Option<DropdownRecord>,
     /// the selection, autoloads on scroll till reaches the last page
     selection: Vec<DropdownRecord>,
-    current_page: u32,
     /// whether or not all the items of the page has been loaded
     reached_last_page: bool,
 }
@@ -149,21 +148,19 @@ pub struct DropdownListWithImage {
     /// the selected value of the record
     selected: Option<DropdownRecordWithImage>,
     /// the selection, autoloads on scroll till reaches the last page
-    selection: Vec<DropdownRecordWithImage>,
-    current_page: u32,
+    choices: Vec<DropdownRecordWithImage>,
     /// whether or not all the items of the page has been loaded
     reached_last_page: bool,
 }
 
 #[derive(Debug, Serialize, Clone)]
-pub struct DropdownListWithAutoComplete {
+pub struct DropdownListWithAutocomplete {
     /// api url for the next page to be loaded
     api_url: String,
     /// the selected value of the record
     selected: Option<DropdownRecord>,
     /// the selection, autoloads on scroll till reaches the last page
-    selection: Vec<DropdownRecord>,
-    current_page: u32,
+    choices: Vec<DropdownRecord>,
     /// whether or not all the items of the page has been loaded
     reached_last_page: bool,
 }
@@ -176,7 +173,7 @@ pub enum DropdownData {
     DropdownListWithImage(DropdownListWithImage),
     /// images in rounded corner
     DropdownListWithRoundedImage(DropdownListWithImage),
-    DropdownListWithAutoComplete(DropdownListWithAutoComplete),
+    DropdownListWithAutocomplete(DropdownListWithAutocomplete),
 }
 
 
