@@ -46,6 +46,12 @@
     border-color: #ccc;
 }
 
+.card-field-value > textarea {
+    border-width: 1px 1px 1px 1px;
+    border-style: solid;
+    border-color: #ccc;
+}
+
 .card-field-name{
     padding: 0 5px;
     height: 30px;
@@ -232,7 +238,7 @@ a.primary-link {
 .tag-selection{
     display: flex;
     border-width: 0 0 1px 0;
-    border-color: #aaa;
+    border-color: #ccc;
     border-style: solid;
     outline: 0;
     height: 30px;
@@ -259,10 +265,6 @@ a.primary-link {
 }
 
 
-.detail-tab-names {
-    display: flex;
-    background-color: #ddd;
-}
 
 .indirect-tab {
     background-color: #eddac9;
@@ -311,8 +313,11 @@ a.primary-link {
 }
 
 .detail-tab-names {
+    display: flex;
+    background-color: #ddd;
     height: 40px;
     padding-left: 40px;
+    overflow-x: auto;
 }
 
 .active-detail-tab {

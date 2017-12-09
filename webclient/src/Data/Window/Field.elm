@@ -146,13 +146,16 @@ widgetWidthListValue field =
     0 to 40 - 200px
     41 to ~ - 800px
 -}
-shortOrLongWidth : Field -> Int
+shortOrLongWidth : Field -> ( Int, Int )
 shortOrLongWidth field =
     let
         width =
             field.controlWidget.width
+
+        lines =
+            round (toFloat width / 100) + 2
     in
         if width < 40 then
-            200
+            ( 200, 1 )
         else
-            800
+            ( 800, lines )

@@ -20,7 +20,7 @@ viewInList field value =
         widgetWidth =
             Field.widgetWidthListValue field
     in
-        widgetView widgetWidth field value
+        widgetView ( widgetWidth, 1 ) field value
 
 
 {-| view value in card view
@@ -28,14 +28,17 @@ viewInList field value =
 viewInCard : Field -> Maybe Value -> Html msg
 viewInCard field value =
     let
-        widgetWidth =
+        ( width, height ) =
             Field.shortOrLongWidth field
+
+        controlWidget =
+            field.controlWidget
     in
-        widgetView widgetWidth field value
+        widgetView ( width, height ) field value
 
 
-widgetView : Int -> Field -> Maybe Value -> Html msg
-widgetView widgetWidth field maybeValue =
+widgetView : ( Int, Int ) -> Field -> Maybe Value -> Html msg
+widgetView ( widgetWidth, widgetHeight ) field maybeValue =
     let
         controlWidget =
             field.controlWidget
@@ -60,12 +63,22 @@ widgetView widgetWidth field maybeValue =
     in
         case controlWidget.widget of
             Textbox ->
-                input
-                    [ type_ "text"
-                    , styles
-                    , value valueString
-                    ]
-                    []
+                if widgetHeight > 1 then
+                    textarea
+                        [ styles
+                        , value valueString
+                        , style [ ( "height", px (widgetHeight * 24) ) ]
+                        , style [ ( "min-height", px 24 ) ]
+                        , style [ ( "min-width", px 100 ) ]
+                        ]
+                        []
+                else
+                    input
+                        [ type_ "text"
+                        , styles
+                        , value valueString
+                        ]
+                        []
 
             UuidTextbox ->
                 input

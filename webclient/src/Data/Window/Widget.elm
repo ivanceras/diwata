@@ -59,6 +59,7 @@ type Widget
     | Checkboxgroup (List String)
     | Dropdown
     | DropdownWithImage
+    | AutocompleteDropdown
     | DialogDropdown
     | TableLookupDropdown
     | Checkbox
@@ -145,6 +146,9 @@ simpleDecoder =
 
                     "DropdownWithImage" ->
                         Decode.succeed DropdownWithImage
+
+                    "AutocompleteDropdown" ->
+                        Decode.succeed AutocompleteDropdown
 
                     "DialogDropdown" ->
                         Decode.succeed DialogDropdown
