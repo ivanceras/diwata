@@ -14,6 +14,8 @@ use rustorm::Record;
 use rustorm::RecordManager;
 use rustorm::ColumnName;
 use tab::Tab;
+pub use data_container::RecordDetail;
+use data_container::Lookup;
 
 pub struct Filter;
 
@@ -114,14 +116,6 @@ fn extract_record_id<'a>(
 }
 
 
-
-#[derive(Debug, Serialize)]
-pub struct RecordDetail {
-    pub record: Record,
-    pub one_ones: Vec<(TableName, Option<Record>)>,
-    pub has_many: Vec<(TableName, Rows)>,
-    pub indirect: Vec<(TableName, Rows)>,
-}
 
 
 /// get the detail of the selected record data
@@ -501,12 +495,6 @@ fn get_indirect_records(
 }
 
 
-pub struct Lookup{
-    /// main table may contain 1:1 tables
-    main_lookup: Vec<(TableName, ColumnName, Rows)>, 
-    hasmany_lookup: Vec<(TableName, ColumnName, Rows)>,
-    indirect_lookup: Vec<(TableName, ColumnName, Rows)>
-}
 
 /// for all fields in the all tabs of the window
 /// that has a dropdown, fetch the first page
