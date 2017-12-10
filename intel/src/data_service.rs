@@ -501,6 +501,22 @@ fn get_indirect_records(
 }
 
 
+pub struct Lookup{
+    /// main table may contain 1:1 tables
+    main_lookup: Vec<(TableName, ColumnName, Rows)>, 
+    hasmany_lookup: Vec<(TableName, ColumnName, Rows)>,
+    indirect_lookup: Vec<(TableName, ColumnName, Rows)>
+}
+
+/// for all fields in the all tabs of the window
+/// that has a dropdown, fetch the first page
+/// of the dropdown
+pub fn get_all_lookup_for_window(
+    _dm: &RecordManager,
+    _tables: &Vec<Table>,
+    _window: &Window) -> Lookup {
+    panic!("not yet!")
+}
 
 
 /// get the data of this table, no joins

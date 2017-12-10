@@ -28,3 +28,8 @@ we need a high static typing compiler that
     traversal of records, allow indirect links
 
 
+## Dependency requirement
+- rsync
+- sed
+- google-closure-compiler
+- elm 0.18
