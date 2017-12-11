@@ -51,7 +51,7 @@ type alias Window =
     , description : Maybe String
     , group : Maybe String
     , mainTab : Tab
-    , hasOneTables : List TableName
+    , hasOneTabs : List Tab
     , oneOneTabs : List Tab
     , hasManyTabs : List Tab
     , indirectTabs : List ( TableName, Tab )
@@ -70,7 +70,7 @@ baseWindowDecoder =
         |> required "description" (Decode.nullable Decode.string)
         |> required "group" (Decode.nullable Decode.string)
         |> required "main_tab" Tab.decoder
-        |> required "has_one_tables" (Decode.list TableName.decoder)
+        |> required "has_one_tabs" (Decode.list Tab.decoder)
         |> required "one_one_tabs" (Decode.list Tab.decoder)
         |> required "has_many_tabs" (Decode.list Tab.decoder)
         |> required "indirect_tabs" (Decode.list indirectTabDecoder)

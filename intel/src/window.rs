@@ -27,7 +27,7 @@ pub struct Window {
 
     /// table names that is referred by fields from the main table
     /// the first page of it is retrieved
-    pub has_one_tables: Vec<TableName>,
+    pub has_one_tabs: Vec<Tab>,
 
     /// this record is linked 1:1 to this record
     /// and the table that contains that record
@@ -50,13 +50,17 @@ impl Window {
     fn from_tables(
         main_table: &Table,
         one_one: &Vec<&Table>,
-        has_one_tables: Vec<TableName>,
+        has_one: &Vec<&Table>,
         has_many: &Vec<&Table>,
         indirect: &Vec<IndirectTable>,
         all_tables: &Vec<Table>,
     ) -> Self {
         let main_tab: Tab = Tab::from_table(main_table, all_tables);
         let one_one_tabs: Vec<Tab> = one_one
+            .iter()
+            .map(|t| Tab::from_table(t, all_tables))
+            .collect();
+        let has_one_tabs: Vec<Tab> = has_one
             .iter()
             .map(|t| Tab::from_table(t, all_tables))
             .collect();
@@ -80,7 +84,7 @@ impl Window {
             description: main_tab.description.to_owned(),
             group: main_tab.table_name.schema.to_owned(),
             main_tab,
-            has_one_tables,
+            has_one_tabs,
             one_one_tabs,
             has_many_tabs,
             indirect_tabs,
@@ -159,14 +163,14 @@ pub fn derive_all_windows(tables: &Vec<Table>) -> Vec<Window> {
         let table_intel = TableIntel(table);
         if table_intel.is_window(&tables) {
             let one_one_tables: Vec<&Table> = table_intel.get_one_one_tables(&tables);
-            let has_one_tables: Vec<TableName> = table_intel.get_has_one_tablenames(&tables);
+            let has_one_tables: Vec<&Table> = table_intel.get_has_one_tables(&tables);
             let has_many_tables: Vec<&Table> = table_intel.get_has_many_tables(&tables);
             let indirect_tables: Vec<IndirectTable> = table_intel.get_indirect_tables(&tables);
             println!("window: {}", table.name.name);
             let window = Window::from_tables(
                 &table,
                 &one_one_tables,
-                has_one_tables,
+                &has_one_tables,
                 &has_many_tables,
                 &indirect_tables,
                 &tables,

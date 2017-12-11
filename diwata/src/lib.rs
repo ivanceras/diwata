@@ -141,10 +141,9 @@ fn get_detailed_record(
     }
 }
 
-#[get("/<table_name>/<record_id>/<page>")]
+#[get("/<table_name>/<page>")]
 fn get_lookup_data(
     table_name: String,
-    record_id: String,
     page: u32
 ) -> Result<Option<Json<Rows>>, ServiceError> {
     let dm = get_pool_dm()?;
@@ -160,7 +159,6 @@ fn get_lookup_data(
                 &dm,
                 &tables,
                 &window.main_tab,
-                &record_id,
                 PAGE_SIZE,
                 page,
             )?;

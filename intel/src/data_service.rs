@@ -31,18 +31,74 @@ fn calc_offset(page: u32, page_size: u32) -> u32 {
     (page - 1) * page_size
 }
 
+fn build_tab_column_display_with_rename(tab: &Tab, rename: bool) -> Option<String> {
+    match *&tab.display {
+        Some(ref display) => {
+            let table_name = &tab.table_name.name;
+            let mut buff = String::new();
+            for (i,column) in display.columns.iter().enumerate(){
+                let column_name = &column.name;
+                if i > 0 {
+                    buff += ", ";
+                }
+                if rename {
+                    buff += &format!("{}.{} as \"{}.{}\"", table_name, column_name, table_name, column_name);
+                } else {
+                    buff += &format!("{}.{}", table_name, column_name);
+                }
+            }
+            Some(buff)
+        }
+        None => None
+    }
+}
+
 /// get data for the window
+/// TODO: left join the table for the lookup fields
+/// retrieving the Lookup table display columns
 pub fn get_maintable_data(
     em: &EntityManager,
-    _tables: &Vec<Table>,
+    tables: &Vec<Table>,
     window: &Window,
     _filter: Option<Filter>,
     page: u32,
     page_size: u32,
 ) -> Result<Rows, DbError> {
-    let mut sql = String::from("SELECT * ");
-    let main_tablename = &window.main_tab.table_name;
+
+    let main_table = get_main_table(window, tables);
+    assert!(main_table.is_some());
+    let main_table = main_table.unwrap();
+
+    let main_tablename = &main_table.name;
+    let mut sql = format!("SELECT {}.* ", main_tablename.name);
+
+    for has_one in window.has_one_tabs.iter(){
+        let column_display = build_tab_column_display_with_rename(has_one, true);
+        column_display.map(|cd| sql += &format!(", {} ",cd));
+    }
+
     sql += &format!("FROM {} \n", main_tablename.complete_name());
+    for has_one in window.has_one_tabs.iter(){
+        sql += &format!("LEFT JOIN {} \n", has_one.table_name.complete_name());
+
+        let has_one_rc: Option<&Vec<ColumnName>> =
+            main_table.get_referred_columns_to_table(&has_one.table_name);
+        assert!(has_one_rc.is_some());
+        let has_one_rc = has_one_rc.unwrap();
+
+        let has_one_fk = main_table.get_foreign_column_names_to_table(&has_one.table_name);
+        assert_eq!(has_one_rc.len(), has_one_rc.len());
+        for (i, referred_column) in has_one_rc.iter().enumerate(){
+            if i == 0 {
+                sql += "ON ";
+            }
+            else {
+                sql += "AND ";
+            }
+            sql += &format!("{}.{} = {}.{} ",main_tablename.name, has_one_fk[i].name, 
+                            has_one.table_name.name, referred_column.name);
+        }
+    }
     sql += &format!("LIMIT {} ", page_size);
     sql += &format!("OFFSET {} ", calc_offset(page, page_size));
     println!("SQL: {}", sql);
@@ -516,7 +572,6 @@ pub fn get_lookup_data(
     dm: &RecordManager,
     tables: &Vec<Table>,
     tab: &Tab,
-    record_id: &str,
     page_size: u32,
     page: u32,
 ) -> Result<Rows, IntelError> {
@@ -526,78 +581,40 @@ pub fn get_lookup_data(
     assert!(table.is_some());
     let table = table.unwrap();
 
-    let pk_types = table.get_primary_column_types();
     let primary_columns = table.get_primary_column_names();
-    let record_id = extract_record_id(record_id, &pk_types, &primary_columns)?;
-
-    let ident_columns = match tab.display {
-        Some(ref display) => display.columns.iter().map(|ref col|*col).collect::<Vec<&ColumnName>>(),
-        None => vec![]
-    };
+    assert!(primary_columns.len() > 0);
+    let mut sql = format!("SELECT ");
+    for (i,pk) in primary_columns.iter().enumerate(){
+        if i > 0 {
+           sql += &"," 
+        }
+        sql += &format!("{} ", pk.name);
+    }
     
+    let column_display = build_tab_column_display_with_rename(tab, false);
 
-    let column_display: String = match tab.display{
+    column_display.map(|cd| sql += &format!(", {} ",cd));
+
+    sql += &format!("FROM {} ", table_name.complete_name());
+
+    match tab.display {
         Some(ref display) => {
-            let mut buff = "".to_string();
-            let chained = primary_columns.iter()
-                            .map(|col|*col)
-                            .chain(display.columns.iter());
-            for (i,column) in chained.enumerate(){
-                if i > 0 {
-                    buff += ", ";
+            for (i,column) in display.columns.iter().enumerate(){
+                if i == 0 {
+                    sql += "ORDER BY "
+                }else{
+                    sql += ", ";
                 }
-                buff += &column.name ;
+                sql += &format!("{} ASC ", column.name);
             }
-            buff
         }
-        None => {
-            "*".to_string()
-        }
-    };
-    let mut record_sql = format!("SELECT {} FROM {} ", column_display, table_name.complete_name());
-    let mut params = vec![];
-    for (i, pk) in primary_columns.iter().enumerate() {
-        if i == 0 {
-            record_sql += "WHERE ";
-        } else {
-            record_sql += "AND ";
-        }
-        record_sql += &format!(" {} = ${} ", pk.complete_name(), i + 1);
-        let required_type = pk_types[i];
-        find_value(pk, &record_id, required_type)
-            .map(|v| params.push(v.clone()));
+        None => ()
     }
 
-    let page_sql = format!("SELECT {} FROM {} ",column_display, table_name.complete_name());
-    let limit_sql = &format!("LIMIT {} OFFSET {} ", page_size, calc_offset(page, page_size));
-    let page_sql_with_limit = "".to_string() + &page_sql + &limit_sql;
-    let mut ensured_sql = format!("WITH _$record AS ({}) ", record_sql);
-    ensured_sql += &format!(", _$page AS ({})", page_sql_with_limit );
-    ensured_sql += &format!(", _$ensured_page AS (
-            SELECT {} FROM _$page
-            UNION
-            SELECT {} FROM _$record
-        )", column_display, column_display);
-    ensured_sql += &format!("SELECT DISTINCT {} FROM _$ensured_page ", column_display);
-
-    let mut order_sql = "".to_string();
-    for (i,column) in ident_columns.iter().enumerate(){
-        if i == 0 {
-            order_sql += "ORDER BY "
-        }else{
-            order_sql += ", ";
-        }
-        order_sql += &format!("{} ASC ", column.name);
-    }
+    sql += &format!("LIMIT {} OFFSET {} ", page_size, calc_offset(page, page_size));
     
-    let (sql,params) = if page == 1 {
-       (ensured_sql + &order_sql , params)
-    }
-    else {
-       (page_sql + &order_sql + &limit_sql, vec![])
-    };
     println!("sql: {}", sql);
-    let rows = dm.execute_sql_with_return(&sql, &params)?;
+    let rows = dm.execute_sql_with_return(&sql, &[])?;
     println!("rows: {:?}", rows);
     Ok(rows)
 }
