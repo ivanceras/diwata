@@ -17,12 +17,12 @@ pub struct Tab {
     /// in these
     pub fields: Vec<Field>,
     pub is_view: bool,
-    /// the displayable column name, serves as identifier to human vision
-    /// this would be name, title, first_name - lastname
     pub display: Option<IdentifierDisplay>,
 }
 
 
+/// the displayable column name, serves as identifier to human vision
+/// this would be name, title, first_name - lastname
 #[derive(Debug, Serialize, Clone)]
 pub struct IdentifierDisplay {
     pub columns: Vec<ColumnName>,
