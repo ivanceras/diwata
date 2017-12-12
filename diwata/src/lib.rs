@@ -29,6 +29,7 @@ use std::path::{Path, PathBuf};
 use rocket::response::NamedFile;
 use rocket::response::Redirect;
 use intel::tab::Tab;
+use intel::data_container::Lookup;
 
 
 mod error;
@@ -139,6 +140,32 @@ fn get_detailed_record(
         }
         None => Ok(None),
     }
+}
+
+#[get("/<table_name>")]
+fn get_window_lookup_data(
+    table_name: String,
+    ) -> Result<Option<Json<Lookup>>, ServiceError> {
+    let dm = get_pool_dm()?;
+    let em = get_pool_em()?;
+    let mut cache_pool = cache::CACHE_POOL.lock().unwrap();
+    let windows = cache_pool.get_cached_windows(&em, DB_URL)?;
+    let table_name = TableName::from(&table_name);
+    let window = window::get_window(&table_name, &windows);
+    let tables = cache_pool.get_cached_tables(&em, DB_URL)?;
+    match window {
+        Some(window) => {
+            let lookup: Lookup = data_service::get_all_lookup_for_window(
+                &dm,
+                &tables,
+                &window,
+                PAGE_SIZE,
+            )?;
+            Ok(Some(Json(lookup)))
+        }
+        None => Ok(None),
+    }
+
 }
 
 #[get("/<table_name>/<page>")]
@@ -300,6 +327,7 @@ pub fn rocket() -> Rocket {
             ],
         )
         .mount("/lookup", routes![get_lookup_data])
+        .mount("/lookup_all", routes![get_window_lookup_data])
         .mount("/window", routes![get_window,])
         .mount("/windows", routes![get_windows,])
 }

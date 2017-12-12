@@ -1,8 +1,9 @@
 use reference::Reference;
 use rustorm::Column;
-use rustorm::TableName;
 use rustorm::Table;
 use rustorm::types::SqlType;
+use data_container::DropdownInfo;
+use tab::Tab;
 
 #[derive(Debug, Serialize, Clone)]
 pub enum Widget {
@@ -108,7 +109,7 @@ pub enum Alignment {
 
 #[derive(Debug, Serialize, Clone)]
 pub enum Dropdown {
-    TableDropdown(TableName),
+    TableDropdown(DropdownInfo),
 }
 
 
@@ -179,10 +180,10 @@ impl ControlWidget {
             .max()
             .unwrap_or(0);
 
-        let dropdown = Some(
-            Dropdown::TableDropdown(table.name.clone())
-        );
-
+        let dropdown = Tab::derive_dropdowninfo(table)
+            .map(|dropdown_info|
+                 Dropdown::TableDropdown(dropdown_info)
+             );
         ControlWidget {
             widget,
             dropdown, 

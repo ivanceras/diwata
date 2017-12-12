@@ -16,7 +16,7 @@ mod field;
 mod table_intel;
 mod service;
 pub mod data_service;
-mod data_container;
+pub mod data_container;
 pub mod cache;
 pub mod error;
 

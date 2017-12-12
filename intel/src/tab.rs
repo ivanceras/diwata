@@ -6,6 +6,7 @@ use field::Field;
 use rustorm::Table;
 use rustorm::Column;
 use table_intel;
+use data_container::DropdownInfo;
 
 #[derive(Debug, Serialize, Clone)]
 pub struct Tab {
@@ -49,11 +50,24 @@ impl Tab {
         fields
     }
 
+    pub fn derive_dropdowninfo(table: &Table) -> Option<DropdownInfo> {
+        match Self::derive_display(table){
+            Some(display) => {
+                Some(DropdownInfo{
+                    source: table.name.clone(),
+                    display,
+                })
+            }
+            None => None
+        }
+    }
+
     // TODO: also make a function to do derive_image_display to detect
     // images that are displayeable
     fn derive_display(table: &Table) -> Option<IdentifierDisplay> {
         let table_name = &table.name.name;
         let columns = &table.columns;
+        // match for users table common structure
         let display = if table_name == "user" ||
             table_name == "users" {
             let found_column = 
@@ -87,6 +101,7 @@ impl Tab {
             })
         };
 
+        // match for person common columns
         display.or_else(|| {
             let maybe_firstname = 
                 columns.iter()
@@ -115,9 +130,25 @@ impl Tab {
                 }
             }
             else{
-                None
-            }
+                let same_name =
+                        columns.iter()
+                            .find(|column| {
+                                let column_name = &column.name.name;
+                                column_name == table_name
+                            });
+
+                    match same_name {
+                        Some(column) => {
+                            Some(IdentifierDisplay {
+                                columns: vec![column.name.clone()],
+                                separator: None
+                            })
+                        }
+                        None => None
+                   }
+                }
         })
+
     }
 
 

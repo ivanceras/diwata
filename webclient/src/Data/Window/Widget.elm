@@ -12,6 +12,7 @@ import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Extra
 import Json.Decode.Pipeline as Pipeline exposing (custom, decode, hardcoded, required)
 import Data.Window.TableName as TableName exposing (TableName)
+import Data.Window.Display as Display exposing (IdentifierDisplay)
 
 
 type alias ControlWidget =
@@ -25,8 +26,13 @@ type alias ControlWidget =
 
 
 type Dropdown
-    = TableDropdown TableName
+    = TableDropdown DropdownInfo 
 
+
+type alias DropdownInfo =
+    { source : TableName
+    , display: IdentifierDisplay
+    }
 
 type Alignment
     = Left
@@ -261,8 +267,14 @@ dropdownDecoder =
 tableDropdownDecoder : Decoder Dropdown
 tableDropdownDecoder =
     decode TableDropdown
-        |> required "TableDropdown" TableName.decoder
+        |> required "TableDropdown" dropdownInfoDecoder
 
+
+dropdownInfoDecoder : Decoder DropdownInfo
+dropdownInfoDecoder =
+    decode DropdownInfo
+        |> required "source" TableName.decoder
+        |> required "display" Display.decoder
 
 alignmentDecoder : Decoder Alignment
 alignmentDecoder =

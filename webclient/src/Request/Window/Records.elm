@@ -48,7 +48,7 @@ listPage page maybeToken tableName =
 
 lookups : Maybe AuthToken -> TableName -> Http.Request Rows
 lookups maybeToken tableName =
-    apiUrl ("/lookup/" ++ tableNameToString tableName ++ "/")
+    apiUrl ("/lookup_all/" ++ tableNameToString tableName)
         |> HttpBuilder.get
         |> HttpBuilder.withExpect (Http.expectJson Record.rowsDecoder)
         |> withAuthorization maybeToken

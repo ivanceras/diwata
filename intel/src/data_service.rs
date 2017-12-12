@@ -558,7 +558,9 @@ fn get_indirect_records(
 pub fn get_all_lookup_for_window(
     _dm: &RecordManager,
     _tables: &Vec<Table>,
-    _window: &Window) -> Lookup {
+    _window: &Window,
+    _page_size: u32
+    ) -> Result<Lookup,DbError> {
     panic!("not yet!")
 }
 
