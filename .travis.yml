@@ -21,4 +21,5 @@ before_script:
 
   
 script:
+  - cargo build -p diwata --release
   - cargo test --all-features

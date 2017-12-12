@@ -34,4 +34,4 @@ test:
 
 build:
   script:
-    - cargo build -p webserver --release
+    - cargo build -p diwata --release
