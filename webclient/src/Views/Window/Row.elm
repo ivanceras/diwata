@@ -47,7 +47,7 @@ view recordId record tab =
                             (if field.isPrimary then
                                 [ viewPrimaryValue ]
                              else
-                                [ Value.viewInList field value ]
+                                [ Value.viewInList tab field record ]
                             )
                 )
                 fields

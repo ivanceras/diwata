@@ -10,23 +10,26 @@ import Widgets.Tagger as Tagger
 import Data.Window.Field as Field exposing (Field)
 import Util exposing (px)
 import Data.Window.DataType as DataType exposing (DataType)
+import Data.Window.Tab as Tab exposing (Tab)
+import Data.Window.Record as Record exposing (Record)
+import Dict
 
 
 {-| View value in list record view
 -}
-viewInList : Field -> Maybe Value -> Html msg
-viewInList field value =
+viewInList : Tab -> Field -> Record -> Html msg
+viewInList tab field record =
     let
         widgetWidth =
             Field.widgetWidthListValue field
     in
-        widgetView InList ( widgetWidth, 1 ) field value
+        widgetView InList ( widgetWidth, 1 ) tab field (Just record)
 
 
 {-| view value in card view
 -}
-viewInCard : Field -> Maybe Value -> Html msg
-viewInCard field value =
+viewInCard : Tab -> Field -> Maybe Record -> Html msg
+viewInCard tab field record =
     let
         ( width, height ) =
             Field.shortOrLongWidth field
@@ -34,7 +37,7 @@ viewInCard field value =
         controlWidget =
             field.controlWidget
     in
-        widgetView InCard ( width, height ) field value
+        widgetView InCard ( width, height ) tab field record
 
 
 type Presentation
@@ -42,9 +45,20 @@ type Presentation
     | InCard
 
 
-widgetView : Presentation -> ( Int, Int ) -> Field -> Maybe Value -> Html msg
-widgetView presentation ( widgetWidth, widgetHeight ) field maybeValue =
+widgetView : Presentation -> ( Int, Int ) -> Tab -> Field -> Maybe Record -> Html msg
+widgetView presentation ( widgetWidth, widgetHeight ) tab field record =
     let
+        columnName =
+            Field.columnName field
+
+        maybeValue =
+            case record of
+                Just record ->
+                    Dict.get columnName record
+
+                Nothing ->
+                    Nothing
+
         controlWidget =
             field.controlWidget
 
@@ -199,12 +213,32 @@ widgetView presentation ( widgetWidth, widgetHeight ) field maybeValue =
                     Tagger.view styles tags
 
             TableLookupDropdown ->
-                input
-                    [ type_ "text"
-                    , styles
-                    , value valueString
-                    ]
-                    []
+                let
+                    maybeDisplay =
+                        case record of
+                            Just record ->
+                                Tab.displayValuesFromField tab field record
+
+                            Nothing ->
+                                Nothing
+
+                    display =
+                        case maybeDisplay of
+                            Just v ->
+                                v
+
+                            Nothing ->
+                                ""
+
+                    textDisplay =
+                        valueString ++ "  |  " ++ display
+                in
+                    input
+                        [ type_ "text"
+                        , styles
+                        , value textDisplay
+                        ]
+                        []
 
             _ ->
                 Debug.crash ("unable to handle widget:" ++ toString controlWidget)

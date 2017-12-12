@@ -5,6 +5,7 @@ module Data.Window.Tab
         , columnNames
         , primaryFields
         , recordId
+        , displayValuesFromField
         )
 
 import Json.Decode as Decode exposing (Decoder)
@@ -16,8 +17,10 @@ import Data.Window.DataType as DataType exposing (DataType)
 import Dict
 import Data.Window.Record as Record exposing (Record, RecordId)
 import Data.Window.ColumnName as ColumnName exposing (ColumnName)
-import Data.Window.Widget as Widget exposing (Dropdown)
+import Data.Window.Widget as Widget exposing (Dropdown(..))
 import Data.Window.Display as Display exposing (IdentifierDisplay)
+import Data.Window.Field as Field exposing (Field)
+import Data.Window.Value as Value exposing (Value)
 
 
 type alias Tab =
@@ -44,8 +47,6 @@ decoder =
         |> required "fields" (Decode.list Field.decoder)
         |> required "is_view" Decode.bool
         |> required "display" (Decode.nullable Display.decoder)
-
-
 
 
 primaryFields : Tab -> List Field
@@ -80,3 +81,64 @@ recordId record tab =
                 pkFields
     in
         Record.RecordId (primaryValues)
+
+
+{-| only works for simple column name on fields
+-}
+tableColumn : TableName -> ColumnName -> String
+tableColumn tableName columnName =
+    tableName.name ++ "." ++ columnName.name
+
+
+{-| Get a the dropdown record value
+-}
+displayValue : TableName -> ColumnName -> Record -> Maybe Value
+displayValue sourceTable displayColumn record =
+    let
+        name =
+            tableColumn sourceTable displayColumn
+    in
+        Dict.get name record
+
+
+displayValues : TableName -> List ColumnName -> Record -> List Value
+displayValues sourceTable displayColumns record =
+    List.filterMap
+        (\column ->
+            displayValue sourceTable column record
+        )
+        displayColumns
+
+
+displayValuesFromField : Tab -> Field -> Record -> Maybe String
+displayValuesFromField tab field record =
+    let
+        cwidget =
+            field.controlWidget
+
+        dropdown =
+            cwidget.dropdown
+    in
+        case dropdown of
+            Just (Widget.TableDropdown info) ->
+                let
+                    sourceTable =
+                        info.source
+
+                    displayColumns =
+                        info.display.columns
+
+                    separator =
+                        Maybe.withDefault "" info.display.separator
+
+                    valueList =
+                        displayValues sourceTable displayColumns record
+
+                    valueListStrings =
+                        List.map Value.valueToString valueList
+                in
+                    String.join separator valueListStrings
+                        |> Just
+
+            Nothing ->
+                Nothing

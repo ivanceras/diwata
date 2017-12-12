@@ -5,7 +5,7 @@ module Data.Window.Widget
         , ControlWidget
         , controlWidgetDecoder
         , alignmentToString
-        , Dropdown
+        , Dropdown(..)
         )
 
 import Json.Decode as Decode exposing (Decoder)
@@ -26,13 +26,14 @@ type alias ControlWidget =
 
 
 type Dropdown
-    = TableDropdown DropdownInfo 
+    = TableDropdown DropdownInfo
 
 
 type alias DropdownInfo =
     { source : TableName
-    , display: IdentifierDisplay
+    , display : IdentifierDisplay
     }
+
 
 type Alignment
     = Left
@@ -275,6 +276,7 @@ dropdownInfoDecoder =
     decode DropdownInfo
         |> required "source" TableName.decoder
         |> required "display" Display.decoder
+
 
 alignmentDecoder : Decoder Alignment
 alignmentDecoder =

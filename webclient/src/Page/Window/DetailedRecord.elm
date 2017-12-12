@@ -16,8 +16,8 @@ import Data.Window.Tab as Tab exposing (Tab)
 import Views.Window.Tab as Tab
 import Dict
 import Data.Window.Field as Field exposing (Field)
-import Views.Window.Field as Field
 import Data.Window.Value as Value exposing (Value)
+import Views.Window.Value as Value
 import Mouse exposing (Position)
 import Data.Session as Session exposing (Session)
 import Util exposing ((=>))
@@ -269,26 +269,6 @@ cardViewRecord record tab =
         columnNames =
             Tab.columnNames tab
 
-        fieldValuePair : List ( Field, Maybe Value )
-        fieldValuePair =
-            List.map
-                (\field ->
-                    let
-                        columnName =
-                            Field.columnName field
-
-                        value =
-                            case record of
-                                Just record ->
-                                    Dict.get columnName record
-
-                                Nothing ->
-                                    Nothing
-                    in
-                        ( field, value )
-                )
-                tab.fields
-
         maxColumnLen =
             List.map String.length columnNames
                 |> List.maximum
@@ -304,12 +284,27 @@ cardViewRecord record tab =
         div []
             [ div [ class "card-view" ]
                 (List.map
-                    (\( field, value ) ->
-                        Field.view fieldLabelWidth field value
+                    (\field ->
+                        viewFieldInCard fieldLabelWidth tab field record
                     )
-                    fieldValuePair
+                    tab.fields
                 )
             ]
+
+
+viewFieldInCard : Int -> Tab -> Field -> Maybe Record -> Html msg
+viewFieldInCard labelWidth tab field record =
+    div [ class "card-field" ]
+        [ div
+            [ class "card-field-name"
+            , style [ ( "width", px labelWidth ) ]
+            ]
+            [ label [ class "card-field-label" ]
+                [ text (field.name ++ ": ") ]
+            ]
+        , div [ class "card-field-value" ]
+            [ Value.viewInCard tab field record ]
+        ]
 
 
 viewDetailTabs : Model -> Html Msg
