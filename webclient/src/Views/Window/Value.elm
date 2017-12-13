@@ -276,7 +276,10 @@ widgetView presentation ( widgetWidth, widgetHeight ) tab field record =
                     select
                         [ styles
                         ]
-                        [ option [ value valueString ]
+                        [ option
+                            [ value valueString
+                            , selected True
+                            ]
                             [ text textDisplay ]
                         ]
 
