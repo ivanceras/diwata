@@ -72,31 +72,52 @@ pub fn get_maintable_data(
     let main_tablename = &main_table.name;
     let mut sql = format!("SELECT {}.* ", main_tablename.name);
 
-    for has_one in window.has_one_tabs.iter(){
-        let column_display = build_tab_column_display_with_rename(has_one, true);
-        column_display.map(|cd| sql += &format!(", {} ",cd));
+    for field in &window.main_tab.fields{
+        let dropdown_info = field.get_dropdown_info();
+        match dropdown_info{
+            Some(ref dropdown_info) => {
+                let source_tablename = &dropdown_info.source.name;
+                let field_column_name = &field.first_column_name().name;
+                let source_table_rename = format!("{}_{}",field_column_name, source_tablename);
+                for display_column in &dropdown_info.display.columns{
+                    let display_column_name = &display_column.name;
+                    sql += &format!(", {}.{} as \"{}.{}.{}\" ", source_table_rename,  display_column_name,
+                                    field_column_name, source_tablename, display_column_name);
+                }
+            }
+            None => {
+                ()
+            }
+        }
     }
 
     sql += &format!("FROM {} \n", main_tablename.complete_name());
-    for has_one in window.has_one_tabs.iter(){
-        sql += &format!("LEFT JOIN {} \n", has_one.table_name.complete_name());
-
-        let has_one_rc: Option<&Vec<ColumnName>> =
-            main_table.get_referred_columns_to_table(&has_one.table_name);
-        assert!(has_one_rc.is_some());
-        let has_one_rc = has_one_rc.unwrap();
-
-        let has_one_fk = main_table.get_foreign_column_names_to_table(&has_one.table_name);
-        assert_eq!(has_one_rc.len(), has_one_rc.len());
-        for (i, referred_column) in has_one_rc.iter().enumerate(){
-            if i == 0 {
-                sql += "ON ";
+    for field in &window.main_tab.fields{
+        let dropdown_info = field.get_dropdown_info();
+        match dropdown_info{
+            Some(ref dropdown_info) => {
+                let source_tablename = &dropdown_info.source.name;
+                let source_table = table_intel::get_table(&dropdown_info.source, tables);
+                assert!(source_table.is_some());
+                let source_table = source_table.unwrap();
+                let source_pk = source_table.get_primary_column_names();
+                let field_column_name = &field.first_column_name().name;
+                let field_column_names = field.column_names();
+                let source_table_rename = format!("{}_{}",field_column_name, source_tablename);
+                assert_eq!(source_pk.len(), field_column_names.len());
+                sql += &format!("\nLEFT JOIN {} AS {} ", source_tablename, source_table_rename);
+                for (i, spk) in source_pk.iter().enumerate() {
+                    if i == 0{
+                        sql += "ON "
+                    }else {
+                        sql += "AND "
+                    }
+                    sql += &format!("{}.{} = {}.{} ", source_table_rename, spk.name, main_tablename.name, field_column_names[i].name)
+                }
             }
-            else {
-                sql += "AND ";
+            None => {
+                ()
             }
-            sql += &format!("{}.{} = {}.{} ",main_tablename.name, has_one_fk[i].name, 
-                            has_one.table_name.name, referred_column.name);
         }
     }
     sql += &format!("LIMIT {} ", page_size);

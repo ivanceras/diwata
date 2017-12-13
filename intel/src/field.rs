@@ -7,6 +7,8 @@ use rustorm::types::ArrayType;
 use rustorm::Table;
 use widget::ControlWidget;
 use rustorm::ColumnName;
+use data_container::DropdownInfo;
+use widget::Dropdown;
 
 
 #[derive(Debug, Serialize, Clone)]
@@ -28,6 +30,27 @@ pub struct Field {
 pub enum ColumnDetail {
     Simple(ColumnName, SqlType),
     Compound(Vec<(ColumnName, SqlType)>),
+}
+
+impl ColumnDetail {
+    fn first_column_name(&self) -> &ColumnName {
+        match *self{
+            ColumnDetail::Simple(ref column_name, _) => &column_name,
+            ColumnDetail::Compound(ref column_names_types) => &column_names_types[0].0
+        }
+    }
+
+    fn column_names(&self) -> Vec<&ColumnName> {
+        match *self{
+            ColumnDetail::Simple(ref column_name, _) => vec![column_name],
+            ColumnDetail::Compound(ref column_names_types) => {
+                column_names_types.iter()
+                    .map(|&(ref column_name,_)|
+                         column_name
+                    ).collect()
+            }
+        }
+    }
 }
 
 impl<'a> From<&'a Column> for ColumnDetail {
@@ -79,6 +102,24 @@ impl Field {
         }
     }
 
+    pub fn get_dropdown_info(&self) -> Option<&DropdownInfo> {
+        let control_widget = &self.control_widget;
+        let dropdown = &control_widget.dropdown;
+        match *dropdown {
+            Some(Dropdown::TableDropdown(ref dropdown_info)) => Some(dropdown_info),
+            None => None
+        }
+    }
+
+    pub fn column_names(&self) -> Vec<&ColumnName> {
+        self.column_detail.column_names()
+    }
+
+    pub fn first_column_name(&self) -> &ColumnName {
+        self.column_detail.first_column_name()
+    }
+
+
     /// 2 or more columns
     /// will be merge into 1 field
     /// such as this: a lookup to the table
@@ -91,6 +132,8 @@ impl Field {
         referred_table: &Table,
     ) -> Self {
         let control_widget = ControlWidget::from_has_one_table(columns, referred_table);
+        println!("control widget of {} on referred_table: {} is widget: {:?}", table.name.name, referred_table.name.name, control_widget);
+        println!("referring columns: {:#?}", columns);
         let mut columns_comment = String::new();
         for column in columns {
             if let Some(ref comment) = column.comment {

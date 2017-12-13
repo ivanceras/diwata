@@ -78,7 +78,7 @@ pub struct ControlWidget {
 
     /// if the widget is Dropdown, DropdownWithImage, AutoCompleteDropdown
     /// DialogDropdown, CountryList, CountrListWithFlag
-    dropdown: Option<Dropdown>,
+    pub dropdown: Option<Dropdown>,
 
     /// width (character wise) of the widget based on
     /// average of the database values on this column
