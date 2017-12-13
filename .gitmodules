@@ -3,4 +3,4 @@
 	url = https://ivanceras@github.com/ivanceras/sakila
 [submodule "rustorm"]
 	path = rustorm
-	url = https://ivanceras@gitlab.com/ivanceras/rustorm-rewrite
+	url = https://ivanceras@github.com/ivanceras/rustorm
