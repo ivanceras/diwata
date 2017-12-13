@@ -204,10 +204,14 @@ impl Field {
             && (table_name == "users" || table_name == "user")
         {
             Some(Reference::PrimaryUserUuid)
-        } else if sql_type == &SqlType::Uuid && default_is_generated_uuid
+        } 
+        else if sql_type == &SqlType::Uuid && default_is_generated_uuid
             && table.get_primary_column_names().contains(&&column.name) {
                 Some(Reference::PrimaryUuid)
-            }
+        }
+        else if table.get_primary_column_names().contains(&&column.name) {
+            Some(Reference::PrimaryField)
+        }
         
         // if numeric range with 2 precision on decimal
         else if sql_type == &SqlType::Numeric && match *capacity {

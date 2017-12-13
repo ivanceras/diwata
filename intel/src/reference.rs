@@ -44,6 +44,7 @@ pub enum Reference {
     ReferredUserUuid, // referred user in uuid
     PrimaryUuid,      // it is a primary key value and uuid type
     PrimaryInt,       // it is a primary key value and int type
+    PrimaryField,     // primary key value regardless of the type
     ReferredUuid,     // a foreign key uuid referring to another record from some other table
     Created,          // indicates a date the record was created
     Updated,          // indicates a date the record was updated
@@ -156,6 +157,7 @@ impl Reference {
             Reference::ReferredUserUuid => Widget::DialogDropdown,
             Reference::PrimaryUuid => Widget::PrimaryUrlLink,
             Reference::PrimaryInt => Widget::PrimaryUrlLink,
+            Reference::PrimaryField => Widget::PrimaryUrlLink,
             Reference::ReferredUuid => Widget::DialogDropdown,
             Reference::Created => Widget::DateTimePicker,
             Reference::Updated => Widget::DateTimePicker,
