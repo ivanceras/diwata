@@ -87,7 +87,7 @@ impl<'a> From<&'a Vec<&'a Column>> for ColumnDetail {
 impl Field {
     /// derive field from supplied column
     pub fn from_column(table: &Table, column: &Column) -> Self {
-        let reference = Self::try_derive_reference(column);
+        let reference = Self::try_derive_reference(table, column);
         let control_widget = ControlWidget::derive_control_widget(column, &reference);
         let column_detail: ColumnDetail = ColumnDetail::from(column);
         let primary_columns = table.get_primary_column_names();
@@ -160,10 +160,10 @@ impl Field {
 
     /// check to see if has a strict derive_reference
     /// also try the derive_maybe_reference
-    fn try_derive_reference(column: &Column) -> Option<Reference> {
-        match Self::derive_reference(column) {
+    fn try_derive_reference(table: &Table, column: &Column) -> Option<Reference> {
+        match Self::derive_reference(table, column) {
             Some(reference) => Some(reference),
-            None => Self::derive_maybe_reference(column),
+            None => Self::derive_maybe_reference(table, column),
         }
     }
 
@@ -172,7 +172,7 @@ impl Field {
     /// - sql_type, capacity
     /// - column_name as clue
     /// - actual value to verify if it matches the reference
-    fn derive_reference(column: &Column) -> Option<Reference> {
+    fn derive_reference(table: &Table, column: &Column) -> Option<Reference> {
         let table_name = &column.table.name;
         let column_name = &column.name.name;
         let sql_type = &column.specification.sql_type;
@@ -204,7 +204,11 @@ impl Field {
             && (table_name == "users" || table_name == "user")
         {
             Some(Reference::PrimaryUserUuid)
-        }
+        } else if sql_type == &SqlType::Uuid && default_is_generated_uuid
+            && table.get_primary_column_names().contains(&&column.name) {
+                Some(Reference::PrimaryUuid)
+            }
+        
         // if numeric range with 2 precision on decimal
         else if sql_type == &SqlType::Numeric && match *capacity {
             Some(ref capacity) => match *capacity {
@@ -265,7 +269,7 @@ impl Field {
     }
 
     /// derive reference but not really sure
-    fn derive_maybe_reference(column: &Column) -> Option<Reference> {
+    fn derive_maybe_reference(_table: &Table, column: &Column) -> Option<Reference> {
         let column_name = &column.name.name;
         let sql_type = &column.specification.sql_type;
         let capacity = &column.specification.capacity;
