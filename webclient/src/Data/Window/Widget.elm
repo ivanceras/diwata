@@ -81,6 +81,7 @@ type Widget
     | IndicatorStatusImage
     | ToggleButton
     | UrlLink
+    | PrimaryUrlLink
     | UrlTextbox
     | VideoLink
     | YoutubeVideoEmbed
@@ -184,6 +185,9 @@ simpleDecoder =
 
                     "UrlLink" ->
                         Decode.succeed UrlLink
+
+                    "PrimaryUrlLink" ->
+                        Decode.succeed PrimaryUrlLink
 
                     "UrlTextbox" ->
                         Decode.succeed UrlTextbox

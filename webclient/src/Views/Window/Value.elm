@@ -233,12 +233,12 @@ widgetView presentation ( widgetWidth, widgetHeight ) tab field record =
                     textDisplay =
                         valueString ++ "  |  " ++ display
                 in
-                    input
-                        [ type_ "text"
-                        , styles
-                        , value textDisplay
+                    select
+                        [ styles
                         ]
-                        []
+                        [ option [ value valueString ]
+                            [ text textDisplay ]
+                        ]
 
             _ ->
                 Debug.crash ("unable to handle widget:" ++ toString controlWidget)

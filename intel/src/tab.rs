@@ -122,7 +122,7 @@ impl Tab {
                 if let Some(firstname) = maybe_firstname {
                     Some(IdentifierDisplay{
                         columns: vec![lastname.name.clone(), firstname.name.clone()],
-                        separator: Some(",".into())
+                        separator: Some(", ".into())
                     })
                 }
                 else{

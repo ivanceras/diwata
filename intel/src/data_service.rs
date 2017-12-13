@@ -72,6 +72,7 @@ pub fn get_maintable_data(
     let main_tablename = &main_table.name;
     let mut sql = format!("SELECT {}.* ", main_tablename.name);
 
+    // select the display columns of the lookup tables, left joined in this query
     for field in &window.main_tab.fields{
         let dropdown_info = field.get_dropdown_info();
         match dropdown_info{
@@ -91,7 +92,9 @@ pub fn get_maintable_data(
         }
     }
 
-    sql += &format!("FROM {} \n", main_tablename.complete_name());
+    sql += &format!("\nFROM {} \n", main_tablename.complete_name());
+    // left join the table that is looked up by the fields, so as to be able to retrieve the
+    // identifiable column values
     for field in &window.main_tab.fields{
         let dropdown_info = field.get_dropdown_info();
         match dropdown_info{
@@ -105,12 +108,12 @@ pub fn get_maintable_data(
                 let field_column_names = field.column_names();
                 let source_table_rename = format!("{}_{}",field_column_name, source_tablename);
                 assert_eq!(source_pk.len(), field_column_names.len());
-                sql += &format!("\nLEFT JOIN {} AS {} ", source_tablename, source_table_rename);
+                sql += &format!("\nLEFT JOIN {} AS {} ", source_table.complete_name(), source_table_rename);
                 for (i, spk) in source_pk.iter().enumerate() {
                     if i == 0{
-                        sql += "ON "
+                        sql += "\nON "
                     }else {
-                        sql += "AND "
+                        sql += "\nAND "
                     }
                     sql += &format!("{}.{} = {}.{} ", source_table_rename, spk.name, main_tablename.name, field_column_names[i].name)
                 }
@@ -120,7 +123,7 @@ pub fn get_maintable_data(
             }
         }
     }
-    sql += &format!("LIMIT {} ", page_size);
+    sql += &format!("\nLIMIT {} ", page_size);
     sql += &format!("OFFSET {} ", calc_offset(page, page_size));
     println!("SQL: {}", sql);
     let result: Result<Rows, DbError> = em.db().execute_sql_with_return(&sql, &[]);
@@ -210,23 +213,67 @@ pub fn get_selected_record_detail(
     let primary_columns = main_table.get_primary_column_names();
     let record_id = extract_record_id(record_id, &pk_types, &primary_columns)?;
     println!("arg record_id: {:#?}", record_id);
-    let mut sql = format!(
-        "
-        SELECT * FROM {} ",
-        main_table.complete_name()
-    );
-    let mut filter = "".to_string();
+    let mut sql = format!("SELECT {}.* ", main_table.name.name);
+    // select the display columns of the lookup tables, left joined in this query
+    for field in &window.main_tab.fields{
+        let dropdown_info = field.get_dropdown_info();
+        match dropdown_info{
+            Some(ref dropdown_info) => {
+                let source_tablename = &dropdown_info.source.name;
+                let field_column_name = &field.first_column_name().name;
+                let source_table_rename = format!("{}_{}",field_column_name, source_tablename);
+                for display_column in &dropdown_info.display.columns{
+                    let display_column_name = &display_column.name;
+                    sql += &format!(", {}.{} as \"{}.{}.{}\" ", source_table_rename,  display_column_name,
+                                    field_column_name, source_tablename, display_column_name);
+                }
+            }
+            None => {
+                ()
+            }
+        }
+    }
+    sql += &format!("\nFROM {} ", main_table.complete_name());
+    // left join the table that is looked up by the fields, so as to be able to retrieve the
+    // identifiable column values
+    for field in &window.main_tab.fields{
+        let dropdown_info = field.get_dropdown_info();
+        match dropdown_info{
+            Some(ref dropdown_info) => {
+                let source_tablename = &dropdown_info.source.name;
+                let source_table = table_intel::get_table(&dropdown_info.source, tables);
+                assert!(source_table.is_some());
+                let source_table = source_table.unwrap();
+                let source_pk = source_table.get_primary_column_names();
+                let field_column_name = &field.first_column_name().name;
+                let field_column_names = field.column_names();
+                let source_table_rename = format!("{}_{}",field_column_name, source_tablename);
+                assert_eq!(source_pk.len(), field_column_names.len());
+                sql += &format!("\nLEFT JOIN {} AS {} ", source_table.complete_name(), source_table_rename);
+                for (i, spk) in source_pk.iter().enumerate() {
+                    if i == 0{
+                        sql += "\nON "
+                    }else {
+                        sql += "\nAND "
+                    }
+                    sql += &format!("{}.{} = {}.{} ", source_table_rename, spk.name, main_table.name.name, field_column_names[i].name)
+                }
+            }
+            None => {
+                ()
+            }
+        }
+    }
     let mut params: Vec<Value> = Vec::with_capacity(record_id.len());
     for (i, &(pk, ref value)) in record_id.iter().enumerate() {
         if i == 0 {
-            filter += "WHERE ";
+            sql += "\nWHERE ";
         } else {
-            filter += "AND ";
+            sql += "\nAND ";
         }
-        filter += &format!("{} = ${} ", pk.complete_name(), i + 1);
+        sql += &format!("{}.{} = ${} ", main_table.name.name, pk.complete_name(), i + 1);
         params.push(value.clone());
     }
-    sql += &filter;
 
     println!("SQL: {}", sql);
     println!("PARAMS: {:?}", params);
@@ -341,29 +388,77 @@ fn get_one_one_record(
     let one_one_table = table_intel::get_table(&one_one_tab.table_name, tables);
     assert!(one_one_table.is_some());
     let one_one_table = one_one_table.unwrap();
-    let mut one_one_sql = format!("SELECT * FROM {} ", one_one_table.complete_name());
+    let mut one_one_sql = format!("SELECT {}.* ",one_one_table.name.name);
+    // select the display columns of the lookup tables, left joined in this query
+    for field in &one_one_tab.fields{
+        let dropdown_info = field.get_dropdown_info();
+        match dropdown_info{
+            Some(ref dropdown_info) => {
+                let source_tablename = &dropdown_info.source.name;
+                let field_column_name = &field.first_column_name().name;
+                let source_table_rename = format!("{}_{}",field_column_name, source_tablename);
+                for display_column in &dropdown_info.display.columns{
+                    let display_column_name = &display_column.name;
+                    one_one_sql += &format!(", {}.{} as \"{}.{}.{}\" ", source_table_rename,  display_column_name,
+                                    field_column_name, source_tablename, display_column_name);
+                }
+            }
+            None => {
+                ()
+            }
+        }
+    }
+    one_one_sql += &format!("FROM {} ", one_one_table.complete_name());
+    // left join the table that is looked up by the fields, so as to be able to retrieve the
+    // identifiable column values
+    for field in &one_one_tab.fields{
+        let dropdown_info = field.get_dropdown_info();
+        match dropdown_info{
+            Some(ref dropdown_info) => {
+                let source_tablename = &dropdown_info.source.name;
+                let source_table = table_intel::get_table(&dropdown_info.source, tables);
+                assert!(source_table.is_some());
+                let source_table = source_table.unwrap();
+                let source_pk = source_table.get_primary_column_names();
+                let field_column_name = &field.first_column_name().name;
+                let field_column_names = field.column_names();
+                let source_table_rename = format!("{}_{}",field_column_name, source_tablename);
+                assert_eq!(source_pk.len(), field_column_names.len());
+                one_one_sql += &format!("\nLEFT JOIN {} AS {} ", source_table.complete_name(), source_table_rename);
+                for (i, spk) in source_pk.iter().enumerate() {
+                    if i == 0{
+                        one_one_sql += "\nON "
+                    }else {
+                        one_one_sql += "\nAND "
+                    }
+                    one_one_sql += &format!("{}.{} = {}.{} ", source_table_rename, spk.name, one_one_table.name.name, field_column_names[i].name)
+                }
+            }
+            None => {
+                ()
+            }
+        }
+    }
     let referred_columns_to_main_table =
         one_one_table.get_referred_columns_to_table(&main_table.name);
     let one_one_pk = one_one_table.get_primary_column_names();
     let one_one_pk_data_types = one_one_table.get_primary_column_types();
 
-    let mut one_one_filter = "".to_string();
     let mut one_one_params = Vec::with_capacity(one_one_pk.len());
 
     for referred_columns in referred_columns_to_main_table.iter() {
         for (i, rc) in referred_columns.iter().enumerate() {
             if i == 0 {
-                one_one_filter += "WHERE ";
+                one_one_sql += "\nWHERE ";
             } else {
-                one_one_filter += "AND ";
+                one_one_sql += "\nAND ";
             }
-            one_one_filter += &format!(" {} = ${} ", one_one_pk[i].complete_name(), i + 1);
+            one_one_sql += &format!(" {}.{} = ${} ", one_one_table.name.name, one_one_pk[i].complete_name(), i + 1);
             let required_type = one_one_pk_data_types[i];
             find_value(rc, record_id, required_type).map(|v| one_one_params.push(v.clone()));
         }
     }
-    one_one_sql += &one_one_filter;
-    one_one_sql += &format!("LIMIT {} ", page_size);
+    one_one_sql += &format!("\nLIMIT {} ", page_size);
     println!(
         "referred column to main table: {:?}",
         referred_columns_to_main_table
@@ -420,12 +515,65 @@ fn get_has_many_records(
     assert!(has_many_table.is_some());
     let has_many_table = has_many_table.unwrap();
     println!("has many table: {} ", has_many_table.name.name);
-    let mut has_many_sql = format!("SELECT * FROM {} ", has_many_table.complete_name());
+    let mut has_many_sql = format!("SELECT {}.* ", has_many_table.name.name);
+
+    // select the display columns of the lookup tables, left joined in this query
+    for field in &has_many_tab.fields {
+        let dropdown_info = field.get_dropdown_info();
+        match dropdown_info{
+            Some(ref dropdown_info) => {
+                let source_tablename = &dropdown_info.source.name;
+                let field_column_name = &field.first_column_name().name;
+                let source_table_rename = format!("{}_{}",field_column_name, source_tablename);
+                for display_column in &dropdown_info.display.columns{
+                    let display_column_name = &display_column.name;
+                    has_many_sql += &format!(", {}.{} as \"{}.{}.{}\" ", source_table_rename,  display_column_name,
+                                    field_column_name, source_tablename, display_column_name);
+                }
+            }
+            None => {
+                ()
+            }
+        }
+    }
+    has_many_sql += &format!("\nFROM {} ", has_many_table.complete_name());
+
+    // left join the table that is looked up by the fields, so as to be able to retrieve the
+    // identifiable column values
+    for field in &has_many_tab.fields{
+        let dropdown_info = field.get_dropdown_info();
+        match dropdown_info{
+            Some(ref dropdown_info) => {
+                let source_tablename = &dropdown_info.source.name;
+                let source_table = table_intel::get_table(&dropdown_info.source, tables);
+                assert!(source_table.is_some());
+                let source_table = source_table.unwrap();
+                let source_pk = source_table.get_primary_column_names();
+                let field_column_name = &field.first_column_name().name;
+                let field_column_names = field.column_names();
+                let source_table_rename = format!("{}_{}",field_column_name, source_tablename);
+                assert_eq!(source_pk.len(), field_column_names.len());
+                has_many_sql += &format!("\nLEFT JOIN {} AS {} ", source_table.complete_name(), source_table_rename);
+                for (i, spk) in source_pk.iter().enumerate() {
+                    if i == 0{
+                        has_many_sql += "\nON "
+                    }else {
+                        has_many_sql += "\nAND "
+                    }
+                    has_many_sql += &format!("{}.{} = {}.{} ", source_table_rename, spk.name, 
+                                            has_many_table.name.name, field_column_names[i].name)
+                }
+            }
+            None => {
+                ()
+            }
+        }
+    }
+
     let has_many_fk = has_many_table.get_foreign_column_names_to_table(&main_table.name);
     let has_many_fk_data_types = has_many_table.get_foreign_column_types_to_table(&main_table.name);
     assert_eq!(has_many_fk.len(), has_many_fk_data_types.len());
 
-    let mut has_many_filter = "".to_string();
     let mut has_many_params = Vec::with_capacity(has_many_fk.len());
 
     let referred_columns_to_main_table: Option<&Vec<ColumnName>> =
@@ -436,17 +584,16 @@ fn get_has_many_records(
 
     for (i, referred_column) in referred_columns_to_main_table.iter().enumerate() {
         if i == 0 {
-            has_many_filter += "WHERE ";
+            has_many_sql += "\nWHERE ";
         } else {
-            has_many_filter += "AND ";
+            has_many_sql += "\nAND ";
         }
-        has_many_filter += &format!(" {} = ${} ", has_many_fk[i].complete_name(), i + 1);
+        has_many_sql += &format!(" {}.{} = ${} ", has_many_table.name.name, has_many_fk[i].complete_name(), i + 1);
         let required_type = has_many_fk_data_types[i];
         find_value(referred_column, main_record_id, required_type)
             .map(|v| has_many_params.push(v.clone()));
     }
 
-    has_many_sql += &has_many_filter;
     has_many_sql += &format!("LIMIT {} ", page_size);
     has_many_sql += &format!("OFFSET {} ", calc_offset(page, page_size));
     println!(
@@ -512,11 +659,31 @@ fn get_indirect_records(
     let indirect_tablename = &indirect_table.name;
 
     let mut indirect_sql = format!(
-        "SELECT {}.* FROM {} ",
+        "SELECT {}.* ",
         indirect_tablename.name,
-        linker_table.complete_name()
     );
-    indirect_sql += &format!("LEFT JOIN {} ", indirect_table.complete_name());
+
+    // select the display columns of the lookup tables, left joined in this query
+    for field in &indirect_tab.fields{
+        let dropdown_info = field.get_dropdown_info();
+        match dropdown_info{
+            Some(ref dropdown_info) => {
+                let source_tablename = &dropdown_info.source.name;
+                let field_column_name = &field.first_column_name().name;
+                let source_table_rename = format!("{}_{}",field_column_name, source_tablename);
+                for display_column in &dropdown_info.display.columns{
+                    let display_column_name = &display_column.name;
+                    indirect_sql += &format!(", {}.{} as \"{}.{}.{}\" ", source_table_rename,  display_column_name,
+                                    field_column_name, source_tablename, display_column_name);
+                }
+            }
+            None => {
+                ()
+            }
+        }
+    }
+    indirect_sql += &format!("\nFROM {} ", linker_table.complete_name());
+    indirect_sql += &format!("\nLEFT JOIN {} ", indirect_table.complete_name());
     println!("indirect table: {:?}", indirect_table.complete_name());
     let linker_rc_to_indirect_table =
         linker_table.get_referred_columns_to_table(indirect_tablename);
@@ -541,18 +708,48 @@ fn get_indirect_records(
             indirect_pk[i].complete_name()
         );
     }
+    // left join the table that is looked up by the fields, so as to be able to retrieve the
+    // identifiable column values
+    for field in &indirect_tab.fields{
+        let dropdown_info = field.get_dropdown_info();
+        match dropdown_info{
+            Some(ref dropdown_info) => {
+                let source_tablename = &dropdown_info.source.name;
+                let source_table = table_intel::get_table(&dropdown_info.source, tables);
+                assert!(source_table.is_some());
+                let source_table = source_table.unwrap();
+                let source_pk = source_table.get_primary_column_names();
+                let field_column_name = &field.first_column_name().name;
+                let field_column_names = field.column_names();
+                let source_table_rename = format!("{}_{}",field_column_name, source_tablename);
+                assert_eq!(source_pk.len(), field_column_names.len());
+                indirect_sql += &format!("\nLEFT JOIN {} AS {} ", source_table.complete_name(), source_table_rename);
+                for (i, spk) in source_pk.iter().enumerate() {
+                    if i == 0{
+                        indirect_sql += "ON "
+                    }else {
+                        indirect_sql += "AND "
+                    }
+                    indirect_sql += &format!("{}.{} = {}.{} ", source_table_rename, spk.name, 
+                                             indirect_table.name.name, field_column_names[i].name)
+                }
+            }
+            None => {
+                ()
+            }
+        }
+    }
     let linker_rc_to_main_table = linker_table.get_referred_columns_to_table(&main_table.name);
     assert!(linker_rc_to_main_table.is_some());
     let linker_rc_to_main_table = linker_rc_to_main_table.unwrap();
     let mut indirect_params = Vec::with_capacity(linker_rc_to_main_table.iter().count());
-    let mut filter = "".to_string();
     for (i, rc) in linker_rc_to_main_table.iter().enumerate() {
         if i == 0 {
-            filter += "WHERE ";
+            indirect_sql += "\nWHERE ";
         } else {
-            filter += "AND ";
+            indirect_sql += "\nAND ";
         }
-        filter += &format!(
+        indirect_sql += &format!(
             "{}.{} = ${} ",
             linker_table.name.name,
             linker_pk[i].complete_name(),
@@ -561,8 +758,7 @@ fn get_indirect_records(
         let required_type: &SqlType = linker_pk_data_types[i];
         find_value(rc, record_id, required_type).map(|v| indirect_params.push(v.clone()));
     }
-    indirect_sql += &filter;
-    indirect_sql += &format!("LIMIT {} ", page_size);
+    indirect_sql += &format!("\nLIMIT {} ", page_size);
     indirect_sql += &format!("OFFSET {} ", calc_offset(page, page_size));
     println!("INDIRECT SQL: {}", indirect_sql);
     println!("INDIRECT PARAMS: {:?}", indirect_params);

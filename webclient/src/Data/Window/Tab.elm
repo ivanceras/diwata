@@ -85,27 +85,31 @@ recordId record tab =
 
 {-| only works for simple column name on fields
 -}
-tableColumn : TableName -> ColumnName -> String
-tableColumn tableName columnName =
-    tableName.name ++ "." ++ columnName.name
+tableColumn : Field -> TableName -> ColumnName -> String
+tableColumn field tableName columnName =
+    let
+        firstColumnName =
+            Field.firstColumnName field
+    in
+        firstColumnName.name ++ "." ++ tableName.name ++ "." ++ columnName.name
 
 
 {-| Get a the dropdown record value
 -}
-displayValue : TableName -> ColumnName -> Record -> Maybe Value
-displayValue sourceTable displayColumn record =
+displayValue : Field -> TableName -> ColumnName -> Record -> Maybe Value
+displayValue field sourceTable displayColumn record =
     let
-        name =
-            tableColumn sourceTable displayColumn
+        columnName =
+            tableColumn field sourceTable displayColumn
     in
-        Dict.get name record
+        Dict.get columnName record
 
 
-displayValues : TableName -> List ColumnName -> Record -> List Value
-displayValues sourceTable displayColumns record =
+displayValues : Field -> TableName -> List ColumnName -> Record -> List Value
+displayValues field sourceTable displayColumns record =
     List.filterMap
         (\column ->
-            displayValue sourceTable column record
+            displayValue field sourceTable column record
         )
         displayColumns
 
@@ -132,7 +136,7 @@ displayValuesFromField tab field record =
                         Maybe.withDefault "" info.display.separator
 
                     valueList =
-                        displayValues sourceTable displayColumns record
+                        displayValues field sourceTable displayColumns record
 
                     valueListStrings =
                         List.map Value.valueToString valueList

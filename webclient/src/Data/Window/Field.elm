@@ -9,6 +9,7 @@ module Data.Window.Field
         , shortOrLongWidth
         , simpleDataType
         , dropdown
+        , firstColumnName
         )
 
 import Json.Decode as Decode exposing (Decoder)
@@ -66,6 +67,30 @@ columnDataTypes detail =
                     dataType
                 )
                 listColumnDataType
+
+
+firstColumnName : Field -> ColumnName
+firstColumnName field =
+    case field.columnDetail of
+        Simple ( columnName, _ ) ->
+            columnName
+
+        Compound detailList ->
+            let
+                columnName =
+                    List.map
+                        (\( columnName, _ ) ->
+                            columnName
+                        )
+                        detailList
+                        |> List.head
+            in
+                case columnName of
+                    Just columnName ->
+                        columnName
+
+                    Nothing ->
+                        Debug.crash "This is unreachable!"
 
 
 columnName : Field -> String
