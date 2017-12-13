@@ -305,6 +305,11 @@ fn redirect_to_web() -> Redirect {
     Redirect::to("/web/")
 }
 
+#[get("/favicon.ico")]
+fn favicon() -> Option<NamedFile> {
+    NamedFile::open(Path::new("./public/img/favicon.ico")).ok()
+}
+
 
 
 
@@ -314,7 +319,7 @@ pub fn rocket() -> Rocket {
         .attach(AdHoc::on_response(|_req, resp| {
             resp.set_header(AccessControlAllowOrigin::Any);
         }))
-        .mount("/", routes![redirect_to_web,])
+        .mount("/", routes![redirect_to_web, favicon])
         .mount("/web", routes![webclient_index, webclient])
         .mount(
             "/data",
