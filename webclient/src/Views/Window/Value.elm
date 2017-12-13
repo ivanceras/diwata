@@ -13,6 +13,8 @@ import Data.Window.DataType as DataType exposing (DataType)
 import Data.Window.Tab as Tab exposing (Tab)
 import Data.Window.Record as Record exposing (Record)
 import Dict
+import Route exposing (Route)
+import Data.WindowArena as WindowArena
 
 
 {-| View value in list record view
@@ -88,6 +90,44 @@ widgetView presentation ( widgetWidth, widgetHeight ) tab field record =
                     , value valueString
                     ]
                     []
+
+            PrimaryUrlLink ->
+                let
+                    tableName =
+                        tab.tableName
+                in
+                    case record of
+                        Just record ->
+                            let
+                                recordId =
+                                    Tab.recordId record tab
+
+                                recordIdString =
+                                    Record.idToString recordId
+                            in
+                                case presentation of
+                                    InList ->
+                                        div
+                                            [ class "primary-link-wrapper"
+                                            , styles
+                                            ]
+                                            [ a
+                                                [ class "primary-link"
+                                                , Route.href (Route.WindowArena (Just (WindowArena.initArgWithRecordId tableName recordIdString)))
+                                                ]
+                                                [ text valueString ]
+                                            ]
+
+                                    InCard ->
+                                        input
+                                            [ type_ "text"
+                                            , styles
+                                            , value valueString
+                                            ]
+                                            []
+
+                        Nothing ->
+                            text ""
 
             MultilineText ->
                 case presentation of
