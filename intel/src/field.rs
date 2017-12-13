@@ -326,7 +326,7 @@ mod test {
         assert!(table.is_ok());
         let table = table.unwrap();
         let user_id = &table.columns[0];
-        let reference = Field::derive_reference(user_id);
+        let reference = Field::derive_reference(&table, user_id);
         println!("reference: {:#?}", reference);
         assert_eq!(reference, Some(Reference::PrimaryUserId));
     }

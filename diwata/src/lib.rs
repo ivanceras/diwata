@@ -34,8 +34,8 @@ use intel::data_container::Lookup;
 
 mod error;
 
-//static DB_URL: &'static str = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
-static DB_URL: &'static str = "postgres://postgres:p0stgr3s@localhost:5432/bazaar_v8";
+static DB_URL: &'static str = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
+//static DB_URL: &'static str = "postgres://postgres:p0stgr3s@localhost:5432/bazaar_v8";
 
 static PAGE_SIZE: u32 = 40;
 
