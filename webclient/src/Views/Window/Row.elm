@@ -15,10 +15,11 @@ import Data.Window.Value as Value
 import Data.Window.TableName exposing (TableName)
 import Data.Window.Widget as Widget
 import Util exposing (px)
+import Data.Window.Lookup as Lookup exposing (Lookup)
 
 
-view : RecordId -> Record -> Tab -> Html msg
-view recordId record tab =
+view : Lookup -> RecordId -> Record -> Tab -> Html msg
+view lookup recordId record tab =
     let
         fields =
             tab.fields
@@ -29,7 +30,7 @@ view recordId record tab =
             (List.map
                 (\field ->
                     div [ class "tab-row-value" ]
-                        [ Value.viewInList tab field record ]
+                        [ Value.viewInList lookup tab field record ]
                 )
                 fields
             )

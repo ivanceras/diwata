@@ -15,23 +15,24 @@ import Data.Window.Record as Record exposing (Record)
 import Dict
 import Route exposing (Route)
 import Data.WindowArena as WindowArena
+import Data.Window.Lookup as Lookup exposing (Lookup)
 
 
 {-| View value in list record view
 -}
-viewInList : Tab -> Field -> Record -> Html msg
-viewInList tab field record =
+viewInList : Lookup -> Tab -> Field -> Record -> Html msg
+viewInList lookup tab field record =
     let
         widgetWidth =
             Field.widgetWidthListValue field
     in
-        widgetView InList ( widgetWidth, 1 ) tab field (Just record)
+        widgetView lookup InList ( widgetWidth, 1 ) tab field (Just record)
 
 
 {-| view value in card view
 -}
-viewInCard : Tab -> Field -> Maybe Record -> Html msg
-viewInCard tab field record =
+viewInCard : Lookup -> Tab -> Field -> Maybe Record -> Html msg
+viewInCard lookup tab field record =
     let
         ( width, height ) =
             Field.shortOrLongWidth field
@@ -39,7 +40,7 @@ viewInCard tab field record =
         controlWidget =
             field.controlWidget
     in
-        widgetView InCard ( width, height ) tab field record
+        widgetView lookup InCard ( width, height ) tab field record
 
 
 type Presentation
@@ -47,8 +48,18 @@ type Presentation
     | InCard
 
 
-widgetView : Presentation -> ( Int, Int ) -> Tab -> Field -> Maybe Record -> Html msg
-widgetView presentation ( widgetWidth, widgetHeight ) tab field record =
+valueToString : Maybe Value -> String
+valueToString maybeValue =
+    case maybeValue of
+        Just argValue ->
+            Value.valueToString argValue
+
+        Nothing ->
+            ""
+
+
+widgetView : Lookup -> Presentation -> ( Int, Int ) -> Tab -> Field -> Maybe Record -> Html msg
+widgetView lookup presentation ( widgetWidth, widgetHeight ) tab field record =
     let
         columnName =
             Field.columnName field
@@ -65,12 +76,7 @@ widgetView presentation ( widgetWidth, widgetHeight ) tab field record =
             field.controlWidget
 
         valueString =
-            case maybeValue of
-                Just argValue ->
-                    Value.valueToString argValue
-
-                Nothing ->
-                    ""
+            valueToString maybeValue
 
         alignment =
             controlWidget.alignment
@@ -257,10 +263,69 @@ widgetView presentation ( widgetWidth, widgetHeight ) tab field record =
                     maybeDisplay =
                         case record of
                             Just record ->
-                                Tab.displayValuesFromField tab field record
+                                Tab.displayValuesFromField field record
 
                             Nothing ->
                                 Nothing
+
+                    dropdowninfo =
+                        case field.controlWidget.dropdown of
+                            Just (Widget.TableDropdown dropdown) ->
+                                Just
+                                    ( dropdown.source
+                                    , dropdown.display.columns
+                                    , case dropdown.display.separator of
+                                        Just separator ->
+                                            separator
+
+                                        Nothing ->
+                                            ""
+                                    )
+
+                            Nothing ->
+                                Nothing
+
+                    listChoices : List String
+                    listChoices =
+                        case dropdowninfo of
+                            Just ( sourceTable, displayColumns, separator ) ->
+                                let
+                                    lookupRecords =
+                                        Lookup.tableLookup sourceTable lookup
+                                in
+                                    List.map
+                                        (\record ->
+                                            let
+                                                displayValues : List Value
+                                                displayValues =
+                                                    List.filterMap
+                                                        (\displayColumn ->
+                                                            Dict.get displayColumn.name record
+                                                        )
+                                                        displayColumns
+
+                                                displayString =
+                                                    List.map
+                                                        (\value ->
+                                                            Value.valueToString value
+                                                        )
+                                                        displayValues
+                                                        |> String.join separator
+                                            in
+                                                displayString
+                                        )
+                                        lookupRecords
+
+                            Nothing ->
+                                []
+
+                    optionChoices =
+                        List.map
+                            (\choice ->
+                                option []
+                                    [ text choice ]
+                            )
+                            listChoices
 
                     display =
                         case maybeDisplay of
@@ -276,12 +341,14 @@ widgetView presentation ( widgetWidth, widgetHeight ) tab field record =
                     select
                         [ styles
                         ]
-                        [ option
+                        ([ option
                             [ value valueString
                             , selected True
                             ]
                             [ text textDisplay ]
-                        ]
+                         ]
+                            ++ optionChoices
+                        )
 
             _ ->
                 Debug.crash ("unable to handle widget:" ++ toString controlWidget)

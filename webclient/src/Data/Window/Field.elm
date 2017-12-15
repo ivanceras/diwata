@@ -10,12 +10,15 @@ module Data.Window.Field
         , simpleDataType
         , dropdown
         , firstColumnName
+        , displayColumns
+        , sourceTable
         )
 
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Extra
 import Json.Decode.Pipeline as Pipeline exposing (custom, decode, hardcoded, required)
 import Data.Window.ColumnName as ColumnName exposing (ColumnName)
+import Data.Window.TableName as TableName exposing (TableName)
 import Data.Window.DataType as DataType exposing (DataType)
 import Data.Window.Widget as Widget exposing (ControlWidget, Dropdown)
 
@@ -33,6 +36,26 @@ type alias Field =
 dropdown : Field -> Maybe Dropdown
 dropdown field =
     field.controlWidget.dropdown
+
+
+displayColumns : Field -> List ColumnName
+displayColumns field =
+    case dropdown field of
+        Just (Widget.TableDropdown dropdown) ->
+            dropdown.display.columns
+
+        Nothing ->
+            []
+
+
+sourceTable : Field -> Maybe TableName
+sourceTable field =
+    case dropdown field of
+        Just (Widget.TableDropdown dropdown) ->
+            Just dropdown.source
+
+        Nothing ->
+            Nothing
 
 
 type ColumnDetail

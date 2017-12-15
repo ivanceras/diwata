@@ -27,6 +27,7 @@ import Json.Decode as Decode
 import Json.Encode as Encode exposing (Value)
 import Request.Helpers exposing (apiUrl)
 import Util exposing ((=>))
+import Data.Window.Lookup as Lookup exposing (Lookup)
 
 
 -- LIST --
@@ -46,11 +47,11 @@ listPage page maybeToken tableName =
         |> HttpBuilder.toRequest
 
 
-lookups : Maybe AuthToken -> TableName -> Http.Request Rows
+lookups : Maybe AuthToken -> TableName -> Http.Request Lookup
 lookups maybeToken tableName =
     apiUrl ("/lookup_all/" ++ tableNameToString tableName)
         |> HttpBuilder.get
-        |> HttpBuilder.withExpect (Http.expectJson Record.rowsDecoder)
+        |> HttpBuilder.withExpect (Http.expectJson Lookup.decoder)
         |> withAuthorization maybeToken
         |> HttpBuilder.toRequest
 

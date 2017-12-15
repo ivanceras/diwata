@@ -31,27 +31,7 @@ fn calc_offset(page: u32, page_size: u32) -> u32 {
     (page - 1) * page_size
 }
 
-fn build_tab_column_display_with_rename(tab: &Tab, rename: bool) -> Option<String> {
-    match *&tab.display {
-        Some(ref display) => {
-            let table_name = &tab.table_name.name;
-            let mut buff = String::new();
-            for (i,column) in display.columns.iter().enumerate(){
-                let column_name = &column.name;
-                if i > 0 {
-                    buff += ", ";
-                }
-                if rename {
-                    buff += &format!("{}.{} as \"{}.{}\"", table_name, column_name, table_name, column_name);
-                } else {
-                    buff += &format!("{}.{}", table_name, column_name);
-                }
-            }
-            Some(buff)
-        }
-        None => None
-    }
-}
+
 
 /// get data for the window
 /// TODO: left join the table for the lookup fields
@@ -773,29 +753,83 @@ fn get_indirect_records(
 /// that has a dropdown, fetch the first page
 /// of the dropdown
 pub fn get_all_lookup_for_window(
-    _dm: &RecordManager,
-    _tables: &Vec<Table>,
-    _window: &Window,
-    _page_size: u32
-    ) -> Result<Lookup,DbError> {
-    panic!("not yet!")
+    dm: &RecordManager,
+    tables: &Vec<Table>,
+    window: &Window,
+    page_size: u32,
+    ) -> Result<Lookup, IntelError> {
+    
+    let mut lookup_tables = get_tab_lookup_tablenames(&window.main_tab);
+    for one_one_tab in &window.one_one_tabs{
+        let mut lookup = get_tab_lookup_tablenames(one_one_tab);
+        lookup_tables.append(&mut lookup);
+    }
+
+    for has_many_tab in &window.has_many_tabs{
+        let mut lookup = get_tab_lookup_tablenames(has_many_tab);
+        lookup_tables.append(&mut lookup);
+    }
+
+    for &(ref _linker_table, ref indirect_tab) in &window.indirect_tabs{
+        let mut lookup = get_tab_lookup_tablenames(indirect_tab);
+        lookup_tables.append(&mut lookup);
+    }
+    println!("total tables: {}", lookup_tables.len());
+    lookup_tables.dedup();
+    println!("after dedup: {}", lookup_tables.len());
+    let mut lookup_data = vec![];
+    for (lookup_table, display_columns) in lookup_tables{
+        let rows = get_lookup_data_of_table_with_display_columns(dm, tables, lookup_table, &display_columns, page_size, 1)?;
+        lookup_data.push((lookup_table.to_owned(), rows));
+    }
+    Ok(Lookup(lookup_data))
 }
 
 
-/// get the data of this table, no joins
-/// since it is only used as lookup from some other table
-/// record_id is the value that is selected in the lookup
-/// ensure that the value is included in the first page
-/// this table must have it's own window too
-pub fn get_lookup_data(
+/// for each field of this tab that has a table lookup, get the table_name
+fn get_tab_lookup_tablenames(tab: &Tab) -> Vec<(&TableName, Vec<&ColumnName>)> {
+    let mut table_names = vec![];
+    for field in tab.fields.iter(){
+        match field.get_dropdown_info(){
+            Some(dropdown_info) => {
+                let display_columns = dropdown_info.display.columns
+                        .iter()
+                        .collect();
+                table_names.push((&dropdown_info.source, display_columns))
+            }
+            None => () 
+        }
+    }
+    table_names
+}
+
+
+pub fn get_lookup_data_of_tab(
     dm: &RecordManager,
     tables: &Vec<Table>,
     tab: &Tab,
     page_size: u32,
     page: u32,
 ) -> Result<Rows, IntelError> {
-   
     let table_name = &tab.table_name;
+    let display_columns = tab.get_display_columns();
+    get_lookup_data_of_table_with_display_columns(dm, tables, table_name, &display_columns, page_size, page)
+}
+
+/// get the data of this table, no joins
+/// since it is only used as lookup from some other table
+/// record_id is the value that is selected in the lookup
+/// ensure that the value is included in the first page
+/// this table must have it's own window too
+pub fn get_lookup_data_of_table_with_display_columns(
+    dm: &RecordManager,
+    tables: &Vec<Table>,
+    table_name: &TableName,
+    display_columns: &Vec<&ColumnName>,
+    page_size: u32,
+    page: u32,
+) -> Result<Rows, IntelError> {
+   
     let table = table_intel::get_table(table_name, tables);
     assert!(table.is_some());
     let table = table.unwrap();
@@ -810,24 +844,19 @@ pub fn get_lookup_data(
         sql += &format!("{} ", pk.name);
     }
     
-    let column_display = build_tab_column_display_with_rename(tab, false);
-
-    column_display.map(|cd| sql += &format!(", {} ",cd));
-
+    for column in display_columns.iter(){
+        sql += &format!(", {} ", column.name);
+    }
     sql += &format!("FROM {} ", table_name.complete_name());
 
-    match tab.display {
-        Some(ref display) => {
-            for (i,column) in display.columns.iter().enumerate(){
-                if i == 0 {
-                    sql += "ORDER BY "
-                }else{
-                    sql += ", ";
-                }
-                sql += &format!("{} ASC ", column.name);
-            }
+
+    for (i,column) in display_columns.iter().enumerate(){
+        if i == 0 {
+            sql += "ORDER BY "
+        }else{
+            sql += ", ";
         }
-        None => ()
+        sql += &format!("{} ASC ", column.name);
     }
 
     sql += &format!("LIMIT {} OFFSET {} ", page_size, calc_offset(page, page_size));

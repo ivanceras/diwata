@@ -114,8 +114,8 @@ displayValues field sourceTable displayColumns record =
         displayColumns
 
 
-displayValuesFromField : Tab -> Field -> Record -> Maybe String
-displayValuesFromField tab field record =
+displayValuesFromField : Field -> Record -> Maybe String
+displayValuesFromField field record =
     let
         cwidget =
             field.controlWidget

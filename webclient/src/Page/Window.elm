@@ -35,6 +35,7 @@ import Data.Window.GroupedWindow as GroupedWindow exposing (GroupedWindow, Windo
 import Data.Window.TableName as TableName exposing (TableName)
 import Views.Window.Tab as Tab
 import Window as BrowserWindow
+import Data.Window.Lookup as Lookup exposing (Lookup)
 
 
 -- MODEL --
@@ -43,10 +44,10 @@ import Window as BrowserWindow
 type alias Model =
     { errors : List String
     , commentText : String
-    , commentInFlight : Bool
     , tableName : TableName
     , mainTab : Tab.Model
     , window : Window
+    , lookup : Lookup
     }
 
 
@@ -86,7 +87,7 @@ init session tableName =
                 |> Http.toTask
                 |> Task.mapError handleLoadError
 
-        loadLookups =
+        loadWindowLookups =
             Request.Window.Records.lookups maybeAuthToken tableName
                 |> Http.toTask
                 |> Task.mapError handleLoadError
@@ -108,18 +109,23 @@ init session tableName =
                 getBrowserSize
                 |> Task.mapError handleLoadError
     in
-        Task.map2
-            (\window mainTab ->
-                { errors = []
-                , commentText = ""
-                , commentInFlight = False
-                , tableName = tableName
-                , mainTab = mainTab
-                , window = window
-                }
+        Task.map3
+            (\window mainTab lookup ->
+                let
+                    _ =
+                        Debug.log "lookup: " lookup
+                in
+                    { errors = []
+                    , commentText = ""
+                    , tableName = tableName
+                    , mainTab = mainTab
+                    , window = window
+                    , lookup = lookup
+                    }
             )
             loadWindow
             mainTabTask
+            loadWindowLookups
 
 
 
@@ -131,9 +137,6 @@ view session model =
     let
         tableName =
             model.tableName
-
-        postingDisabled =
-            model.commentInFlight
     in
         div []
             [ viewMainTab model
@@ -147,7 +150,7 @@ viewMainTab model =
             model.mainTab
     in
         div [ class "main-tab" ]
-            [ Tab.listView mainTab
+            [ Tab.listView model.lookup mainTab
                 |> Html.map TabMsg
             ]
 

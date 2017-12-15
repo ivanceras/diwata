@@ -29,6 +29,8 @@ import Page.Window as Window
 import Util exposing (px, viewIf)
 import Data.WindowArena exposing (ArenaArg, Section(..))
 import Route
+import Data.Window.Lookup as Lookup exposing (Lookup)
+import Util
 
 
 {-| Example:
@@ -49,6 +51,7 @@ type alias Model =
     , drag : Maybe Drag
     , browserSize : BrowserWindow.Size
     , arenaArg : ArenaArg
+    , lookup : Lookup
     }
 
 
@@ -82,6 +85,11 @@ init tableName selectedRow arenaArg =
 
         loadWindow =
             Request.Window.get Nothing tableName
+                |> Http.toTask
+                |> Task.mapError handleLoadError
+
+        loadWindowLookups =
+            Records.lookups Nothing tableName
                 |> Http.toTask
                 |> Task.mapError handleLoadError
 
@@ -140,8 +148,8 @@ init tableName selectedRow arenaArg =
         handleLoadError e =
             pageLoadError Page.DetailedRecord ("DetailedRecord is currently unavailable. Error: " ++ (toString e))
     in
-        Task.map5
-            (\detail window hasManyTabs indirectTabs size ->
+        (Util.map6
+            (\detail window hasManyTabs indirectTabs size lookup ->
                 { selectedRow = detail
                 , window = window
                 , hasManyTabs = hasManyTabs
@@ -150,6 +158,7 @@ init tableName selectedRow arenaArg =
                 , drag = Nothing
                 , browserSize = size
                 , arenaArg = arenaArg
+                , lookup = lookup
                 }
             )
             fetchSelected
@@ -157,6 +166,8 @@ init tableName selectedRow arenaArg =
             initHasManyTabs
             initIndirectTabs
             browserSize
+            loadWindowLookups
+        )
 
 
 availableHeight : BrowserWindow.Size -> Float
@@ -219,7 +230,7 @@ view model =
                 [ class "main-tab-selected"
                 , style [ ( "height", px (mainRecordHeight) ) ]
                 ]
-                [ cardViewRecord (Just mainSelectedRecord) mainTab
+                [ cardViewRecord model (Just mainSelectedRecord) mainTab
                 , viewOneOneTabs model
                 ]
             , viewIf (Window.hasDetails model.window)
@@ -248,23 +259,23 @@ viewOneOneTabs model =
             model.selectedRow
     in
         div []
-            (List.map (oneOneCardView selectedRow) window.oneOneTabs)
+            (List.map (oneOneCardView model selectedRow) window.oneOneTabs)
 
 
-oneOneCardView : RecordDetail -> Tab -> Html msg
-oneOneCardView detail tab =
+oneOneCardView : Model -> RecordDetail -> Tab -> Html msg
+oneOneCardView model detail tab =
     let
         record =
             RecordDetail.oneOneRecordOfTable detail tab.tableName
     in
         div [ class "one-one-tab" ]
             [ div [ class "one-one-tab-separator" ] [ text tab.name ]
-            , cardViewRecord record tab
+            , cardViewRecord model record tab
             ]
 
 
-cardViewRecord : Maybe Record -> Tab -> Html msg
-cardViewRecord record tab =
+cardViewRecord : Model -> Maybe Record -> Tab -> Html msg
+cardViewRecord model record tab =
     let
         columnNames =
             Tab.columnNames tab
@@ -285,15 +296,15 @@ cardViewRecord record tab =
             [ div [ class "card-view" ]
                 (List.map
                     (\field ->
-                        viewFieldInCard fieldLabelWidth tab field record
+                        viewFieldInCard model fieldLabelWidth tab field record
                     )
                     tab.fields
                 )
             ]
 
 
-viewFieldInCard : Int -> Tab -> Field -> Maybe Record -> Html msg
-viewFieldInCard labelWidth tab field record =
+viewFieldInCard : Model -> Int -> Tab -> Field -> Maybe Record -> Html msg
+viewFieldInCard model labelWidth tab field record =
     div [ class "card-field" ]
         [ div
             [ class "card-field-name"
@@ -303,7 +314,7 @@ viewFieldInCard labelWidth tab field record =
                 [ text (field.name ++ ": ") ]
             ]
         , div [ class "card-field-value" ]
-            [ Value.viewInCard tab field record ]
+            [ Value.viewInCard model.lookup tab field record ]
         ]
 
 
@@ -356,11 +367,11 @@ viewDetailTabs model =
 
         detailTabViews =
             (hasManyTabs
-                |> List.map (listView HasMany activeTab)
+                |> List.map (listView model HasMany activeTab)
             )
                 ++ (List.map
                         (\indirectTab ->
-                            listView Indirect activeTab indirectTab
+                            listView model Indirect activeTab indirectTab
                         )
                         indirectTabs
                    )
@@ -405,8 +416,8 @@ viewDetailTabs model =
             text "No detail tabs"
 
 
-listView : Section -> Maybe TableName -> Tab.Model -> Html Msg
-listView section activeTab tab =
+listView : Model -> Section -> Maybe TableName -> Tab.Model -> Html Msg
+listView model section activeTab tab =
     let
         isTabActive =
             case activeTab of
@@ -425,7 +436,7 @@ listView section activeTab tab =
                     style [ ( "display", "none" ) ]
 
         detailRecordView =
-            Tab.listView tab
+            Tab.listView model.lookup tab
                 |> Html.map (\tabMsg -> TabMsg ( section, tab, tabMsg ))
     in
         div

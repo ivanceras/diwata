@@ -1,7 +1,6 @@
 use rustorm::TableName;
 use rustorm::Rows;
 use rustorm::Record;
-use rustorm::ColumnName;
 use tab::IdentifierDisplay;
 
 #[derive(Debug, Serialize)]
@@ -24,15 +23,7 @@ pub struct DropdownInfo {
 }
 
 
+/// lookup for same table are the same regardless of which field they are referred
 #[derive(Debug, Serialize)]
-pub struct Lookup{
-    /// the lookup data in main table
-    main_lookup: Vec<(TableName, ColumnName, DropdownInfo, Rows)>, 
-    /// for the 1:1 lookup data
-    one_one_lookup: Vec<(TableName, ColumnName, DropdownInfo, Rows)>, 
-    /// the lookup used in the has_many tab details
-    hasmany_lookup: Vec<(TableName, ColumnName, DropdownInfo, Rows)>,
-    /// the lookup used in the indirect tab details
-    indirect_lookup: Vec<(TableName, ColumnName, DropdownInfo, Rows)>
-}
+pub struct Lookup(pub Vec<(TableName, Rows)>);
 

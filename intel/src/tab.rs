@@ -144,7 +144,18 @@ impl Tab {
                                 separator: None
                             })
                         }
-                        None => None
+                        None => {
+                            // use primary key orunique key here
+                            let mut columns: Vec<ColumnName> = vec![];
+                            let primary_columns = table.get_primary_column_names();
+                            for pk in primary_columns{
+                                columns.push(pk.to_owned());
+                            }
+                            Some(IdentifierDisplay {
+                                columns,
+                                separator: None
+                            })
+                        }
                    }
                 }
         })
@@ -184,5 +195,16 @@ impl Tab {
             }
         }
         fields
+    }
+
+    pub fn get_display_columns(&self) -> Vec<&ColumnName> {
+        match *&self.display {
+            Some(ref display) => {
+                display.columns.iter()
+                    .map(|ref column| *column)
+                    .collect()
+            }
+            None => vec![]
+        }
     }
 }

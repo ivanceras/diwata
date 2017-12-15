@@ -21,6 +21,7 @@ import Html.Events exposing (on, onWithOptions)
 import Json.Decode as Decode exposing (Decoder)
 import Json.Encode as Encode
 import Util exposing ((=>), px)
+import Data.Window.Lookup as Lookup exposing (Lookup)
 
 
 type alias Model =
@@ -100,8 +101,8 @@ pageRequestNeeded model =
         && not model.reachedLastPage
 
 
-listView : Model -> Html Msg
-listView model =
+listView : Lookup -> Model -> Html Msg
+listView lookup model =
     let
         tab =
             model.tab
@@ -130,7 +131,7 @@ listView model =
                         (\page ->
                             div [ class "tab-page" ]
                                 [ div [ class "row-shadow-list-rows" ]
-                                    [ listViewPage page model ]
+                                    [ listViewPage lookup page model ]
                                 ]
                         )
                         model.pages
@@ -139,8 +140,8 @@ listView model =
             ]
 
 
-listViewPage : Rows -> Model -> Html Msg
-listViewPage rows model =
+listViewPage : Lookup -> Rows -> Model -> Html Msg
+listViewPage lookup rows model =
     let
         height =
             model.height
@@ -157,7 +158,7 @@ listViewPage rows model =
         recordIdList =
             List.map (\record -> Tab.recordId record tab) recordList
     in
-        listViewRows tab recordIdList recordList
+        listViewRows lookup tab recordIdList recordList
 
 
 viewPageShadow : Model -> Html Msg
@@ -273,13 +274,13 @@ viewSearchbox field =
             ]
 
 
-listViewRows : Tab -> List RecordId -> List Record -> Html Msg
-listViewRows tab recordIdList recordList =
+listViewRows : Lookup -> Tab -> List RecordId -> List Record -> Html Msg
+listViewRows lookup tab recordIdList recordList =
     div []
         (if List.length recordList > 0 then
             (List.map2
                 (\recordId record ->
-                    Row.view recordId record tab
+                    Row.view lookup recordId record tab
                 )
                 recordIdList
                 recordList

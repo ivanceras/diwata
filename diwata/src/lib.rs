@@ -182,7 +182,7 @@ fn get_lookup_data(
     let tables = cache_pool.get_cached_tables(&em, DB_URL)?;
     match window {
         Some(window) => {
-            let rows: Rows = data_service::get_lookup_data(
+            let rows: Rows = data_service::get_lookup_data_of_tab(
                 &dm,
                 &tables,
                 &window.main_tab,
