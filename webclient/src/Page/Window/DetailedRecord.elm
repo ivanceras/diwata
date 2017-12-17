@@ -249,7 +249,7 @@ view model =
             ]
 
 
-viewOneOneTabs : Model -> Html msg
+viewOneOneTabs : Model -> Html Msg
 viewOneOneTabs model =
     let
         window =
@@ -262,7 +262,7 @@ viewOneOneTabs model =
             (List.map (oneOneCardView model selectedRow) window.oneOneTabs)
 
 
-oneOneCardView : Model -> RecordDetail -> Tab -> Html msg
+oneOneCardView : Model -> RecordDetail -> Tab -> Html Msg
 oneOneCardView model detail tab =
     let
         record =
@@ -274,7 +274,7 @@ oneOneCardView model detail tab =
             ]
 
 
-cardViewRecord : Model -> Maybe Record -> Tab -> Html msg
+cardViewRecord : Model -> Maybe Record -> Tab -> Html Msg
 cardViewRecord model record tab =
     let
         columnNames =
@@ -303,7 +303,7 @@ cardViewRecord model record tab =
             ]
 
 
-viewFieldInCard : Model -> Int -> Tab -> Field -> Maybe Record -> Html msg
+viewFieldInCard : Model -> Int -> Tab -> Field -> Maybe Record -> Html Msg
 viewFieldInCard model labelWidth tab field record =
     div [ class "card-field" ]
         [ div
@@ -314,7 +314,9 @@ viewFieldInCard model labelWidth tab field record =
                 [ text (field.name ++ ": ") ]
             ]
         , div [ class "card-field-value" ]
-            [ Value.viewInCard model.lookup tab field record ]
+            [ Value.viewInCard model.lookup tab field record
+                |> Html.map ValueMsg
+            ]
         ]
 
 
@@ -478,6 +480,7 @@ type Msg
     | WindowResized BrowserWindow.Size
     | TabMsg ( Section, Tab.Model, Tab.Msg )
     | TabMsgAll Tab.Msg
+    | ValueMsg Value.Msg
 
 
 update : Session -> Msg -> Model -> ( Model, Cmd Msg )
@@ -568,6 +571,13 @@ update session msg model =
                             [ tabCmd
                             , Cmd.map (\tabMsg -> TabMsg ( section, updatedTabModel, tabMsg )) subCmd
                             ]
+
+            ValueMsg valueMsg ->
+                let
+                    _ =
+                        Debug.log "valueMsg: " valueMsg
+                in
+                    model => Cmd.none
 
 
 requestNextPage : Section -> Tab.Model -> Model -> Cmd Msg

@@ -1,4 +1,4 @@
-module Views.Window.Row exposing (view, viewRowControls)
+module Views.Window.Row exposing (view, viewRowControls, Msg)
 
 import Html exposing (..)
 import Html.Attributes exposing (style, type_, attribute, class, classList, href, id, placeholder, src)
@@ -16,9 +16,14 @@ import Data.Window.TableName exposing (TableName)
 import Data.Window.Widget as Widget
 import Util exposing (px)
 import Data.Window.Lookup as Lookup exposing (Lookup)
+import Views.Window.Value as Value
 
 
-view : Lookup -> RecordId -> Record -> Tab -> Html msg
+type Msg
+    = ValueMsg Value.Msg
+
+
+view : Lookup -> RecordId -> Record -> Tab -> Html Msg
 view lookup recordId record tab =
     let
         fields =
@@ -30,7 +35,9 @@ view lookup recordId record tab =
             (List.map
                 (\field ->
                     div [ class "tab-row-value" ]
-                        [ Value.viewInList lookup tab field record ]
+                        [ Value.viewInList lookup tab field record
+                            |> Html.map ValueMsg
+                        ]
                 )
                 fields
             )

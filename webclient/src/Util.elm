@@ -9,12 +9,23 @@ module Util
         , trim
         , isJust
         , map6
+        , onScroll
+        , Scroll
+        , onWheel
         )
 
 import Html exposing (Attribute, Html)
 import Html.Events exposing (defaultOptions, onWithOptions)
 import Json.Decode as Decode
 import Task exposing (Task)
+import Html.Events exposing (on)
+import Json.Decode as Decode exposing (Decoder)
+
+
+type alias Scroll =
+    { top : Float
+    , left : Float
+    }
 
 
 (=>) : a -> b -> ( a, b )
@@ -133,3 +144,20 @@ map6 func taskA taskB taskC taskD taskE taskF =
                                     )
                         )
             )
+
+
+onScroll : (Scroll -> msg) -> Attribute msg
+onScroll scrollMsg =
+    on "scroll" (Decode.map scrollMsg scrollDecoder)
+
+
+onWheel : (Scroll -> msg) -> Attribute msg
+onWheel scrollMsg =
+    on "wheel" (Decode.map scrollMsg scrollDecoder)
+
+
+scrollDecoder : Decoder Scroll
+scrollDecoder =
+    Decode.map2 Scroll
+        (Decode.at [ "target", "scrollTop" ] Decode.float)
+        (Decode.at [ "target", "scrollLeft" ] Decode.float)

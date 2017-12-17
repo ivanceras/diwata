@@ -26,6 +26,7 @@ pub struct Tab {
 #[derive(Debug, Serialize, Clone)]
 pub struct IdentifierDisplay {
     pub columns: Vec<ColumnName>,
+    pub pk: Vec<ColumnName>,
     separator: Option<String>,
 }
 
@@ -67,6 +68,9 @@ impl Tab {
     fn derive_display(table: &Table) -> Option<IdentifierDisplay> {
         let table_name = &table.name.name;
         let columns = &table.columns;
+        let pk: Vec<ColumnName> = table.get_primary_column_names()
+                .iter()
+                .map(|ref column| (**column).to_owned()).collect();
         // match for users table common structure
         let display = if table_name == "user" ||
             table_name == "users" {
@@ -80,7 +84,8 @@ impl Tab {
             found_column.map(|column|{
                 IdentifierDisplay{
                     columns: vec![column.name.clone()],
-                    separator: None
+                    separator: None,
+                    pk: pk.clone(),
                 }
             })
         }
@@ -97,6 +102,7 @@ impl Tab {
                 IdentifierDisplay{
                     columns: vec![column.name.clone()],
                     separator: None,
+                    pk: pk.clone(),
                 }
             })
         };
@@ -122,7 +128,8 @@ impl Tab {
                 if let Some(firstname) = maybe_firstname {
                     Some(IdentifierDisplay{
                         columns: vec![lastname.name.clone(), firstname.name.clone()],
-                        separator: Some(", ".into())
+                        separator: Some(", ".into()),
+                        pk: pk.clone(),
                     })
                 }
                 else{
@@ -141,7 +148,8 @@ impl Tab {
                         Some(column) => {
                             Some(IdentifierDisplay {
                                 columns: vec![column.name.clone()],
-                                separator: None
+                                separator: None,
+                                pk: pk.clone(),
                             })
                         }
                         None => {
@@ -153,7 +161,8 @@ impl Tab {
                             }
                             Some(IdentifierDisplay {
                                 columns,
-                                separator: None
+                                separator: None,
+                                pk: pk.clone()
                             })
                         }
                    }

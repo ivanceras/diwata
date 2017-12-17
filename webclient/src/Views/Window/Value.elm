@@ -1,4 +1,4 @@
-module Views.Window.Value exposing (viewInList, viewInCard)
+module Views.Window.Value exposing (viewInList, viewInCard, Msg)
 
 import Data.Window.Value as Value exposing (Value(..), ArrayValue(..))
 import Html exposing (..)
@@ -16,11 +16,16 @@ import Dict
 import Route exposing (Route)
 import Data.WindowArena as WindowArena
 import Data.Window.Lookup as Lookup exposing (Lookup)
+import Util exposing (onWheel, onScroll, Scroll)
+
+
+type Msg
+    = ChoicesScrolled Scroll
 
 
 {-| View value in list record view
 -}
-viewInList : Lookup -> Tab -> Field -> Record -> Html msg
+viewInList : Lookup -> Tab -> Field -> Record -> Html Msg
 viewInList lookup tab field record =
     let
         widgetWidth =
@@ -31,7 +36,7 @@ viewInList lookup tab field record =
 
 {-| view value in card view
 -}
-viewInCard : Lookup -> Tab -> Field -> Maybe Record -> Html msg
+viewInCard : Lookup -> Tab -> Field -> Maybe Record -> Html Msg
 viewInCard lookup tab field record =
     let
         ( width, height ) =
@@ -58,7 +63,7 @@ valueToString maybeValue =
             ""
 
 
-widgetView : Lookup -> Presentation -> ( Int, Int ) -> Tab -> Field -> Maybe Record -> Html msg
+widgetView : Lookup -> Presentation -> ( Int, Int ) -> Tab -> Field -> Maybe Record -> Html Msg
 widgetView lookup presentation ( widgetWidth, widgetHeight ) tab field record =
     let
         columnName =
@@ -280,15 +285,16 @@ widgetView lookup presentation ( widgetWidth, widgetHeight ) tab field record =
 
                                         Nothing ->
                                             ""
+                                    , dropdown.display.pk
                                     )
 
                             Nothing ->
                                 Nothing
 
-                    listChoices : List String
+                    listChoices : List ( String, String )
                     listChoices =
                         case dropdowninfo of
-                            Just ( sourceTable, displayColumns, separator ) ->
+                            Just ( sourceTable, displayColumns, separator, pk ) ->
                                 let
                                     lookupRecords =
                                         Lookup.tableLookup sourceTable lookup
@@ -311,21 +317,29 @@ widgetView lookup presentation ( widgetWidth, widgetHeight ) tab field record =
                                                         )
                                                         displayValues
                                                         |> String.join separator
+
+                                                displayPk : List Value
+                                                displayPk =
+                                                    List.filterMap
+                                                        (\pk ->
+                                                            Dict.get pk.name record
+                                                        )
+                                                        pk
+
+                                                displayPkString =
+                                                    List.map
+                                                        (\value ->
+                                                            Value.valueToString value
+                                                        )
+                                                        displayPk
+                                                        |> String.join " "
                                             in
-                                                displayString
+                                                ( displayPkString, displayString )
                                         )
                                         lookupRecords
 
                             Nothing ->
                                 []
-
-                    optionChoices =
-                        List.map
-                            (\choice ->
-                                option []
-                                    [ text choice ]
-                            )
-                            listChoices
 
                     display =
                         case maybeDisplay of
@@ -335,20 +349,47 @@ widgetView lookup presentation ( widgetWidth, widgetHeight ) tab field record =
                             Nothing ->
                                 ""
 
-                    textDisplay =
-                        valueString ++ "  |  " ++ display
+                    listChoicesWithSelected =
+                        if
+                            List.any
+                                (\( pk, display ) ->
+                                    pk == valueString
+                                )
+                                listChoices
+                        then
+                            listChoices
+                        else
+                            ( valueString, display )
+                                :: listChoices
+
+                    sortedChoices =
+                        listChoicesWithSelected
+                            |> List.sortBy
+                                (\( pk, display ) ->
+                                    String.toLower display
+                                )
+
+                    optionChoices : List (Html msg)
+                    optionChoices =
+                        List.map
+                            (\( pkValue, displayChoice ) ->
+                                let
+                                    optionDisplay =
+                                        pkValue ++ "  |  " ++ displayChoice
+                                in
+                                    option
+                                        [ value pkValue
+                                        , selected (pkValue == valueString)
+                                        ]
+                                        [ text optionDisplay ]
+                            )
+                            sortedChoices
                 in
                     select
                         [ styles
+                        , onWheel ChoicesScrolled
                         ]
-                        ([ option
-                            [ value valueString
-                            , selected True
-                            ]
-                            [ text textDisplay ]
-                         ]
-                            ++ optionChoices
-                        )
+                        optionChoices
 
             _ ->
                 Debug.crash ("unable to handle widget:" ++ toString controlWidget)

@@ -17,10 +17,9 @@ import Data.Window.Field as Field exposing (Field)
 import Views.Window.Row as Row
 import Task exposing (Task)
 import Page.Errored as Errored exposing (PageLoadError, pageLoadError)
-import Html.Events exposing (on, onWithOptions)
 import Json.Decode as Decode exposing (Decoder)
 import Json.Encode as Encode
-import Util exposing ((=>), px)
+import Util exposing ((=>), px, onScroll, Scroll)
 import Data.Window.Lookup as Lookup exposing (Lookup)
 
 
@@ -32,12 +31,6 @@ type alias Model =
     , pageRequestInFlight : Bool
     , currentPage : Int
     , reachedLastPage : Bool
-    }
-
-
-type alias Scroll =
-    { top : Float
-    , left : Float
     }
 
 
@@ -124,7 +117,7 @@ listView lookup model =
                 [ viewPageShadow model
                 , div
                     [ class "list-view-rows"
-                    , onScroll
+                    , onScroll ListRowScrolled
                     , style [ ( "height", px height ) ]
                     ]
                     (List.map
@@ -281,6 +274,7 @@ listViewRows lookup tab recordIdList recordList =
             (List.map2
                 (\recordId record ->
                     Row.view lookup recordId record tab
+                        |> Html.map RowMsg
                 )
                 recordIdList
                 recordList
@@ -292,23 +286,12 @@ listViewRows lookup tab recordIdList recordList =
         )
 
 
-onScroll : Attribute Msg
-onScroll =
-    on "scroll" (Decode.map ListRowScrolled scrollDecoder)
-
-
-scrollDecoder : Decoder Scroll
-scrollDecoder =
-    Decode.map2 Scroll
-        (Decode.at [ "target", "scrollTop" ] Decode.float)
-        (Decode.at [ "target", "scrollLeft" ] Decode.float)
-
-
 type Msg
     = SetHeight Float
     | ListRowScrolled Scroll
     | NextPageReceived Rows
     | NextPageError String
+    | RowMsg Row.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -335,6 +318,13 @@ update msg model =
             let
                 _ =
                     Debug.log "Error receiving next page"
+            in
+                model => Cmd.none
+
+        RowMsg rowMsg ->
+            let
+                _ =
+                    Debug.log "rowMsg: " rowMsg
             in
                 model => Cmd.none
 

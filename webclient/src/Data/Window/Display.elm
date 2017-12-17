@@ -8,6 +8,7 @@ import Json.Decode.Pipeline as Pipeline exposing (custom, decode, hardcoded, req
 type alias IdentifierDisplay =
     { columns : List ColumnName
     , separator : Maybe String
+    , pk : List ColumnName
     }
 
 
@@ -16,3 +17,4 @@ decoder =
     decode IdentifierDisplay
         |> required "columns" (Decode.list ColumnName.decoder)
         |> required "separator" (Decode.nullable Decode.string)
+        |> required "pk" (Decode.list ColumnName.decoder)
