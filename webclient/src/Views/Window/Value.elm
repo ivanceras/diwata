@@ -17,6 +17,7 @@ import Route exposing (Route)
 import Data.WindowArena as WindowArena
 import Data.Window.Lookup as Lookup exposing (Lookup)
 import Util exposing (onWheel, onScroll, Scroll)
+import Widgets.Dropdown as Dropdown
 
 
 type Msg
@@ -385,11 +386,14 @@ widgetView lookup presentation ( widgetWidth, widgetHeight ) tab field record =
                             )
                             sortedChoices
                 in
+                   {-
                     select
                         [ styles
                         , onWheel ChoicesScrolled
                         ]
                         optionChoices
+                        -}
+                    Dropdown.view sortedChoices
 
             _ ->
                 Debug.crash ("unable to handle widget:" ++ toString controlWidget)

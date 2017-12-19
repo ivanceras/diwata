@@ -362,3 +362,32 @@ a.primary-link {
     padding-left: 10px;
 }
 
+.dropdown-option {
+    display: flex;
+}
+
+.dropdown-input {
+    display: flex;
+}
+.dropdown-input input {
+    border: 1px solid #ccc;
+}
+
+.dropdown-input button {
+    width: 20px;
+    margin-left: -20px;
+    border: 0;
+    background: none;
+    box-shadow:none;
+    border-radius: 0px;
+    outline: none;
+}
+
+.dropdown-input button:focus {
+    outline: none
+}
+
+.dropdown-input button::-moz-focus-inner {
+  border: 0;
+}
+
