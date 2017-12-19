@@ -1,14 +1,26 @@
-module Widgets.Dropdown exposing (view)
+module Widgets.Dropdown exposing (view, init)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Util exposing (viewIf)
 
 
-view: List (String, String ) -> Html msg
-view list =
+type alias Model =
+    { opened: Bool
+    , list: List (String, String)
+    }
+
+init: List (String, String) -> Model
+init list =
+    { opened = False
+    , list = list
+    }
+
+view: Model -> Html msg
+view model =
     div []
         [viewInputButton
-        ,viewDropdown list
+        ,viewIf model.opened (viewDropdown model.list)
         ]
 
 viewInputButton: Html msg

@@ -385,15 +385,10 @@ widgetView lookup presentation ( widgetWidth, widgetHeight ) tab field record =
                                         [ text optionDisplay ]
                             )
                             sortedChoices
+                    
+                    dropdownModel = Dropdown.init sortedChoices
                 in
-                   {-
-                    select
-                        [ styles
-                        , onWheel ChoicesScrolled
-                        ]
-                        optionChoices
-                        -}
-                    Dropdown.view sortedChoices
+                    Dropdown.view dropdownModel 
 
             _ ->
                 Debug.crash ("unable to handle widget:" ++ toString controlWidget)
