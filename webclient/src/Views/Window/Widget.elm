@@ -68,6 +68,13 @@ createWidget presentation lookup record tab field maybeValue =
         valueString =
             valueToString maybeValue
 
+        maybeValueString =
+            case maybeValue of
+                Just value ->
+                    Just (Value.valueToString value)
+                Nothing ->
+                    Nothing
+
         alignment =
             controlWidget.alignment
                 |> Widget.alignmentToString
@@ -393,7 +400,7 @@ createWidget presentation lookup record tab field maybeValue =
                             sortedChoices
 
                     dropdownModel =
-                        Dropdown.init sortedChoices
+                        Dropdown.init maybeValueString sortedChoices
                 in
                     TableDropdown dropdownModel
 

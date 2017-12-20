@@ -370,7 +370,10 @@ a.primary-link {
     display: flex;
 }
 .dropdown-input input {
-    border: 1px solid #ccc;
+    border-width: 0 0 1px 0;
+    border-style: solid;
+    border-color: #ccc;
+    height: 30px;
 }
 
 .dropdown-input button {
@@ -392,7 +395,7 @@ a.primary-link {
 }
 
 .dropdown-select {
-    position: absolute;
+    position: relative;
     background-color: #fff;
     z-index: 99999;
     height: 200px;
@@ -400,3 +403,17 @@ a.primary-link {
     border: 1px solid #ccc;
 }
 
+
+.dropdown-select .dropdown-option:hover {
+    background-color: #eee;
+}
+
+
+.dropdown-select .dropdown-option .pk-value {
+    padding-right: 10px;
+    border-right: 1px solid #ccc;
+}
+
+.dropdown-select .dropdown-option .choice {
+    padding-left: 10px;
+}
