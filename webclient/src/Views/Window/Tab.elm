@@ -27,23 +27,42 @@ type alias Model =
     { tab : Tab
     , scroll : Scroll
     , height : Float
-    , pages : List Rows
+    , lookup : Lookup
+    , pageRows : List (List Row.Model)
     , pageRequestInFlight : Bool
     , currentPage : Int
     , reachedLastPage : Bool
     }
 
 
-init : Float -> Tab -> Rows -> Model
-init height tab rows =
+init : Float -> Lookup -> Tab -> Rows -> Model
+init height lookup tab rows =
     { tab = tab
     , scroll = Scroll 0 0
     , height = height
-    , pages = [ rows ]
+    , lookup = lookup
+    , pageRows = [ createRowsModel lookup tab rows ]
     , pageRequestInFlight = False
     , currentPage = 1
     , reachedLastPage = False
     }
+
+
+createRowsModel : Lookup -> Tab -> Rows -> List Row.Model
+createRowsModel lookup tab rows =
+    let
+        recordList =
+            Record.rowsToRecordList rows
+    in
+        List.map
+            (\record ->
+                let
+                    recordId =
+                        Tab.recordId record tab
+                in
+                    Row.init lookup recordId record tab
+            )
+            recordList
 
 
 {-| IMPORTANT: rowHeight 40 is based on the
@@ -58,11 +77,11 @@ estimatedListHeight model =
 
         rowLength =
             List.foldl
-                (\rows len ->
-                    len + List.length rows.data
+                (\page len ->
+                    len + List.length page
                 )
                 0
-                model.pages
+                model.pageRows
     in
         rowHeight * (toFloat rowLength)
 
@@ -120,38 +139,9 @@ listView lookup model =
                     , onScroll ListRowScrolled
                     , style [ ( "height", px height ) ]
                     ]
-                    (List.map
-                        (\page ->
-                            div [ class "tab-page" ]
-                                [ div [ class "row-shadow-list-rows" ]
-                                    [ listViewPage lookup page model ]
-                                ]
-                        )
-                        model.pages
-                    )
+                    [ listViewRows model ]
                 ]
             ]
-
-
-listViewPage : Lookup -> Rows -> Model -> Html Msg
-listViewPage lookup rows model =
-    let
-        height =
-            model.height
-
-        tab =
-            model.tab
-
-        columnNames =
-            Tab.columnNames tab
-
-        recordList =
-            Record.rowsToRecordList rows
-
-        recordIdList =
-            List.map (\record -> Tab.recordId record tab) recordList
-    in
-        listViewRows lookup tab recordIdList recordList
 
 
 viewPageShadow : Model -> Html Msg
@@ -178,30 +168,23 @@ viewPageShadow model =
                 , style [ ( "top", topPx ) ]
                 ]
                 (List.map
-                    (\rows ->
-                        let
-                            recordList =
-                                Record.rowsToRecordList rows
-
-                            recordIdList =
-                                List.map (\record -> Tab.recordId record tab) recordList
-                        in
-                            div [ class "shadow-page" ]
-                                [ viewRowShadow recordIdList tab model ]
+                    (\page ->
+                        div [ class "shadow-page" ]
+                            [ viewRowShadow page model.tab ]
                     )
-                    model.pages
+                    model.pageRows
                 )
             ]
 
 
-viewRowShadow : List RecordId -> Tab -> Model -> Html Msg
-viewRowShadow recordIdList tab model =
+viewRowShadow : List Row.Model -> Tab -> Html Msg
+viewRowShadow pageRow tab =
     div [ class "row-shadow" ]
         (List.map
-            (\recordId ->
-                Row.viewRowControls recordId tab
+            (\row ->
+                Row.viewRowControls row.recordId tab
             )
-            recordIdList
+            pageRow
         )
 
 
@@ -267,23 +250,40 @@ viewSearchbox field =
             ]
 
 
-listViewRows : Lookup -> Tab -> List RecordId -> List Record -> Html Msg
-listViewRows lookup tab recordIdList recordList =
+viewPage : List Row.Model -> Html Msg
+viewPage rowList =
     div []
-        (if List.length recordList > 0 then
-            (List.map2
-                (\recordId record ->
-                    Row.view lookup recordId record tab
-                        |> Html.map RowMsg
-                )
-                recordIdList
-                recordList
+        (List.map
+            (\row ->
+                Row.view row
+                    |> Html.map (RowMsg row)
             )
-         else
-            [ div [ class "empty-list-view-rows" ]
-                [ text "Empty list view rows" ]
-            ]
+            rowList
         )
+
+
+listViewRows : Model -> Html Msg
+listViewRows model =
+    let
+        lookup =
+            model.lookup
+
+        tab =
+            model.tab
+    in
+        div [ class "tab-page" ]
+            (if List.length model.pageRows > 0 then
+                (List.map
+                    (\pageRow ->
+                        viewPage pageRow
+                    )
+                    model.pageRows
+                )
+             else
+                [ div [ class "empty-list-view-rows" ]
+                    [ text "Empty list view rows" ]
+                ]
+            )
 
 
 type Msg
@@ -291,7 +291,7 @@ type Msg
     | ListRowScrolled Scroll
     | NextPageReceived Rows
     | NextPageError String
-    | RowMsg Row.Msg
+    | RowMsg Row.Model Row.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -306,7 +306,7 @@ update msg model =
         NextPageReceived rows ->
             if List.length rows.data > 0 then
                 { model
-                    | pages = model.pages ++ [ rows ]
+                    | pageRows = model.pageRows ++ [ createRowsModel model.lookup model.tab rows ]
                     , pageRequestInFlight = False
                     , currentPage = model.currentPage + 1
                 }
@@ -321,12 +321,40 @@ update msg model =
             in
                 model => Cmd.none
 
-        RowMsg rowMsg ->
+        RowMsg argRow rowMsg ->
             let
-                _ =
-                    Debug.log "rowMsg: " rowMsg
+                updatedPage : List (List ( Row.Model, Cmd Msg ))
+                updatedPage =
+                    List.map
+                        (\page ->
+                            List.map
+                                (\row ->
+                                    let
+                                        ( newRow, subCmd ) =
+                                            if row == argRow then
+                                                Row.update rowMsg row
+                                            else
+                                                ( row, Cmd.none )
+                                    in
+                                        ( newRow, Cmd.map (RowMsg newRow) subCmd )
+                                )
+                                page
+                        )
+                        model.pageRows
+
+                ( pageRows, subCmd ) =
+                    List.foldl
+                        (\listList ( pageAcc, cmdAcc ) ->
+                            let
+                                ( page, cmd ) =
+                                    List.unzip listList
+                            in
+                                ( pageAcc ++ [ page ], cmdAcc ++ cmd )
+                        )
+                        ( [], [] )
+                        updatedPage
             in
-                model => Cmd.none
+                { model | pageRows = pageRows } => Cmd.batch subCmd
 
 
 subscriptions : Model -> Sub Msg

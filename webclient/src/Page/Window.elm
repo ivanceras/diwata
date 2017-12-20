@@ -87,6 +87,7 @@ init session tableName =
                 |> Http.toTask
                 |> Task.mapError handleLoadError
 
+        loadWindowLookups : Task PageLoadError Lookup
         loadWindowLookups =
             Request.Window.Records.lookups maybeAuthToken tableName
                 |> Http.toTask
@@ -100,13 +101,14 @@ init session tableName =
                 pageLoadError Page.Other "Window is currently unavailable."
 
         mainTabTask =
-            Task.map3
-                (\window records size ->
-                    Tab.init (calcMainTabHeight size) window.mainTab records
+            Task.map4
+                (\window records size lookup ->
+                    Tab.init (calcMainTabHeight size) lookup window.mainTab records
                 )
                 loadWindow
                 loadRecords
                 getBrowserSize
+                loadWindowLookups
                 |> Task.mapError handleLoadError
     in
         Task.map3

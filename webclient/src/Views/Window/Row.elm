@@ -1,4 +1,4 @@
-module Views.Window.Row exposing (view, viewRowControls, Msg)
+module Views.Window.Row exposing (view, viewRowControls, Msg, Model, update, init)
 
 import Html exposing (..)
 import Html.Attributes exposing (style, type_, attribute, class, classList, href, id, placeholder, src)
@@ -17,15 +17,53 @@ import Data.Window.Widget as Widget
 import Util exposing (px)
 import Data.Window.Lookup as Lookup exposing (Lookup)
 import Views.Window.Value as Value
+import Util exposing ((=>), pair, viewIf)
+import Views.Window.Presentation as Presentation exposing (Presentation(..))
 
 
-type Msg
-    = ValueMsg Value.Msg
+type alias Model =
+    { selected : Bool
+    , lookup : Lookup
+    , recordId : RecordId
+    , record : Record
+    , tab : Tab
+    , values : List Value.Model
+    }
 
 
-view : Lookup -> RecordId -> Record -> Tab -> Html Msg
-view lookup recordId record tab =
+init : Lookup -> RecordId -> Record -> Tab -> Model
+init lookup recordId record tab =
+    { selected = False
+    , lookup = lookup
+    , recordId = recordId
+    , record = record
+    , tab = tab
+    , values = createValues lookup record tab
+    }
+
+
+createValues : Lookup -> Record -> Tab -> List Value.Model
+createValues lookup record tab =
+    List.map
+        (Value.init InList lookup record tab)
+        tab.fields
+
+
+view : Model -> Html Msg
+view model =
     let
+        lookup =
+            model.lookup
+
+        recordId =
+            model.recordId
+
+        record =
+            model.record
+
+        tab =
+            model.tab
+
         fields =
             tab.fields
 
@@ -33,13 +71,13 @@ view lookup recordId record tab =
     in
         div [ class "tab-row" ]
             (List.map
-                (\field ->
+                (\value ->
                     div [ class "tab-row-value" ]
-                        [ Value.viewInList lookup tab field record
-                            |> Html.map ValueMsg
+                        [ Value.view value
+                            |> Html.map (ValueMsg value)
                         ]
                 )
-                fields
+                model.values
             )
 
 
@@ -94,3 +132,33 @@ viewRecordDetail recordId tab =
             [ div [ class "icon icon-pencil" ]
                 []
             ]
+
+
+type Msg
+    = ValueMsg Value.Model Value.Msg
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    case msg of
+        ValueMsg argValue msg ->
+            let
+                updated =
+                    List.map
+                        (\value ->
+                            if argValue == value then
+                                let
+                                    ( newValue, subCmd ) =
+                                        Value.update msg value
+                                in
+                                    ( newValue, Cmd.map (ValueMsg newValue) subCmd )
+                            else
+                                value => Cmd.none
+                        )
+                        model.values
+
+                ( updatedValues, subCmds ) =
+                    List.unzip updated
+            in
+                { model | values = updatedValues }
+                    => Cmd.batch subCmds

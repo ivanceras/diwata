@@ -31,6 +31,7 @@ import Data.WindowArena exposing (ArenaArg, Section(..))
 import Route
 import Data.Window.Lookup as Lookup exposing (Lookup)
 import Util
+import Views.Window.Presentation as Presentation exposing (Presentation(..))
 
 
 {-| Example:
@@ -52,6 +53,7 @@ type alias Model =
     , browserSize : BrowserWindow.Size
     , arenaArg : ArenaArg
     , lookup : Lookup
+    , values : List Value.Model
     }
 
 
@@ -94,8 +96,8 @@ init tableName selectedRow arenaArg =
                 |> Task.mapError handleLoadError
 
         initHasManyTabs =
-            Task.map3
-                (\window size detailRows ->
+            Task.map4
+                (\window size detailRows lookup ->
                     let
                         ( mainRecordHeight, detailTabHeight ) =
                             splitTabHeights window (initialPosition size) size
@@ -108,7 +110,7 @@ init tableName selectedRow arenaArg =
                                 in
                                     case rows of
                                         Just rows ->
-                                            Tab.init detailTabHeight hasManyTab rows
+                                            Tab.init detailTabHeight lookup hasManyTab rows
 
                                         Nothing ->
                                             Debug.crash "Empty row"
@@ -118,10 +120,11 @@ init tableName selectedRow arenaArg =
                 loadWindow
                 browserSize
                 fetchSelected
+                loadWindowLookups
 
         initIndirectTabs =
-            Task.map3
-                (\window size detailRows ->
+            Task.map4
+                (\window size detailRows lookup ->
                     let
                         ( mainRecordHeight, detailTabHeight ) =
                             splitTabHeights window (initialPosition size) size
@@ -134,7 +137,7 @@ init tableName selectedRow arenaArg =
                                 in
                                     case rows of
                                         Just rows ->
-                                            Tab.init detailTabHeight indirectTab rows
+                                            Tab.init detailTabHeight lookup indirectTab rows
 
                                         Nothing ->
                                             Debug.crash "Empty row"
@@ -144,6 +147,7 @@ init tableName selectedRow arenaArg =
                 loadWindow
                 browserSize
                 fetchSelected
+                loadWindowLookups
 
         handleLoadError e =
             pageLoadError Page.DetailedRecord ("DetailedRecord is currently unavailable. Error: " ++ (toString e))
@@ -159,6 +163,7 @@ init tableName selectedRow arenaArg =
                 , browserSize = size
                 , arenaArg = arenaArg
                 , lookup = lookup
+                , values = createValues window.mainTab lookup detail
                 }
             )
             fetchSelected
@@ -168,6 +173,15 @@ init tableName selectedRow arenaArg =
             browserSize
             loadWindowLookups
         )
+
+
+createValues : Tab -> Lookup -> RecordDetail -> List Value.Model
+createValues tab lookup detail =
+    List.map
+        (\field ->
+            Value.init InCard lookup detail.record tab field
+        )
+        tab.fields
 
 
 availableHeight : BrowserWindow.Size -> Float
@@ -295,29 +309,33 @@ cardViewRecord model record tab =
         div []
             [ div [ class "card-view" ]
                 (List.map
-                    (\field ->
-                        viewFieldInCard model fieldLabelWidth tab field record
+                    (\value ->
+                        viewFieldInCard fieldLabelWidth value
                     )
-                    tab.fields
+                    model.values
                 )
             ]
 
 
-viewFieldInCard : Model -> Int -> Tab -> Field -> Maybe Record -> Html Msg
-viewFieldInCard model labelWidth tab field record =
-    div [ class "card-field" ]
-        [ div
-            [ class "card-field-name"
-            , style [ ( "width", px labelWidth ) ]
+viewFieldInCard : Int -> Value.Model -> Html Msg
+viewFieldInCard labelWidth value =
+    let
+        field =
+            value.field
+    in
+        div [ class "card-field" ]
+            [ div
+                [ class "card-field-name"
+                , style [ ( "width", px labelWidth ) ]
+                ]
+                [ label [ class "card-field-label" ]
+                    [ text (field.name ++ ": ") ]
+                ]
+            , div [ class "card-field-value" ]
+                [ Value.view value
+                    |> Html.map (ValueMsg value)
+                ]
             ]
-            [ label [ class "card-field-label" ]
-                [ text (field.name ++ ": ") ]
-            ]
-        , div [ class "card-field-value" ]
-            [ Value.viewInCard model.lookup tab field record
-                |> Html.map ValueMsg
-            ]
-        ]
 
 
 viewDetailTabs : Model -> Html Msg
@@ -480,7 +498,7 @@ type Msg
     | WindowResized BrowserWindow.Size
     | TabMsg ( Section, Tab.Model, Tab.Msg )
     | TabMsgAll Tab.Msg
-    | ValueMsg Value.Msg
+    | ValueMsg Value.Model Value.Msg
 
 
 update : Session -> Msg -> Model -> ( Model, Cmd Msg )
@@ -572,12 +590,28 @@ update session msg model =
                             , Cmd.map (\tabMsg -> TabMsg ( section, updatedTabModel, tabMsg )) subCmd
                             ]
 
-            ValueMsg valueMsg ->
+            ValueMsg argValue valueMsg ->
                 let
-                    _ =
-                        Debug.log "valueMsg: " valueMsg
+                    valueUpdate : List ( Value.Model, Cmd Msg )
+                    valueUpdate =
+                        List.map
+                            (\value ->
+                                if argValue == value then
+                                    let
+                                        ( newValue, cmd ) =
+                                            Value.update valueMsg value
+                                    in
+                                        ( newValue, Cmd.map (ValueMsg newValue) cmd )
+                                else
+                                    value => Cmd.none
+                            )
+                            model.values
+
+                    ( updatedValues, subCmd ) =
+                        List.unzip valueUpdate
                 in
-                    model => Cmd.none
+                    { model | values = updatedValues }
+                        => Cmd.batch subCmd
 
 
 requestNextPage : Section -> Tab.Model -> Model -> Cmd Msg

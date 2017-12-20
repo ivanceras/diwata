@@ -391,3 +391,8 @@ a.primary-link {
   border: 0;
 }
 
+.dropdown-select {
+    position: absolute;
+    background-color: #fff;
+}
+
