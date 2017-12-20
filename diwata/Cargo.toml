@@ -16,6 +16,8 @@ dao = {path = "../rustorm/dao"}
 rustorm = { path = "../rustorm", features = ["with-postgres"] }
 rustorm_codegen = {path = "../rustorm/codegen"}
 intel = {path = "../intel"}
+structopt = "0.1"
+structopt-derive = "0.1"
 
 [package.metadata.deb]
 maintainer = "Jovansonlee Cesar <ivanceras@gmail.com>"
