@@ -128,7 +128,6 @@ pub enum Document {
     Archived,
 }
 
-
 impl Reference {
     pub fn get_widget_fullview(&self) -> Widget {
         match *self {

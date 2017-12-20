@@ -100,14 +100,11 @@ pub struct WindowName {
     pub is_view: bool,
 }
 
-
 #[derive(Debug, Serialize)]
 pub struct GroupedWindow {
     group: String,
     window_names: Vec<WindowName>,
 }
-
-
 
 pub fn get_grouped_windows_using_cache(
     em: &EntityManager,
@@ -118,7 +115,6 @@ pub fn get_grouped_windows_using_cache(
     let grouped_window = get_grouped_windows(em, &tables)?;
     Ok(grouped_window)
 }
-
 
 /// get all the schema content and convert to grouped window
 /// for displaying as a list in the client side
@@ -151,8 +147,6 @@ fn get_grouped_windows(
     }
     Ok(grouped_windows)
 }
-
-
 
 /// extract all the tables and create a window object for each that can
 /// be a window, cache them for later use, so as not to keeping redoing

@@ -20,7 +20,6 @@ pub struct Tab {
     pub display: Option<IdentifierDisplay>,
 }
 
-
 /// the displayable column name, serves as identifier to human vision
 /// this would be name, title, first_name - lastname
 #[derive(Debug, Serialize, Clone)]
@@ -52,14 +51,12 @@ impl Tab {
     }
 
     pub fn derive_dropdowninfo(table: &Table) -> Option<DropdownInfo> {
-        match Self::derive_display(table){
-            Some(display) => {
-                Some(DropdownInfo{
-                    source: table.name.clone(),
-                    display,
-                })
-            }
-            None => None
+        match Self::derive_display(table) {
+            Some(display) => Some(DropdownInfo {
+                source: table.name.clone(),
+                display,
+            }),
+            None => None,
         }
     }
 
@@ -68,109 +65,86 @@ impl Tab {
     fn derive_display(table: &Table) -> Option<IdentifierDisplay> {
         let table_name = &table.name.name;
         let columns = &table.columns;
-        let pk: Vec<ColumnName> = table.get_primary_column_names()
-                .iter()
-                .map(|ref column| (**column).to_owned()).collect();
+        let pk: Vec<ColumnName> = table
+            .get_primary_column_names()
+            .iter()
+            .map(|ref column| (**column).to_owned())
+            .collect();
         // match for users table common structure
-        let display = if table_name == "user" ||
-            table_name == "users" {
-            let found_column = 
-                columns.iter() 
-                    .find(|column| {
-                        let column_name = &column.name.name;
-                        *column_name == "username"
-                            || *column_name == "email"
-                    });
-            found_column.map(|column|{
-                IdentifierDisplay{
-                    columns: vec![column.name.clone()],
-                    separator: None,
-                    pk: pk.clone(),
-                }
+        let display = if table_name == "user" || table_name == "users" {
+            let found_column = columns.iter().find(|column| {
+                let column_name = &column.name.name;
+                *column_name == "username" || *column_name == "email"
+            });
+            found_column.map(|column| IdentifierDisplay {
+                columns: vec![column.name.clone()],
+                separator: None,
+                pk: pk.clone(),
             })
         }
         // match the column name regardless of the table name
         else {
-            let found_column = 
-                columns.iter() 
-                    .find(|column| {
-                        let column_name = &column.name.name;
-                        *column_name == "name"
-                            || *column_name == "title"
-                    });
-            found_column.map(|column|{
-                IdentifierDisplay{
-                    columns: vec![column.name.clone()],
-                    separator: None,
-                    pk: pk.clone(),
-                }
+            let found_column = columns.iter().find(|column| {
+                let column_name = &column.name.name;
+                *column_name == "name" || *column_name == "title"
+            });
+            found_column.map(|column| IdentifierDisplay {
+                columns: vec![column.name.clone()],
+                separator: None,
+                pk: pk.clone(),
             })
         };
 
         // match for person common columns
         display.or_else(|| {
-            let maybe_firstname = 
-                columns.iter()
-                    .find(|column|{
-                        let column_name = &column.name.name;
-                            *column_name == "first_name"
-                                || *column_name == "firstname"
-                    });
+            let maybe_firstname = columns.iter().find(|column| {
+                let column_name = &column.name.name;
+                *column_name == "first_name" || *column_name == "firstname"
+            });
 
-            let maybe_lastname = 
-                columns.iter()
-                    .find(|column| {
-                        let column_name = &column.name.name;
-                        *column_name == "last_name"
-                            || *column_name == "lastname"
-                    });
+            let maybe_lastname = columns.iter().find(|column| {
+                let column_name = &column.name.name;
+                *column_name == "last_name" || *column_name == "lastname"
+            });
             if let Some(lastname) = maybe_lastname {
                 if let Some(firstname) = maybe_firstname {
-                    Some(IdentifierDisplay{
+                    Some(IdentifierDisplay {
                         columns: vec![lastname.name.clone(), firstname.name.clone()],
                         separator: Some(", ".into()),
                         pk: pk.clone(),
                     })
-                }
-                else{
+                } else {
                     None
                 }
-            }
-            else{
-                let same_name =
-                        columns.iter()
-                            .find(|column| {
-                                let column_name = &column.name.name;
-                                column_name == table_name
-                            });
+            } else {
+                let same_name = columns.iter().find(|column| {
+                    let column_name = &column.name.name;
+                    column_name == table_name
+                });
 
-                    match same_name {
-                        Some(column) => {
-                            Some(IdentifierDisplay {
-                                columns: vec![column.name.clone()],
-                                separator: None,
-                                pk: pk.clone(),
-                            })
+                match same_name {
+                    Some(column) => Some(IdentifierDisplay {
+                        columns: vec![column.name.clone()],
+                        separator: None,
+                        pk: pk.clone(),
+                    }),
+                    None => {
+                        // use primary key orunique key here
+                        let mut columns: Vec<ColumnName> = vec![];
+                        let primary_columns = table.get_primary_column_names();
+                        for pk in primary_columns {
+                            columns.push(pk.to_owned());
                         }
-                        None => {
-                            // use primary key orunique key here
-                            let mut columns: Vec<ColumnName> = vec![];
-                            let primary_columns = table.get_primary_column_names();
-                            for pk in primary_columns{
-                                columns.push(pk.to_owned());
-                            }
-                            Some(IdentifierDisplay {
-                                columns,
-                                separator: None,
-                                pk: pk.clone()
-                            })
-                        }
-                   }
+                        Some(IdentifierDisplay {
+                            columns,
+                            separator: None,
+                            pk: pk.clone(),
+                        })
+                    }
                 }
+            }
         })
-
     }
-
 
     fn derive_simple_fields(table: &Table) -> Vec<Field> {
         let columns: &Vec<Column> = &table.columns;
@@ -208,12 +182,8 @@ impl Tab {
 
     pub fn get_display_columns(&self) -> Vec<&ColumnName> {
         match *&self.display {
-            Some(ref display) => {
-                display.columns.iter()
-                    .map(|ref column| *column)
-                    .collect()
-            }
-            None => vec![]
+            Some(ref display) => display.columns.iter().map(|ref column| *column).collect(),
+            None => vec![],
         }
     }
 }

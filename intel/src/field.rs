@@ -10,7 +10,6 @@ use rustorm::ColumnName;
 use data_container::DropdownInfo;
 use widget::Dropdown;
 
-
 #[derive(Debug, Serialize, Clone)]
 pub struct Field {
     /// name of the field, derive from column name
@@ -34,21 +33,19 @@ pub enum ColumnDetail {
 
 impl ColumnDetail {
     fn first_column_name(&self) -> &ColumnName {
-        match *self{
+        match *self {
             ColumnDetail::Simple(ref column_name, _) => &column_name,
-            ColumnDetail::Compound(ref column_names_types) => &column_names_types[0].0
+            ColumnDetail::Compound(ref column_names_types) => &column_names_types[0].0,
         }
     }
 
     fn column_names(&self) -> Vec<&ColumnName> {
-        match *self{
+        match *self {
             ColumnDetail::Simple(ref column_name, _) => vec![column_name],
-            ColumnDetail::Compound(ref column_names_types) => {
-                column_names_types.iter()
-                    .map(|&(ref column_name,_)|
-                         column_name
-                    ).collect()
-            }
+            ColumnDetail::Compound(ref column_names_types) => column_names_types
+                .iter()
+                .map(|&(ref column_name, _)| column_name)
+                .collect(),
         }
     }
 }
@@ -107,7 +104,7 @@ impl Field {
         let dropdown = &control_widget.dropdown;
         match *dropdown {
             Some(Dropdown::TableDropdown(ref dropdown_info)) => Some(dropdown_info),
-            None => None
+            None => None,
         }
     }
 
@@ -118,7 +115,6 @@ impl Field {
     pub fn first_column_name(&self) -> &ColumnName {
         self.column_detail.first_column_name()
     }
-
 
     /// 2 or more columns
     /// will be merge into 1 field
@@ -132,7 +128,10 @@ impl Field {
         referred_table: &Table,
     ) -> Self {
         let control_widget = ControlWidget::from_has_one_table(columns, referred_table);
-        println!("control widget of {} on referred_table: {} is widget: {:?}", table.name.name, referred_table.name.name, control_widget);
+        println!(
+            "control widget of {} on referred_table: {} is widget: {:?}",
+            table.name.name, referred_table.name.name, control_widget
+        );
         println!("referring columns: {:#?}", columns);
         let mut columns_comment = String::new();
         for column in columns {
@@ -204,15 +203,13 @@ impl Field {
             && (table_name == "users" || table_name == "user")
         {
             Some(Reference::PrimaryUserUuid)
-        } 
-        else if sql_type == &SqlType::Uuid && default_is_generated_uuid
-            && table.get_primary_column_names().contains(&&column.name) {
-                Some(Reference::PrimaryUuid)
-        }
-        else if table.get_primary_column_names().contains(&&column.name) {
+        } else if sql_type == &SqlType::Uuid && default_is_generated_uuid
+            && table.get_primary_column_names().contains(&&column.name)
+        {
+            Some(Reference::PrimaryUuid)
+        } else if table.get_primary_column_names().contains(&&column.name) {
             Some(Reference::PrimaryField)
         }
-        
         // if numeric range with 2 precision on decimal
         else if sql_type == &SqlType::Numeric && match *capacity {
             Some(ref capacity) => match *capacity {
@@ -306,8 +303,6 @@ impl Field {
         }
     }
 }
-
-
 
 #[cfg(test)]
 

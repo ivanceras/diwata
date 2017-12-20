@@ -88,9 +88,6 @@ impl<'a> TableIntel<'a> {
         false
     }
 
-
-
-
     /// 1:1 tables are table that has a record
     /// that refer to this table
     /// every record on that table refers to
@@ -302,7 +299,6 @@ mod test {
         assert!(table_intel.is_owned_table());
     }
 
-
     #[test]
     fn table_relations() {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/bazaar_v8";
@@ -348,8 +344,7 @@ mod test {
                 for indirect in indirect_tables {
                     println!(
                         "          indirect --> ({}) --> ({})",
-                        indirect.linker.name.name,
-                        indirect.indirect_table.name.name
+                        indirect.linker.name.name, indirect.indirect_table.name.name
                     );
                 }
             }

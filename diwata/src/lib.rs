@@ -31,7 +31,6 @@ use rocket::response::Redirect;
 use intel::tab::Tab;
 use intel::data_container::Lookup;
 
-
 mod error;
 
 static DB_URL: &'static str = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
@@ -67,14 +66,12 @@ fn get_pool_dm() -> Result<RecordManager, ServiceError> {
     }
 }
 
-
 #[get("/")]
 fn get_windows() -> Result<Json<Vec<GroupedWindow>>, ServiceError> {
     let em = get_pool_em()?;
     let grouped_windows: Vec<GroupedWindow> = window::get_grouped_windows_using_cache(&em, DB_URL)?;
     Ok(Json(grouped_windows))
 }
-
 
 #[get("/<table_name>")]
 fn get_window(table_name: String) -> Result<Option<Json<Window>>, ServiceError> {
@@ -143,9 +140,7 @@ fn get_detailed_record(
 }
 
 #[get("/<table_name>")]
-fn get_window_lookup_data(
-    table_name: String,
-    ) -> Result<Option<Json<Lookup>>, ServiceError> {
+fn get_window_lookup_data(table_name: String) -> Result<Option<Json<Lookup>>, ServiceError> {
     let dm = get_pool_dm()?;
     let em = get_pool_em()?;
     let mut cache_pool = cache::CACHE_POOL.lock().unwrap();
@@ -155,24 +150,16 @@ fn get_window_lookup_data(
     let tables = cache_pool.get_cached_tables(&em, DB_URL)?;
     match window {
         Some(window) => {
-            let lookup: Lookup = data_service::get_all_lookup_for_window(
-                &dm,
-                &tables,
-                &window,
-                PAGE_SIZE,
-            )?;
+            let lookup: Lookup =
+                data_service::get_all_lookup_for_window(&dm, &tables, &window, PAGE_SIZE)?;
             Ok(Some(Json(lookup)))
         }
         None => Ok(None),
     }
-
 }
 
 #[get("/<table_name>/<page>")]
-fn get_lookup_data(
-    table_name: String,
-    page: u32
-) -> Result<Option<Json<Rows>>, ServiceError> {
+fn get_lookup_data(table_name: String, page: u32) -> Result<Option<Json<Rows>>, ServiceError> {
     let dm = get_pool_dm()?;
     let em = get_pool_em()?;
     let mut cache_pool = cache::CACHE_POOL.lock().unwrap();
@@ -194,7 +181,6 @@ fn get_lookup_data(
         None => Ok(None),
     }
 }
-
 
 /// retrieve records from a has_many table based on the selected main records
 /// from the main table
@@ -288,7 +274,6 @@ fn get_indirect_records(
     }
 }
 
-
 #[get("/")]
 fn webclient_index() -> Option<NamedFile> {
     NamedFile::open(Path::new("./public/index.html")).ok()
@@ -299,7 +284,6 @@ fn webclient(file: PathBuf) -> Option<NamedFile> {
     NamedFile::open(Path::new("./public/").join(file)).ok()
 }
 
-
 #[get("/")]
 fn redirect_to_web() -> Redirect {
     Redirect::to("/web/")
@@ -309,10 +293,6 @@ fn redirect_to_web() -> Redirect {
 fn favicon() -> Option<NamedFile> {
     NamedFile::open(Path::new("./public/img/favicon.ico")).ok()
 }
-
-
-
-
 
 pub fn rocket() -> Rocket {
     rocket::ignite()

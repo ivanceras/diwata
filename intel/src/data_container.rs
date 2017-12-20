@@ -22,8 +22,6 @@ pub struct DropdownInfo {
     pub display: IdentifierDisplay,
 }
 
-
 /// lookup for same table are the same regardless of which field they are referred
 #[derive(Debug, Serialize)]
 pub struct Lookup(pub Vec<(TableName, Rows)>);
-

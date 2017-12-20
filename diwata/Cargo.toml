@@ -32,5 +32,6 @@ priority = "optional"
 assets = [
     ["../target/release/diwata", "usr/bin/", "755"],
     ["../README.md", "usr/share/doc/diwata/README", "644"],
+    ["../public/*", "var/lib/diwata/", "644"],
 ]
 

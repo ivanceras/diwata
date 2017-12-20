@@ -6,15 +6,11 @@ use std::collections::BTreeMap;
 use error::IntelError;
 use std::sync::{Arc, Mutex};
 
-
 lazy_static!{
     pub static ref CACHE_POOL: Arc<Mutex<CachePool>> = {
         Arc::new(Mutex::new(CachePool::new()))
     };
 }
-
-
-
 
 /// contains an atlas of cache, one for each String key
 /// puposedly for DB_URL, there will

@@ -20,7 +20,6 @@ pub mod data_container;
 pub mod cache;
 pub mod error;
 
-
 pub use window::Window;
 
 #[cfg(test)]

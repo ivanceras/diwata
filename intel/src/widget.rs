@@ -69,7 +69,6 @@ pub enum Widget {
     Viewer3D,
 }
 
-
 /// contains the widget
 /// and the dropdown data
 #[derive(Debug, Serialize, Clone)]
@@ -97,7 +96,6 @@ pub struct ControlWidget {
     alignment: Alignment,
 }
 
-
 #[derive(Debug, Serialize, Clone)]
 pub enum Alignment {
     Left,
@@ -105,13 +103,10 @@ pub enum Alignment {
     Center,
 }
 
-
-
 #[derive(Debug, Serialize, Clone)]
 pub enum Dropdown {
     TableDropdown(DropdownInfo),
 }
-
 
 impl ControlWidget {
     /// derive widget base from column
@@ -135,13 +130,13 @@ impl ControlWidget {
         } else {
             let widget = if *sql_type == SqlType::Bool {
                 Widget::Checkbox
-            }else if *sql_type == SqlType::TimestampTz || *sql_type == SqlType::Timestamp {
+            } else if *sql_type == SqlType::TimestampTz || *sql_type == SqlType::Timestamp {
                 Widget::DateTimePicker
             } else if *sql_type == SqlType::Date {
                 Widget::DatePicker
             } else if *sql_type == SqlType::Uuid {
                 Widget::UuidTextbox
-            }else if width > 100 {
+            } else if width > 100 {
                 Widget::MultilineText
             } else {
                 Widget::Textbox
@@ -181,12 +176,10 @@ impl ControlWidget {
             .unwrap_or(0);
 
         let dropdown = Tab::derive_dropdowninfo(table)
-            .map(|dropdown_info|
-                 Dropdown::TableDropdown(dropdown_info)
-             );
+            .map(|dropdown_info| Dropdown::TableDropdown(dropdown_info));
         ControlWidget {
             widget,
-            dropdown, 
+            dropdown,
             width,
             max_len: None,
             height: 1,
