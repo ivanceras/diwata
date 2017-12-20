@@ -50,7 +50,7 @@ viewOption ( pk, choice ) =
     div
         [ class "dropdown-option" ]
         [ div [ class "pk-value" ]
-            [ text pk ]
+            [ text (pk ++ "  |  ") ]
         , div [ class "choice" ]
             [ text choice ]
         ]

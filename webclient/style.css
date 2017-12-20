@@ -394,5 +394,9 @@ a.primary-link {
 .dropdown-select {
     position: absolute;
     background-color: #fff;
+    z-index: 99999;
+    height: 200px;
+    overflow-y: auto;
+    border: 1px solid #ccc;
 }
 
