@@ -249,28 +249,25 @@ update session msg model =
 -}
 dropdownPageRequestNeeded : Lookup -> Model -> Maybe TableName
 dropdownPageRequestNeeded lookup model =
-    if not model.dropdownPageRequestInFlight then
-        let
-            sourceTable =
-                Tab.dropdownPageRequestNeeded lookup model.mainTab
+    let
+        sourceTable =
+            Tab.dropdownPageRequestNeeded lookup model.mainTab
 
-            reachedLastPage =
-                case sourceTable of
-                    Just sourceTable ->
-                        Lookup.hasReachedLastPage sourceTable lookup
+        reachedLastPage =
+            case sourceTable of
+                Just sourceTable ->
+                    Lookup.hasReachedLastPage sourceTable lookup
 
-                    Nothing ->
-                        False
+                Nothing ->
+                    False
 
-            _ =
-                Debug.log "reached last page" reachedLastPage
-        in
-            if not reachedLastPage then
-                sourceTable
-            else
-                Nothing
-    else
-        Nothing
+        _ =
+            Debug.log "reached last page" reachedLastPage
+    in
+        if not reachedLastPage && not model.dropdownPageRequestInFlight then
+            sourceTable
+        else
+            Nothing
 
 
 requestNextPage : Tab.Model -> Cmd Msg

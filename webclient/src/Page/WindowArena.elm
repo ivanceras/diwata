@@ -249,7 +249,7 @@ update session msg model =
                                             Lookup.tableLookup sourceTable lookup
                                     in
                                         { newWindow | dropdownPageRequestInFlight = True }
-                                            => requestNextDropdownPage currentPage sourceTable
+                                            => requestNextDropdownPageForWindow currentPage sourceTable
 
                                 Nothing ->
                                     newWindow => Cmd.none
@@ -267,10 +267,30 @@ update session msg model =
             case model.selectedRow of
                 Just selectedRow ->
                     let
+                        lookup =
+                            selectedRow.lookup
+
                         ( newDetailedRecord, subCmd ) =
                             DetailedRecord.update session subMsg selectedRow
+
+                        ( updatedDetailedRecord, detailCmd ) =
+                            case DetailedRecord.dropdownPageRequestNeeded lookup selectedRow of
+                                Just sourceTable ->
+                                    let
+                                        ( currentPage, listRecord ) =
+                                            Lookup.tableLookup sourceTable lookup
+                                    in
+                                        { newDetailedRecord | dropdownPageRequestInFlight = True }
+                                            => requestNextDropdownPageForDetailedRecord currentPage sourceTable
+
+                                Nothing ->
+                                    newDetailedRecord => Cmd.none
                     in
-                        { model | selectedRow = Just newDetailedRecord } => Cmd.map DetailedRecordMsg subCmd
+                        { model | selectedRow = Just updatedDetailedRecord }
+                            => Cmd.batch
+                                [ Cmd.map DetailedRecordMsg subCmd
+                                , detailCmd
+                                ]
 
                 Nothing ->
                     model => Cmd.none
@@ -283,8 +303,8 @@ update session msg model =
                 model => Cmd.none
 
 
-requestNextDropdownPage : Int -> TableName -> Cmd Msg
-requestNextDropdownPage currentPage sourceTable =
+requestNextDropdownPageForWindow : Int -> TableName -> Cmd Msg
+requestNextDropdownPageForWindow currentPage sourceTable =
     Request.Window.Records.lookupPage (currentPage + 1) Nothing sourceTable
         |> Http.toTask
         |> Task.attempt
@@ -299,6 +319,25 @@ requestNextDropdownPage currentPage sourceTable =
 
                     Err e ->
                         WindowMsg (Window.LookupNextPageErrored (toString e))
+            )
+
+
+requestNextDropdownPageForDetailedRecord : Int -> TableName -> Cmd Msg
+requestNextDropdownPageForDetailedRecord currentPage sourceTable =
+    Request.Window.Records.lookupPage (currentPage + 1) Nothing sourceTable
+        |> Http.toTask
+        |> Task.attempt
+            (\result ->
+                case result of
+                    Ok rows ->
+                        let
+                            recordList =
+                                Record.rowsToRecordList rows
+                        in
+                            DetailedRecordMsg (DetailedRecord.LookupNextPageReceived ( sourceTable, recordList ))
+
+                    Err e ->
+                        DetailedRecordMsg (DetailedRecord.LookupNextPageErrored (toString e))
             )
 
 

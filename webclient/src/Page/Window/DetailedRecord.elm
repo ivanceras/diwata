@@ -1,4 +1,13 @@
-module Page.Window.DetailedRecord exposing (init, Model, view, subscriptions, update, Msg)
+module Page.Window.DetailedRecord
+    exposing
+        ( init
+        , Model
+        , view
+        , subscriptions
+        , update
+        , Msg(..)
+        , dropdownPageRequestNeeded
+        )
 
 import Data.Window.RecordDetail as RecordDetail exposing (RecordDetail)
 import Task exposing (Task)
@@ -54,6 +63,7 @@ type alias Model =
     , arenaArg : ArenaArg
     , lookup : Lookup
     , values : List Value.Model
+    , dropdownPageRequestInFlight : Bool
     }
 
 
@@ -157,6 +167,7 @@ init tableName selectedRow arenaArg window =
                 , arenaArg = arenaArg
                 , lookup = lookup
                 , values = createValues window.mainTab detail
+                , dropdownPageRequestInFlight = False
                 }
             )
             fetchSelected
@@ -165,6 +176,50 @@ init tableName selectedRow arenaArg window =
             browserSize
             loadWindowLookups
         )
+
+
+dropdownPageRequestNeeded : Lookup -> Model -> Maybe TableName
+dropdownPageRequestNeeded lookup model =
+    let
+        mainValues =
+            List.filterMap
+                (\value ->
+                    Value.dropdownPageRequestNeeded lookup value
+                )
+                model.values
+
+        hasManyTabValues =
+            List.filterMap
+                (\hasManyTab ->
+                    Tab.dropdownPageRequestNeeded lookup hasManyTab
+                )
+                model.hasManyTabs
+
+        indirectTabValues =
+            List.filterMap
+                (\indirectTab ->
+                    Tab.dropdownPageRequestNeeded lookup indirectTab
+                )
+                model.indirectTabs
+
+        sourceTable =
+            mainValues
+                ++ hasManyTabValues
+                ++ indirectTabValues
+                |> List.head
+
+        reachedLastPage =
+            case sourceTable of
+                Just sourceTable ->
+                    Lookup.hasReachedLastPage sourceTable lookup
+
+                Nothing ->
+                    False
+    in
+        if not reachedLastPage && not model.dropdownPageRequestInFlight then
+            sourceTable
+        else
+            Nothing
 
 
 createValues : Tab -> RecordDetail -> List Value.Model
@@ -494,6 +549,8 @@ type Msg
     | TabMsg ( Section, Tab.Model, Tab.Msg )
     | TabMsgAll Tab.Msg
     | ValueMsg Value.Model Value.Msg
+    | LookupNextPageReceived ( TableName, List Record )
+    | LookupNextPageErrored String
 
 
 update : Session -> Msg -> Model -> ( Model, Cmd Msg )
@@ -607,6 +664,23 @@ update session msg model =
                 in
                     { model | values = updatedValues }
                         => Cmd.batch subCmd
+
+            LookupNextPageReceived ( sourceTable, recordList ) ->
+                let
+                    _ =
+                        Debug.log "In detailedRecord recordList" (toString recordList)
+
+                    updatedLookup =
+                        Lookup.addPage sourceTable recordList model.lookup
+                in
+                    { model
+                        | lookup = updatedLookup
+                        , dropdownPageRequestInFlight = False
+                    }
+                        => Cmd.none
+
+            LookupNextPageErrored e ->
+                Debug.crash "Error loading next page lookup" e
 
 
 requestNextPage : Section -> Tab.Model -> Model -> Cmd Msg
