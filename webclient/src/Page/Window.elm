@@ -79,19 +79,14 @@ calcMainTabHeight browserSize =
         height
 
 
-init : Session -> TableName -> Task PageLoadError Model
-init session tableName =
+init : Session -> TableName -> Window -> Task PageLoadError Model
+init session tableName window =
     let
         maybeAuthToken =
             Maybe.map .token session.user
 
         getBrowserSize =
             BrowserWindow.size
-
-        loadWindow =
-            Request.Window.get maybeAuthToken tableName
-                |> Http.toTask
-                |> Task.mapError handleLoadError
 
         loadRecords =
             Request.Window.Records.list maybeAuthToken tableName
@@ -112,18 +107,17 @@ init session tableName =
                 pageLoadError Page.Other "Window is currently unavailable."
 
         mainTabTask =
-            Task.map4
-                (\window records size lookup ->
+            Task.map3
+                (\records size lookup ->
                     Tab.init (calcMainTabHeight size) window.mainTab records
                 )
-                loadWindow
                 loadRecords
                 getBrowserSize
                 loadWindowLookups
                 |> Task.mapError handleLoadError
     in
-        Task.map3
-            (\window mainTab lookup ->
+        Task.map2
+            (\mainTab lookup ->
                 let
                     _ =
                         Debug.log "lookup: " lookup
@@ -137,7 +131,6 @@ init session tableName =
                     , dropdownPageRequestInFlight = False
                     }
             )
-            loadWindow
             mainTabTask
             loadWindowLookups
 

@@ -74,8 +74,8 @@ initialPosition browserSize =
         Position 0 allocateMain
 
 
-init : TableName -> String -> ArenaArg -> Task PageLoadError Model
-init tableName selectedRow arenaArg =
+init : TableName -> String -> ArenaArg -> Window -> Task PageLoadError Model
+init tableName selectedRow arenaArg window =
     let
         browserSize =
             BrowserWindow.size
@@ -85,19 +85,14 @@ init tableName selectedRow arenaArg =
                 |> Http.toTask
                 |> Task.mapError handleLoadError
 
-        loadWindow =
-            Request.Window.get Nothing tableName
-                |> Http.toTask
-                |> Task.mapError handleLoadError
-
         loadWindowLookups =
             Records.lookups Nothing tableName
                 |> Http.toTask
                 |> Task.mapError handleLoadError
 
         initHasManyTabs =
-            Task.map4
-                (\window size detailRows lookup ->
+            Task.map3
+                (\size detailRows lookup ->
                     let
                         ( mainRecordHeight, detailTabHeight ) =
                             splitTabHeights window (initialPosition size) size
@@ -117,14 +112,13 @@ init tableName selectedRow arenaArg =
                             )
                             window.hasManyTabs
                 )
-                loadWindow
                 browserSize
                 fetchSelected
                 loadWindowLookups
 
         initIndirectTabs =
-            Task.map4
-                (\window size detailRows lookup ->
+            Task.map3
+                (\size detailRows lookup ->
                     let
                         ( mainRecordHeight, detailTabHeight ) =
                             splitTabHeights window (initialPosition size) size
@@ -144,7 +138,6 @@ init tableName selectedRow arenaArg =
                             )
                             window.indirectTabs
                 )
-                loadWindow
                 browserSize
                 fetchSelected
                 loadWindowLookups
@@ -152,8 +145,8 @@ init tableName selectedRow arenaArg =
         handleLoadError e =
             pageLoadError Page.WindowArena ("WindowArena DetailedRecord is currently unavailable. Error: " ++ (toString e))
     in
-        (Util.map6
-            (\detail window hasManyTabs indirectTabs size lookup ->
+        (Task.map5
+            (\detail hasManyTabs indirectTabs size lookup ->
                 { selectedRow = detail
                 , window = window
                 , hasManyTabs = hasManyTabs
@@ -167,7 +160,6 @@ init tableName selectedRow arenaArg =
                 }
             )
             fetchSelected
-            loadWindow
             initHasManyTabs
             initIndirectTabs
             browserSize

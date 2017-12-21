@@ -51,21 +51,44 @@ init session arenaArg =
             else
                 SelectList.fromLists [] yourFeed [ globalFeed ]
 
-        loadActiveWindow =
-            case arenaArg of
-                Just arenaArg ->
-                    Window.init session arenaArg.tableName
+        maybeAuthToken =
+            Maybe.map .token session.user
+
+        tableName =
+            Maybe.map .tableName arenaArg
+
+        loadWindow =
+            case tableName of
+                Just tableName ->
+                    Request.Window.get maybeAuthToken tableName
+                        |> Http.toTask
                         |> Task.map Just
                         |> Task.mapError handleLoadError
 
                 Nothing ->
                     Task.succeed Nothing
 
-        activeWindow =
-            Maybe.map .tableName arenaArg
+        loadActiveWindow =
+            case tableName of
+                Just tableName ->
+                    Task.andThen
+                        (\window ->
+                            case window of
+                                Just window ->
+                                    Window.init session tableName window
+                                        |> Task.map Just
+                                        |> Task.mapError handleLoadError
+
+                                Nothing ->
+                                    Task.succeed Nothing
+                        )
+                        loadWindow
+
+                Nothing ->
+                    Task.succeed Nothing
 
         loadWindowList =
-            GroupedWindow.init session activeWindow feedSources
+            GroupedWindow.init session tableName feedSources
                 |> Task.mapError handleLoadError
 
         loadSelectedRecord =
@@ -73,9 +96,18 @@ init session arenaArg =
                 Just arenaArg ->
                     case arenaArg.selected of
                         Just selectedRecord ->
-                            DetailedRecord.init arenaArg.tableName selectedRecord arenaArg
-                                |> Task.map Just
-                                |> Task.mapError handleLoadError
+                            Task.andThen
+                                (\window ->
+                                    case window of
+                                        Just window ->
+                                            DetailedRecord.init arenaArg.tableName selectedRecord arenaArg window
+                                                |> Task.map Just
+                                                |> Task.mapError handleLoadError
+
+                                        Nothing ->
+                                            Task.succeed Nothing
+                                )
+                                loadWindow
 
                         Nothing ->
                             Task.succeed Nothing
