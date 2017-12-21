@@ -7,11 +7,13 @@ module Views.Window.Tab
         , Msg(..)
         , subscriptions
         , pageRequestNeeded
+        , dropdownPageRequestNeeded
         )
 
 import Html exposing (..)
 import Html.Attributes exposing (attribute, class, classList, href, id, placeholder, src, property, type_, style)
 import Data.Window.Tab as Tab exposing (Tab)
+import Data.Window.TableName as TableName exposing (TableName)
 import Data.Window.Record as Record exposing (Rows, Record, RecordId)
 import Data.Window.Field as Field exposing (Field)
 import Views.Window.Row as Row
@@ -27,7 +29,6 @@ type alias Model =
     { tab : Tab
     , scroll : Scroll
     , height : Float
-    , lookup : Lookup
     , pageRows : List (List Row.Model)
     , pageRequestInFlight : Bool
     , currentPage : Int
@@ -35,21 +36,20 @@ type alias Model =
     }
 
 
-init : Float -> Lookup -> Tab -> Rows -> Model
-init height lookup tab rows =
+init : Float -> Tab -> Rows -> Model
+init height tab rows =
     { tab = tab
     , scroll = Scroll 0 0
     , height = height
-    , lookup = lookup
-    , pageRows = [ createRowsModel lookup tab rows ]
+    , pageRows = [ createRowsModel tab rows ]
     , pageRequestInFlight = False
     , currentPage = 1
     , reachedLastPage = False
     }
 
 
-createRowsModel : Lookup -> Tab -> Rows -> List Row.Model
-createRowsModel lookup tab rows =
+createRowsModel : Tab -> Rows -> List Row.Model
+createRowsModel tab rows =
     let
         recordList =
             Record.rowsToRecordList rows
@@ -60,7 +60,7 @@ createRowsModel lookup tab rows =
                     recordId =
                         Tab.recordId record tab
                 in
-                    Row.init lookup recordId record tab
+                    Row.init recordId record tab
             )
             recordList
 
@@ -113,6 +113,21 @@ pageRequestNeeded model =
         && not model.reachedLastPage
 
 
+dropdownPageRequestNeeded : Lookup -> Model -> Maybe TableName
+dropdownPageRequestNeeded lookup model =
+    List.filterMap
+        (\page ->
+            List.filterMap
+                (\row ->
+                    Row.dropdownPageRequestNeeded lookup row
+                )
+                page
+                |> List.head
+        )
+        model.pageRows
+        |> List.head
+
+
 listView : Lookup -> Model -> Html Msg
 listView lookup model =
     let
@@ -139,7 +154,7 @@ listView lookup model =
                     , onScroll ListRowScrolled
                     , style [ ( "height", px height ) ]
                     ]
-                    [ listViewRows model ]
+                    [ listViewRows lookup model ]
                 ]
             ]
 
@@ -250,24 +265,21 @@ viewSearchbox field =
             ]
 
 
-viewPage : List Row.Model -> Html Msg
-viewPage rowList =
+viewPage : Lookup -> List Row.Model -> Html Msg
+viewPage lookup rowList =
     div []
         (List.map
             (\row ->
-                Row.view row
+                Row.view lookup row
                     |> Html.map (RowMsg row)
             )
             rowList
         )
 
 
-listViewRows : Model -> Html Msg
-listViewRows model =
+listViewRows : Lookup -> Model -> Html Msg
+listViewRows lookup model =
     let
-        lookup =
-            model.lookup
-
         tab =
             model.tab
     in
@@ -275,7 +287,7 @@ listViewRows model =
             (if List.length model.pageRows > 0 then
                 (List.map
                     (\pageRow ->
-                        viewPage pageRow
+                        viewPage lookup pageRow
                     )
                     model.pageRows
                 )
@@ -306,7 +318,7 @@ update msg model =
         NextPageReceived rows ->
             if List.length rows.data > 0 then
                 { model
-                    | pageRows = model.pageRows ++ [ createRowsModel model.lookup model.tab rows ]
+                    | pageRows = model.pageRows ++ [ createRowsModel model.tab rows ]
                     , pageRequestInFlight = False
                     , currentPage = model.currentPage + 1
                 }

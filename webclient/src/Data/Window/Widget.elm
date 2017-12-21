@@ -6,6 +6,7 @@ module Data.Window.Widget
         , controlWidgetDecoder
         , alignmentToString
         , Dropdown(..)
+        , DropdownInfo
         )
 
 import Json.Decode as Decode exposing (Decoder)

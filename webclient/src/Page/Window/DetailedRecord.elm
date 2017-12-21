@@ -110,7 +110,7 @@ init tableName selectedRow arenaArg =
                                 in
                                     case rows of
                                         Just rows ->
-                                            Tab.init detailTabHeight lookup hasManyTab rows
+                                            Tab.init detailTabHeight hasManyTab rows
 
                                         Nothing ->
                                             Debug.crash "Empty row"
@@ -137,7 +137,7 @@ init tableName selectedRow arenaArg =
                                 in
                                     case rows of
                                         Just rows ->
-                                            Tab.init detailTabHeight lookup indirectTab rows
+                                            Tab.init detailTabHeight indirectTab rows
 
                                         Nothing ->
                                             Debug.crash "Empty row"
@@ -150,7 +150,7 @@ init tableName selectedRow arenaArg =
                 loadWindowLookups
 
         handleLoadError e =
-            pageLoadError Page.DetailedRecord ("DetailedRecord is currently unavailable. Error: " ++ (toString e))
+            pageLoadError Page.WindowArena ("WindowArena DetailedRecord is currently unavailable. Error: " ++ (toString e))
     in
         (Util.map6
             (\detail window hasManyTabs indirectTabs size lookup ->
@@ -163,7 +163,7 @@ init tableName selectedRow arenaArg =
                 , browserSize = size
                 , arenaArg = arenaArg
                 , lookup = lookup
-                , values = createValues window.mainTab lookup detail
+                , values = createValues window.mainTab detail
                 }
             )
             fetchSelected
@@ -175,11 +175,11 @@ init tableName selectedRow arenaArg =
         )
 
 
-createValues : Tab -> Lookup -> RecordDetail -> List Value.Model
-createValues tab lookup detail =
+createValues : Tab -> RecordDetail -> List Value.Model
+createValues tab detail =
     List.map
         (\field ->
-            Value.init InCard lookup detail.record tab field
+            Value.init InCard detail.record tab field
         )
         tab.fields
 
@@ -291,6 +291,9 @@ oneOneCardView model detail tab =
 cardViewRecord : Model -> Maybe Record -> Tab -> Html Msg
 cardViewRecord model record tab =
     let
+        lookup =
+            model.lookup
+
         columnNames =
             Tab.columnNames tab
 
@@ -310,15 +313,15 @@ cardViewRecord model record tab =
             [ div [ class "card-view" ]
                 (List.map
                     (\value ->
-                        viewFieldInCard fieldLabelWidth value
+                        viewFieldInCard fieldLabelWidth lookup value
                     )
                     model.values
                 )
             ]
 
 
-viewFieldInCard : Int -> Value.Model -> Html Msg
-viewFieldInCard labelWidth value =
+viewFieldInCard : Int -> Lookup -> Value.Model -> Html Msg
+viewFieldInCard labelWidth lookup value =
     let
         field =
             value.field
@@ -332,7 +335,7 @@ viewFieldInCard labelWidth value =
                     [ text (field.name ++ ": ") ]
                 ]
             , div [ class "card-field-value" ]
-                [ Value.view value
+                [ Value.view lookup value
                     |> Html.map (ValueMsg value)
                 ]
             ]

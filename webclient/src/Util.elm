@@ -148,7 +148,9 @@ map6 func taskA taskB taskC taskD taskE taskF =
 
 onScroll : (Scroll -> msg) -> Attribute msg
 onScroll scrollMsg =
-    on "scroll" (Decode.map scrollMsg scrollDecoder)
+    onWithOptions "scroll"
+        { defaultOptions | stopPropagation = True }
+        (Decode.map scrollMsg scrollDecoder)
 
 
 onWheel : (Scroll -> msg) -> Attribute msg

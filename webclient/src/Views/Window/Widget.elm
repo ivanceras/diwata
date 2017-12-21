@@ -1,9 +1,9 @@
-module Views.Window.Widget exposing (Model, init, Msg, view, update)
+module Views.Window.Widget exposing (Model, init, Msg, view, update, dropdownPageRequestNeeded)
 
 import Data.Window.Value as Value exposing (Value(..), ArrayValue(..))
 import Html exposing (..)
 import Html.Attributes exposing (selected, checked, style, attribute, class, classList, href, id, placeholder, src, type_, value)
-import Data.Window.Widget as Widget exposing (ControlWidget, Widget(..))
+import Data.Window.Widget as Widget exposing (ControlWidget, Widget(..), DropdownInfo)
 import Date
 import Date.Format
 import Widgets.Tagger as Tagger
@@ -15,32 +15,110 @@ import Data.Window.Record as Record exposing (Record)
 import Dict
 import Route exposing (Route)
 import Data.WindowArena as WindowArena
-import Data.Window.Lookup as Lookup exposing (Lookup)
+import Data.Window.Lookup as Lookup exposing (Lookup(..))
 import Util exposing ((=>), onWheel, onScroll, Scroll)
 import Widgets.Dropdown as Dropdown
 import Views.Window.Presentation as Presentation exposing (Presentation(..))
+import Request.Window.Records
+import Http
+import Task
+import Data.Window.TableName as TableName exposing (TableName)
 
 
 type alias Model =
     { widget : Widget
+    , record : Record
+    , value : Maybe Value
+    , field : Field
+    , dropdownInfo : Maybe DropdownInfo
     }
 
 
-init : Presentation -> Lookup -> Record -> Tab -> Field -> Maybe Value -> Model
-init presentation lookup record tab field maybeValue =
-    { widget = createWidget presentation lookup record tab field maybeValue
-    }
+init : Presentation -> Record -> Tab -> Field -> Maybe Value -> Model
+init presentation record tab field maybeValue =
+    let
+        controlWidget =
+            field.controlWidget
+
+        dropdownInfo =
+            case controlWidget.dropdown of
+                Just (Widget.TableDropdown dropdownInfo) ->
+                    Just dropdownInfo
+
+                Nothing ->
+                    Nothing
+    in
+        { widget = createWidget presentation record tab field maybeValue
+        , record = record
+        , value = maybeValue
+        , field = field
+        , dropdownInfo = dropdownInfo
+        }
 
 
-view : Model -> Html Msg
-view model =
+view : Lookup -> Model -> Html Msg
+view lookup model =
     case model.widget of
         HtmlWidget html ->
             html
 
         TableDropdown dropdown ->
-            Dropdown.view dropdown
-                |> Html.map (DropdownMsg dropdown)
+            let
+                pkValue =
+                    case model.value of
+                        Just v ->
+                            Just (Value.valueToString v)
+
+                        Nothing ->
+                            Nothing
+
+                displayValue =
+                    Field.displayValues model.field model.record
+
+                displayValueString =
+                    case displayValue of
+                        Just s ->
+                            s
+
+                        Nothing ->
+                            ""
+
+                dropdownInfo =
+                    case model.dropdownInfo of
+                        Just dropdownInfo ->
+                            dropdownInfo
+
+                        Nothing ->
+                            Debug.crash "There should be dropdown info here"
+
+                sourceTable =
+                    dropdownInfo.source
+
+                ( page, recordList ) =
+                    Lookup.tableLookup sourceTable lookup
+
+                list =
+                    listRecordToListString dropdownInfo recordList
+
+                listWithSelected =
+                    case pkValue of
+                        Just pkValue ->
+                            if
+                                List.any
+                                    (\( pk, display ) ->
+                                        pk == pkValue
+                                    )
+                                    list
+                            then
+                                list
+                            else
+                                ( pkValue, displayValueString ) :: list
+
+                        Nothing ->
+                            list
+            in
+                Dropdown.view listWithSelected dropdown
+                    |> Html.map (DropdownMsg dropdown)
 
 
 valueToString : Maybe Value -> String
@@ -53,8 +131,68 @@ valueToString maybeValue =
             ""
 
 
-createWidget : Presentation -> Lookup -> Record -> Tab -> Field -> Maybe Value -> Widget
-createWidget presentation lookup record tab field maybeValue =
+listRecordToListString : DropdownInfo -> List Record -> List ( String, String )
+listRecordToListString dropdownInfo lookupRecords =
+    let
+        tableName =
+            dropdownInfo.source
+
+        displayColumns =
+            dropdownInfo.display.columns
+
+        separator =
+            case dropdownInfo.display.separator of
+                Just separator ->
+                    separator
+
+                Nothing ->
+                    ""
+
+        pk =
+            dropdownInfo.display.pk
+    in
+        List.map
+            (\record ->
+                let
+                    displayValues : List Value
+                    displayValues =
+                        List.filterMap
+                            (\displayColumn ->
+                                Dict.get displayColumn.name record
+                            )
+                            displayColumns
+
+                    displayString =
+                        List.map
+                            (\value ->
+                                Value.valueToString value
+                            )
+                            displayValues
+                            |> String.join separator
+
+                    displayPk : List Value
+                    displayPk =
+                        List.filterMap
+                            (\pk ->
+                                Dict.get pk.name record
+                            )
+                            pk
+
+                    displayPkString =
+                        List.map
+                            (\value ->
+                                Value.valueToString value
+                            )
+                            displayPk
+                            |> String.join " "
+                in
+                    ( displayPkString, displayString )
+            )
+            lookupRecords
+
+
+createWidget : Presentation -> Record -> Tab -> Field -> Maybe Value -> Widget
+createWidget presentation record tab field maybeValue =
     let
         controlWidget =
             field.controlWidget
@@ -72,6 +210,7 @@ createWidget presentation lookup record tab field maybeValue =
             case maybeValue of
                 Just value ->
                     Just (Value.valueToString value)
+
                 Nothing ->
                     Nothing
 
@@ -284,123 +423,8 @@ createWidget presentation lookup record tab field maybeValue =
 
             TableLookupDropdown ->
                 let
-                    maybeDisplay =
-                        Tab.displayValuesFromField field record
-
-                    dropdowninfo =
-                        case controlWidget.dropdown of
-                            Just (Widget.TableDropdown dropdown) ->
-                                Just
-                                    ( dropdown.source
-                                    , dropdown.display.columns
-                                    , case dropdown.display.separator of
-                                        Just separator ->
-                                            separator
-
-                                        Nothing ->
-                                            ""
-                                    , dropdown.display.pk
-                                    )
-
-                            Nothing ->
-                                Nothing
-
-                    listChoices : List ( String, String )
-                    listChoices =
-                        case dropdowninfo of
-                            Just ( sourceTable, displayColumns, separator, pk ) ->
-                                let
-                                    lookupRecords =
-                                        Lookup.tableLookup sourceTable lookup
-                                in
-                                    List.map
-                                        (\record ->
-                                            let
-                                                displayValues : List Value
-                                                displayValues =
-                                                    List.filterMap
-                                                        (\displayColumn ->
-                                                            Dict.get displayColumn.name record
-                                                        )
-                                                        displayColumns
-
-                                                displayString =
-                                                    List.map
-                                                        (\value ->
-                                                            Value.valueToString value
-                                                        )
-                                                        displayValues
-                                                        |> String.join separator
-
-                                                displayPk : List Value
-                                                displayPk =
-                                                    List.filterMap
-                                                        (\pk ->
-                                                            Dict.get pk.name record
-                                                        )
-                                                        pk
-
-                                                displayPkString =
-                                                    List.map
-                                                        (\value ->
-                                                            Value.valueToString value
-                                                        )
-                                                        displayPk
-                                                        |> String.join " "
-                                            in
-                                                ( displayPkString, displayString )
-                                        )
-                                        lookupRecords
-
-                            Nothing ->
-                                []
-
-                    display =
-                        case maybeDisplay of
-                            Just v ->
-                                v
-
-                            Nothing ->
-                                ""
-
-                    listChoicesWithSelected =
-                        if
-                            List.any
-                                (\( pk, display ) ->
-                                    pk == valueString
-                                )
-                                listChoices
-                        then
-                            listChoices
-                        else
-                            ( valueString, display )
-                                :: listChoices
-
-                    sortedChoices =
-                        listChoicesWithSelected
-                            |> List.sortBy
-                                (\( pk, display ) ->
-                                    String.toLower display
-                                )
-
-                    optionChoices : List (Html msg)
-                    optionChoices =
-                        List.map
-                            (\( pkValue, displayChoice ) ->
-                                let
-                                    optionDisplay =
-                                        pkValue ++ "  |  " ++ displayChoice
-                                in
-                                    option
-                                        [ value pkValue
-                                        , selected (pkValue == valueString)
-                                        ]
-                                        [ text optionDisplay ]
-                            )
-                            sortedChoices
-
                     dropdownModel =
-                        Dropdown.init maybeValueString sortedChoices
+                        Dropdown.init maybeValueString
                 in
                     TableDropdown dropdownModel
 
@@ -439,29 +463,68 @@ type Msg
     = DropdownMsg Dropdown.Model Dropdown.Msg
 
 
+dropdownModel : Model -> Maybe Dropdown.Model
+dropdownModel model =
+    case model.widget of
+        TableDropdown dropdown ->
+            Just dropdown
+
+        _ ->
+            Nothing
+
+
+dropdownPageRequestNeeded : Lookup -> Model -> Maybe TableName
+dropdownPageRequestNeeded lookup model =
+    case dropdownModel model of
+        Just dropdown ->
+            case Field.dropdownInfo model.field of
+                Just dropdownInfo ->
+                    let
+                        sourceTable =
+                            dropdownInfo.source
+
+                        ( page, recordList ) =
+                            Lookup.tableLookup sourceTable lookup
+
+                        list =
+                            listRecordToListString dropdownInfo recordList
+                    in
+                        if Dropdown.pageRequestNeeded list dropdown then
+                            Just sourceTable
+                        else
+                            Nothing
+
+                Nothing ->
+                    Nothing
+
+        Nothing ->
+            Nothing
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    let
-        ( widget, cmd ) =
-            case msg of
-                DropdownMsg dropdown msg ->
-                    let
-                        _ =
-                            Debug.log "dropdown msg" msg
-                    in
-                        case model.widget of
-                            HtmlWidget html ->
-                                ( HtmlWidget html, Cmd.none )
+    case msg of
+        DropdownMsg dropdown msg ->
+            let
+                _ =
+                    Debug.log "dropdown msg" msg
 
-                            TableDropdown dropdown ->
-                                let
-                                    ( newDropdown, subCmd ) =
-                                        Dropdown.update msg dropdown
-                                in
-                                    ( TableDropdown newDropdown, Cmd.map (DropdownMsg newDropdown) subCmd )
-    in
-        { model | widget = widget }
-            => cmd
+                ( widget, cmd ) =
+                    case model.widget of
+                        HtmlWidget html ->
+                            ( HtmlWidget html, Cmd.none )
+
+                        TableDropdown dropdown ->
+                            let
+                                ( newDropdown, subCmd ) =
+                                    Dropdown.update msg dropdown
+                            in
+                                ( TableDropdown newDropdown
+                                , Cmd.map (DropdownMsg newDropdown) subCmd
+                                )
+            in
+                { model | widget = widget }
+                    => cmd
 
 
 type Widget

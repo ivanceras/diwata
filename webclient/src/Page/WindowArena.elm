@@ -22,6 +22,9 @@ import Data.WindowArena as WindowArena exposing (ArenaArg)
 import Page.Window.DetailedRecord as DetailedRecord
 import Window as BrowserWindow
 import Route
+import Request.Window.Records
+import Data.Window.Record as Record
+import Data.Window.Lookup as Lookup
 
 
 -- MODEL --
@@ -200,10 +203,30 @@ update session msg model =
             case model.activeWindow of
                 Just activeWindow ->
                     let
+                        lookup =
+                            activeWindow.lookup
+
                         ( newWindow, subCmd ) =
                             Window.update session subMsg activeWindow
+
+                        ( updatedWindow, windowCmd ) =
+                            case Window.dropdownPageRequestNeeded lookup activeWindow of
+                                Just sourceTable ->
+                                    let
+                                        ( currentPage, listRecord ) =
+                                            Lookup.tableLookup sourceTable lookup
+                                    in
+                                        { newWindow | dropdownPageRequestInFlight = True }
+                                            => requestNextDropdownPage currentPage sourceTable
+
+                                Nothing ->
+                                    newWindow => Cmd.none
                     in
-                        { model | activeWindow = Just newWindow } => Cmd.map WindowMsg subCmd
+                        { model | activeWindow = Just updatedWindow }
+                            => Cmd.batch
+                                [ Cmd.map WindowMsg subCmd
+                                , windowCmd
+                                ]
 
                 Nothing ->
                     model => Cmd.none
@@ -226,6 +249,25 @@ update session msg model =
                     Debug.log "Window is resized: " size
             in
                 model => Cmd.none
+
+
+requestNextDropdownPage : Int -> TableName -> Cmd Msg
+requestNextDropdownPage currentPage sourceTable =
+    Request.Window.Records.lookupPage (currentPage + 1) Nothing sourceTable
+        |> Http.toTask
+        |> Task.attempt
+            (\result ->
+                case result of
+                    Ok rows ->
+                        let
+                            recordList =
+                                Record.rowsToRecordList rows
+                        in
+                            WindowMsg (Window.LookupNextPageReceived ( sourceTable, recordList ))
+
+                    Err e ->
+                        WindowMsg (Window.LookupNextPageErrored (toString e))
+            )
 
 
 subscriptions : Model -> Sub Msg

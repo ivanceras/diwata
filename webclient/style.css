@@ -72,7 +72,7 @@
 
 .tab-row-value {
     padding: 5px 5px;
-    height: 40px;
+    height: 40px; /*DO NOT change: this is used as basis inside code calculation in elm code */
 }
 
 .tab-row-value > input
@@ -403,6 +403,11 @@ a.primary-link {
     border: 1px solid #ccc;
 }
 
+.dropdown-select .dropdown-option {
+    display: flex;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
 
 .dropdown-select .dropdown-option:hover {
     background-color: #eee;
@@ -412,8 +417,12 @@ a.primary-link {
 .dropdown-select .dropdown-option .pk-value {
     padding-right: 10px;
     border-right: 1px solid #ccc;
+    line-height: 30px; /* DO NOT change: this is used in calculation in the elm code */
+    vertical-align: middle;
 }
 
 .dropdown-select .dropdown-option .choice {
     padding-left: 10px;
+    line-height: 30px;
+    vertical-align: middle;
 }

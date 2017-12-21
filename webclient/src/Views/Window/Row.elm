@@ -1,4 +1,13 @@
-module Views.Window.Row exposing (view, viewRowControls, Msg, Model, update, init)
+module Views.Window.Row
+    exposing
+        ( view
+        , viewRowControls
+        , Msg
+        , Model
+        , update
+        , init
+        , dropdownPageRequestNeeded
+        )
 
 import Html exposing (..)
 import Html.Attributes exposing (style, type_, attribute, class, classList, href, id, placeholder, src)
@@ -23,7 +32,6 @@ import Views.Window.Presentation as Presentation exposing (Presentation(..))
 
 type alias Model =
     { selected : Bool
-    , lookup : Lookup
     , recordId : RecordId
     , record : Record
     , tab : Tab
@@ -31,30 +39,26 @@ type alias Model =
     }
 
 
-init : Lookup -> RecordId -> Record -> Tab -> Model
-init lookup recordId record tab =
+init : RecordId -> Record -> Tab -> Model
+init recordId record tab =
     { selected = False
-    , lookup = lookup
     , recordId = recordId
     , record = record
     , tab = tab
-    , values = createValues lookup record tab
+    , values = createValues record tab
     }
 
 
-createValues : Lookup -> Record -> Tab -> List Value.Model
-createValues lookup record tab =
+createValues : Record -> Tab -> List Value.Model
+createValues record tab =
     List.map
-        (Value.init InList lookup record tab)
+        (Value.init InList record tab)
         tab.fields
 
 
-view : Model -> Html Msg
-view model =
+view : Lookup -> Model -> Html Msg
+view lookup model =
     let
-        lookup =
-            model.lookup
-
         recordId =
             model.recordId
 
@@ -73,7 +77,7 @@ view model =
             (List.map
                 (\value ->
                     div [ class "tab-row-value" ]
-                        [ Value.view value
+                        [ Value.view lookup value
                             |> Html.map (ValueMsg value)
                         ]
                 )
@@ -132,6 +136,16 @@ viewRecordDetail recordId tab =
             [ div [ class "icon icon-pencil" ]
                 []
             ]
+
+
+dropdownPageRequestNeeded : Lookup -> Model -> Maybe TableName
+dropdownPageRequestNeeded lookup model =
+    List.filterMap
+        (\value ->
+            Value.dropdownPageRequestNeeded lookup value
+        )
+        model.values
+        |> List.head
 
 
 type Msg

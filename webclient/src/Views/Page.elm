@@ -23,7 +23,6 @@ under Other.
 type ActivePage
     = Other
     | WindowArena
-    | DetailedRecord
     | Login
     | Register
     | Settings

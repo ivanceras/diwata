@@ -5,7 +5,6 @@ module Data.Window.Tab
         , columnNames
         , primaryFields
         , recordId
-        , displayValuesFromField
         )
 
 import Json.Decode as Decode exposing (Decoder)
@@ -81,68 +80,3 @@ recordId record tab =
                 pkFields
     in
         Record.RecordId (primaryValues)
-
-
-{-| only works for simple column name on fields
--}
-tableColumn : Field -> TableName -> ColumnName -> String
-tableColumn field tableName columnName =
-    let
-        firstColumnName =
-            Field.firstColumnName field
-    in
-        firstColumnName.name ++ "." ++ tableName.name ++ "." ++ columnName.name
-
-
-{-| Get a the dropdown record value
--}
-displayValue : Field -> TableName -> ColumnName -> Record -> Maybe Value
-displayValue field sourceTable displayColumn record =
-    let
-        columnName =
-            tableColumn field sourceTable displayColumn
-    in
-        Dict.get columnName record
-
-
-displayValues : Field -> TableName -> List ColumnName -> Record -> List Value
-displayValues field sourceTable displayColumns record =
-    List.filterMap
-        (\column ->
-            displayValue field sourceTable column record
-        )
-        displayColumns
-
-
-displayValuesFromField : Field -> Record -> Maybe String
-displayValuesFromField field record =
-    let
-        cwidget =
-            field.controlWidget
-
-        dropdown =
-            cwidget.dropdown
-    in
-        case dropdown of
-            Just (Widget.TableDropdown info) ->
-                let
-                    sourceTable =
-                        info.source
-
-                    displayColumns =
-                        info.display.columns
-
-                    separator =
-                        Maybe.withDefault "" info.display.separator
-
-                    valueList =
-                        displayValues field sourceTable displayColumns record
-
-                    valueListStrings =
-                        List.map Value.valueToString valueList
-                in
-                    String.join separator valueListStrings
-                        |> Just
-
-            Nothing ->
-                Nothing

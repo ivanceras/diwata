@@ -1,4 +1,14 @@
-module Page.Window exposing (Model, Msg, init, update, view, subscriptions, calcMainTabHeight)
+module Page.Window
+    exposing
+        ( Model
+        , Msg(..)
+        , init
+        , update
+        , view
+        , subscriptions
+        , calcMainTabHeight
+        , dropdownPageRequestNeeded
+        )
 
 {-| Viewing an individual window.
 -}
@@ -35,7 +45,7 @@ import Data.Window.GroupedWindow as GroupedWindow exposing (GroupedWindow, Windo
 import Data.Window.TableName as TableName exposing (TableName)
 import Views.Window.Tab as Tab
 import Window as BrowserWindow
-import Data.Window.Lookup as Lookup exposing (Lookup)
+import Data.Window.Lookup as Lookup exposing (Lookup(..))
 
 
 -- MODEL --
@@ -48,6 +58,7 @@ type alias Model =
     , mainTab : Tab.Model
     , window : Window
     , lookup : Lookup
+    , dropdownPageRequestInFlight : Bool
     }
 
 
@@ -103,7 +114,7 @@ init session tableName =
         mainTabTask =
             Task.map4
                 (\window records size lookup ->
-                    Tab.init (calcMainTabHeight size) lookup window.mainTab records
+                    Tab.init (calcMainTabHeight size) window.mainTab records
                 )
                 loadWindow
                 loadRecords
@@ -123,6 +134,7 @@ init session tableName =
                     , mainTab = mainTab
                     , window = window
                     , lookup = lookup
+                    , dropdownPageRequestInFlight = False
                     }
             )
             loadWindow
@@ -167,6 +179,8 @@ type Msg
     | RecordDeleted RecordId (Result Http.Error ())
     | CloseWindow
     | TabMsg Tab.Msg
+    | LookupNextPageReceived ( TableName, List Record )
+    | LookupNextPageErrored String
 
 
 update : Session -> Msg -> Model -> ( Model, Cmd Msg )
@@ -206,15 +220,64 @@ update session msg model =
                         Tab.update tabMsg model.mainTab
 
                     ( updatedMainTab, tabCmd ) =
-                        case Tab.pageRequestNeeded newMainTab of
-                            True ->
-                                { newMainTab | pageRequestInFlight = True }
-                                    => requestNextPage newMainTab
-
-                            False ->
-                                newMainTab => Cmd.none
+                        if Tab.pageRequestNeeded newMainTab then
+                            { newMainTab | pageRequestInFlight = True }
+                                => requestNextPage newMainTab
+                        else
+                            newMainTab => Cmd.none
                 in
-                    { model | mainTab = updatedMainTab } => Cmd.batch [ Cmd.map TabMsg subCmd, tabCmd ]
+                    { model | mainTab = updatedMainTab }
+                        => Cmd.batch
+                            [ Cmd.map TabMsg subCmd
+                            , tabCmd
+                            ]
+
+            LookupNextPageReceived ( sourceTable, recordList ) ->
+                let
+                    updatedLookup =
+                        Lookup.addPage sourceTable recordList model.lookup
+                in
+                    { model
+                        | lookup = updatedLookup
+                        , dropdownPageRequestInFlight = False
+                    }
+                        => Cmd.none
+
+            LookupNextPageErrored e ->
+                Debug.crash "Error loading next page lookup" e
+
+
+{-|
+
+    check whether a dropdownPage request is needed on the window
+    conditions should be met:
+        - there is no currently dropdown page request in flight
+        - the lookup data for the specific table hasn't reached the last page
+-}
+dropdownPageRequestNeeded : Lookup -> Model -> Maybe TableName
+dropdownPageRequestNeeded lookup model =
+    if not model.dropdownPageRequestInFlight then
+        let
+            sourceTable =
+                Tab.dropdownPageRequestNeeded lookup model.mainTab
+
+            reachedLastPage =
+                case sourceTable of
+                    Just sourceTable ->
+                        Lookup.hasReachedLastPage sourceTable lookup
+
+                    Nothing ->
+                        False
+
+            _ =
+                Debug.log "reached last page" reachedLastPage
+        in
+            if not reachedLastPage then
+                sourceTable
+            else
+                Nothing
+    else
+        Nothing
 
 
 requestNextPage : Tab.Model -> Cmd Msg

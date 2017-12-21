@@ -1,4 +1,12 @@
-module Views.Window.Value exposing (init, Model, view, Msg, update)
+module Views.Window.Value
+    exposing
+        ( init
+        , Model
+        , view
+        , Msg
+        , update
+        , dropdownPageRequestNeeded
+        )
 
 import Data.Window.Value as Value exposing (Value(..), ArrayValue(..))
 import Html exposing (..)
@@ -20,11 +28,11 @@ import Util exposing ((=>), onWheel, onScroll, Scroll)
 import Widgets.Dropdown as Dropdown
 import Views.Window.Presentation as Presentation exposing (Presentation(..))
 import Views.Window.Widget as Widget
+import Data.Window.TableName as TableName exposing (TableName)
 
 
 type alias Model =
-    { lookup : Lookup
-    , tab : Tab
+    { tab : Tab
     , field : Field
     , record : Maybe Record
     , widget : Widget.Model
@@ -32,8 +40,8 @@ type alias Model =
     }
 
 
-init : Presentation -> Lookup -> Record -> Tab -> Field -> Model
-init presentation lookup record tab field =
+init : Presentation -> Record -> Tab -> Field -> Model
+init presentation record tab field =
     let
         columnName =
             Field.columnName field
@@ -42,10 +50,9 @@ init presentation lookup record tab field =
             Dict.get columnName record
 
         widget =
-            Widget.init presentation lookup record tab field maybeValue
+            Widget.init presentation record tab field maybeValue
     in
-        { lookup = lookup
-        , tab = tab
+        { tab = tab
         , field = field
         , record = Just record
         , widget = widget
@@ -53,10 +60,15 @@ init presentation lookup record tab field =
         }
 
 
-view : Model -> Html Msg
-view model =
-    Widget.view model.widget
+view : Lookup -> Model -> Html Msg
+view lookup model =
+    Widget.view lookup model.widget
         |> Html.map WidgetMsg
+
+
+dropdownPageRequestNeeded : Lookup -> Model -> Maybe TableName
+dropdownPageRequestNeeded lookup model =
+    Widget.dropdownPageRequestNeeded lookup model.widget
 
 
 type Msg
@@ -65,11 +77,11 @@ type Msg
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    let
-        ( newWidget, subCmd ) =
-            case msg of
-                WidgetMsg widgetMsg ->
+    case msg of
+        WidgetMsg widgetMsg ->
+            let
+                ( newWidget, subCmd ) =
                     Widget.update widgetMsg model.widget
-    in
-        { model | widget = newWidget }
-            => Cmd.map WidgetMsg subCmd
+            in
+                { model | widget = newWidget }
+                    => Cmd.map WidgetMsg subCmd
