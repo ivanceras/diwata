@@ -41,6 +41,7 @@ import Data.Window.Lookup as Lookup exposing (Lookup)
 import Util
 import Views.Window.Presentation as Presentation exposing (Presentation(..))
 import Request.Window.Records
+import Views.Window.Toolbar as Toolbar
 
 
 {-| Example:
@@ -270,11 +271,17 @@ availableHeight browserSize =
 splitTabHeights : Window -> Position -> BrowserWindow.Size -> ( Float, Float )
 splitTabHeights window position browserSize =
     let
+        toolbar =
+            50
+
+        totalDeductions =
+            60 + toolbar
+
         allotedHeight =
             if Window.hasDetails window then
-                availableHeight browserSize - 60
+                availableHeight browserSize - totalDeductions
             else
-                availableHeight browserSize + 60
+                availableHeight browserSize + totalDeductions
 
         detailRecordHeight =
             allotedHeight - toFloat position.y
@@ -316,7 +323,11 @@ view model =
             splitTabHeights window realPosition browserSize
     in
         div []
-            [ div
+            [ div [ class "toolbar-area" ]
+                [ Toolbar.viewForMain
+                , Toolbar.viewForDetailRecord
+                ]
+            , div
                 [ class "main-tab-selected"
                 , style [ ( "height", px (mainRecordHeight) ) ]
                 ]

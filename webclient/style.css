@@ -102,11 +102,14 @@ a.primary-link {
 
 .frozen-head{
     min-width: 120px;
-    height: 51px; /* because there is a 1px border on tab-columns and 50px height*/
-    border-width: 0 0 1px 0;
+    border-width: 1px 0 1px 0;
     border-style: solid;
     border-color: #ccc;
     padding-left: 40px;
+}
+
+.frozen-head .frozen-head-content {
+    height: 50px;
 }
 
 .frozen-head .frozen-head-indicator {
@@ -162,6 +165,11 @@ a.primary-link {
     padding: 0 3px;
 }
 
+.row-controls .row-undo,
+.row-controls .row-save {
+    color: #ccc;
+}
+
 .tab-names{
     background-color: #ddd;
     display: flex;
@@ -187,9 +195,7 @@ a.primary-link {
 
 .tab-columns {
     overflow: hidden;
-    border-width: 0 1px 1px 1px;
-    border-style: solid;
-    border-color: #ccc;
+    border: 1px solid #ccc
 }
 .tab-columns-content {
     display: flex;
@@ -354,7 +360,7 @@ a.primary-link {
 }
 
 .active-main-tab.in-selected-record {
-    background-color: #fff;
+    /*background-color: #fff;*/
 }
 
 .tab-page {
@@ -442,4 +448,36 @@ a.primary-link {
     padding-left: 10px;
     line-height: 30px;
     vertical-align: middle;
+}
+
+.toolbar-area {
+    padding: 10px 10px;
+}
+
+.toolbar {
+    height: 30px;
+}
+
+/**
+ * Tooltip implemented only with CSS
+ */
+.tooltip {
+}
+
+.tooltip .tooltip-text {
+    margin-top: 20px;
+    display: none;
+    background-color: black;
+    color: #fff;
+    text-align: center;
+    padding: 4px;
+    border-radius: 2px;
+    position: absolute;
+    z-index: 1000;
+    font-size: 12px; 
+
+}
+
+.tooltip:hover .tooltip-text {
+    display: inline-block;
 }

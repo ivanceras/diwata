@@ -23,6 +23,7 @@ import Json.Decode as Decode exposing (Decoder)
 import Json.Encode as Encode
 import Util exposing ((=>), px, onScroll, Scroll)
 import Data.Window.Lookup as Lookup exposing (Lookup)
+import Views.Window.Toolbar as Toolbar
 
 
 type alias Model =
@@ -147,21 +148,25 @@ listView lookup model =
         height =
             model.height
     in
-        div
-            [ class "tab-list-view"
-            ]
-            [ div [ class "frozen-head-columns" ]
-                [ viewFrozenHead model
-                , viewColumns model fields
+        div []
+            [ div [ class "toolbar-area" ]
+                [ Toolbar.viewForMain ]
+            , div
+                [ class "tab-list-view"
                 ]
-            , div [ class "page-shadow-and-list-rows" ]
-                [ viewPageShadow model
-                , div
-                    [ class "list-view-rows"
-                    , onScroll ListRowScrolled
-                    , style [ ( "height", px height ) ]
+                [ div [ class "frozen-head-columns" ]
+                    [ viewFrozenHead model
+                    , viewColumns model fields
                     ]
-                    [ listViewRows lookup model ]
+                , div [ class "page-shadow-and-list-rows" ]
+                    [ viewPageShadow model
+                    , div
+                        [ class "list-view-rows"
+                        , onScroll ListRowScrolled
+                        , style [ ( "height", px height ) ]
+                        ]
+                        [ listViewRows lookup model ]
+                    ]
                 ]
             ]
 
@@ -225,13 +230,15 @@ viewFrozenHead model =
         div
             [ class "frozen-head"
             ]
-            [ div [ class "frozen-head-indicator" ]
-                [ text itemsIndicator ]
-            , div
-                [ class "frozen-head-controls" ]
-                [ input [ type_ "checkbox" ] []
-                , div [ class "filter-btn" ]
-                    [ i [ class "fa fa-filter" ] [] ]
+            [ div [ class "frozen-head-content" ]
+                [ div [ class "frozen-head-indicator" ]
+                    [ text itemsIndicator ]
+                , div
+                    [ class "frozen-head-controls" ]
+                    [ input [ type_ "checkbox" ] []
+                    , div [ class "filter-btn" ]
+                        [ i [ class "fa fa-filter" ] [] ]
+                    ]
                 ]
             ]
 

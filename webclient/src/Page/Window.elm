@@ -65,14 +65,18 @@ type alias Model =
 calcMainTabHeight : BrowserWindow.Size -> Float
 calcMainTabHeight browserSize =
     let
+        -- have to hardcode here until the Dom.Size module is exposed https://github.com/elm-lang/dom/issues/15 https://github.com/elm-lang/dom/pull/19
         browserHeight =
             toFloat browserSize.height
 
-        -- have to hardcode here until the Dom.Size module is exposed https://github.com/elm-lang/dom/issues/15 https://github.com/elm-lang/dom/pull/19
-        totalDeductions =
-            200.0
+        -- style.css .toolbar-area margin + .toolbar height
+        toolbarArea =
+            50.0
 
         -- banner: 100, window-tabs: 40, columns: 50, allowance: 10 (borders etc)
+        totalDeductions =
+            200.0 + toolbarArea
+
         height =
             browserHeight - totalDeductions
     in
