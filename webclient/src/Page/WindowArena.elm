@@ -161,7 +161,8 @@ viewWindowOrSelectedRow : Session -> Model -> Html Msg
 viewWindowOrSelectedRow session model =
     case model.selectedRow of
         Just selectedRow ->
-            Html.map DetailedRecordMsg (DetailedRecord.view selectedRow)
+            DetailedRecord.view selectedRow
+                |> Html.map DetailedRecordMsg
 
         Nothing ->
             viewWindow session model.activeWindow

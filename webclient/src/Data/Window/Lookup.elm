@@ -21,15 +21,14 @@ type alias TableLookup =
 
 decoder : Decoder Lookup
 decoder =
-    Decode.list
-        (Decode.map4 TableLookup
-            (Decode.index 0 TableName.decoder)
-            (Decode.index 1 (Record.rowsDecoder)
-                |> Decode.andThen (\rows -> Decode.succeed (Record.rowsToRecordList rows))
-            )
-            (Decode.succeed 1)
-            (Decode.succeed False)
+    Decode.map4 TableLookup
+        (Decode.index 0 TableName.decoder)
+        (Decode.index 1 (Record.rowsDecoder)
+            |> Decode.andThen (\rows -> decode (Record.rowsToRecordList rows))
         )
+        (decode 1)
+        (decode False)
+        |> Decode.list
         |> Decode.map Lookup
 
 
