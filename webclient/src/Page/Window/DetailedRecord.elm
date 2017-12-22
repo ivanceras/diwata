@@ -17,7 +17,6 @@ import Html.Attributes exposing (style, attribute, class, classList, href, id, p
 import Request.Window.Records as Records
 import Page.Errored as Errored exposing (PageLoadError, pageLoadError)
 import Data.Window.TableName as TableName exposing (TableName)
-import Page.Errored as Errored exposing (PageLoadError, pageLoadError)
 import Data.Window.Record as Record exposing (Record, Rows)
 import Data.Window as Window exposing (Window)
 import Request.Window
@@ -41,6 +40,7 @@ import Route
 import Data.Window.Lookup as Lookup exposing (Lookup)
 import Util
 import Views.Window.Presentation as Presentation exposing (Presentation(..))
+import Request.Window.Records
 
 
 {-| Example:
@@ -84,6 +84,18 @@ initialPosition browserSize =
         Position 0 allocateMain
 
 
+getTotalRecords : TableName -> Task PageLoadError Int
+getTotalRecords tableName =
+    Request.Window.Records.totalRecords Nothing tableName
+        |> Http.toTask
+        |> Task.mapError handleLoadError
+
+
+handleLoadError : Http.Error -> PageLoadError
+handleLoadError e =
+    pageLoadError Page.WindowArena ("WindowArena DetailedRecord is currently unavailable. Error: " ++ (toString e))
+
+
 init : TableName -> String -> ArenaArg -> Window -> Task PageLoadError Model
 init tableName selectedRow arenaArg window =
     let
@@ -100,60 +112,77 @@ init tableName selectedRow arenaArg window =
                 |> Http.toTask
                 |> Task.mapError handleLoadError
 
+        hasManyTableRecordCounts =
+            List.map
+                (\hasManyTab ->
+                    getTotalRecords hasManyTab.tableName
+                )
+                window.hasManyTabs
+                |> Task.sequence
+
         initHasManyTabs =
-            Task.map3
-                (\size detailRows lookup ->
+            Task.map4
+                (\size detailRows lookup recordCounts ->
                     let
                         ( mainRecordHeight, detailTabHeight ) =
                             splitTabHeights window (initialPosition size) size
                     in
-                        List.map
-                            (\hasManyTab ->
+                        List.map2
+                            (\hasManyTab hasManyRecordCount ->
                                 let
                                     rows =
                                         RecordDetail.contentInTable detailRows.hasMany hasManyTab.tableName
                                 in
                                     case rows of
                                         Just rows ->
-                                            Tab.init detailTabHeight hasManyTab rows
+                                            Tab.init detailTabHeight hasManyTab rows hasManyRecordCount
 
                                         Nothing ->
                                             Debug.crash "Empty row"
                             )
                             window.hasManyTabs
+                            recordCounts
                 )
                 browserSize
                 fetchSelected
                 loadWindowLookups
+                hasManyTableRecordCounts
+
+        indirectTableRecordCounts =
+            List.map
+                (\( _, indirectTab ) ->
+                    getTotalRecords indirectTab.tableName
+                )
+                window.indirectTabs
+                |> Task.sequence
 
         initIndirectTabs =
-            Task.map3
-                (\size detailRows lookup ->
+            Task.map4
+                (\size detailRows lookup recordCounts ->
                     let
                         ( mainRecordHeight, detailTabHeight ) =
                             splitTabHeights window (initialPosition size) size
                     in
-                        List.map
-                            (\( _, indirectTab ) ->
+                        List.map2
+                            (\( _, indirectTab ) indirectRecordCount ->
                                 let
                                     rows =
                                         RecordDetail.contentInTable detailRows.indirect indirectTab.tableName
                                 in
                                     case rows of
                                         Just rows ->
-                                            Tab.init detailTabHeight indirectTab rows
+                                            Tab.init detailTabHeight indirectTab rows indirectRecordCount
 
                                         Nothing ->
                                             Debug.crash "Empty row"
                             )
                             window.indirectTabs
+                            recordCounts
                 )
                 browserSize
                 fetchSelected
                 loadWindowLookups
-
-        handleLoadError e =
-            pageLoadError Page.WindowArena ("WindowArena DetailedRecord is currently unavailable. Error: " ++ (toString e))
+                indirectTableRecordCounts
     in
         (Task.map5
             (\detail hasManyTabs indirectTabs size lookup ->

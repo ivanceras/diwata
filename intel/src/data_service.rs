@@ -16,6 +16,8 @@ use rustorm::ColumnName;
 use tab::Tab;
 pub use data_container::RecordDetail;
 use data_container::Lookup;
+use rustorm::FromDao;
+use dao;
 
 pub struct Filter;
 
@@ -29,8 +31,17 @@ fn calc_offset(page: u32, page_size: u32) -> u32 {
     (page - 1) * page_size
 }
 
+pub fn get_total_records(em: &EntityManager, table_name: &TableName) -> Result<u64, DbError> {
+    #[derive(FromDao)]
+    struct Count{
+        count: i64
+    }
+    let sql = format!("SELECT COUNT(*) AS count FROM {}", table_name.complete_name());
+    let count: Result<Count,DbError> = em.execute_sql_with_one_return(&sql, &[]);
+    count.map(|c| c.count as u64)
+}
+
 /// get data for the window
-/// TODO: left join the table for the lookup fields
 /// retrieving the Lookup table display columns
 pub fn get_maintable_data(
     em: &EntityManager,

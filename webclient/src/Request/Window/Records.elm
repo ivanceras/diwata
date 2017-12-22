@@ -9,6 +9,7 @@ module Request.Window.Records
         , fetchIndirectRecords
         , lookups
         , lookupPage
+        , totalRecords
         )
 
 import Data.Window as Window exposing (Window, Tag, slugToString)
@@ -44,6 +45,15 @@ listPage page maybeToken tableName =
     apiUrl ("/data/" ++ tableNameToString tableName ++ "/" ++ toString page)
         |> HttpBuilder.get
         |> HttpBuilder.withExpect (Http.expectJson Record.rowsDecoder)
+        |> withAuthorization maybeToken
+        |> HttpBuilder.toRequest
+
+
+totalRecords : Maybe AuthToken -> TableName -> Http.Request Int
+totalRecords maybeToken tableName =
+    apiUrl ("/record_count/" ++ tableNameToString tableName)
+        |> HttpBuilder.get
+        |> HttpBuilder.withExpect (Http.expectJson Decode.int)
         |> withAuthorization maybeToken
         |> HttpBuilder.toRequest
 

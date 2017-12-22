@@ -5,6 +5,8 @@ authors = ["lee"]
 
 [dependencies]
 rustorm = {path = "../rustorm"}
+rustorm_codegen = {path = "../rustorm/codegen"}
+dao = {path = "../rustorm/dao"}
 serde = "1.0.15"
 serde_derive = "1.0.15"
 serde_json = "1.0.3"

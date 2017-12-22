@@ -106,6 +106,19 @@ a.primary-link {
     border-width: 0 0 1px 0;
     border-style: solid;
     border-color: #ccc;
+    padding-left: 40px;
+}
+
+.frozen-head .frozen-head-indicator {
+    text-align: right;
+    padding: 0 5px;
+}
+.frozen-head .frozen-head-controls {
+    display: flex;
+}
+
+.frozen-head .frozen-head-controls .filter-btn{
+    padding: 0 20px;
 }
 
 .page-shadow{
@@ -153,13 +166,15 @@ a.primary-link {
     background-color: #ddd;
     display: flex;
     padding-left: 15px;
+    border-bottom: 1px solid #aaa;
 }
 
-.tab-names a {
+.tab-names a.tab-name {
     padding-top: 5px;
     text-decoration: none;
     display: block;
     color: #333;
+    margin-bottom: -1px;
 }
 
 .tab-name {
@@ -270,7 +285,15 @@ a.primary-link {
     background-color: #eddac9;
 }
 
-.detail-tab-name {
+.detail-tab-names {
+    display: flex;
+    background-color: #ddd;
+    height: 40px;
+    padding-left: 40px;
+    overflow-x: auto;
+}
+
+.detail-tab-names a.detail-tab-name {
     padding: 5px 20px;
     border-radius: 5px 5px 0 0;
     border: 1px solid #888;
@@ -278,6 +301,12 @@ a.primary-link {
     display: block;
     color: #333;
     outline: 0;
+}
+
+.detail-tab-names a.detail-tab-name.active-detail-tab {
+    background-color: #f5f5f4;
+    border-width: 1px 1px 0 1px;
+    border-color: #888;
 }
 
 .nav-group .is-view-active {
@@ -312,19 +341,7 @@ a.primary-link {
     margin-top: -6px;
 }
 
-.detail-tab-names {
-    display: flex;
-    background-color: #ddd;
-    height: 40px;
-    padding-left: 40px;
-    overflow-x: auto;
-}
 
-.active-detail-tab {
-    background-color: #f5f5f4;
-    border-width: 1px 1px 0 1px;
-    border-color: #888;
-}
 
 .indirect-tab.active-detail-tab{
     background-color: #fff4ea;

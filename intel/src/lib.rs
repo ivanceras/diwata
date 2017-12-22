@@ -2,7 +2,10 @@
 #![allow(dead_code)]
 #[macro_use]
 extern crate lazy_static;
+#[macro_use]
+extern crate rustorm_codegen;
 extern crate rustorm;
+extern crate dao;
 #[macro_use]
 extern crate serde_derive;
 extern crate uuid;
@@ -13,7 +16,7 @@ mod widget;
 pub mod window;
 pub mod tab;
 mod field;
-mod table_intel;
+pub mod table_intel;
 mod service;
 pub mod data_service;
 pub mod data_container;

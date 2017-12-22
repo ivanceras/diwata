@@ -30,6 +30,7 @@ use rocket::response::NamedFile;
 use rocket::response::Redirect;
 use intel::tab::Tab;
 use intel::data_container::Lookup;
+use intel::table_intel;
 
 mod error;
 
@@ -83,6 +84,22 @@ fn get_window(table_name: String) -> Result<Option<Json<Window>>, ServiceError> 
     match window {
         Some(window) => Ok(Some(Json(window.to_owned()))),
         None => Ok(None),
+    }
+}
+
+#[get("/<table_name>")]
+fn get_total_records(table_name: String) -> Result<Option<Json<u64>>, ServiceError> {
+    let em = get_pool_em()?;
+    let mut cache_pool = cache::CACHE_POOL.lock().unwrap();
+    let table_name = TableName::from(&table_name);
+    let tables = cache_pool.get_cached_tables(&em, DB_URL)?;
+    let table = table_intel::get_table(&table_name, &tables); 
+    match table{
+        Some(table) => {
+            let count = data_service::get_total_records(&em, &table.name)?;
+            Ok(Some(Json(count)))
+        }
+        None => Ok(None)
     }
 }
 
@@ -313,6 +330,7 @@ pub fn rocket() -> Rocket {
         )
         .mount("/lookup", routes![get_lookup_data])
         .mount("/lookup_all", routes![get_window_lookup_data])
+        .mount("/record_count", routes![get_total_records])
         .mount("/window", routes![get_window,])
         .mount("/windows", routes![get_windows,])
 }

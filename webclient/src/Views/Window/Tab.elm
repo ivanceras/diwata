@@ -33,11 +33,12 @@ type alias Model =
     , pageRequestInFlight : Bool
     , currentPage : Int
     , reachedLastPage : Bool
+    , totalRecords : Int
     }
 
 
-init : Float -> Tab -> Rows -> Model
-init height tab rows =
+init : Float -> Tab -> Rows -> Int -> Model
+init height tab rows totalRecords =
     { tab = tab
     , scroll = Scroll 0 0
     , height = height
@@ -45,6 +46,7 @@ init height tab rows =
     , pageRequestInFlight = False
     , currentPage = 1
     , reachedLastPage = False
+    , totalRecords = totalRecords
     }
 
 
@@ -65,6 +67,16 @@ createRowsModel tab rows =
             recordList
 
 
+numberOfRecords : Model -> Int
+numberOfRecords model =
+    List.foldl
+        (\page len ->
+            len + List.length page
+        )
+        0
+        model.pageRows
+
+
 {-| IMPORTANT: rowHeight 40 is based on the
 computed tab-row css class, not matching the rowHeight will make the load-page-on-deman upon
 scoll not trigger since isScrolledBottom does not measure the actual value
@@ -76,12 +88,7 @@ estimatedListHeight model =
             40.0
 
         rowLength =
-            List.foldl
-                (\page len ->
-                    len + List.length page
-                )
-                0
-                model.pageRows
+            numberOfRecords model
     in
         rowHeight * (toFloat rowLength)
 
@@ -205,10 +212,28 @@ viewRowShadow pageRow tab =
 
 viewFrozenHead : Model -> Html Msg
 viewFrozenHead model =
-    div
-        [ class "frozen-head"
-        ]
-        []
+    let
+        loadedItems =
+            numberOfRecords model
+
+        totalItems =
+            model.totalRecords
+
+        itemsIndicator =
+            toString loadedItems ++ "/" ++ toString totalItems
+    in
+        div
+            [ class "frozen-head"
+            ]
+            [ div [ class "frozen-head-indicator" ]
+                [ text itemsIndicator ]
+            , div
+                [ class "frozen-head-controls" ]
+                [ input [ type_ "checkbox" ] []
+                , div [ class "filter-btn" ]
+                    [ i [ class "fa fa-filter" ] [] ]
+                ]
+            ]
 
 
 viewColumns : Model -> List Field -> Html Msg
