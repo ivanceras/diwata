@@ -4,21 +4,42 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Util exposing ((=>), px, onScroll, Scroll, viewIf)
+import Data.Window.Field as Field
 
 
 type alias Model =
     { opened : Bool
     , selected : Maybe String
     , scroll : Scroll
+    , widgetWidth : Int
     }
 
 
-init : Maybe String -> Model
-init selected =
+init : Int -> Maybe String -> Model
+init widgetWidth selected =
     { opened = False
     , selected = selected
     , scroll = Scroll 0 0
+    , widgetWidth = widgetWidth
     }
+
+
+calcPkWidth : List ( String, String ) -> Int
+calcPkWidth list =
+    let
+        charWidth =
+            List.map
+                (\( pk, display ) ->
+                    String.length pk
+                )
+                list
+                |> List.maximum
+                |> Maybe.withDefault 0
+
+        ( fontWidth, _ ) =
+            Field.fontSize
+    in
+        charWidth * fontWidth
 
 
 estimatedListHeight : List ( String, String ) -> Float
@@ -61,7 +82,7 @@ view : List ( String, String ) -> Model -> Html Msg
 view list model =
     div []
         [ viewInputButton list model
-        , viewIf model.opened (viewDropdown list)
+        , viewIf model.opened (viewDropdown list model)
         ]
 
 
@@ -94,6 +115,7 @@ viewInputButton list model =
                 [ onClick ToggleDropdown
                 , onBlur CloseDropdown
                 , value selectedDisplay
+                , style [ ( "width", px model.widgetWidth ) ]
                 ]
                 []
             , button
@@ -105,8 +127,8 @@ viewInputButton list model =
             ]
 
 
-viewDropdown : List ( String, String ) -> Html Msg
-viewDropdown list =
+viewDropdown : List ( String, String ) -> Model -> Html Msg
+viewDropdown list model =
     let
         sorted =
             List.sortBy
@@ -114,23 +136,30 @@ viewDropdown list =
                     String.toLower display
                 )
                 list
+
+        pkWidth =
+            calcPkWidth sorted
     in
         div
             [ class "dropdown-select"
             , onScroll DropdownScrolled
+            , style [ ( "width", px model.widgetWidth ) ]
             ]
             [ div [ class "dropdown-options" ]
-                (List.map viewOption sorted)
+                (List.map (viewOption pkWidth) sorted)
             ]
 
 
-viewOption : ( String, String ) -> Html Msg
-viewOption ( pk, choice ) =
+viewOption : Int -> ( String, String ) -> Html Msg
+viewOption pkWidth ( pk, choice ) =
     div
         [ class "dropdown-option"
         , onMouseDown (SelectionChanged pk)
         ]
-        [ div [ class "pk-value" ]
+        [ div
+            [ class "pk-value"
+            , style [ ( "min-width", px pkWidth ) ]
+            ]
             [ text pk ]
         , div [ class "choice" ]
             [ text choice ]

@@ -14,6 +14,7 @@ module Data.Window.Field
         , displayColumns
         , sourceTable
         , displayValues
+        , fontSize
         )
 
 import Json.Decode as Decode exposing (Decoder)

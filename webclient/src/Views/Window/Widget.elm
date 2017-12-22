@@ -424,7 +424,7 @@ createWidget presentation record tab field maybeValue =
             TableLookupDropdown ->
                 let
                     dropdownModel =
-                        Dropdown.init maybeValueString
+                        Dropdown.init widgetWidth maybeValueString
                 in
                     TableDropdown dropdownModel
 

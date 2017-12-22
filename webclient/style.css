@@ -438,7 +438,8 @@ a.primary-link {
 
 
 .dropdown-select .dropdown-option .pk-value {
-    padding-right: 10px;
+    padding: 0 5px;
+    text-align: right;
     border-right: 1px solid #ccc;
     line-height: 30px; /* DO NOT change: this is used in calculation in the elm code */
     vertical-align: middle;

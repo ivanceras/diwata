@@ -26,7 +26,7 @@ pub struct Tab {
 pub struct IdentifierDisplay {
     pub columns: Vec<ColumnName>,
     pub pk: Vec<ColumnName>,
-    separator: Option<String>,
+    pub separator: Option<String>,
 }
 
 impl Tab {
