@@ -74,7 +74,7 @@ calcMainTabSize browserSize =
 
         -- style.css .toolbar-area margin + .toolbar height
         toolbarHeight =
-            50.0
+            80.0
 
         --scrollbar heights : 40 when overflow-x: auto kicks in in toolbars and in tabnames
         scrollbarHeights =

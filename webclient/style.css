@@ -461,6 +461,7 @@ a.primary-link {
     margin-left: 20px;
     overflow-x: auto;
     display:flex;
+    height: 80px;
 }
 
 .toolbar {
@@ -474,10 +475,14 @@ a.primary-link {
  */
 .tooltip {
 }
-
+/**
+ * There is an issue when overflow-x: auto is added to the toolbar
+ * container, part of the tooltip obstucted, z-index didn't help
+ */
 .tooltip .tooltip-text {
     margin-top: 20px;
-    display: none;
+    /*display: none;*/
+    visibility: hidden;
     background-color: black;
     color: #fff;
     text-align: center;
@@ -490,5 +495,6 @@ a.primary-link {
 }
 
 .tooltip:hover .tooltip-text {
-    display: inline-block;
+    /*display: inline-block;*/
+    visibility: visible;
 }
