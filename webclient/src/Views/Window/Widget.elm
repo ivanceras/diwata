@@ -194,9 +194,6 @@ listRecordToListString dropdownInfo lookupRecords =
 createWidget : Presentation -> Record -> Tab -> Field -> Maybe Value -> Widget
 createWidget presentation record tab field maybeValue =
     let
-        _ =
-            Debug.log "maybeValue: " maybeValue
-
         controlWidget =
             field.controlWidget
 
@@ -512,9 +509,6 @@ update msg model =
     case msg of
         DropdownMsg dropdown msg ->
             let
-                _ =
-                    Debug.log "dropdown msg" msg
-
                 ( widget, cmd ) =
                     case model.widget of
                         HtmlWidget html ->

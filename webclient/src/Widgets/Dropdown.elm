@@ -89,9 +89,6 @@ view list model =
 viewInputButton : List ( String, String ) -> Model -> Html Msg
 viewInputButton list model =
     let
-        _ =
-            Debug.log "selected: " model.selected
-
         selectedValue =
             case model.selected of
                 Just selected ->
