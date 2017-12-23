@@ -106,12 +106,13 @@ displayValues field record =
                             displayValue field sourceTable column record
                         )
                         displayColumns
-
-                valueListStrings =
-                    List.map Value.valueToString valueList
             in
-                String.join separator valueListStrings
-                    |> Just
+                if List.isEmpty valueList then
+                    Nothing
+                else
+                    List.map Value.valueToString valueList
+                        |> String.join separator
+                        |> Just
 
         Nothing ->
             Nothing

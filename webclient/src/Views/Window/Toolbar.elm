@@ -52,7 +52,7 @@ viewForMain =
 
 viewForDetailRecord : Html msg
 viewForDetailRecord =
-    div [ class "btn-group" ]
+    div [ class "toolbar btn-group" ]
         [ button [ class "btn btn-large btn-default tooltip" ]
             [ span [ class "icon icon-text icon-left-open" ] []
             , text "Prev"

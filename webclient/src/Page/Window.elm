@@ -6,7 +6,7 @@ module Page.Window
         , update
         , view
         , subscriptions
-        , calcMainTabHeight
+        , calcMainTabSize
         , dropdownPageRequestNeeded
         )
 
@@ -62,25 +62,38 @@ type alias Model =
     }
 
 
-calcMainTabHeight : BrowserWindow.Size -> Float
-calcMainTabHeight browserSize =
+calcMainTabSize : BrowserWindow.Size -> ( Float, Float )
+calcMainTabSize browserSize =
     let
         -- have to hardcode here until the Dom.Size module is exposed https://github.com/elm-lang/dom/issues/15 https://github.com/elm-lang/dom/pull/19
         browserHeight =
             toFloat browserSize.height
 
+        browserWidth =
+            toFloat browserSize.width
+
         -- style.css .toolbar-area margin + .toolbar height
-        toolbarArea =
+        toolbarHeight =
             50.0
 
+        --scrollbar heights : 40 when overflow-x: auto kicks in in toolbars and in tabnames
+        scrollbarHeights =
+            50
+
         -- banner: 100, window-tabs: 40, columns: 50, allowance: 10 (borders etc)
-        totalDeductions =
-            200.0 + toolbarArea
+        heightDeductions =
+            200.0 + toolbarHeight + scrollbarHeights
 
         height =
-            browserHeight - totalDeductions
+            browserHeight - heightDeductions
+
+        widthDeductions =
+            400
+
+        width =
+            browserWidth - widthDeductions
     in
-        height
+        ( width, height )
 
 
 init : Session -> TableName -> Window -> Task PageLoadError Model
@@ -118,7 +131,7 @@ init session tableName window =
         mainTabTask =
             Task.map4
                 (\records size lookup totalRecords ->
-                    Tab.init (calcMainTabHeight size) window.mainTab records totalRecords
+                    Tab.init (calcMainTabSize size) window.mainTab records totalRecords
                 )
                 loadRecords
                 getBrowserSize
@@ -302,6 +315,6 @@ requestNextPage tab =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ BrowserWindow.resizes (\size -> TabMsg (Tab.SetHeight (calcMainTabHeight size)))
+        [ BrowserWindow.resizes (\size -> TabMsg (Tab.SetSize (calcMainTabSize size)))
         , Sub.map TabMsg (Tab.subscriptions model.mainTab)
         ]

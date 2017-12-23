@@ -122,14 +122,7 @@ impl Tab {
                         pk: pk.clone(),
                     }),
                     None => {
-                        // use primary key orunique key here
-                        /*
-                        let mut columns: Vec<ColumnName> = vec![];
-                        let primary_columns = table.get_primary_column_names();
-                        for pk in primary_columns {
-                            columns.push(pk.to_owned());
-                        }
-                        */
+                        // empty display columns
                         Some(IdentifierDisplay {
                             columns: vec![],
                             separator: None,

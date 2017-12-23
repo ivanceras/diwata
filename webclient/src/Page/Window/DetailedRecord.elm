@@ -60,7 +60,7 @@ type alias Model =
     , indirectTabs : List Tab.Model
     , position : Position
     , drag : Maybe Drag
-    , browserSize : BrowserWindow.Size
+    , size : ( Float, Float )
     , arenaArg : ArenaArg
     , lookup : Lookup
     , values : List Value.Model
@@ -77,12 +77,15 @@ type alias Drag =
 initialPosition : BrowserWindow.Size -> Position
 initialPosition browserSize =
     let
-        allocateMain =
-            round (availableHeight browserSize * 0.6)
+        ( allotedWidth, allotedHeight ) =
+            allotedSize browserSize
+
+        allotedMainHeight =
+            round (allotedHeight * 0.6)
 
         -- 60% main tab, 40% detail tabs
     in
-        Position 0 allocateMain
+        Position 0 allotedMainHeight
 
 
 getTotalRecords : TableName -> Task PageLoadError Int
@@ -123,10 +126,19 @@ init tableName selectedRow arenaArg window =
 
         initHasManyTabs =
             Task.map4
-                (\size detailRows lookup recordCounts ->
+                (\browserSize detailRows lookup recordCounts ->
                     let
+                        size =
+                            allotedSize browserSize
+
                         ( mainRecordHeight, detailTabHeight ) =
-                            splitTabHeights window (initialPosition size) size
+                            splitTabHeights window (initialPosition browserSize) size
+
+                        ( allotedWidth, allotedHeight ) =
+                            size
+
+                        tabSize =
+                            ( allotedWidth, detailTabHeight )
                     in
                         List.map2
                             (\hasManyTab hasManyRecordCount ->
@@ -136,7 +148,7 @@ init tableName selectedRow arenaArg window =
                                 in
                                     case rows of
                                         Just rows ->
-                                            Tab.init detailTabHeight hasManyTab rows hasManyRecordCount
+                                            Tab.init tabSize hasManyTab rows hasManyRecordCount
 
                                         Nothing ->
                                             Debug.crash "Empty row"
@@ -159,10 +171,19 @@ init tableName selectedRow arenaArg window =
 
         initIndirectTabs =
             Task.map4
-                (\size detailRows lookup recordCounts ->
+                (\browserSize detailRows lookup recordCounts ->
                     let
+                        size =
+                            allotedSize browserSize
+
                         ( mainRecordHeight, detailTabHeight ) =
-                            splitTabHeights window (initialPosition size) size
+                            splitTabHeights window (initialPosition browserSize) size
+
+                        ( allotedWidth, _ ) =
+                            allotedSize browserSize
+
+                        tabSize =
+                            ( allotedWidth, detailTabHeight )
                     in
                         List.map2
                             (\( _, indirectTab ) indirectRecordCount ->
@@ -172,7 +193,7 @@ init tableName selectedRow arenaArg window =
                                 in
                                     case rows of
                                         Just rows ->
-                                            Tab.init detailTabHeight indirectTab rows indirectRecordCount
+                                            Tab.init tabSize indirectTab rows indirectRecordCount
 
                                         Nothing ->
                                             Debug.crash "Empty row"
@@ -186,14 +207,14 @@ init tableName selectedRow arenaArg window =
                 indirectTableRecordCounts
     in
         (Task.map5
-            (\detail hasManyTabs indirectTabs size lookup ->
+            (\detail hasManyTabs indirectTabs browserSize lookup ->
                 { selectedRow = detail
                 , window = window
                 , hasManyTabs = hasManyTabs
                 , indirectTabs = indirectTabs
-                , position = initialPosition size
+                , position = initialPosition browserSize
                 , drag = Nothing
-                , browserSize = size
+                , size = allotedSize browserSize
                 , arenaArg = arenaArg
                 , lookup = lookup
                 , values = createValues window.mainTab detail
@@ -261,15 +282,15 @@ createValues tab detail =
         tab.fields
 
 
-availableHeight : BrowserWindow.Size -> Float
-availableHeight browserSize =
-    Window.calcMainTabHeight browserSize
+allotedSize : BrowserWindow.Size -> ( Float, Float )
+allotedSize browserSize =
+    Window.calcMainTabSize browserSize
 
 
 {-| Split tab heights (MainRecordHeight, DetailRecordHeight)
 -}
-splitTabHeights : Window -> Position -> BrowserWindow.Size -> ( Float, Float )
-splitTabHeights window position browserSize =
+splitTabHeights : Window -> Position -> ( Float, Float ) -> ( Float, Float )
+splitTabHeights window position size =
     let
         toolbar =
             50
@@ -277,11 +298,14 @@ splitTabHeights window position browserSize =
         totalDeductions =
             60 + toolbar
 
+        ( width, height ) =
+            size
+
         allotedHeight =
             if Window.hasDetails window then
-                availableHeight browserSize - totalDeductions
+                height - totalDeductions
             else
-                availableHeight browserSize + totalDeductions
+                height + totalDeductions
 
         detailRecordHeight =
             allotedHeight - toFloat position.y
@@ -313,17 +337,23 @@ view model =
         mainTab =
             window.mainTab
 
-        browserSize =
-            model.browserSize
-
         realPosition =
             getPosition model
 
         ( mainRecordHeight, detailTabHeight ) =
-            splitTabHeights window realPosition browserSize
+            splitTabHeights window realPosition model.size
+
+        ( width, height ) =
+            model.size
+
+        toolbarWidth =
+            width + 150
     in
         div []
-            [ div [ class "toolbar-area" ]
+            [ div
+                [ class "toolbar-area"
+                , style [ ( "max-width", px toolbarWidth ) ]
+                ]
                 [ Toolbar.viewForMain
                 , Toolbar.viewForDetailRecord
                 ]
@@ -630,10 +660,10 @@ update session msg model =
                 in
                     updateSizes session newModel
 
-            WindowResized size ->
+            WindowResized browserSize ->
                 let
                     newModel =
-                        { model | browserSize = size }
+                        { model | size = allotedSize browserSize }
                 in
                     updateSizes session newModel
 
@@ -768,10 +798,19 @@ updateSizes session model =
         window =
             model.window
 
+        size =
+            model.size
+
+        ( allotedWidth, allotedHeight ) =
+            size
+
         ( mainRecordHeight, detailTabHeight ) =
-            splitTabHeights window realPosition model.browserSize
+            splitTabHeights window realPosition size
+
+        tabSize =
+            ( allotedWidth, detailTabHeight )
     in
-        update session (TabMsgAll (Tab.SetHeight detailTabHeight)) model
+        update session (TabMsgAll (Tab.SetSize tabSize)) model
 
 
 updateTabModels : List Tab.Model -> Tab.Model -> List Tab.Model

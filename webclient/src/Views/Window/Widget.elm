@@ -75,14 +75,6 @@ view lookup model =
                 displayValue =
                     Field.displayValues model.field model.record
 
-                displayValueString =
-                    case displayValue of
-                        Just s ->
-                            s
-
-                        Nothing ->
-                            ""
-
                 dropdownInfo =
                     case model.dropdownInfo of
                         Just dropdownInfo ->
@@ -112,7 +104,7 @@ view lookup model =
                             then
                                 list
                             else
-                                ( pkValue, displayValueString ) :: list
+                                ( pkValue, displayValue ) :: list
 
                         Nothing ->
                             list
@@ -131,7 +123,7 @@ valueToString maybeValue =
             ""
 
 
-listRecordToListString : DropdownInfo -> List Record -> List ( String, String )
+listRecordToListString : DropdownInfo -> List Record -> List ( String, Maybe String )
 listRecordToListString dropdownInfo lookupRecords =
     let
         tableName =
@@ -163,12 +155,16 @@ listRecordToListString dropdownInfo lookupRecords =
                             displayColumns
 
                     displayString =
-                        List.map
-                            (\value ->
-                                Value.valueToString value
-                            )
-                            displayValues
-                            |> String.join separator
+                        if List.isEmpty displayValues then
+                            Nothing
+                        else
+                            List.map
+                                (\value ->
+                                    Value.valueToString value
+                                )
+                                displayValues
+                                |> String.join separator
+                                |> Just
 
                     displayPk : List Value
                     displayPk =
@@ -219,6 +215,9 @@ createWidget presentation record tab field maybeValue =
 
         alignment =
             controlWidget.alignment
+
+        alignmentString =
+            alignment
                 |> Widget.alignmentToString
 
         ( widgetWidth, widgetHeight ) =
@@ -235,7 +234,7 @@ createWidget presentation record tab field maybeValue =
 
         styles =
             style
-                [ ( "text-align", alignment )
+                [ ( "text-align", alignmentString )
                 , ( "width", px widgetWidth )
                 ]
     in
@@ -427,7 +426,7 @@ createWidget presentation record tab field maybeValue =
             TableLookupDropdown ->
                 let
                     dropdownModel =
-                        Dropdown.init widgetWidth maybeValueString
+                        Dropdown.init alignment widgetWidth maybeValueString
                 in
                     TableDropdown dropdownModel
 

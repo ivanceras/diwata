@@ -29,7 +29,7 @@ import Views.Window.Toolbar as Toolbar
 type alias Model =
     { tab : Tab
     , scroll : Scroll
-    , height : Float
+    , size : ( Float, Float )
     , pageRows : List (List Row.Model)
     , pageRequestInFlight : Bool
     , currentPage : Int
@@ -38,11 +38,11 @@ type alias Model =
     }
 
 
-init : Float -> Tab -> Rows -> Int -> Model
-init height tab rows totalRecords =
+init : ( Float, Float ) -> Tab -> Rows -> Int -> Model
+init size tab rows totalRecords =
     { tab = tab
     , scroll = Scroll 0 0
-    , height = height
+    , size = size
     , pageRows = [ createRowsModel tab rows ]
     , pageRequestInFlight = False
     , currentPage = 1
@@ -109,9 +109,12 @@ isScrolledBottom model =
 
         bottomAllowance =
             50.0
+
+        ( width, height ) =
+            model.size
     in
         --Debug.log ("scrollTop("++toString scrollTop++") + model.height("++toString model.height ++") > contentHeight("++toString contentHeight++") - bottomAllowance("++toString bottomAllowance++")")
-        (scrollTop + model.height > contentHeight - bottomAllowance)
+        (scrollTop + height > contentHeight - bottomAllowance)
 
 
 pageRequestNeeded : Model -> Bool
@@ -145,11 +148,17 @@ listView lookup model =
         fields =
             tab.fields
 
-        height =
-            model.height
+        ( width, height ) =
+            model.size
+
+        toolbarWidth =
+            width + 100
     in
         div []
-            [ div [ class "toolbar-area" ]
+            [ div
+                [ class "toolbar-area"
+                , style [ ( "max-width", px toolbarWidth ) ]
+                ]
                 [ Toolbar.viewForMain ]
             , div
                 [ class "tab-list-view"
@@ -163,7 +172,10 @@ listView lookup model =
                     , div
                         [ class "list-view-rows"
                         , onScroll ListRowScrolled
-                        , style [ ( "height", px height ) ]
+                        , style
+                            [ ( "height", px height )
+                            , ( "width", px width )
+                            ]
                         ]
                         [ listViewRows lookup model ]
                     ]
@@ -183,8 +195,8 @@ viewPageShadow model =
         tab =
             model.tab
 
-        height =
-            model.height
+        ( width, height ) =
+            model.size
     in
         div
             [ class "page-shadow"
@@ -251,9 +263,13 @@ viewColumns model fields =
 
         leftPx =
             px (-scrollLeft)
+
+        ( width, height ) =
+            model.size
     in
         div
             [ class "tab-columns"
+            , style [ ( "width", px width ) ]
             ]
             [ div
                 [ class "tab-columns-content"
@@ -331,7 +347,7 @@ listViewRows lookup model =
 
 
 type Msg
-    = SetHeight Float
+    = SetSize ( Float, Float )
     | ListRowScrolled Scroll
     | NextPageReceived Rows
     | NextPageError String
@@ -341,8 +357,8 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        SetHeight height ->
-            { model | height = height } => Cmd.none
+        SetSize size ->
+            { model | size = size } => Cmd.none
 
         ListRowScrolled scroll ->
             { model | scroll = scroll } => Cmd.none

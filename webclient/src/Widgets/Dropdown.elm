@@ -5,36 +5,44 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Util exposing ((=>), px, onScroll, Scroll, viewIf)
 import Data.Window.Field as Field
+import Data.Window.Widget as Widget exposing (Alignment)
 
 
 type alias Model =
     { opened : Bool
     , selected : Maybe String
     , scroll : Scroll
-    , widgetWidth : Int
+    , alignment : Alignment
+    , width : Int
     }
 
 
-init : Int -> Maybe String -> Model
-init widgetWidth selected =
+init : Alignment -> Int -> Maybe String -> Model
+init alignment width selected =
     { opened = False
     , selected = selected
     , scroll = Scroll 0 0
-    , widgetWidth = widgetWidth
+    , alignment = alignment
+    , width = width
     }
 
 
-calcPkWidth : List ( String, String ) -> Int
+pkCharWidth : List ( String, a ) -> Int
+pkCharWidth list =
+    List.map
+        (\( pk, display ) ->
+            String.length pk
+        )
+        list
+        |> List.maximum
+        |> Maybe.withDefault 0
+
+
+calcPkWidth : List ( String, a ) -> Int
 calcPkWidth list =
     let
         charWidth =
-            List.map
-                (\( pk, display ) ->
-                    String.length pk
-                )
-                list
-                |> List.maximum
-                |> Maybe.withDefault 0
+            pkCharWidth list
 
         ( fontWidth, _ ) =
             Field.fontSize
@@ -42,7 +50,7 @@ calcPkWidth list =
         charWidth * fontWidth
 
 
-estimatedListHeight : List ( String, String ) -> Float
+estimatedListHeight : List ( String, a ) -> Float
 estimatedListHeight list =
     let
         optionHeight =
@@ -54,7 +62,7 @@ estimatedListHeight list =
         optionHeight * toFloat optionLen
 
 
-isScrolledBottom : List ( String, String ) -> Model -> Bool
+isScrolledBottom : List ( String, a ) -> Model -> Bool
 isScrolledBottom list model =
     let
         dropdownHeight =
@@ -73,21 +81,37 @@ isScrolledBottom list model =
         (scrollTop + dropdownHeight > contentHeight - bottomAllowance)
 
 
-pageRequestNeeded : List ( String, String ) -> Model -> Bool
+pageRequestNeeded : List ( String, Maybe String ) -> Model -> Bool
 pageRequestNeeded list model =
     isScrolledBottom list model
 
 
-view : List ( String, String ) -> Model -> Html Msg
+view : List ( String, Maybe String ) -> Model -> Html Msg
 view list model =
-    div []
-        [ viewInputButton list model
-        , viewIf model.opened (viewDropdown list model)
-        ]
+    let
+        alignment =
+            model.alignment
+
+        alignmentString =
+            Widget.alignmentToString alignment
+
+        widgetWidth =
+            model.width
+
+        styles =
+            style
+                [ ( "text-align", alignmentString )
+                , ( "width", px widgetWidth )
+                ]
+    in
+        div []
+            [ viewInputButton styles list model
+            , viewIf model.opened (viewDropdown styles list model)
+            ]
 
 
-viewInputButton : List ( String, String ) -> Model -> Html Msg
-viewInputButton list model =
+viewInputButton : Attribute Msg -> List ( String, Maybe String ) -> Model -> Html Msg
+viewInputButton styles list model =
     let
         selectedValue =
             case model.selected of
@@ -105,7 +129,19 @@ viewInputButton list model =
         selectedDisplay =
             case selectedValue of
                 Just ( pk, choice ) ->
-                    pk ++ "  |  " ++ choice
+                    let
+                        pkWidth =
+                            pkCharWidth list
+
+                        pkPadded =
+                            String.padLeft pkWidth ' ' pk
+                    in
+                        case choice of
+                            Just choice ->
+                                pkPadded ++ "  |  " ++ choice
+
+                            Nothing ->
+                                pkPadded
 
                 Nothing ->
                     ""
@@ -115,7 +151,7 @@ viewInputButton list model =
                 [ onClick ToggleDropdown
                 , onBlur CloseDropdown
                 , value selectedDisplay
-                , style [ ( "width", px model.widgetWidth ) ]
+                , styles
                 ]
                 []
             , button
@@ -127,13 +163,18 @@ viewInputButton list model =
             ]
 
 
-viewDropdown : List ( String, String ) -> Model -> Html Msg
-viewDropdown list model =
+viewDropdown : Attribute Msg -> List ( String, Maybe String ) -> Model -> Html Msg
+viewDropdown styles list model =
     let
         sorted =
             List.sortBy
                 (\( pk, display ) ->
-                    String.toLower display
+                    case display of
+                        Just display ->
+                            String.toLower display
+
+                        Nothing ->
+                            ""
                 )
                 list
 
@@ -143,27 +184,36 @@ viewDropdown list model =
         div
             [ class "dropdown-select"
             , onScroll DropdownScrolled
-            , style [ ( "width", px model.widgetWidth ) ]
+            , styles
             ]
             [ div [ class "dropdown-options" ]
                 (List.map (viewOption pkWidth) sorted)
             ]
 
 
-viewOption : Int -> ( String, String ) -> Html Msg
+viewOption : Int -> ( String, Maybe String ) -> Html Msg
 viewOption pkWidth ( pk, choice ) =
-    div
-        [ class "dropdown-option"
-        , onMouseDown (SelectionChanged pk)
-        ]
-        [ div
-            [ class "pk-value"
-            , style [ ( "min-width", px pkWidth ) ]
+    let
+        display =
+            case choice of
+                Just choice ->
+                    choice
+
+                Nothing ->
+                    ""
+    in
+        div
+            [ class "dropdown-option"
+            , onMouseDown (SelectionChanged pk)
             ]
-            [ text pk ]
-        , div [ class "choice" ]
-            [ text choice ]
-        ]
+            [ div
+                [ class "pk-value"
+                , style [ ( "min-width", px pkWidth ) ]
+                ]
+                [ text pk ]
+            , div [ class "choice" ]
+                [ text display ]
+            ]
 
 
 type Msg

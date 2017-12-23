@@ -204,13 +204,31 @@ impl ControlWidget {
             None => 0
         };
 
+
+        let alignment = match dropdown {
+            Some(ref dropdown) => {
+                match *dropdown {
+                    Dropdown::TableDropdown(ref dropdown_info) => {
+                        let display = &dropdown_info.display;
+                        if display.columns.len() > 0 {
+                            Alignment::Left
+                        }
+                        else {
+                            Alignment::Right
+                        }
+                    }
+                }
+            }
+            None => Alignment::Left
+        };
+
         ControlWidget {
             widget,
             dropdown,
             width: pk_width + display_width,
             max_len: None,
             height: 1,
-            alignment: Alignment::Left,
+            alignment
         }
     }
 
