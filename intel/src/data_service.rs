@@ -681,7 +681,7 @@ fn get_indirect_records(
     let linker_table = table_intel::get_table(linker_table_name, tables);
     assert!(linker_table.is_some());
     let linker_table = linker_table.unwrap();
-    let linker_pk = linker_table.get_primary_column_names();
+    let _linker_pk = linker_table.get_primary_column_names();
     let linker_pk_data_types = linker_table.get_primary_column_types();
 
     let indirect_tablename = &indirect_table.name;
@@ -775,7 +775,10 @@ fn get_indirect_records(
             None => (),
         }
     }
+    println!("---> In indirect, main table: {}", main_table.name.complete_name());
+    println!("---> linker table: {}", linker_table.complete_name());
     let linker_rc_to_main_table = linker_table.get_referred_columns_to_table(&main_table.name);
+    println!("---> linker rc: {:#?}", linker_rc_to_main_table);
     assert!(linker_rc_to_main_table.is_some());
     let linker_rc_to_main_table = linker_rc_to_main_table.unwrap();
     let mut indirect_params = Vec::with_capacity(linker_rc_to_main_table.iter().count());
@@ -788,7 +791,7 @@ fn get_indirect_records(
         indirect_sql += &format!(
             "{}.{} = ${} ",
             linker_table.name.name,
-            linker_pk[i].complete_name(),
+            rc.name,
             i + 1
         );
         let required_type: &SqlType = linker_pk_data_types[i];
