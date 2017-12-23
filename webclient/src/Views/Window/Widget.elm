@@ -194,6 +194,9 @@ listRecordToListString dropdownInfo lookupRecords =
 createWidget : Presentation -> Record -> Tab -> Field -> Maybe Value -> Widget
 createWidget presentation record tab field maybeValue =
     let
+        _ =
+            Debug.log "maybeValue: " maybeValue
+
         controlWidget =
             field.controlWidget
 
@@ -208,6 +211,9 @@ createWidget presentation record tab field maybeValue =
 
         maybeValueString =
             case maybeValue of
+                Just Nil ->
+                    Nothing
+
                 Just value ->
                     Just (Value.valueToString value)
 
