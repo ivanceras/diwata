@@ -1,7 +1,7 @@
 use rustorm::TableName;
 use rustorm::Rows;
 use rustorm::Record;
-use tab::IdentifierDisplay;
+use rustorm::ColumnName;
 
 #[derive(Debug, Serialize)]
 pub struct RecordDetail {
@@ -25,3 +25,12 @@ pub struct DropdownInfo {
 /// lookup for same table are the same regardless of which field they are referred
 #[derive(Debug, Serialize)]
 pub struct Lookup(pub Vec<(TableName, Rows)>);
+
+/// the displayable column name, serves as identifier to human vision
+/// this would be name, title, first_name - lastname
+#[derive(Debug, Serialize, Clone)]
+pub struct IdentifierDisplay {
+    pub columns: Vec<ColumnName>,
+    pub pk: Vec<ColumnName>,
+    pub separator: Option<String>,
+}

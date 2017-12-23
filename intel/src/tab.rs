@@ -7,6 +7,7 @@ use rustorm::Table;
 use rustorm::Column;
 use table_intel;
 use data_container::DropdownInfo;
+use data_container::IdentifierDisplay;
 
 #[derive(Debug, Serialize, Clone)]
 pub struct Tab {
@@ -20,14 +21,6 @@ pub struct Tab {
     pub display: Option<IdentifierDisplay>,
 }
 
-/// the displayable column name, serves as identifier to human vision
-/// this would be name, title, first_name - lastname
-#[derive(Debug, Serialize, Clone)]
-pub struct IdentifierDisplay {
-    pub columns: Vec<ColumnName>,
-    pub pk: Vec<ColumnName>,
-    pub separator: Option<String>,
-}
 
 impl Tab {
     pub fn from_table(table: &Table, tables: &Vec<Table>) -> Self {
