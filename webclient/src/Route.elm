@@ -15,7 +15,7 @@ import Data.Window.TableName as TableName
         , maybeTableNameParser
         , maybeTableNameToString
         )
-import Data.WindowArena exposing (parseArenaArgs, ArenaArg, argToString)
+import Data.WindowArena as WindowArena exposing (parseArenaArgs, ArenaArg, argToString)
 
 
 -- ROUTING --
@@ -42,6 +42,7 @@ route =
         , Url.map Register (s "register")
         , Url.map NewWindow (s "editor")
         , Url.map EditWindow (s "editor" </> tableNameParser)
+        , Url.map (WindowArena Nothing) (s "")
         ]
 
 
@@ -102,16 +103,18 @@ modifyUrl =
 
 fromLocation : Location -> Maybe Route
 fromLocation location =
-    if String.isEmpty location.hash then
-        Just (WindowArena Nothing)
-    else
-        let
-            arenaArgs =
-                parseArenaArgs location.hash
-        in
-            case arenaArgs of
-                Just arenaArgs ->
-                    Just (WindowArena (Just arenaArgs))
+    {-
+       if String.isEmpty location.hash then
+           Just (WindowArena Nothing)
+       else
+    -}
+    let
+        arenaArgs =
+            parseArenaArgs location.hash
+    in
+        case arenaArgs of
+            Just arenaArgs ->
+                Just (WindowArena (Just arenaArgs))
 
-                Nothing ->
-                    parseHash route location
+            Nothing ->
+                parseHash route location

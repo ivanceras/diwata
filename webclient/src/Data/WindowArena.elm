@@ -3,6 +3,7 @@ module Data.WindowArena
         ( initArg
         , initArgWithRecordId
         , parseArenaArgs
+        , arenaArgParser
         , ArenaArg
         , argToString
         , Section(..)
@@ -218,6 +219,18 @@ keyPairs url =
             List.map2 (\( i, key ) ( j, value ) -> ( key, value )) keys values
     in
         pairs
+
+
+arenaArgParser : UrlParser.Parser (Maybe ArenaArg -> a) a
+arenaArgParser =
+    UrlParser.custom "ARENA_ARG" <|
+        \segment ->
+            Ok (parseArenaArgs segment)
+
+
+tryParseArenaArgs : String -> Result String (Maybe ArenaArg)
+tryParseArenaArgs arg =
+    Ok (parseArenaArgs arg)
 
 
 parseArenaArgs : String -> Maybe ArenaArg

@@ -33,3 +33,7 @@ we need a high static typing compiler that
 - sed
 - google-closure-compiler
 - elm 0.18
+
+## Nice to haves
+- pure rust webclient [yew](https://github.com/DenisKolodin/yew)
+- native-client [relm](https://github.com/antoyo/relm)
