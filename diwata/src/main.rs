@@ -16,5 +16,14 @@ struct Opt {
 fn main() {
     let opt = Opt::from_args();
     println!("opt: {:?}", opt);
+    match opt.db_url {
+        Some(db_url) => {
+            match diwata::set_db_url(db_url){
+                Ok(_) => println!("url is set"),
+                Err(_) => println!("unable to set db_url"),
+            }
+        }
+        None => ()
+    }
     diwata::rocket().launch();
 }

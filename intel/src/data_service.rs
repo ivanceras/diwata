@@ -180,6 +180,10 @@ fn extract_record_id<'a>(
                     }
                 }
             }
+
+            SqlType::Varchar => {
+                  Value::Text(splinter.to_string()) 
+            }
             _ => panic!("primary with type {:?} is not yet covered", pk_type),
         };
         record_id.push((pk_column, value));

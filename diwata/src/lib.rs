@@ -34,15 +34,36 @@ use intel::table_intel;
 
 mod error;
 
-static DB_URL: &'static str = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
+//static DB_URL: &'static str = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
 //static DB_URL: &'static str = "postgres://postgres:p0stgr3s@localhost:5432/bazaar_v8";
+//static DB_URL: &'static str = "postgres://rforum:rforum@localhost:5432/rforum";
+//static DB_URL: &'static str = "postgres://rforum:rforum@localhost:5432/sakila";
+
 
 static PAGE_SIZE: u32 = 40;
 
 lazy_static!{
+    pub static ref DB_URL: Mutex<String> = Mutex::new("".to_string());
     pub static ref POOL: Arc<Mutex<Pool>> = {
         Arc::new(Mutex::new(Pool::new()))
     };
+}
+
+fn get_db_url() -> Result<String, ServiceError> {
+    match DB_URL.lock(){
+        Ok(db_url) => Ok(db_url.to_owned()),
+        Err(e) => Err(ServiceError::GenericError(format!("{}", e)))
+    }
+}
+
+pub fn set_db_url(new_url: String) -> Result<(), ServiceError> {
+    match DB_URL.lock(){
+        Ok(mut db_url) => {
+            *db_url = new_url;
+            Ok(())
+        }
+        Err(e) => Err(ServiceError::GenericError(format!("{}", e)))
+    }
 }
 
 fn get_pool_em() -> Result<EntityManager, ServiceError> {
@@ -50,7 +71,8 @@ fn get_pool_em() -> Result<EntityManager, ServiceError> {
         Ok(pool) => pool,
         Err(_e) => return Err(ServiceError::PoolResourceError),
     };
-    match pool.em(DB_URL) {
+    let db_url = &get_db_url()?;
+    match pool.em(db_url) {
         Ok(em) => Ok(em),
         Err(e) => return Err(ServiceError::DbError(e)),
     }
@@ -61,7 +83,8 @@ fn get_pool_dm() -> Result<RecordManager, ServiceError> {
         Ok(pool) => pool,
         Err(_e) => return Err(ServiceError::PoolResourceError),
     };
-    match pool.dm(DB_URL) {
+    let db_url = &get_db_url()?;
+    match pool.dm(db_url) {
         Ok(em) => Ok(em),
         Err(e) => return Err(ServiceError::DbError(e)),
     }
@@ -70,15 +93,18 @@ fn get_pool_dm() -> Result<RecordManager, ServiceError> {
 #[get("/")]
 fn get_windows() -> Result<Json<Vec<GroupedWindow>>, ServiceError> {
     let em = get_pool_em()?;
-    let grouped_windows: Vec<GroupedWindow> = window::get_grouped_windows_using_cache(&em, DB_URL)?;
+    let db_url = &get_db_url()?;
+    let grouped_windows: Vec<GroupedWindow> = window::get_grouped_windows_using_cache(&em, db_url)?;
     Ok(Json(grouped_windows))
 }
 
 #[get("/<table_name>")]
 fn get_window(table_name: String) -> Result<Option<Json<Window>>, ServiceError> {
     let em = get_pool_em()?;
+    let db_url = &get_db_url()?;
     let mut cache_pool = cache::CACHE_POOL.lock().unwrap();
-    let windows = cache_pool.get_cached_windows(&em, DB_URL)?;
+    println!("{:#?}", db_url);
+    let windows = cache_pool.get_cached_windows(&em, db_url)?;
     let table_name = TableName::from(&table_name);
     let window = window::get_window(&table_name, &windows);
     match window {
@@ -90,9 +116,10 @@ fn get_window(table_name: String) -> Result<Option<Json<Window>>, ServiceError> 
 #[get("/<table_name>")]
 fn get_total_records(table_name: String) -> Result<Option<Json<u64>>, ServiceError> {
     let em = get_pool_em()?;
+    let db_url = &get_db_url()?;
     let mut cache_pool = cache::CACHE_POOL.lock().unwrap();
     let table_name = TableName::from(&table_name);
-    let tables = cache_pool.get_cached_tables(&em, DB_URL)?;
+    let tables = cache_pool.get_cached_tables(&em, db_url)?;
     let table = table_intel::get_table(&table_name, &tables); 
     match table{
         Some(table) => {
@@ -111,11 +138,12 @@ fn get_data(table_name: String) -> Result<Option<Json<Rows>>, ServiceError> {
 #[get("/<table_name>/<page>")]
 fn get_data_with_page(table_name: String, page: u32) -> Result<Option<Json<Rows>>, ServiceError> {
     let em = get_pool_em()?;
+    let db_url = &get_db_url()?;
     let mut cache_pool = cache::CACHE_POOL.lock().unwrap();
-    let windows = cache_pool.get_cached_windows(&em, DB_URL)?;
+    let windows = cache_pool.get_cached_windows(&em, db_url)?;
     let table_name = TableName::from(&table_name);
     let window = window::get_window(&table_name, &windows);
-    let tables = cache_pool.get_cached_tables(&em, DB_URL)?;
+    let tables = cache_pool.get_cached_tables(&em, db_url)?;
     match window {
         Some(window) => {
             let rows: Rows =
@@ -133,11 +161,12 @@ fn get_detailed_record(
 ) -> Result<Option<Json<RecordDetail>>, ServiceError> {
     let dm = get_pool_dm()?;
     let em = get_pool_em()?;
+    let db_url = &get_db_url()?;
     let mut cache_pool = cache::CACHE_POOL.lock().unwrap();
-    let windows = cache_pool.get_cached_windows(&em, DB_URL)?;
+    let windows = cache_pool.get_cached_windows(&em, db_url)?;
     let table_name = TableName::from(&table_name);
     let window = window::get_window(&table_name, &windows);
-    let tables = cache_pool.get_cached_tables(&em, DB_URL)?;
+    let tables = cache_pool.get_cached_tables(&em, db_url)?;
     match window {
         Some(window) => {
             let dao: Option<RecordDetail> = data_service::get_selected_record_detail(
@@ -160,11 +189,12 @@ fn get_detailed_record(
 fn get_window_lookup_data(table_name: String) -> Result<Option<Json<Lookup>>, ServiceError> {
     let dm = get_pool_dm()?;
     let em = get_pool_em()?;
+    let db_url = &get_db_url()?;
     let mut cache_pool = cache::CACHE_POOL.lock().unwrap();
-    let windows = cache_pool.get_cached_windows(&em, DB_URL)?;
+    let windows = cache_pool.get_cached_windows(&em, db_url)?;
     let table_name = TableName::from(&table_name);
     let window = window::get_window(&table_name, &windows);
-    let tables = cache_pool.get_cached_tables(&em, DB_URL)?;
+    let tables = cache_pool.get_cached_tables(&em, db_url)?;
     match window {
         Some(window) => {
             let lookup: Lookup =
@@ -179,11 +209,12 @@ fn get_window_lookup_data(table_name: String) -> Result<Option<Json<Lookup>>, Se
 fn get_lookup_data(table_name: String, page: u32) -> Result<Option<Json<Rows>>, ServiceError> {
     let dm = get_pool_dm()?;
     let em = get_pool_em()?;
+    let db_url = &get_db_url()?;
     let mut cache_pool = cache::CACHE_POOL.lock().unwrap();
-    let windows = cache_pool.get_cached_windows(&em, DB_URL)?;
+    let windows = cache_pool.get_cached_windows(&em, db_url)?;
     let table_name = TableName::from(&table_name);
     let window = window::get_window(&table_name, &windows);
-    let tables = cache_pool.get_cached_tables(&em, DB_URL)?;
+    let tables = cache_pool.get_cached_tables(&em, db_url)?;
     match window {
         Some(window) => {
             let rows: Rows = data_service::get_lookup_data_of_tab(
@@ -210,11 +241,12 @@ fn get_has_many_records(
 ) -> Result<Option<Json<Rows>>, ServiceError> {
     let dm = get_pool_dm()?;
     let em = get_pool_em()?;
+    let db_url = &get_db_url()?;
     let mut cache_pool = cache::CACHE_POOL.lock().unwrap();
-    let windows = cache_pool.get_cached_windows(&em, DB_URL)?;
+    let windows = cache_pool.get_cached_windows(&em, db_url)?;
     let table_name = TableName::from(&table_name);
     let window = window::get_window(&table_name, &windows);
-    let tables = cache_pool.get_cached_tables(&em, DB_URL)?;
+    let tables = cache_pool.get_cached_tables(&em, db_url)?;
     let has_many_table_name = TableName::from(&has_many_table);
     match window {
         Some(window) => {
@@ -253,11 +285,12 @@ fn get_indirect_records(
 ) -> Result<Option<Json<Rows>>, ServiceError> {
     let dm = get_pool_dm()?;
     let em = get_pool_em()?;
+    let db_url = &get_db_url()?;
     let mut cache_pool = cache::CACHE_POOL.lock().unwrap();
-    let windows = cache_pool.get_cached_windows(&em, DB_URL)?;
+    let windows = cache_pool.get_cached_windows(&em, db_url)?;
     let table_name = TableName::from(&table_name);
     let window = window::get_window(&table_name, &windows);
-    let tables = cache_pool.get_cached_tables(&em, DB_URL)?;
+    let tables = cache_pool.get_cached_tables(&em, db_url)?;
     let indirect_table_name = TableName::from(&indirect_table);
     match window {
         Some(window) => {

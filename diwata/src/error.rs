@@ -3,6 +3,7 @@ use intel::error::IntelError;
 
 #[derive(Debug)]
 pub enum ServiceError {
+    GenericError(String),
     PoolResourceError,
     IntelError(IntelError),
     DbError(DbError),
