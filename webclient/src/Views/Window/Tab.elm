@@ -150,14 +150,10 @@ listView lookup model =
 
         ( width, height ) =
             model.size
-
-        toolbarWidth =
-            width + 100
     in
         div []
             [ div
                 [ class "toolbar-area"
-                , style [ ( "max-width", px toolbarWidth ) ]
                 ]
                 [ Toolbar.viewForMain ]
             , div

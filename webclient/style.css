@@ -456,12 +456,12 @@ a.primary-link {
     vertical-align: middle;
 }
 
+
 .toolbar-area {
-    padding: 10px 0;
-    margin-left: 20px;
-    overflow-x: auto;
     display:flex;
-    height: 80px;
+    overflow-x: auto;
+    padding: 50px 0 10px 0;
+    margin-left: 20px;
 }
 
 .toolbar {
@@ -480,7 +480,7 @@ a.primary-link {
  * container, part of the tooltip obstucted, z-index didn't help
  */
 .tooltip .tooltip-text {
-    margin-top: 20px;
+    margin-top: -40px;
     /*display: none;*/
     visibility: hidden;
     background-color: black;

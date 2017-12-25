@@ -293,10 +293,10 @@ splitTabHeights : Window -> Position -> ( Float, Float ) -> ( Float, Float )
 splitTabHeights window position size =
     let
         toolbar =
-            50
+            80
 
         totalDeductions =
-            60 + toolbar
+            100 + toolbar
 
         ( width, height ) =
             size
@@ -345,14 +345,10 @@ view model =
 
         ( width, height ) =
             model.size
-
-        toolbarWidth =
-            width + 150
     in
         div []
             [ div
                 [ class "toolbar-area"
-                , style [ ( "max-width", px toolbarWidth ) ]
                 ]
                 [ Toolbar.viewForMain
                 , Toolbar.viewForDetailRecord
