@@ -1,2 +1,2 @@
-web: ./target/release/iron_curtain
+web: ./target/release/diwata
 
