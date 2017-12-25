@@ -103,18 +103,16 @@ modifyUrl =
 
 fromLocation : Location -> Maybe Route
 fromLocation location =
-    {-
-       if String.isEmpty location.hash then
-           Just (WindowArena Nothing)
-       else
-    -}
-    let
-        arenaArgs =
-            parseArenaArgs location.hash
-    in
-        case arenaArgs of
-            Just arenaArgs ->
-                Just (WindowArena (Just arenaArgs))
+    if String.isEmpty location.hash then
+        Just (WindowArena Nothing)
+    else
+        let
+            arenaArgs =
+                parseArenaArgs location.hash
+        in
+            case arenaArgs of
+                Just arenaArgs ->
+                    Just (WindowArena (Just arenaArgs))
 
-            Nothing ->
-                parseHash route location
+                Nothing ->
+                    parseHash route location
