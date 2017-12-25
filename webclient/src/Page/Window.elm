@@ -108,23 +108,30 @@ init session tableName window =
         loadRecords =
             Request.Window.Records.list maybeAuthToken tableName
                 |> Http.toTask
-                |> Task.mapError handleLoadError
+                |> Task.mapError (handleLoadError " inLoadrecords")
 
         getTotalRecords =
             Request.Window.Records.totalRecords maybeAuthToken tableName
                 |> Http.toTask
-                |> Task.mapError handleLoadError
+                |> Task.mapError (handleLoadError "In getTotalRecords")
 
         loadWindowLookups : Task PageLoadError Lookup
         loadWindowLookups =
             Request.Window.Records.lookups maybeAuthToken tableName
                 |> Http.toTask
-                |> Task.mapError handleLoadError
+                |> Task.mapError (handleLoadError "In loadWindowLookups")
 
-        handleLoadError e =
+        _ =
+            Task.map
+                (\records ->
+                    Debug.log "loaded records" records
+                )
+                loadRecords
+
+        handleLoadError s e =
             let
                 _ =
-                    Debug.log "error in loading window" e
+                    Debug.log ("error in loading window" ++ s) e
             in
                 pageLoadError Page.Other "Window is currently unavailable."
 
@@ -137,7 +144,7 @@ init session tableName window =
                 getBrowserSize
                 loadWindowLookups
                 getTotalRecords
-                |> Task.mapError handleLoadError
+                |> Task.mapError (handleLoadError "in mainTabTask")
     in
         Task.map2
             (\mainTab lookup ->

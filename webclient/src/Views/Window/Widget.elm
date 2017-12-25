@@ -423,6 +423,9 @@ createWidget presentation record tab field maybeValue =
                     HtmlWidget
                         (Tagger.view styles tags)
 
+            FileUpload ->
+                HtmlWidget (input [ type_ "file" ] [])
+
             TableLookupDropdown ->
                 let
                     dropdownModel =

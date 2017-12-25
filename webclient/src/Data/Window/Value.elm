@@ -238,8 +238,6 @@ dateValueDecoder =
 
     make a string representation for the purpose of selected record.
     Support the most common primary key data_types for now
-
-
 -}
 valueToString : Value -> String
 valueToString value =
@@ -272,7 +270,7 @@ valueToString value =
             toString v
 
         Char v ->
-            toString v
+            String.fromChar v
 
         Text v ->
             v
