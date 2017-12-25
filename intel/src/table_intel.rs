@@ -147,21 +147,23 @@ impl<'a> TableIntel<'a> {
             let table_intel = TableIntel(&table);
             if self.is_referred_by(table) && table_intel.is_linker_table() {
                 let has_one_tables = table_intel.get_has_one_tables(tables);
-                // there should only be 2 has_one tables of the linker
-                // the other one that is not equal to this table in context
-                // is the indirect table
-                assert_eq!(has_one_tables.len(), 2);
-                let other_table = if has_one_tables[0] != self.0 {
-                    has_one_tables[0]
-                } else {
-                    has_one_tables[1] //this way, if the second 1 is equal to the table in context assign it anyway
-                };
+                if has_one_tables.len() == 2 {
+                    // there should only be 2 has_one tables of the linker
+                    // the other one that is not equal to this table in context
+                    // is the indirect table
+                    //assert_eq!(has_one_tables.len(), 2);
+                    let other_table = if has_one_tables[0] != self.0 {
+                        has_one_tables[0]
+                    } else {
+                        has_one_tables[1] //this way, if the second 1 is equal to the table in context assign it anyway
+                    };
 
-                let indirect = IndirectTable {
-                    linker: table,
-                    indirect_table: other_table,
-                };
-                indirect_tables.push(indirect);
+                    let indirect = IndirectTable {
+                        linker: table,
+                        indirect_table: other_table,
+                    };
+                    indirect_tables.push(indirect);
+                }
             }
         }
         indirect_tables
