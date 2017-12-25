@@ -18,6 +18,8 @@ pub use data_container::RecordDetail;
 use data_container::Lookup;
 use rustorm::FromDao;
 use dao;
+use bigdecimal::BigDecimal;
+use std::str::FromStr;
 
 pub struct Filter;
 
@@ -156,6 +158,18 @@ fn extract_record_id<'a>(
                     }
                 }
             }
+            SqlType::Smallint => {
+                let v = splinter.parse();
+                match v {
+                    Ok(v) => Value::Smallint(v),
+                    Err(e) => {
+                        return Err(IntelError::ParamParseError(format!(
+                            "Invalid for type {:?}: {}, Error: {}",
+                            pk_type, splinter, e
+                        )));
+                    }
+                }
+            }
             SqlType::Uuid => {
                 let uuid = Uuid::parse_str(splinter);
                 match uuid {
@@ -168,10 +182,10 @@ fn extract_record_id<'a>(
                     }
                 }
             }
-            SqlType::Smallint => {
-                let v = splinter.parse();
+            SqlType::Numeric => {
+                let v = BigDecimal::from_str(splinter);
                 match v {
-                    Ok(v) => Value::Smallint(v),
+                    Ok(v) => Value::BigDecimal(v),
                     Err(e) => {
                         return Err(IntelError::ParamParseError(format!(
                             "Invalid for type {:?}: {}, Error: {}",

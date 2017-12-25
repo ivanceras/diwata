@@ -9,6 +9,7 @@ extern crate dao;
 #[macro_use]
 extern crate serde_derive;
 extern crate uuid;
+extern crate bigdecimal;
 
 mod reference;
 mod widget;

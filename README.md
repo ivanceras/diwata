@@ -1,39 +1,29 @@
-## Diwata is a database interface with the goal of being usable, user-friendly with its basic and advanced functionality be discoverable by the user.
+## Diwata 
+Diwata is a database interface with the goal of being usable, user-friendly with its basic and advanced functionality be discoverable by the user.
 
 [![](https://travis-ci.org/ivanceras/diwata.svg?branch=master)](https://travis-ci.org/ivanceras/diwata)
 
-Diwata comprised of 3 major components:
-1. The client side UI.
-2. The orm
-3. The intellisense
+## Dependencies 
+```sh
+sudo apt install rsync
+npm install elm@0.18
 
-## The client side UI.
-The client side is the part of the app which the user interacts. Due to the complexity of the system
-we need a high static typing compiler that 
+```
 
+Compile and run
+```
+git clone https://github.com/ivanceras/diwata
+cd webclient && ./compile.sh && cd ..
 
+cd diwata && cargo run -p diwata -- --dburl <db_url>
 
-## Overall design infastructure
-* The intelisense feature has been decoupled away from rustorm
-    and is more specific to diwata than to an orm.
-* Intelisense data needs to stored in a separate database (sqlite) in 
-    such a way it doesn't mess around with the user database
-* Diwata will be able to handle multiple database with 
-    each specific configurations and are highly sensitive.
-    Diwata needs a way to protect the app, so a login/password
-    may be employed and synced into the cloud
-* Diwata specific configuration will need to be persited into
-    the sqlite database, this includes user preference for
-    SQL encoding/beautifier/formatter, use of smart grids
-    traversal of records, allow indirect links
+```
+
+## Specify a database
+
+```
+cargo run -p diwata -- --dburl postgres://postgres:passwd@localhost:5432/sakila
+```
+Then visit http://localhost:8000/
 
 
-## Dependency requirement
-- rsync
-- sed
-- google-closure-compiler
-- elm 0.18
-
-## Nice to haves
-- pure rust webclient [yew](https://github.com/DenisKolodin/yew)
-- native-client [relm](https://github.com/antoyo/relm)
