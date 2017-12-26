@@ -848,9 +848,11 @@ pub fn get_all_lookup_for_window(
         let mut lookup = get_tab_lookup_tablenames(indirect_tab);
         lookup_tables.append(&mut lookup);
     }
-    println!("total tables: {}", lookup_tables.len());
-    lookup_tables.dedup();
-    println!("after dedup: {}", lookup_tables.len());
+    println!("total tables: {} {:#?}", lookup_tables.len(), lookup_tables);
+    //lookup_tables.dedup();
+    lookup_tables.sort_by(|a,b|a.0.name.cmp(&b.0.name));
+    lookup_tables.dedup_by(|a,b|a.0.name == b.0.name);
+    println!("after dedup: {} {:#?}", lookup_tables.len(), lookup_tables);
     let mut lookup_data = vec![];
     for (lookup_table, display_columns) in lookup_tables {
         let rows = get_lookup_data_of_table_with_display_columns(
