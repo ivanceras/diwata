@@ -282,19 +282,8 @@ dropdownPageRequestNeeded lookup model =
     let
         sourceTable =
             Tab.dropdownPageRequestNeeded lookup model.mainTab
-
-        reachedLastPage =
-            case sourceTable of
-                Just sourceTable ->
-                    Lookup.hasReachedLastPage sourceTable lookup
-
-                Nothing ->
-                    False
-
-        _ =
-            Debug.log "reached last page" reachedLastPage
     in
-        if not reachedLastPage && not model.dropdownPageRequestInFlight then
+        if not model.dropdownPageRequestInFlight then
             sourceTable
         else
             Nothing

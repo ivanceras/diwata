@@ -253,22 +253,17 @@ dropdownPageRequestNeeded lookup model =
                 )
                 model.indirectTabs
 
+        -- HACKY: whichever has the source table
+        -- it's not possible for dropdown to open for more than 1 at a time
         sourceTable =
             mainValues
                 ++ hasManyTabValues
                 ++ indirectTabValues
                 |> List.head
-
-        reachedLastPage =
-            case sourceTable of
-                Just sourceTable ->
-                    Lookup.hasReachedLastPage sourceTable lookup
-
-                Nothing ->
-                    False
     in
-        if not reachedLastPage && not model.dropdownPageRequestInFlight then
-            sourceTable
+        if not model.dropdownPageRequestInFlight then
+            Debug.log "dropdownPageRequestNeeded for: "
+                sourceTable
         else
             Nothing
 
@@ -503,11 +498,11 @@ viewDetailTabs model =
 
         detailTabViews =
             (hasManyTabs
-                |> List.map (listView model HasMany activeTab)
+                |> List.map (listView model.lookup HasMany activeTab)
             )
                 ++ (List.map
                         (\indirectTab ->
-                            listView model Indirect activeTab indirectTab
+                            listView model.lookup Indirect activeTab indirectTab
                         )
                         indirectTabs
                    )
@@ -552,8 +547,8 @@ viewDetailTabs model =
             text "No detail tabs"
 
 
-listView : Model -> Section -> Maybe TableName -> Tab.Model -> Html Msg
-listView model section activeTab tab =
+listView : Lookup -> Section -> Maybe TableName -> Tab.Model -> Html Msg
+listView lookup section activeTab tab =
     let
         isTabActive =
             case activeTab of
@@ -572,7 +567,7 @@ listView model section activeTab tab =
                     style [ ( "display", "none" ) ]
 
         detailRecordView =
-            Tab.listView model.lookup tab
+            Tab.listView lookup tab
                 |> Html.map (\tabMsg -> TabMsg ( section, tab, tabMsg ))
     in
         div
@@ -733,9 +728,6 @@ update session msg model =
 
             LookupNextPageReceived ( sourceTable, recordList ) ->
                 let
-                    _ =
-                        Debug.log "In detailedRecord recordList" (toString recordList)
-
                     updatedLookup =
                         Lookup.addPage sourceTable recordList model.lookup
                 in

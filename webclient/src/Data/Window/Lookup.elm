@@ -1,4 +1,12 @@
-module Data.Window.Lookup exposing (Lookup(..), decoder, tableLookup, addPage, hasReachedLastPage)
+module Data.Window.Lookup
+    exposing
+        ( Lookup(..)
+        , decoder
+        , tableLookup
+        , addPage
+        , hasReachedLastPage
+        , lookupStatus
+        )
 
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Extra
@@ -74,6 +82,15 @@ hasReachedLastPage tableName (Lookup lookup) =
 
             Nothing ->
                 False
+
+
+lookupStatus : Lookup -> List ( TableName, Bool )
+lookupStatus (Lookup lookup) =
+    List.map
+        (\tableLookup ->
+            ( tableLookup.source, tableLookup.reachedLastPage )
+        )
+        lookup
 
 
 tableLookup : TableName -> Lookup -> ( Int, List Record )

@@ -275,9 +275,12 @@ update session msg model =
                             DetailedRecord.update session subMsg selectedRow
 
                         ( updatedDetailedRecord, detailCmd ) =
-                            case DetailedRecord.dropdownPageRequestNeeded lookup selectedRow of
+                            case Debug.log "dropdownpage request needed? " (DetailedRecord.dropdownPageRequestNeeded lookup selectedRow) of
                                 Just sourceTable ->
                                     let
+                                        _ =
+                                            Debug.log "requestneeded of source table: " sourceTable
+
                                         ( currentPage, listRecord ) =
                                             Lookup.tableLookup sourceTable lookup
                                     in
