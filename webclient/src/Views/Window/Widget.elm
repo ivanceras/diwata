@@ -494,7 +494,10 @@ dropdownPageRequestNeeded lookup model =
                         list =
                             listRecordToListString dropdownInfo recordList
                     in
-                        if Dropdown.pageRequestNeeded list dropdown then
+                        if
+                            Dropdown.pageRequestNeeded list dropdown
+                                && not (Lookup.hasReachedLastPage sourceTable lookup)
+                        then
                             Just sourceTable
                         else
                             Nothing
