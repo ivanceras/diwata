@@ -1,7 +1,7 @@
 module Widgets.Tagger exposing (view)
 
 import Html exposing (..)
-import Html.Attributes exposing (contenteditable, attribute, class, classList, href, id, placeholder, src)
+import Html.Attributes exposing (contenteditable, class)
 
 
 view : Attribute msg -> List String -> Html msg
