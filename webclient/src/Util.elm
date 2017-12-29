@@ -4,11 +4,11 @@ module Util
         , px
         , appendErrors
         , onClickStopPropagation
+        , onClickPreventDefault
         , pair
         , viewIf
         , trim
         , isJust
-        , map6
         , onScroll
         , Scroll
         , onWheel
@@ -68,6 +68,13 @@ onClickStopPropagation msg =
         (Decode.succeed msg)
 
 
+onClickPreventDefault : msg -> Attribute msg
+onClickPreventDefault msg =
+    onWithOptions "click"
+        { defaultOptions | preventDefault = True }
+        (Decode.succeed msg)
+
+
 appendErrors : { model | errors : List error } -> List error -> { model | errors : List error }
 appendErrors model errors =
     { model | errors = model.errors ++ errors }
@@ -118,32 +125,6 @@ isJust value =
 
         Nothing ->
             False
-
-
-map6 : (a -> b -> c -> d -> e -> f -> result) -> Task x a -> Task x b -> Task x c -> Task x d -> Task x e -> Task x f -> Task x result
-map6 func taskA taskB taskC taskD taskE taskF =
-    taskA
-        |> Task.andThen
-            (\a ->
-                taskB
-                    |> Task.andThen
-                        (\b ->
-                            taskC
-                                |> Task.andThen
-                                    (\c ->
-                                        taskD
-                                            |> Task.andThen
-                                                (\d ->
-                                                    taskE
-                                                        |> Task.andThen
-                                                            (\e ->
-                                                                taskF
-                                                                    |> Task.andThen (\f -> Task.succeed (func a b c d e f))
-                                                            )
-                                                )
-                                    )
-                        )
-            )
 
 
 onScroll : (Scroll -> msg) -> Attribute msg

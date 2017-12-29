@@ -148,18 +148,14 @@ init session tableName window =
     in
         Task.map2
             (\mainTab lookup ->
-                let
-                    _ =
-                        Debug.log "lookup: " lookup
-                in
-                    { errors = []
-                    , commentText = ""
-                    , tableName = tableName
-                    , mainTab = mainTab
-                    , window = window
-                    , lookup = lookup
-                    , dropdownPageRequestInFlight = False
-                    }
+                { errors = []
+                , commentText = ""
+                , tableName = tableName
+                , mainTab = mainTab
+                , window = window
+                , lookup = lookup
+                , dropdownPageRequestInFlight = False
+                }
             )
             mainTabTask
             loadWindowLookups

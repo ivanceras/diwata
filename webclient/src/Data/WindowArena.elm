@@ -9,9 +9,9 @@ module Data.WindowArena
         , Section(..)
         )
 
-import Data.Window.TableName as TableName exposing (TableName, fromString, tableNameToString)
+import Data.Window.TableName as TableName exposing (TableName, tableNameToString)
 import UrlParser
-import Data.Query as Query exposing (orderClauseParser, maybeFilterParser, orderClauseToString)
+import Data.Query as Query exposing (orderClauseParser, orderClauseToString)
 import Util exposing (trim)
 import Data.Window.Record as Record exposing (Record, RecordId)
 
@@ -226,11 +226,6 @@ arenaArgParser =
     UrlParser.custom "ARENA_ARG" <|
         \segment ->
             Ok (parseArenaArgs segment)
-
-
-tryParseArenaArgs : String -> Result String (Maybe ArenaArg)
-tryParseArenaArgs arg =
-    Ok (parseArenaArgs arg)
 
 
 parseArenaArgs : String -> Maybe ArenaArg

@@ -9,7 +9,7 @@ module Data.Window.Tab
 
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Extra
-import Json.Decode.Pipeline as Pipeline exposing (custom, decode, hardcoded, required)
+import Json.Decode.Pipeline as Pipeline exposing (decode, required)
 import Data.Window.TableName as TableName exposing (TableName)
 import Data.Window.Field as Field exposing (Field)
 import Data.Window.DataType as DataType exposing (DataType)
@@ -18,7 +18,6 @@ import Data.Window.Record as Record exposing (Record, RecordId)
 import Data.Window.ColumnName as ColumnName exposing (ColumnName)
 import Data.Window.Widget as Widget exposing (Dropdown(..))
 import Data.Window.Display as Display exposing (IdentifierDisplay)
-import Data.Window.Field as Field exposing (Field)
 import Data.Window.Value as Value exposing (Value)
 
 
@@ -53,13 +52,16 @@ primaryFields tab =
     List.filter .isPrimary tab.fields
 
 
-primaryDataTypes : Tab -> List DataType
-primaryDataTypes tab =
-    let
-        fields =
-            primaryFields tab
-    in
-        List.concatMap Field.fieldDataTypes fields
+
+{-
+   primaryDataTypes : Tab -> List DataType
+   primaryDataTypes tab =
+       let
+           fields =
+               primaryFields tab
+       in
+           List.concatMap Field.fieldDataTypes fields
+-}
 
 
 recordId : Record -> Tab -> RecordId

@@ -3,7 +3,7 @@ module Data.Window.Author exposing (Author, decoder)
 import Data.User as User exposing (Username)
 import Data.UserPhoto as UserPhoto exposing (UserPhoto)
 import Json.Decode as Decode exposing (Decoder)
-import Json.Decode.Pipeline as Pipeline exposing (custom, decode, required)
+import Json.Decode.Pipeline as Pipeline exposing (decode, required)
 
 
 decoder : Decoder Author

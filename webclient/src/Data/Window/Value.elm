@@ -2,7 +2,7 @@ module Data.Window.Value exposing (Value(..), ArrayValue(..), decoder, valueToSt
 
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Extra
-import Json.Decode.Pipeline as Pipeline exposing (custom, decode, required)
+import Json.Decode.Pipeline as Pipeline exposing (decode, required)
 import Date exposing (Date)
 import Date.Format
 

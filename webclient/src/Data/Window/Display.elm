@@ -2,7 +2,7 @@ module Data.Window.Display exposing (decoder, IdentifierDisplay)
 
 import Data.Window.ColumnName as ColumnName exposing (ColumnName)
 import Json.Decode as Decode exposing (Decoder)
-import Json.Decode.Pipeline as Pipeline exposing (custom, decode, hardcoded, required)
+import Json.Decode.Pipeline as Pipeline exposing (decode, required)
 
 
 type alias IdentifierDisplay =

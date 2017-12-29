@@ -8,7 +8,7 @@ module Data.Window.RecordDetail
 
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Extra
-import Json.Decode.Pipeline as Pipeline exposing (custom, decode, required)
+import Json.Decode.Pipeline as Pipeline exposing (decode, required)
 import Data.Window.Record as Record exposing (Record, Rows)
 import Data.Window.TableName as TableName exposing (TableName)
 
@@ -73,11 +73,14 @@ oneOneRecordOfTable detail tableName =
             Nothing
 
 
-hasManyRecordsOfTable : RecordDetail -> TableName -> Maybe Rows
-hasManyRecordsOfTable detail tableName =
-    contentInTable detail.hasMany tableName
+
+{-
+   hasManyRecordsOfTable : RecordDetail -> TableName -> Maybe Rows
+   hasManyRecordsOfTable detail tableName =
+       contentInTable detail.hasMany tableName
 
 
-indirectRecordsOfTable : RecordDetail -> TableName -> Maybe Rows
-indirectRecordsOfTable detail tableName =
-    contentInTable detail.indirect tableName
+   indirectRecordsOfTable : RecordDetail -> TableName -> Maybe Rows
+   indirectRecordsOfTable detail tableName =
+       contentInTable detail.indirect tableName
+-}

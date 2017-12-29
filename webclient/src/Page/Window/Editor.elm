@@ -5,14 +5,14 @@ import Data.Window.TableName as TableName exposing (TableName)
 import Data.Session as Session exposing (Session)
 import Data.User as User exposing (User)
 import Html exposing (..)
-import Html.Attributes exposing (attribute, class, defaultValue, disabled, href, id, placeholder, type_)
+import Html.Attributes exposing (attribute, class, defaultValue, placeholder)
 import Html.Events exposing (onInput, onSubmit)
 import Http
 import Page.Errored as Errored exposing (PageLoadError, pageLoadError)
 import Request.Window
 import Route
 import Task exposing (Task)
-import Util exposing ((=>), pair, viewIf)
+import Util exposing ((=>), pair)
 import Validate exposing (ifBlank)
 import Views.Form as Form
 import Views.Page as Page

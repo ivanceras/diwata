@@ -6,20 +6,19 @@ module Page.WindowArena exposing (Model, Msg, init, update, view, subscriptions)
 import Data.Window as Window exposing (Tag)
 import Data.Session as Session exposing (Session)
 import Html exposing (..)
-import Html.Attributes exposing (attribute, class, classList, href, id, placeholder)
-import Html.Events exposing (onClick)
+import Html.Attributes exposing (class, classList, id)
 import Http
 import Page.Errored as Errored exposing (PageLoadError, pageLoadError)
 import Request.Window
 import SelectList exposing (SelectList)
 import Task exposing (Task)
-import Util exposing ((=>), onClickStopPropagation)
-import Views.Window.GroupedWindow as GroupedWindow exposing (FeedSource, globalFeed, tagFeed, yourFeed)
+import Util exposing ((=>))
+import Views.Window.GroupedWindow as GroupedWindow exposing (FeedSource, globalFeed, yourFeed)
 import Views.Page as Page
 import Page.Window as Window
 import Data.Window.TableName as TableName exposing (TableName)
 import Data.WindowArena as WindowArena exposing (ArenaArg)
-import Page.Window.DetailedRecord as DetailedRecord
+import Views.Window.DetailedRecord as DetailedRecord
 import Window as BrowserWindow
 import Route
 import Request.Window.Records
@@ -42,9 +41,6 @@ type alias Model =
 init : Session -> Maybe ArenaArg -> Task PageLoadError Model
 init session arenaArg =
     let
-        _ =
-            Debug.log "Arena arg: " arenaArg
-
         feedSources =
             if session.user == Nothing then
                 SelectList.singleton globalFeed

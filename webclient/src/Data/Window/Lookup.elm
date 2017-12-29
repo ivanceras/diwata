@@ -10,7 +10,7 @@ module Data.Window.Lookup
 
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Extra
-import Json.Decode.Pipeline as Pipeline exposing (custom, decode, required)
+import Json.Decode.Pipeline as Pipeline exposing (decode)
 import Data.Window.TableName as TableName exposing (TableName)
 import Data.Window.Record as Record exposing (Record, Rows)
 

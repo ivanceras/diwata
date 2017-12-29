@@ -3,8 +3,8 @@ module Page.Settings exposing (ExternalMsg(..), Model, Msg, init, update, view)
 import Data.Session as Session exposing (Session)
 import Data.User as User exposing (User)
 import Data.UserPhoto as UserPhoto
-import Html exposing (Html, button, div, fieldset, h1, input, text, textarea)
-import Html.Attributes exposing (attribute, class, defaultValue, placeholder, type_)
+import Html exposing (Html, button, div, fieldset, h1, text)
+import Html.Attributes exposing (attribute, class, defaultValue, placeholder)
 import Html.Events exposing (onInput, onSubmit)
 import Http
 import Json.Decode as Decode exposing (Decoder, decodeString, field, list, string)

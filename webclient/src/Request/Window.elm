@@ -13,13 +13,12 @@ module Request.Window
         , update
         )
 
-import Data.Window as Window exposing (Window, Tag, slugToString, baseWindowDecoder)
+import Data.Window as Window exposing (Window, Tag)
 import Data.Window.GroupedWindow as GroupedWindow exposing (GroupedWindow, WindowName)
 import Data.Window.TableName as TableName
     exposing
         ( TableName
         , tableNameToString
-        , tableNameParser
         )
 import Data.AuthToken as AuthToken exposing (AuthToken, withAuthorization)
 import Data.User as User exposing (Username)
@@ -125,11 +124,6 @@ toggleFavorite tableName authToken =
 favorite : TableName -> AuthToken -> Http.Request TableName
 favorite =
     buildFavorite HttpBuilder.post
-
-
-unfavorite : TableName -> AuthToken -> Http.Request TableName
-unfavorite =
-    buildFavorite HttpBuilder.delete
 
 
 buildFavorite :

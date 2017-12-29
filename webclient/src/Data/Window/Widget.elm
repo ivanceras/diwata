@@ -12,7 +12,7 @@ module Data.Window.Widget
 
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Extra
-import Json.Decode.Pipeline as Pipeline exposing (custom, decode, hardcoded, required)
+import Json.Decode.Pipeline as Pipeline exposing (decode, required)
 import Data.Window.TableName as TableName exposing (TableName)
 import Data.Window.Display as Display exposing (IdentifierDisplay)
 
@@ -110,6 +110,7 @@ decoder =
     Decode.oneOf
         [ simpleDecoder
         , dropDownWidgetDecoder
+        , radiogroupWidgetDecoder
         ]
 
 
@@ -308,3 +309,9 @@ dropDownWidgetDecoder : Decoder Widget
 dropDownWidgetDecoder =
     decode FixDropdown
         |> required "FixDropdown" (Decode.list Decode.string)
+
+
+radiogroupWidgetDecoder : Decoder Widget
+radiogroupWidgetDecoder =
+    decode Radiogroup
+        |> required "Radiogroup" (Decode.list Decode.string)

@@ -13,8 +13,7 @@ import Data.Window.Author as Author exposing (Author)
 import Date exposing (Date)
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Extra
-import Json.Decode.Pipeline as Pipeline exposing (custom, decode, required)
-import Data.Window.Value as Value exposing (Value)
+import Json.Decode.Pipeline as Pipeline exposing (decode, required)
 import Data.Window.TableName as TableName exposing (TableName)
 import Dict exposing (Dict)
 import Data.Window.DataType as DataType exposing (DataType)
@@ -71,39 +70,41 @@ idToString (RecordId values) =
         |> String.join ","
 
 
-parseRecordId : String -> List DataType -> Maybe RecordId
-parseRecordId arg dataTypes =
-    let
-        args : List String
-        args =
-            String.split "," arg
 
-        values : List (Maybe Value)
-        values =
-            List.map2
-                (\arg dataType ->
-                    let
-                        parsedValues : Maybe Value
-                        parsedValues =
-                            valueFromString arg dataType
-                    in
-                        parsedValues
-                )
-                args
-                dataTypes
+{-
+   parseRecordId : String -> List DataType -> Maybe RecordId
+   parseRecordId arg dataTypes =
+       let
+           args : List String
+           args =
+               String.split "," arg
 
-        recordValues : List Value
-        recordValues =
-            List.filterMap (\v -> v) values
-    in
-        case List.isEmpty recordValues of
-            False ->
-                Just (RecordId recordValues)
+           values : List (Maybe Value)
+           values =
+               List.map2
+                   (\arg dataType ->
+                       let
+                           parsedValues : Maybe Value
+                           parsedValues =
+                               valueFromString arg dataType
+                       in
+                           parsedValues
+                   )
+                   args
+                   dataTypes
 
-            True ->
-                Nothing
+           recordValues : List Value
+           recordValues =
+               List.filterMap (\v -> v) values
+       in
+           case List.isEmpty recordValues of
+               False ->
+                   Just (RecordId recordValues)
 
-
+               True ->
+                   Nothing
+-}
+{--
 valueFromString : String -> DataType -> Maybe Value
 valueFromString arg dataType =
     case dataType of
@@ -153,3 +154,4 @@ valueFromString arg dataType =
         _ ->
             Debug.crash ("This is not dealt with yet: " ++ arg ++ " " ++ (toString dataType))
                 Nothing
+--}
