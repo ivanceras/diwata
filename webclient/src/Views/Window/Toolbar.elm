@@ -1,7 +1,7 @@
 module Views.Window.Toolbar exposing (viewForMain, viewForDetailRecord)
 
 import Html exposing (..)
-import Html.Attributes exposing (style, attribute, class, classList, href, id, placeholder, src)
+import Html.Attributes exposing (class)
 
 
 viewForMain : Html msg

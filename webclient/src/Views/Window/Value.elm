@@ -10,13 +10,11 @@ module Views.Window.Value
 
 import Data.Window.Value as Value exposing (Value(..), ArrayValue(..))
 import Html exposing (..)
-import Html.Attributes exposing (selected, checked, style, attribute, class, classList, href, id, placeholder, src, type_, value)
 import Data.Window.Widget as Widget exposing (ControlWidget, Widget(..))
 import Date
 import Date.Format
 import Widgets.Tagger as Tagger
 import Data.Window.Field as Field exposing (Field)
-import Util exposing (px)
 import Data.Window.DataType as DataType exposing (DataType)
 import Data.Window.Tab as Tab exposing (Tab)
 import Data.Window.Record as Record exposing (Record)
@@ -24,7 +22,7 @@ import Dict
 import Route exposing (Route)
 import Data.WindowArena as WindowArena
 import Data.Window.Lookup as Lookup exposing (Lookup)
-import Util exposing ((=>), onWheel, onScroll, Scroll)
+import Util exposing ((=>), Scroll)
 import Widgets.Dropdown as Dropdown
 import Views.Window.Presentation as Presentation exposing (Presentation(..))
 import Views.Window.Widget as Widget
