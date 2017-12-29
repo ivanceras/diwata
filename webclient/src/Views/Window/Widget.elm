@@ -2,7 +2,7 @@ module Views.Window.Widget exposing (Model, init, Msg, view, update, dropdownPag
 
 import Data.Window.Value as Value exposing (Value(..), ArrayValue(..))
 import Html exposing (..)
-import Html.Attributes exposing (selected, checked, style, attribute, class, classList, href, id, placeholder, src, type_, value)
+import Html.Attributes exposing (id, for, name, selected, checked, style, class, type_, value)
 import Data.Window.Widget as Widget exposing (ControlWidget, Widget(..), DropdownInfo)
 import Date
 import Date.Format
@@ -16,7 +16,7 @@ import Dict
 import Route exposing (Route)
 import Data.WindowArena as WindowArena
 import Data.Window.Lookup as Lookup exposing (Lookup(..))
-import Util exposing ((=>), onWheel, onScroll, Scroll)
+import Util exposing ((=>), Scroll)
 import Widgets.Dropdown as Dropdown
 import Views.Window.Presentation as Presentation exposing (Presentation(..))
 import Request.Window.Records
@@ -126,9 +126,6 @@ valueToString maybeValue =
 listRecordToListString : DropdownInfo -> List Record -> List ( String, Maybe String )
 listRecordToListString dropdownInfo lookupRecords =
     let
-        tableName =
-            dropdownInfo.source
-
         displayColumns =
             dropdownInfo.display.columns
 
@@ -196,8 +193,8 @@ createWidget presentation record tab field maybeValue =
         widget =
             controlWidget.widget
 
-        columnName =
-            Field.columnName field
+        _ =
+            Debug.log "widget is " widget
 
         valueString =
             valueToString maybeValue
@@ -425,6 +422,57 @@ createWidget presentation record tab field maybeValue =
 
             FileUpload ->
                 HtmlWidget (input [ type_ "file" ] [])
+
+            Radiogroup list ->
+                case presentation of
+                    InCard ->
+                        HtmlWidget
+                            (div []
+                                (List.map
+                                    (\choice ->
+                                        div []
+                                            [ input
+                                                [ type_ "radio"
+                                                , name field.name
+                                                , value choice
+                                                , id choice
+                                                ]
+                                                []
+                                            , label [ for choice ]
+                                                [ text choice ]
+                                            ]
+                                    )
+                                    list
+                                )
+                            )
+
+                    InList ->
+                        let
+                            listWithBlank =
+                                "" :: list
+                        in
+                            HtmlWidget
+                                (select [ styles ]
+                                    (List.map
+                                        (\v ->
+                                            let
+                                                isSelected =
+                                                    case maybeValue of
+                                                        Just fieldValue ->
+                                                            v == (Value.valueToString fieldValue)
+
+                                                        Nothing ->
+                                                            False
+                                            in
+                                                option
+                                                    [ value v
+                                                    , selected isSelected
+                                                    ]
+                                                    [ text v ]
+                                        )
+                                        listWithBlank
+                                    )
+                                )
 
             TableLookupDropdown ->
                 let
