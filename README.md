@@ -4,7 +4,7 @@ Diwata is a database interface with the goal of being usable, user-friendly with
 [![](https://travis-ci.org/ivanceras/diwata.svg?branch=master)](https://travis-ci.org/ivanceras/diwata)
 
 
-![](https://raw.githubusercontent.com/ivanceras/diwata/master/screenshots/diwata1.png)
+![](https://raw.githubusercontent.com/ivanceras/diwata/master/diwata1.png)
 
 ## Dependencies 
 ```sh
