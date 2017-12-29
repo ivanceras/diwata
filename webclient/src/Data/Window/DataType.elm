@@ -6,7 +6,7 @@ module Data.Window.DataType
 
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Extra
-import Json.Decode.Pipeline as Pipeline exposing (custom, decode, hardcoded, required)
+import Json.Decode.Pipeline as Pipeline exposing (decode, required)
 
 
 type DataType
@@ -159,4 +159,9 @@ enumDecoder =
 arrayTypeDecoder : Decoder DataType
 arrayTypeDecoder =
     decode ArrayType
-        |> required "ArrayType" simpleDecoder
+        |> required "ArrayType"
+            (Decode.oneOf
+                [ simpleDecoder
+                , enumDecoder
+                ]
+            )
