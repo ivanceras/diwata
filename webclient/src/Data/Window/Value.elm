@@ -31,6 +31,7 @@ type Value
 type ArrayValue
     = TextArray (List String)
     | IntArray (List Int)
+    | FloatArray (List Float)
 
 
 decoder : Decoder Value
@@ -63,6 +64,7 @@ arrayDecoder =
             (Decode.oneOf
                 [ textArrayDecoder
                 , intArrayDecoder
+                , floatArrayDecoder
                 ]
             )
 
@@ -77,6 +79,12 @@ intArrayDecoder : Decoder ArrayValue
 intArrayDecoder =
     decode IntArray
         |> required "Int" (Decode.list Decode.int)
+
+
+floatArrayDecoder : Decoder ArrayValue
+floatArrayDecoder =
+    decode FloatArray
+        |> required "Float" (Decode.list Decode.float)
 
 
 nilDecoder : Decoder Value

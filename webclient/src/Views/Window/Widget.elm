@@ -409,7 +409,10 @@ createWidget presentation record tab field maybeValue =
                                                 list
 
                                             IntArray list ->
-                                                List.map (toString) list
+                                                List.map toString list
+
+                                            FloatArray list ->
+                                                List.map toString list
 
                                     _ ->
                                         []
