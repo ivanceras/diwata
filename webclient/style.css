@@ -102,21 +102,22 @@ a.primary-link {
 
 .frozen-head{
     min-width: 120px;
-    padding-left: 40px;
     border-bottom: 1px solid #ccc;
     border-right: 1px dashed #ccc;
 }
 
-.frozen-head .frozen-head-content {
-    height: 50px;
-}
 
 .frozen-head .frozen-head-indicator {
-    text-align: right;
-    padding: 0 5px;
+    padding: 10px 5px;
+    display: flex;
+    justify-content: center;
+}
+.frozen-head-indicator .sort-order-reset{
+   padding: 0 5px; 
 }
 .frozen-head .frozen-head-controls {
     display: flex;
+    padding-left: 40px;
 }
 
 .frozen-head .frozen-head-controls .filter-btn{
@@ -195,20 +196,60 @@ a.primary-link {
 
 .tab-columns {
     overflow: hidden;
-    border-bottom: 1px solid #ccc
+    border-bottom: 1px solid #ccc;
 }
 .tab-columns-content {
     display: flex;
     position: relative;
 }
 
-.tab-column {
-    padding: 0 5px;
-    text-align: center;
+.tab-column-with-sort{
+    display: flex;
+    justify-content: center;
+    padding: 10px 0;
 }
+
+.tab-column {
+    display: flex;
+    font-size: 14px;
+}
+
+.tab-column .column-name {
+    padding: 0 10px;
+}
+
+.tab-column .sort-order-badge {
+    font-size: 10px;
+    vertical-align: middle;
+    margin: 2px 4px;
+    padding: 2px 2px;
+    border-radius: 6px;
+    background-color: #ccc;
+}
+
+.tab-column .sort-btn{
+}
+.tab-column .column-sort{
+    display: flex;
+}
+
+.column-sort .sort-btn{
+    color: #ccc;
+}
+.column-sort .sort-btn.active{
+    color: #555;
+}
+
+.column-sort .sort-btn.asc  {
+}
+
+.column-sort .sort-btn.desc {
+    margin-left: -8px;
+}
+
 .tab-column-with-filter {
     border-right: 1px solid #ccc;
-    height: 50px;
+    height: 70px;
 }
 
 .tab-columns-content .tab-column-with-filter:last-child {
@@ -247,6 +288,13 @@ a.primary-link {
     border-width: 1px 1px 1px 0;
     border-style: solid;
     border-radius: 0 5px 5px 0;
+}
+
+.dropdown-filter{
+    height: 20px;
+    border: 1px solid #aaa;
+    background-color: #fff;
+    outline: 0
 }
 
 .filter-value-icon{
@@ -428,6 +476,7 @@ a.primary-link {
     max-height: 200px;
     overflow-y: auto;
     border: 1px solid #ccc;
+    margin-top: 5px;
 }
 
 .dropdown-select .dropdown-option {
@@ -497,4 +546,30 @@ a.primary-link {
 .tooltip:hover .tooltip-text {
     /*display: inline-block;*/
     visibility: visible;
+}
+
+.date-range-filter {
+    display:flex;
+    padding: 0 5px;
+}
+
+.date-range-filter .start-date {
+    height: 20px;
+    border-color: #aaa;
+    border-width: 1px 1px 1px 1px;
+    border-style: solid;
+    border-radius: 5px 0 0 5px;
+}
+
+.date-range-filter .end-date {
+    height: 20px;
+    border-color: #aaa;
+    border-width: 1px 1px 1px 0px;
+    border-style: solid;
+    border-radius: 0 5px 5px 0;
+}
+
+.toolbar-fa {
+    color: #888;
+    padding: 0 5px;
 }

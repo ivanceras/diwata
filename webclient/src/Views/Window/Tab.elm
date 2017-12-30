@@ -24,6 +24,7 @@ import Json.Encode as Encode
 import Util exposing ((=>), px, onScroll, Scroll)
 import Data.Window.Lookup as Lookup exposing (Lookup)
 import Views.Window.Toolbar as Toolbar
+import Views.Window.Searchbox as Searchbox
 
 
 type alias Model =
@@ -238,15 +239,17 @@ viewFrozenHead model =
         div
             [ class "frozen-head"
             ]
-            [ div [ class "frozen-head-content" ]
-                [ div [ class "frozen-head-indicator" ]
-                    [ text itemsIndicator ]
-                , div
-                    [ class "frozen-head-controls" ]
-                    [ input [ type_ "checkbox" ] []
-                    , div [ class "filter-btn" ]
-                        [ i [ class "fa fa-filter" ] [] ]
+            [ div [ class "frozen-head-indicator" ]
+                [ div [] [ text itemsIndicator ]
+                , div [ class "sort-order-reset" ]
+                    [ i [ class "fa fa-circle-thin" ] []
                     ]
+                ]
+            , div
+                [ class "frozen-head-controls" ]
+                [ input [ type_ "checkbox" ] []
+                , div [ class "filter-btn" ]
+                    [ i [ class "fa fa-filter" ] [] ]
                 ]
             ]
 
@@ -279,34 +282,28 @@ viewColumnWithSearchbox : Field -> Html Msg
 viewColumnWithSearchbox field =
     div [ class "tab-column-with-filter" ]
         [ viewColumn field
-        , viewSearchbox field
+        , Searchbox.view field
         ]
 
 
 viewColumn : Field -> Html Msg
 viewColumn field =
-    div [ class "tab-column" ]
-        [ text (Field.columnName field) ]
-
-
-viewSearchbox : Field -> Html Msg
-viewSearchbox field =
-    let
-        styles =
-            style [ ( "width", px (Field.widgetWidthListColumn field) ) ]
-    in
-        div [ class "column-filter" ]
-            [ i
-                [ class "fa fa-search filter-value-icon"
+    div [ class "tab-column-with-sort" ]
+        [ div [ class "tab-column" ]
+            [ div [ class "column-name" ]
+                [ text (Field.columnName field) ]
+            , div [ class "column-sort" ]
+                [ div [ class "sort-btn asc" ]
+                    [ i [ class "fa fa-sort-asc" ] []
+                    ]
+                , div [ class "sort-btn desc" ]
+                    [ i [ class "fa fa-sort-desc" ] []
+                    ]
                 ]
-                []
-            , input
-                [ class "filter-value"
-                , styles
-                , type_ "search"
-                ]
-                []
+            , div [ class "sort-order-badge" ]
+                [ text "1" ]
             ]
+        ]
 
 
 viewPage : Lookup -> List Row.Model -> Html Msg

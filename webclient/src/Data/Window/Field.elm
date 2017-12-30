@@ -242,8 +242,30 @@ columnPairDecoder =
 widgetCharacterWidth : Field -> Int
 widgetCharacterWidth field =
     let
+        dataType =
+            case simpleDataType field of
+                Just dataType ->
+                    dataType
+
+                Nothing ->
+                    Debug.crash "All field have data types"
+
+        dateWidth =
+            16
+
         columnLen =
-            String.length (columnName field)
+            case dataType of
+                DataType.Date ->
+                    dateWidth
+
+                DataType.Timestamp ->
+                    dateWidth
+
+                DataType.TimestampTz ->
+                    dateWidth
+
+                _ ->
+                    (String.length (columnName field)) + 5
 
         charWidth =
             max columnLen field.controlWidget.width
@@ -272,13 +294,7 @@ widgetWidthListColumn field =
 
 widgetWidthListValue : Field -> Int
 widgetWidthListValue field =
-    let
-        searchIconWidth =
-            16 + 1
-
-        -- 1 for border right on the tab-column, icon-search is 16px
-    in
-        widgetWidthListColumn field + searchIconWidth
+    widgetWidthListColumn field
 
 
 {-|

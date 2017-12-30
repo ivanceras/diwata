@@ -263,8 +263,7 @@ dropdownPageRequestNeeded lookup model =
                 |> List.head
     in
         if not model.dropdownPageRequestInFlight then
-            Debug.log "dropdownPageRequestNeeded for: "
-                sourceTable
+            sourceTable
         else
             Nothing
 
@@ -346,8 +345,7 @@ view model =
             [ div
                 [ class "toolbar-area"
                 ]
-                [ Toolbar.viewForMain
-                , Toolbar.viewForDetailRecord
+                [ Toolbar.viewForDetailRecord
                 ]
             , div
                 [ class "main-tab-selected"
