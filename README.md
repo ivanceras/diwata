@@ -26,38 +26,57 @@ Freeze column
 Distinguisable referred record in a dropdown
 ![](https://raw.githubusercontent.com/ivanceras/ivanceras.github.io/master/diwata/meaningful-dropdown.gif)
 
-### Dependencies
-- elm v0.18
-- rsync
-- google-closure-compiler (optional)
-- sakila database (for demo and testing)
+### Needed Dependencies
+- elm v0.18 ( elm installation needed npm or yarn)
+- rsync  ( for fast syncing files over and over )
+- google-closure-compiler (optional, for release build)
+- sakila database (for demo and testing) [2]
 
-## Dependencies 
+## Install Dependencies 
 ```sh
 sudo apt install rsync
-npm install elm@0.18
-npm install google-closure-compiler
+npm install -g elm@0.18
+npm install -g google-closure-compiler-js
 
 ```
 
-Compile and run
+
+Compile and run 
 ```
 git clone https://github.com/ivanceras/diwata
 cd diwata
+rustup override set nightly-2017-12-21
 cd webclient && ./compile.sh && cd ..
 
 cargo run -p diwata -- --dburl <db_url>
 
 ```
+Note: Needed to use specific nightly until [this montogmery issue is resolved](https://github.com/rust-lang/rust/issues/46936)
 
-## Specify a database
+## Specify a database ( sakila database example )
 
 ```
 cargo run -p diwata -- --dburl postgres://postgres:passwd@localhost:5432/sakila
 ```
+see `run.sh` for the accurate content of command
+
 Then visit http://localhost:8000/
 
+Roadmap checklist:
+- [X] Infinite load-on-deman scrolling
+- [X] Meaningful dropdown lookup
+- [ ] Delete records
+- [ ] Update records
+- [ ] Insert records
+- [ ] Undo update/delete records
+- [ ] Search and filter data
+- [ ] Smart delete cascade messages
+- [ ] Error messages display
+- [ ] Interactive/dynamic record count indicator for toolbar buttons
+- [ ] Loading indicator
+- [ ] Page transition animation
 
-Footnotes
-[1]: This has been tried before, but none quite make 1 more step forward
+Notes:
+[1]: This has been tried before (compiere, adempiere, openbravo, salesforce) etc.
+[2]: You can use sakila database dump as demo database https://github.com/ivanceras/sakila
 
