@@ -18,8 +18,9 @@ An attempt to create back-end to end all back-ends.
 - User friendly granular search and filter
 - Diplay descriptive referred records. (ie: Instead of displaying the foreign_key value integer or uuid, display the referred records in such a way it is distinguisable by the user)
 
-Freeze row and column
+Freeze row
 ![](https://raw.githubusercontent.com/ivanceras/ivanceras.github.io/master/diwata/diwata-freeze-row.gif)
+Freeze column
 ![](https://raw.githubusercontent.com/ivanceras/ivanceras.github.io/master/diwata/diwata-freeze-column.gif)
 
 Distinguisable referred record in a dropdown
