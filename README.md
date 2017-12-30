@@ -7,6 +7,8 @@ An attempt to create back-end to end all back-ends.
 
 
 ![](https://raw.githubusercontent.com/ivanceras/diwata/master/diwata1.png)
+![](https://github.com/ivanceras/ivanceras.github.io/blob/master/diwata/diwata3.png)
+![](https://github.com/ivanceras/ivanceras.github.io/blob/master/diwata/diwata4.png)
 
 
 ## Features
@@ -15,6 +17,13 @@ An attempt to create back-end to end all back-ends.
 - Infinite scrolling / loading of page on scrolling
 - User friendly granular search and filter
 - Diplay descriptive referred records. (ie: Instead of displaying the foreign_key value integer or uuid, display the referred records in such a way it is distinguisable by the user)
+
+Freeze row and column
+![](https://raw.githubusercontent.com/ivanceras/ivanceras.github.io/master/diwata/diwata-freeze-row.gif)
+![](https://raw.githubusercontent.com/ivanceras/ivanceras.github.io/master/diwata/diwata-freeze-column.gif)
+
+Distinguisable referred record in a dropdown
+![](https://raw.githubusercontent.com/ivanceras/ivanceras.github.io/master/diwata/meaningful-dropdown.gif)
 
 ### Dependencies
 - elm v0.18
