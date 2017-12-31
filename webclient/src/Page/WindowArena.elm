@@ -1,4 +1,13 @@
-module Page.WindowArena exposing (Model, Msg, init, update, view, subscriptions)
+module Page.WindowArena
+    exposing
+        ( Model
+        , Msg
+        , init
+        , update
+        , view
+        , subscriptions
+        , rerouteNeeded
+        )
 
 {-| The homepage. You can get here via either the / or /#/ routes.
 -}
@@ -24,6 +33,7 @@ import Route
 import Request.Window.Records
 import Data.Window.Record as Record
 import Data.Window.Lookup as Lookup
+import Data.WindowArena as WindowArena
 
 
 -- MODEL --
@@ -38,9 +48,22 @@ type alias Model =
     }
 
 
+rerouteNeeded : Model -> ArenaArg -> Bool
+rerouteNeeded model arenaArg =
+    case model.arenaArg of
+        Just oldArg ->
+            WindowArena.rerouteNeeded oldArg arenaArg
+
+        Nothing ->
+            True
+
+
 init : Session -> Maybe ArenaArg -> Task PageLoadError Model
 init session arenaArg =
     let
+        _ =
+            Debug.log "window arena: " arenaArg
+
         feedSources =
             if session.user == Nothing then
                 SelectList.singleton globalFeed

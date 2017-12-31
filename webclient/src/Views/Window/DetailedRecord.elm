@@ -533,7 +533,8 @@ viewDetailTabs model =
                                         , ( "indirect-tab", section == Indirect )
                                         , ( "active-detail-tab", isActiveTab )
                                         ]
-                                    , Route.href (Route.WindowArena (Just sectionArenaArg))
+
+                                    --, Route.href (Route.WindowArena (Just sectionArenaArg))
                                     , onClickPreventDefault (ChangeActiveTab section tab.tableName)
                                     ]
                                     [ text tab.name ]
@@ -776,6 +777,10 @@ update session msg model =
                 in
                     { model | arenaArg = newArenaArg }
                         => Route.modifyUrl (Route.WindowArena (Just newArenaArg))
+
+
+
+--=> Cmd.none
 
 
 requestNextPage : Section -> Tab.Model -> Model -> Cmd Msg

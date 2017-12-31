@@ -7,6 +7,7 @@ module Data.WindowArena
         , ArenaArg
         , argToString
         , Section(..)
+        , rerouteNeeded
         )
 
 import Data.Window.TableName as TableName exposing (TableName, tableNameToString)
@@ -94,6 +95,26 @@ type alias ArenaArg =
     , sectionOrder : Maybe (List Query.Order)
     , sectionSelected : Maybe String
     }
+
+
+{-| Reroute needed when
+tableName != tableName,
+
+No reroute needed when
+tableName == tableName and sectionTable != sectionTable
+
+-}
+noRerouteNeeded : ArenaArg -> ArenaArg -> Bool
+noRerouteNeeded oldArg newArg =
+    oldArg.tableName
+        == newArg.tableName
+        && oldArg.sectionTable
+        /= newArg.sectionTable
+
+
+rerouteNeeded : ArenaArg -> ArenaArg -> Bool
+rerouteNeeded oldArg newArg =
+    not (noRerouteNeeded oldArg newArg)
 
 
 argToString : ArenaArg -> String

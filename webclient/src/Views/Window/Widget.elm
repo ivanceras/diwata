@@ -193,9 +193,6 @@ createWidget presentation record tab field maybeValue =
         widget =
             controlWidget.widget
 
-        _ =
-            Debug.log "widget is " widget
-
         valueString =
             valueToString maybeValue
 

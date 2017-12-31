@@ -219,12 +219,15 @@ a.primary-link {
 }
 
 .tab-column .sort-order-badge {
-    font-size: 10px;
+    font-size: 8px;
     vertical-align: middle;
     margin: 2px 4px;
-    padding: 2px 2px;
-    border-radius: 6px;
-    background-color: #ccc;
+    padding: 1px 1px;
+    border-radius: 8px;
+    background-color: #dde;
+    min-width: 16px;
+    height: 16px;
+    text-align: center;
 }
 
 .tab-column .sort-btn{

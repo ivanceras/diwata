@@ -247,6 +247,9 @@ type Msg
 setRoute : Maybe Route -> Model -> ( Model, Cmd Msg )
 setRoute maybeRoute model =
     let
+        _ =
+            Debug.log "setting route"
+
         transition toMsg task =
             { model | pageState = TransitioningFrom (getPage model.pageState) }
                 => Task.attempt toMsg task
@@ -341,7 +344,27 @@ updatePage page msg model =
     in
         case ( msg, page ) of
             ( SetRoute route, _ ) ->
-                setRoute route model
+                case page of
+                    WindowArena arenaModel ->
+                        let
+                            rerouteNeeded =
+                                case route of
+                                    Just (Route.WindowArena (Just newArenaArg)) ->
+                                        WindowArena.rerouteNeeded arenaModel newArenaArg
+
+                                    _ ->
+                                        False
+
+                            _ =
+                                Debug.log "RerouteNeeded: " rerouteNeeded
+                        in
+                            if rerouteNeeded then
+                                setRoute route model
+                            else
+                                model => Cmd.none
+
+                    _ ->
+                        setRoute route model
 
             ( HomeLoaded (Ok subModel), _ ) ->
                 { model | pageState = Loaded (WindowArena subModel) } => Cmd.none
