@@ -421,7 +421,13 @@ createWidget presentation record tab field maybeValue =
                         (Tagger.view styles tags)
 
             FileUpload ->
-                HtmlWidget (input [ type_ "file" ] [])
+                HtmlWidget
+                    (input
+                        [ styles
+                        , type_ "file"
+                        ]
+                        []
+                    )
 
             Radiogroup list ->
                 case presentation of

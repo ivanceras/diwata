@@ -254,6 +254,9 @@ widgetCharacterWidth field =
             16
 
         columnLen =
+            (String.length (columnName field)) + 5
+
+        charWidth =
             case dataType of
                 DataType.Date ->
                     dateWidth
@@ -265,10 +268,7 @@ widgetCharacterWidth field =
                     dateWidth
 
                 _ ->
-                    (String.length (columnName field)) + 5
-
-        charWidth =
-            max columnLen field.controlWidget.width
+                    max columnLen field.controlWidget.width
     in
         charWidth
 

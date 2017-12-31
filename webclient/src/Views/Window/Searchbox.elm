@@ -181,13 +181,13 @@ view field =
                 noSearch noSearchStyles
 
             Checkbox ->
-                booleanFilter styles
+                booleanFilter noSearchStyles
 
             DatePicker ->
-                dateRangeFilter styles
+                dateRangeFilter noSearchStyles
 
             DateTimePicker ->
-                dateRangeFilter styles
+                dateRangeFilter noSearchStyles
 
             PrimaryUrlLink ->
                 case dataType of
