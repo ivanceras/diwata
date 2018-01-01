@@ -332,7 +332,7 @@ pub fn get_selected_record_detail(
                 println!("pushed");
             }
             println!("Getting indirect");
-            let mut indirect_records: Vec<(TableName, Rows)> =
+            let mut indirect_records: Vec<(TableName, TableName, Rows)> =
                 Vec::with_capacity(window.indirect_tabs.iter().count());
             for &(ref linker_table, ref indirect_tab) in window.indirect_tabs.iter() {
                 let ind_records = get_indirect_records(
@@ -345,7 +345,7 @@ pub fn get_selected_record_detail(
                     page_size,
                     1,
                 )?;
-                indirect_records.push((indirect_tab.table_name.clone(), ind_records));
+                indirect_records.push((linker_table.clone(), indirect_tab.table_name.clone(), ind_records));
             }
             let detail = RecordDetail {
                 record: record,
@@ -694,12 +694,12 @@ fn get_indirect_records(
     let indirect_table = table_intel::get_table(&indirect_tab.table_name, tables);
     assert!(indirect_table.is_some());
     let indirect_table = indirect_table.unwrap();
-    let indirect_pk = indirect_table.get_primary_column_names();
+    //let indirect_pk = indirect_table.get_primary_column_names();
 
     let linker_table = table_intel::get_table(linker_table_name, tables);
     assert!(linker_table.is_some());
     let linker_table = linker_table.unwrap();
-    let _linker_pk = linker_table.get_primary_column_names();
+    //let _linker_pk = linker_table.get_primary_column_names();
     let linker_pk_data_types = linker_table.get_primary_column_types();
 
     let indirect_tablename = &indirect_table.name;
@@ -740,8 +740,15 @@ fn get_indirect_records(
         linker_rc_to_indirect_table
     );
     assert!(linker_rc_to_indirect_table.is_some());
-    let linker_rc_to_indirect_table = linker_rc_to_indirect_table.unwrap();
-    for (i, rc) in linker_rc_to_indirect_table.iter().enumerate() {
+    //let linker_rc_to_indirect_table = linker_rc_to_indirect_table.unwrap();
+    let linker_fc = linker_table.get_foreign_key_to_table(indirect_tablename);
+    assert!(linker_fc.is_some());
+    let linker_fc = linker_fc.unwrap();
+    let foreign_columns = &linker_fc.columns;
+    let referring_columns = &linker_fc.referred_columns;
+    println!("foreign columns: {:?}", foreign_columns);
+    println!("referring column: {:?}", referring_columns);
+    for (i, fc) in foreign_columns.iter().enumerate() {
         if i == 0 {
             indirect_sql += "ON "
         } else {
@@ -750,9 +757,9 @@ fn get_indirect_records(
         indirect_sql += &format!(
             " {}.{} = {}.{} ",
             linker_table.name.name,
-            rc.complete_name(),
+            fc.complete_name(),
             indirect_table.name.name,
-            indirect_pk[i].complete_name()
+            referring_columns[i].complete_name()
         );
     }
     // left join the table that is looked up by the fields, so as to be able to retrieve the
@@ -795,12 +802,14 @@ fn get_indirect_records(
     }
     println!("---> In indirect, main table: {}", main_table.name.complete_name());
     println!("---> linker table: {}", linker_table.complete_name());
-    let linker_rc_to_main_table = linker_table.get_referred_columns_to_table(&main_table.name);
-    println!("---> linker rc: {:#?}", linker_rc_to_main_table);
-    assert!(linker_rc_to_main_table.is_some());
-    let linker_rc_to_main_table = linker_rc_to_main_table.unwrap();
-    let mut indirect_params = Vec::with_capacity(linker_rc_to_main_table.iter().count());
-    for (i, rc) in linker_rc_to_main_table.iter().enumerate() {
+    let linker_fc_to_main_table = linker_table.get_foreign_key_to_table(&main_table.name);
+    println!("---> linker rc: {:#?}", linker_fc_to_main_table);
+    assert!(linker_fc_to_main_table.is_some());
+    let linker_fc_to_main_table = linker_fc_to_main_table.unwrap();
+    let mut indirect_params =  vec![];
+    let linker_fc_foreign_columns = &linker_fc_to_main_table.columns;
+    let linker_fc_referring_columns = &linker_fc_to_main_table.referred_columns;
+    for (i, fc) in linker_fc_foreign_columns.iter().enumerate() {
         if i == 0 {
             indirect_sql += "\nWHERE ";
         } else {
@@ -809,10 +818,11 @@ fn get_indirect_records(
         indirect_sql += &format!(
             "{}.{} = ${} ",
             linker_table.name.name,
-            rc.name,
+            fc.name,
             i + 1
         );
         let required_type: &SqlType = linker_pk_data_types[i];
+        let rc = &linker_fc_referring_columns[i];
         find_value(rc, record_id, required_type).map(|v| indirect_params.push(v.clone()));
     }
     indirect_sql += &format!("\nLIMIT {} ", page_size);

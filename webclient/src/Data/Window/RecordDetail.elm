@@ -4,6 +4,7 @@ module Data.Window.RecordDetail
         , decoder
         , oneOneRecordOfTable
         , contentInTable
+        , contentInIndirectTable
         )
 
 import Json.Decode as Decode exposing (Decoder)
@@ -17,7 +18,7 @@ type alias RecordDetail =
     { record : Record
     , oneOnes : List ( TableName, Maybe Record )
     , hasMany : List ( TableName, Rows )
-    , indirect : List ( TableName, Rows )
+    , indirect : List ( TableName, TableName, Rows )
     }
 
 
@@ -41,9 +42,10 @@ decoder =
             )
         |> required "indirect"
             (Decode.list
-                (Decode.map2 (,)
+                (Decode.map3 (,,)
                     (Decode.index 0 TableName.decoder)
-                    (Decode.index 1 Record.rowsDecoder)
+                    (Decode.index 1 TableName.decoder)
+                    (Decode.index 2 Record.rowsDecoder)
                 )
             )
 
@@ -53,6 +55,21 @@ contentInTable list tableName =
     List.filterMap
         (\( tbl, any ) ->
             case tbl == tableName of
+                True ->
+                    Just any
+
+                False ->
+                    Nothing
+        )
+        list
+        |> List.head
+
+
+contentInIndirectTable : List ( TableName, TableName, a ) -> TableName -> TableName -> Maybe a
+contentInIndirectTable list linkerTable tableName =
+    List.filterMap
+        (\( linker, tbl, any ) ->
+            case tbl == tableName && linker == linkerTable of
                 True ->
                     Just any
 

@@ -23,11 +23,15 @@ pub struct Tab {
 
 
 impl Tab {
-    pub fn from_table(table: &Table, tables: &Vec<Table>) -> Self {
+    pub fn from_table(table: &Table, name: Option<String>, tables: &Vec<Table>) -> Self {
         let fields = Self::derive_fields(table, tables);
         let display = Self::derive_display(table);
+        let tab_name = match name {
+            Some(name) => name,
+            None => table.name.name.to_string(),
+        };
         Tab {
-            name: table.name.name.to_string(),
+            name: tab_name,
             description: table.comment.to_owned(),
             table_name: table.name.to_owned(),
             fields: fields,

@@ -181,7 +181,7 @@ view field =
                 noSearch noSearchStyles
 
             Checkbox ->
-                booleanFilter noSearchStyles
+                booleanFilter styles
 
             DatePicker ->
                 dateRangeFilter noSearchStyles

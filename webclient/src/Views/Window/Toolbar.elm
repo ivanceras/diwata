@@ -1,7 +1,7 @@
 module Views.Window.Toolbar exposing (viewForMain, viewForDetailRecord)
 
 import Html exposing (..)
-import Html.Attributes exposing (class)
+import Html.Attributes exposing (class, type_)
 
 
 viewForMain : Html msg
@@ -53,6 +53,13 @@ viewForMain =
             [ i [ class "toolbar-fa fa fa-sort-numeric-asc" ] []
             , text "Reset sorting"
             , span [ class "tooltip-text" ] [ text "Reset the order of sorting" ]
+            ]
+        , div
+            [ class "multi-column-sort btn btn-large btn-default tooltip" ]
+            [ input [ type_ "checkbox" ] []
+            , i [ class "toolbar-fa fa fa-sort-numeric-asc" ] []
+            , text "Multi sort"
+            , span [ class "tooltip-text" ] [ text "Do multi-column sort" ]
             ]
         , button [ class "btn btn-large btn-default tooltip" ]
             [ span [ class "icon icon-export icon-text" ] []

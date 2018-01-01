@@ -58,7 +58,7 @@ type alias Model =
     { selectedRow : RecordDetail
     , window : Window
     , hasManyTabs : List Tab.Model
-    , indirectTabs : List Tab.Model
+    , indirectTabs : List ( TableName, Tab.Model )
     , position : Position
     , drag : Maybe Drag
     , size : ( Float, Float )
@@ -187,14 +187,14 @@ init tableName selectedRow arenaArg window =
                             ( allotedWidth, detailTabHeight )
                     in
                         List.map2
-                            (\( _, indirectTab ) indirectRecordCount ->
+                            (\( linker, indirectTab ) indirectRecordCount ->
                                 let
                                     rows =
-                                        RecordDetail.contentInTable detailRows.indirect indirectTab.tableName
+                                        RecordDetail.contentInIndirectTable detailRows.indirect linker indirectTab.tableName
                                 in
                                     case rows of
                                         Just rows ->
-                                            Tab.init tabSize indirectTab rows indirectRecordCount
+                                            ( linker, Tab.init tabSize indirectTab rows indirectRecordCount )
 
                                         Nothing ->
                                             Debug.crash "Empty row"
@@ -249,7 +249,7 @@ dropdownPageRequestNeeded lookup model =
 
         indirectTabValues =
             List.filterMap
-                (\indirectTab ->
+                (\( linker, indirectTab ) ->
                     Tab.dropdownPageRequestNeeded lookup indirectTab
                 )
                 model.indirectTabs
@@ -469,39 +469,70 @@ viewDetailTabs model =
         hasManyDetailTabs =
             List.map
                 (\tab ->
-                    ( HasMany, tab.tab )
+                    ( HasMany, tab, Nothing )
                 )
                 hasManyTabs
 
         indirectDetailTabs =
             List.map
-                (\tab ->
-                    ( Indirect, tab.tab )
+                (\( linker, tab ) ->
+                    ( Indirect, tab, Just linker )
                 )
                 indirectTabs
 
+        detailTabs : List ( Section, Tab.Model, Maybe TableName )
         detailTabs =
             hasManyDetailTabs ++ indirectDetailTabs
 
-        firstDetailTab =
-            List.head detailTabs
-                |> Maybe.map (\( section, tab ) -> tab.tableName)
-
+        activeTab : Maybe ( Section, TableName, Maybe TableName )
         activeTab =
             case arenaArg.sectionTable of
                 Just ( section, tableName ) ->
-                    Just tableName
+                    Just ( section, tableName, arenaArg.sectionViaLinker )
 
                 Nothing ->
-                    firstDetailTab
+                    List.head detailTabs
+                        |> Maybe.map
+                            (\( section, tab, linker ) ->
+                                ( section, tab.tab.tableName, linker )
+                            )
 
         detailTabViews =
-            (hasManyTabs
-                |> List.map (listView model.lookup HasMany activeTab)
+            (List.map
+                (\hasMany ->
+                    let
+                        isActive =
+                            case activeTab of
+                                Just ( activeSection, activeTable, activeLinker ) ->
+                                    activeSection
+                                        == HasMany
+                                        && activeTable
+                                        == hasMany.tab.tableName
+
+                                Nothing ->
+                                    False
+                    in
+                        listView isActive model.lookup HasMany hasMany
+                )
+                hasManyTabs
             )
                 ++ (List.map
-                        (\indirectTab ->
-                            listView model.lookup Indirect activeTab indirectTab
+                        (\( linker, indirectTab ) ->
+                            let
+                                isActive =
+                                    case activeTab of
+                                        Just ( activeSection, activeTable, activeLinker ) ->
+                                            activeSection
+                                                == Indirect
+                                                && activeTable
+                                                == indirectTab.tab.tableName
+                                                && Just linker
+                                                == activeLinker
+
+                                        Nothing ->
+                                            False
+                            in
+                                listView isActive model.lookup Indirect indirectTab
                         )
                         indirectTabs
                    )
@@ -510,12 +541,21 @@ viewDetailTabs model =
             div []
                 [ div [ class "detail-tab-names" ]
                     (List.map
-                        (\( section, tab ) ->
+                        (\( section, tabModel, linker ) ->
                             let
+                                tab : Tab
+                                tab =
+                                    tabModel.tab
+
                                 isActiveTab =
                                     case activeTab of
-                                        Just activeTab ->
-                                            activeTab == tab.tableName
+                                        Just ( activeSection, activeTable, activeLinker ) ->
+                                            section
+                                                == activeSection
+                                                && activeTable
+                                                == tab.tableName
+                                                && linker
+                                                == activeLinker
 
                                         Nothing ->
                                             False
@@ -533,9 +573,8 @@ viewDetailTabs model =
                                         , ( "indirect-tab", section == Indirect )
                                         , ( "active-detail-tab", isActiveTab )
                                         ]
-
-                                    --, Route.href (Route.WindowArena (Just sectionArenaArg))
-                                    , onClickPreventDefault (ChangeActiveTab section tab.tableName)
+                                    , Route.href (Route.WindowArena (Just sectionArenaArg))
+                                    , onClickPreventDefault (ChangeActiveTab section tab.tableName linker)
                                     ]
                                     [ text tab.name ]
                         )
@@ -548,17 +587,9 @@ viewDetailTabs model =
             text "No detail tabs"
 
 
-listView : Lookup -> Section -> Maybe TableName -> Tab.Model -> Html Msg
-listView lookup section activeTab tab =
+listView : Bool -> Lookup -> Section -> Tab.Model -> Html Msg
+listView isTabActive lookup section tab =
     let
-        isTabActive =
-            case activeTab of
-                Just activeTab ->
-                    activeTab == tab.tab.tableName
-
-                Nothing ->
-                    False
-
         styleDisplay =
             case isTabActive of
                 True ->
@@ -613,7 +644,7 @@ type Msg
     | ValueMsg Value.Model Value.Msg
     | LookupNextPageReceived ( TableName, List Record )
     | LookupNextPageErrored String
-    | ChangeActiveTab Section TableName
+    | ChangeActiveTab Section TableName (Maybe TableName)
 
 
 update : Session -> Msg -> Model -> ( Model, Cmd Msg )
@@ -667,7 +698,15 @@ update session msg model =
                             |> List.unzip
 
                     ( updatedIndirectTabs, indirectSubCmds ) =
-                        List.map (Tab.update tabMsg) model.indirectTabs
+                        List.map
+                            (\( linker, tab ) ->
+                                let
+                                    ( updatedTab, cmd ) =
+                                        Tab.update tabMsg tab
+                                in
+                                    ( ( linker, updatedTab ), cmd )
+                            )
+                            model.indirectTabs
                             |> List.unzip
                 in
                     { model
@@ -695,7 +734,7 @@ update session msg model =
                             |> List.unzip
 
                     ( updatedIndirectTabs, indirectCmds ) =
-                        updateTabModels tabMsg model.indirectTabs updatedTabModel
+                        updateIndirectTabModels tabMsg model.indirectTabs updatedTabModel
                             |> List.unzip
                 in
                     { model
@@ -717,10 +756,10 @@ update session msg model =
                                         updatedHasManyTabs
                                         hasManyCmds
                                         ++ (List.map2
-                                                (\hasManyModel hasManyCmd ->
+                                                (\( linker, indirectModel ) hasManyCmd ->
                                                     Cmd.map
                                                         (\tabMsg ->
-                                                            TabMsg ( Indirect, hasManyModel, tabMsg )
+                                                            TabMsg ( Indirect, indirectModel, tabMsg )
                                                         )
                                                         hasManyCmd
                                                 )
@@ -767,13 +806,16 @@ update session msg model =
             LookupNextPageErrored e ->
                 Debug.crash "Error loading next page lookup" e
 
-            ChangeActiveTab section tableName ->
+            ChangeActiveTab section tableName linker ->
                 let
                     arenaArg =
                         model.arenaArg
 
                     newArenaArg =
-                        { arenaArg | sectionTable = Just ( section, tableName ) }
+                        { arenaArg
+                            | sectionTable = Just ( section, tableName )
+                            , sectionViaLinker = linker
+                        }
                 in
                     { model | arenaArg = newArenaArg }
                         => Route.modifyUrl (Route.WindowArena (Just newArenaArg))
@@ -851,6 +893,22 @@ updateTabModels tabMsg modelList tabModel =
                 Tab.update tabMsg model
             else
                 model => Cmd.none
+        )
+        modelList
+
+
+updateIndirectTabModels : Tab.Msg -> List ( TableName, Tab.Model ) -> Tab.Model -> List ( ( TableName, Tab.Model ), Cmd Tab.Msg )
+updateIndirectTabModels tabMsg modelList tabModel =
+    List.map
+        (\( linker, model ) ->
+            if model.tab.tableName == tabModel.tab.tableName then
+                let
+                    ( updatedTab, cmd ) =
+                        Tab.update tabMsg model
+                in
+                    ( ( linker, updatedTab ), cmd )
+            else
+                ( ( linker, model ), Cmd.none )
         )
         modelList
 

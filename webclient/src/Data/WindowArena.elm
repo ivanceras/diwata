@@ -90,6 +90,7 @@ type alias ArenaArg =
     , order : Maybe (List Query.Order)
     , selected : Maybe String
     , sectionTable : Maybe ( Section, TableName )
+    , sectionViaLinker : Maybe TableName
     , sectionFilter : Maybe String
     , sectionPage : Maybe Int
     , sectionOrder : Maybe (List Query.Order)
@@ -163,13 +164,21 @@ argToString arg =
                 Nothing ->
                     appendSelected
 
-        appendSectionFilter =
-            case arg.sectionFilter of
-                Just filter ->
-                    appendSectionTable ++ [ "section_filter", filter ]
+        appendSectionViaLinker =
+            case arg.sectionViaLinker of
+                Just linker ->
+                    appendSectionTable ++ [ "via", tableNameToString linker ]
 
                 Nothing ->
                     appendSectionTable
+
+        appendSectionFilter =
+            case arg.sectionFilter of
+                Just filter ->
+                    appendSectionViaLinker ++ [ "section_filter", filter ]
+
+                Nothing ->
+                    appendSectionViaLinker
     in
         appendSectionFilter
             |> String.join "/"
@@ -183,6 +192,7 @@ initArg tableName =
     , order = Nothing
     , selected = Nothing
     , sectionTable = Nothing
+    , sectionViaLinker = Nothing
     , sectionFilter = Nothing
     , sectionPage = Nothing
     , sectionOrder = Nothing
@@ -304,6 +314,9 @@ parseArenaArgs url =
 
                                         "indirect" ->
                                             { arg | sectionTable = Just ( Indirect, TableName.fromStringOrBlank value ) }
+
+                                        "via" ->
+                                            { arg | sectionViaLinker = Just (TableName.fromStringOrBlank value) }
 
                                         "section_filter" ->
                                             { arg | sectionFilter = Just value }

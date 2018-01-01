@@ -576,3 +576,12 @@ a.primary-link {
     color: #888;
     padding: 0 5px;
 }
+
+.multi-column-sort {
+    display: flex;
+    justify-content: center;
+}
+
+.multi-column-sort input{
+    margin: 0;
+}

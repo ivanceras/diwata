@@ -8,7 +8,8 @@ pub struct RecordDetail {
     pub record: Record,
     pub one_ones: Vec<(TableName, Option<Record>)>,
     pub has_many: Vec<(TableName, Rows)>,
-    pub indirect: Vec<(TableName, Rows)>,
+    // (linker_tablename, indirect_tablename, records)
+    pub indirect: Vec<(TableName, TableName, Rows)>,
 }
 
 /// the dropdown data and the description on

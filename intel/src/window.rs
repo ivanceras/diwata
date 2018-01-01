@@ -55,27 +55,34 @@ impl Window {
         indirect: &Vec<IndirectTable>,
         all_tables: &Vec<Table>,
     ) -> Self {
-        let main_tab: Tab = Tab::from_table(main_table, all_tables);
+        let main_tab: Tab = Tab::from_table(main_table, None, all_tables);
         let one_one_tabs: Vec<Tab> = one_one
             .iter()
-            .map(|t| Tab::from_table(t, all_tables))
+            .map(|t| Tab::from_table(t, None, all_tables))
             .collect();
         let has_one_tabs: Vec<Tab> = has_one
             .iter()
-            .map(|t| Tab::from_table(t, all_tables))
+            .map(|t| Tab::from_table(t, None, all_tables))
             .collect();
         let has_many_tabs: Vec<Tab> = has_many
             .iter()
-            .map(|t| Tab::from_table(t, all_tables))
+            .map(|t| Tab::from_table(t, None, all_tables))
             .collect();
         let is_view = main_tab.is_view;
 
         let indirect_tabs: Vec<(TableName, Tab)> = indirect
             .iter()
             .map(|t| {
+                let has_repeat = has_repeating_tab(&t.indirect_table.name, indirect);
+                let tab_name = if has_repeat {
+                    Some(format!("{} (via {})", t.indirect_table.name.name, t.linker.name.name))
+                }
+                else{
+                    None
+                };
                 (
                     t.linker.name.clone(),
-                    Tab::from_table(t.indirect_table, all_tables),
+                    Tab::from_table(t.indirect_table, tab_name, all_tables),
                 )
             })
             .collect();
@@ -90,6 +97,21 @@ impl Window {
             indirect_tabs,
             is_view,
         }
+    }
+}
+
+fn has_repeating_tab(table_name: &TableName, indirect: &Vec<IndirectTable> ) -> bool {
+    let mut matched = 0;
+    for ind in indirect.iter(){
+        if ind.indirect_table.name == *table_name {
+            matched += 1;
+        }
+    }
+    if matched > 1 {
+        true
+    }
+    else{
+        false
     }
 }
 
