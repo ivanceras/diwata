@@ -1,42 +1,53 @@
-module Views.Window.Widget exposing (Model, init, Msg, view, update, dropdownPageRequestNeeded)
+module Views.Window.Field
+    exposing
+        ( init
+        , Model
+        , view
+        , Msg
+        , update
+        , dropdownPageRequestNeeded
+        )
 
 import Data.Window.Value as Value exposing (Value(..), ArrayValue(..))
 import Html exposing (..)
-import Html.Attributes exposing (id, for, name, selected, checked, style, class, type_, value)
 import Data.Window.Widget as Widget exposing (ControlWidget, Widget(..), DropdownInfo)
 import Date
 import Date.Format
 import Widgets.Tagger as Tagger
 import Data.Window.Field as Field exposing (Field)
-import Util exposing (px)
 import Data.Window.DataType as DataType exposing (DataType)
 import Data.Window.Tab as Tab exposing (Tab)
 import Data.Window.Record as Record exposing (Record)
 import Dict
 import Route exposing (Route)
 import Data.WindowArena as WindowArena
-import Data.Window.Lookup as Lookup exposing (Lookup(..))
-import Util exposing ((=>), Scroll)
+import Data.Window.Lookup as Lookup exposing (Lookup)
+import Util exposing ((=>), Scroll, px)
 import Widgets.Dropdown as Dropdown
 import Views.Window.Presentation as Presentation exposing (Presentation(..))
-import Request.Window.Records
-import Http
-import Task
 import Data.Window.TableName as TableName exposing (TableName)
+import Html.Attributes exposing (id, for, name, selected, checked, style, class, type_, value)
 
 
 type alias Model =
-    { widget : Widget
+    { tab : Tab
+    , field : Field
     , record : Record
     , value : Maybe Value
-    , field : Field
-    , dropdownInfo : Maybe DropdownInfo
+    , widget : Widget
+    , dropdownInfo: Maybe DropdownInfo
     }
 
 
-init : Presentation -> Record -> Tab -> Field -> Maybe Value -> Model
-init presentation record tab field maybeValue =
+init : Presentation -> Record -> Tab -> Field -> Model
+init presentation record tab field =
     let
+        columnName =
+            Field.columnName field
+
+        maybeValue =
+            Dict.get columnName record
+
         controlWidget =
             field.controlWidget
 
@@ -47,11 +58,14 @@ init presentation record tab field maybeValue =
 
                 Nothing ->
                     Nothing
+
+        widget = createWidget presentation record tab field maybeValue
     in
-        { widget = createWidget presentation record tab field maybeValue
-        , record = record
-        , value = maybeValue
+        { tab = tab
         , field = field
+        , record = record
+        , widget = widget
+        , value = maybeValue
         , dropdownInfo = dropdownInfo
         }
 
@@ -111,78 +125,6 @@ view lookup model =
             in
                 Dropdown.view listWithSelected dropdown
                     |> Html.map (DropdownMsg dropdown)
-
-
-valueToString : Maybe Value -> String
-valueToString maybeValue =
-    case maybeValue of
-        Just argValue ->
-            Value.valueToString argValue
-
-        Nothing ->
-            ""
-
-
-listRecordToListString : DropdownInfo -> List Record -> List ( String, Maybe String )
-listRecordToListString dropdownInfo lookupRecords =
-    let
-        displayColumns =
-            dropdownInfo.display.columns
-
-        separator =
-            case dropdownInfo.display.separator of
-                Just separator ->
-                    separator
-
-                Nothing ->
-                    ""
-
-        pk =
-            dropdownInfo.display.pk
-    in
-        List.map
-            (\record ->
-                let
-                    displayValues : List Value
-                    displayValues =
-                        List.filterMap
-                            (\displayColumn ->
-                                Dict.get displayColumn.name record
-                            )
-                            displayColumns
-
-                    displayString =
-                        if List.isEmpty displayValues then
-                            Nothing
-                        else
-                            List.map
-                                (\value ->
-                                    Value.valueToString value
-                                )
-                                displayValues
-                                |> String.join separator
-                                |> Just
-
-                    displayPk : List Value
-                    displayPk =
-                        List.filterMap
-                            (\pk ->
-                                Dict.get pk.name record
-                            )
-                            pk
-
-                    displayPkString =
-                        List.map
-                            (\value ->
-                                Value.valueToString value
-                            )
-                            displayPk
-                            |> String.join " "
-                in
-                    ( displayPkString, displayString )
-            )
-            lookupRecords
-
 
 createWidget : Presentation -> Record -> Tab -> Field -> Maybe Value -> Widget
 createWidget presentation record tab field maybeValue =
@@ -490,37 +432,75 @@ createWidget presentation record tab field maybeValue =
             _ ->
                 Debug.crash ("unable to handle widget:" ++ toString controlWidget)
 
+valueToString : Maybe Value -> String
+valueToString maybeValue =
+    case maybeValue of
+        Just argValue ->
+            Value.valueToString argValue
 
-viewDatePicker : Attribute msg -> Maybe Value -> Html msg
-viewDatePicker styles maybeValue =
+        Nothing ->
+            ""
+
+
+listRecordToListString : DropdownInfo -> List Record -> List ( String, Maybe String )
+listRecordToListString dropdownInfo lookupRecords =
     let
-        dateString =
-            case maybeValue of
-                Just value ->
-                    case value of
-                        Value.Timestamp v ->
-                            Date.Format.format "%Y-%m-%d" v
+        displayColumns =
+            dropdownInfo.display.columns
 
-                        Value.Date v ->
-                            Date.Format.format "%Y-%m-%d" v
-
-                        _ ->
-                            ""
+        separator =
+            case dropdownInfo.display.separator of
+                Just separator ->
+                    separator
 
                 Nothing ->
                     ""
+
+        pk =
+            dropdownInfo.display.pk
     in
-        input
-            [ type_ "date"
-            , styles
-            , value dateString
-            ]
-            []
+        List.map
+            (\record ->
+                let
+                    displayValues : List Value
+                    displayValues =
+                        List.filterMap
+                            (\displayColumn ->
+                                Dict.get displayColumn.name record
+                            )
+                            displayColumns
 
+                    displayString =
+                        if List.isEmpty displayValues then
+                            Nothing
+                        else
+                            List.map
+                                (\value ->
+                                    Value.valueToString value
+                                )
+                                displayValues
+                                |> String.join separator
+                                |> Just
 
-type Msg
-    = DropdownMsg Dropdown.Model Dropdown.Msg
+                    displayPk : List Value
+                    displayPk =
+                        List.filterMap
+                            (\pk ->
+                                Dict.get pk.name record
+                            )
+                            pk
 
+                    displayPkString =
+                        List.map
+                            (\value ->
+                                Value.valueToString value
+                            )
+                            displayPk
+                            |> String.join " "
+                in
+                    ( displayPkString, displayString )
+            )
+            lookupRecords
 
 dropdownModel : Model -> Maybe Dropdown.Model
 dropdownModel model =
@@ -530,7 +510,6 @@ dropdownModel model =
 
         _ ->
             Nothing
-
 
 dropdownPageRequestNeeded : Lookup -> Model -> Maybe TableName
 dropdownPageRequestNeeded lookup model =
@@ -563,6 +542,39 @@ dropdownPageRequestNeeded lookup model =
             Nothing
 
 
+viewDatePicker : Attribute msg -> Maybe Value -> Html msg
+viewDatePicker styles maybeValue =
+    let
+        dateString =
+            case maybeValue of
+                Just value ->
+                    case value of
+                        Value.Timestamp v ->
+                            Date.Format.format "%Y-%m-%d" v
+
+                        Value.Date v ->
+                            Date.Format.format "%Y-%m-%d" v
+
+                        _ ->
+                            ""
+
+                Nothing ->
+                    ""
+    in
+        input
+            [ type_ "date"
+            , styles
+            , value dateString
+            ]
+            []
+
+type Msg
+    = DropdownMsg Dropdown.Model Dropdown.Msg
+
+type Widget
+    = TableDropdown Dropdown.Model
+    | HtmlWidget (Html Msg)
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
@@ -584,8 +596,3 @@ update msg model =
             in
                 { model | widget = widget }
                     => cmd
-
-
-type Widget
-    = TableDropdown Dropdown.Model
-    | HtmlWidget (Html Msg)

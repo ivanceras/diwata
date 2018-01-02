@@ -26,7 +26,7 @@ import Views.Window.Tab as Tab
 import Dict
 import Data.Window.Field as Field exposing (Field)
 import Data.Window.Value as Value exposing (Value)
-import Views.Window.Value as Value
+import Views.Window.Field as Field
 import Mouse exposing (Position)
 import Data.Session as Session exposing (Session)
 import Util exposing ((=>))
@@ -64,7 +64,7 @@ type alias Model =
     , size : ( Float, Float )
     , arenaArg : ArenaArg
     , lookup : Lookup
-    , values : List Value.Model
+    , values : List Field.Model
     , dropdownPageRequestInFlight : Bool
     }
 
@@ -218,7 +218,7 @@ init tableName selectedRow arenaArg window =
                 , size = allotedSize browserSize
                 , arenaArg = arenaArg
                 , lookup = lookup
-                , values = createValues window.mainTab detail
+                , values = createFields window.mainTab detail
                 , dropdownPageRequestInFlight = False
                 }
             )
@@ -233,21 +233,21 @@ init tableName selectedRow arenaArg window =
 dropdownPageRequestNeeded : Lookup -> Model -> Maybe TableName
 dropdownPageRequestNeeded lookup model =
     let
-        mainValues =
+        mainFields =
             List.filterMap
                 (\value ->
-                    Value.dropdownPageRequestNeeded lookup value
+                    Field.dropdownPageRequestNeeded lookup value
                 )
                 model.values
 
-        hasManyTabValues =
+        hasManyTabFields =
             List.filterMap
                 (\hasManyTab ->
                     Tab.dropdownPageRequestNeeded lookup hasManyTab
                 )
                 model.hasManyTabs
 
-        indirectTabValues =
+        indirectTabFields =
             List.filterMap
                 (\( linker, indirectTab ) ->
                     Tab.dropdownPageRequestNeeded lookup indirectTab
@@ -257,9 +257,9 @@ dropdownPageRequestNeeded lookup model =
         -- HACKY: whichever has the source table
         -- it's not possible for dropdown to open for more than 1 at a time
         sourceTable =
-            mainValues
-                ++ hasManyTabValues
-                ++ indirectTabValues
+            mainFields
+                ++ hasManyTabFields
+                ++ indirectTabFields
                 |> List.head
     in
         if not model.dropdownPageRequestInFlight then
@@ -268,11 +268,11 @@ dropdownPageRequestNeeded lookup model =
             Nothing
 
 
-createValues : Tab -> RecordDetail -> List Value.Model
-createValues tab detail =
+createFields : Tab -> RecordDetail -> List Field.Model
+createFields tab detail =
     List.map
         (\field ->
-            Value.init InCard detail.record tab field
+            Field.init InCard detail.record tab field
         )
         tab.fields
 
@@ -427,7 +427,7 @@ cardViewRecord model record tab =
             ]
 
 
-viewFieldInCard : Int -> Lookup -> Value.Model -> Html Msg
+viewFieldInCard : Int -> Lookup -> Field.Model -> Html Msg
 viewFieldInCard labelWidth lookup value =
     let
         field =
@@ -442,8 +442,8 @@ viewFieldInCard labelWidth lookup value =
                     [ text (field.name ++ ": ") ]
                 ]
             , div [ class "card-field-value" ]
-                [ Value.view lookup value
-                    |> Html.map (ValueMsg value)
+                [ Field.view lookup value
+                    |> Html.map (FieldMsg value)
                 ]
             ]
 
@@ -641,7 +641,7 @@ type Msg
     | WindowResized BrowserWindow.Size
     | TabMsg ( Section, Tab.Model, Tab.Msg )
     | TabMsgAll Tab.Msg
-    | ValueMsg Value.Model Value.Msg
+    | FieldMsg Field.Model Field.Msg
     | LookupNextPageReceived ( TableName, List Record )
     | LookupNextPageErrored String
     | ChangeActiveTab Section TableName (Maybe TableName)
@@ -769,27 +769,27 @@ update session msg model =
                                    )
                             )
 
-            ValueMsg argValue valueMsg ->
+            FieldMsg argField valueMsg ->
                 let
-                    valueUpdate : List ( Value.Model, Cmd Msg )
+                    valueUpdate : List ( Field.Model, Cmd Msg )
                     valueUpdate =
                         List.map
                             (\value ->
-                                if argValue == value then
+                                if argField == value then
                                     let
-                                        ( newValue, cmd ) =
-                                            Value.update valueMsg value
+                                        ( newField, cmd ) =
+                                            Field.update valueMsg value
                                     in
-                                        ( newValue, Cmd.map (ValueMsg newValue) cmd )
+                                        ( newField, Cmd.map (FieldMsg newField) cmd )
                                 else
                                     value => Cmd.none
                             )
                             model.values
 
-                    ( updatedValues, subCmd ) =
+                    ( updatedFields, subCmd ) =
                         List.unzip valueUpdate
                 in
-                    { model | values = updatedValues }
+                    { model | values = updatedFields }
                         => Cmd.batch subCmd
 
             LookupNextPageReceived ( sourceTable, recordList ) ->

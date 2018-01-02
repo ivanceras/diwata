@@ -12,20 +12,18 @@ module Views.Window.Row
 import Html exposing (..)
 import Html.Attributes exposing (style, type_, attribute, class, classList, href, id, placeholder, src)
 import Data.Window.Record as Record exposing (Record, RecordId)
-import Data.Window.Value exposing (Value)
+import Data.Window.Value as Value exposing (Value)
 import Route exposing (Route)
 import Data.Window.Tab as Tab exposing (Tab)
 import Data.WindowArena as WindowArena
 import Dict
-import Views.Window.Value as Value
 import Data.Window.Widget exposing (ControlWidget)
 import Data.Window.Field as Field exposing (Field)
-import Data.Window.Value as Value
 import Data.Window.TableName exposing (TableName)
 import Data.Window.Widget as Widget
 import Util exposing (px)
 import Data.Window.Lookup as Lookup exposing (Lookup)
-import Views.Window.Value as Value
+import Views.Window.Field as Field
 import Util exposing ((=>), pair, viewIf)
 import Views.Window.Presentation as Presentation exposing (Presentation(..))
 
@@ -35,7 +33,7 @@ type alias Model =
     , recordId : RecordId
     , record : Record
     , tab : Tab
-    , values : List Value.Model
+    , fields : List Field.Model
     }
 
 
@@ -45,14 +43,14 @@ init recordId record tab =
     , recordId = recordId
     , record = record
     , tab = tab
-    , values = createValues record tab
+    , fields = createFields record tab
     }
 
 
-createValues : Record -> Tab -> List Value.Model
-createValues record tab =
+createFields : Record -> Tab -> List Field.Model
+createFields record tab =
     List.map
-        (Value.init InList record tab)
+        (Field.init InList record tab)
         tab.fields
 
 
@@ -77,11 +75,11 @@ view lookup model =
             (List.map
                 (\value ->
                     div [ class "tab-row-value" ]
-                        [ Value.view lookup value
+                        [ Field.view lookup value
                             |> Html.map (ValueMsg value)
                         ]
                 )
-                model.values
+                model.fields
             )
 
 
@@ -142,14 +140,14 @@ dropdownPageRequestNeeded : Lookup -> Model -> Maybe TableName
 dropdownPageRequestNeeded lookup model =
     List.filterMap
         (\value ->
-            Value.dropdownPageRequestNeeded lookup value
+            Field.dropdownPageRequestNeeded lookup value
         )
-        model.values
+        model.fields
         |> List.head
 
 
 type Msg
-    = ValueMsg Value.Model Value.Msg
+    = ValueMsg Field.Model Field.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -163,16 +161,16 @@ update msg model =
                             if argValue == value then
                                 let
                                     ( newValue, subCmd ) =
-                                        Value.update msg value
+                                        Field.update msg value
                                 in
                                     ( newValue, Cmd.map (ValueMsg newValue) subCmd )
                             else
                                 value => Cmd.none
                         )
-                        model.values
+                        model.fields
 
-                ( updatedValues, subCmds ) =
+                ( updatedFields, subCmds ) =
                     List.unzip updated
             in
-                { model | values = updatedValues }
+                { model | fields = updatedFields }
                     => Cmd.batch subCmds
