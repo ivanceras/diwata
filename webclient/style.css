@@ -89,6 +89,7 @@ input.uuid-textbox{
 
 a.primary-link {
     font-family: monospace;
+    white-space: nowrap;
 }
 
 .tab-row-value > select
@@ -422,6 +423,7 @@ a.primary-link {
 
 .primary-link-wrapper {
     padding: 5px 20px; 
+    overflow: hidden;
 }
 
 .one-one-tab {
