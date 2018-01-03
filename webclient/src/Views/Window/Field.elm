@@ -23,7 +23,7 @@ import Route exposing (Route)
 import Data.WindowArena as WindowArena
 import Data.Window.Lookup as Lookup exposing (Lookup)
 import Util exposing ((=>), Scroll, px)
-import Widgets.Dropdown as Dropdown
+import Widgets.DropdownDisplay as DropdownDisplay
 import Widgets.FixDropdown as FixDropdown
 import Views.Window.Presentation as Presentation exposing (Presentation(..))
 import Data.Window.TableName as TableName exposing (TableName)
@@ -93,7 +93,12 @@ view lookup model =
                             Nothing
 
                 displayValue =
-                    Field.displayValues model.field model.record
+                    case Field.displayValues model.field model.record of
+                        Just value ->
+                            value
+
+                        Nothing ->
+                            ""
 
                 dropdownInfo =
                     case model.dropdownInfo of
@@ -129,8 +134,8 @@ view lookup model =
                         Nothing ->
                             list
             in
-                Dropdown.view listWithSelected dropdown
-                    |> Html.map (DropdownMsg dropdown)
+                DropdownDisplay.view listWithSelected dropdown
+                    |> Html.map (DropdownDisplayMsg dropdown)
 
 
 createWidget : Presentation -> Record -> Tab -> Field -> Maybe Value -> Widget
@@ -411,7 +416,7 @@ createWidget presentation record tab field maybeValue =
             TableLookupDropdown ->
                 let
                     dropdownModel =
-                        Dropdown.init alignment widgetWidth maybeValueString
+                        DropdownDisplay.init alignment widgetWidth maybeValueString
                 in
                     TableDropdown dropdownModel
 
@@ -429,7 +434,7 @@ valueToString maybeValue =
             ""
 
 
-listRecordToListString : DropdownInfo -> List Record -> List ( String, Maybe String )
+listRecordToListString : DropdownInfo -> List Record -> List ( String, String )
 listRecordToListString dropdownInfo lookupRecords =
     let
         displayColumns =
@@ -459,7 +464,7 @@ listRecordToListString dropdownInfo lookupRecords =
 
                     displayString =
                         if List.isEmpty displayValues then
-                            Nothing
+                            ""
                         else
                             List.map
                                 (\value ->
@@ -467,7 +472,6 @@ listRecordToListString dropdownInfo lookupRecords =
                                 )
                                 displayValues
                                 |> String.join separator
-                                |> Just
 
                     displayPk : List Value
                     displayPk =
@@ -490,7 +494,7 @@ listRecordToListString dropdownInfo lookupRecords =
             lookupRecords
 
 
-dropdownModel : Model -> Maybe Dropdown.Model
+dropdownModel : Model -> Maybe DropdownDisplay.Model
 dropdownModel model =
     case model.widget of
         TableDropdown dropdown ->
@@ -517,7 +521,7 @@ dropdownPageRequestNeeded lookup model =
                             listRecordToListString dropdownInfo recordList
                     in
                         if
-                            Dropdown.pageRequestNeeded list dropdown
+                            DropdownDisplay.pageRequestNeeded list dropdown
                                 && not (Lookup.hasReachedLastPage sourceTable lookup)
                         then
                             Just sourceTable
@@ -559,12 +563,12 @@ viewDatePicker styles maybeValue =
 
 
 type Msg
-    = DropdownMsg Dropdown.Model Dropdown.Msg
+    = DropdownDisplayMsg DropdownDisplay.Model DropdownDisplay.Msg
     | FixDropdownMsg FixDropdown.Model FixDropdown.Msg
 
 
 type Widget
-    = TableDropdown Dropdown.Model
+    = TableDropdown DropdownDisplay.Model
     | FixDropdown FixDropdown.Model
     | HtmlWidget (Html Msg)
 
@@ -572,15 +576,15 @@ type Widget
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        DropdownMsg dropdown msg ->
+        DropdownDisplayMsg dropdown msg ->
             case model.widget of
                 TableDropdown dropdown ->
                     let
                         ( newDropdown, subCmd ) =
-                            Dropdown.update msg dropdown
+                            DropdownDisplay.update msg dropdown
                     in
                         { model | widget = TableDropdown newDropdown }
-                            => Cmd.map (DropdownMsg newDropdown) subCmd
+                            => Cmd.map (DropdownDisplayMsg newDropdown) subCmd
 
                 _ ->
                     model => Cmd.none

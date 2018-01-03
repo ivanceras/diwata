@@ -1,4 +1,4 @@
-module Widgets.Dropdown exposing (view, init, Msg(..), Model, update, pageRequestNeeded)
+module Widgets.DropdownDisplay exposing (view, init, Msg(..), Model, update, pageRequestNeeded)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -81,12 +81,12 @@ isScrolledBottom list model =
         (scrollTop + dropdownHeight > contentHeight - bottomAllowance)
 
 
-pageRequestNeeded : List ( String, Maybe String ) -> Model -> Bool
+pageRequestNeeded : List ( String, String ) -> Model -> Bool
 pageRequestNeeded list model =
     isScrolledBottom list model
 
 
-view : List ( String, Maybe String ) -> Model -> Html Msg
+view : List ( String, String ) -> Model -> Html Msg
 view list model =
     let
         alignment =
@@ -110,7 +110,7 @@ view list model =
             ]
 
 
-viewInputButton : Attribute Msg -> List ( String, Maybe String ) -> Model -> Html Msg
+viewInputButton : Attribute Msg -> List ( String, String ) -> Model -> Html Msg
 viewInputButton styles list model =
     let
         selectedValue =
@@ -136,12 +136,7 @@ viewInputButton styles list model =
                         pkPadded =
                             String.padLeft pkWidth ' ' pk
                     in
-                        case choice of
-                            Just choice ->
-                                pkPadded ++ "  |  " ++ choice
-
-                            Nothing ->
-                                pkPadded
+                        pkPadded ++ "  |  " ++ choice
 
                 Nothing ->
                     ""
@@ -163,18 +158,13 @@ viewInputButton styles list model =
             ]
 
 
-viewDropdown : Attribute Msg -> List ( String, Maybe String ) -> Model -> Html Msg
+viewDropdown : Attribute Msg -> List ( String, String ) -> Model -> Html Msg
 viewDropdown styles list model =
     let
         sorted =
             List.sortBy
                 (\( pk, display ) ->
-                    case display of
-                        Just display ->
-                            String.toLower display
-
-                        Nothing ->
-                            ""
+                    String.toLower display
                 )
                 list
 
@@ -191,29 +181,20 @@ viewDropdown styles list model =
             ]
 
 
-viewOption : Int -> ( String, Maybe String ) -> Html Msg
+viewOption : Int -> ( String, String ) -> Html Msg
 viewOption pkWidth ( pk, choice ) =
-    let
-        display =
-            case choice of
-                Just choice ->
-                    choice
-
-                Nothing ->
-                    ""
-    in
-        div
-            [ class "dropdown-option"
-            , onMouseDown (SelectionChanged pk)
+    div
+        [ class "dropdown-option"
+        , onMouseDown (SelectionChanged pk)
+        ]
+        [ div
+            [ class "pk-value"
+            , style [ ( "min-width", px pkWidth ) ]
             ]
-            [ div
-                [ class "pk-value"
-                , style [ ( "min-width", px pkWidth ) ]
-                ]
-                [ text pk ]
-            , div [ class "choice" ]
-                [ text display ]
-            ]
+            [ text pk ]
+        , div [ class "choice" ]
+            [ text choice ]
+        ]
 
 
 type Msg
