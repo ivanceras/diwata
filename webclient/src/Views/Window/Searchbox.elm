@@ -54,7 +54,7 @@ dropdownFilter list styles =
                     option [ value v ]
                         [ text v ]
                 )
-                list
+                ("" :: list)
             )
         ]
 

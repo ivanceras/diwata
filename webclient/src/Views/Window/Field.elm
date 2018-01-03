@@ -24,6 +24,7 @@ import Data.WindowArena as WindowArena
 import Data.Window.Lookup as Lookup exposing (Lookup)
 import Util exposing ((=>), Scroll, px)
 import Widgets.Dropdown as Dropdown
+import Widgets.FixDropdown as FixDropdown
 import Views.Window.Presentation as Presentation exposing (Presentation(..))
 import Data.Window.TableName as TableName exposing (TableName)
 import Html.Attributes exposing (id, for, name, selected, checked, style, class, type_, value)
@@ -35,7 +36,7 @@ type alias Model =
     , record : Record
     , value : Maybe Value
     , widget : Widget
-    , dropdownInfo: Maybe DropdownInfo
+    , dropdownInfo : Maybe DropdownInfo
     }
 
 
@@ -59,7 +60,8 @@ init presentation record tab field =
                 Nothing ->
                     Nothing
 
-        widget = createWidget presentation record tab field maybeValue
+        widget =
+            createWidget presentation record tab field maybeValue
     in
         { tab = tab
         , field = field
@@ -75,6 +77,10 @@ view lookup model =
     case model.widget of
         HtmlWidget html ->
             html
+
+        FixDropdown fixDropdown ->
+            FixDropdown.view fixDropdown
+                |> Html.map (FixDropdownMsg fixDropdown)
 
         TableDropdown dropdown ->
             let
@@ -125,6 +131,7 @@ view lookup model =
             in
                 Dropdown.view listWithSelected dropdown
                     |> Html.map (DropdownMsg dropdown)
+
 
 createWidget : Presentation -> Record -> Tab -> Field -> Maybe Value -> Widget
 createWidget presentation record tab field maybeValue =
@@ -308,33 +315,12 @@ createWidget presentation record tab field maybeValue =
                 HtmlWidget
                     (viewDatePicker styles maybeValue)
 
-            FixDropdown list ->
+            Widget.FixDropdown list ->
                 let
-                    listWithBlank =
-                        "" :: list
+                    fixDropdownModel =
+                        FixDropdown.init alignment widgetWidth maybeValueString list
                 in
-                    HtmlWidget
-                        (select [ styles ]
-                            (List.map
-                                (\v ->
-                                    let
-                                        isSelected =
-                                            case maybeValue of
-                                                Just fieldValue ->
-                                                    v == (Value.valueToString fieldValue)
-
-                                                Nothing ->
-                                                    False
-                                    in
-                                        option
-                                            [ value v
-                                            , selected isSelected
-                                            ]
-                                            [ text v ]
-                                )
-                                listWithBlank
-                            )
-                        )
+                    FixDropdown fixDropdownModel
 
             TagSelection ->
                 let
@@ -432,6 +418,7 @@ createWidget presentation record tab field maybeValue =
             _ ->
                 Debug.crash ("unable to handle widget:" ++ toString controlWidget)
 
+
 valueToString : Maybe Value -> String
 valueToString maybeValue =
     case maybeValue of
@@ -502,6 +489,7 @@ listRecordToListString dropdownInfo lookupRecords =
             )
             lookupRecords
 
+
 dropdownModel : Model -> Maybe Dropdown.Model
 dropdownModel model =
     case model.widget of
@@ -510,6 +498,7 @@ dropdownModel model =
 
         _ ->
             Nothing
+
 
 dropdownPageRequestNeeded : Lookup -> Model -> Maybe TableName
 dropdownPageRequestNeeded lookup model =
@@ -568,31 +557,43 @@ viewDatePicker styles maybeValue =
             ]
             []
 
+
 type Msg
     = DropdownMsg Dropdown.Model Dropdown.Msg
+    | FixDropdownMsg FixDropdown.Model FixDropdown.Msg
+
 
 type Widget
     = TableDropdown Dropdown.Model
+    | FixDropdown FixDropdown.Model
     | HtmlWidget (Html Msg)
+
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         DropdownMsg dropdown msg ->
-            let
-                ( widget, cmd ) =
-                    case model.widget of
-                        HtmlWidget html ->
-                            ( HtmlWidget html, Cmd.none )
+            case model.widget of
+                TableDropdown dropdown ->
+                    let
+                        ( newDropdown, subCmd ) =
+                            Dropdown.update msg dropdown
+                    in
+                        { model | widget = TableDropdown newDropdown }
+                            => Cmd.map (DropdownMsg newDropdown) subCmd
 
-                        TableDropdown dropdown ->
-                            let
-                                ( newDropdown, subCmd ) =
-                                    Dropdown.update msg dropdown
-                            in
-                                ( TableDropdown newDropdown
-                                , Cmd.map (DropdownMsg newDropdown) subCmd
-                                )
-            in
-                { model | widget = widget }
-                    => cmd
+                _ ->
+                    model => Cmd.none
+
+        FixDropdownMsg fixDropdown msg ->
+            case model.widget of
+                FixDropdown fixDropdown ->
+                    let
+                        ( newFix, subCmd ) =
+                            FixDropdown.update msg fixDropdown
+                    in
+                        { model | widget = FixDropdown newFix }
+                            => Cmd.map (FixDropdownMsg newFix) subCmd
+
+                _ ->
+                    model => Cmd.none
