@@ -218,7 +218,8 @@ viewRowShadow pageRow tab =
     div [ class "row-shadow" ]
         (List.map
             (\row ->
-                Row.viewRowControls row.recordId tab
+                Row.viewRowControls row row.recordId tab
+                    |> Html.map (RowMsg row)
             )
             pageRow
         )

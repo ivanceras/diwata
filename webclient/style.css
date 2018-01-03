@@ -40,13 +40,13 @@
     height: 30px;
     flex: 1;
 }
-.card-field-value > input {
+.card-field-value input {
     border-width: 0 0 1px 0;
     border-style: solid;
     border-color: #ccc;
 }
 
-.card-field-value > textarea {
+.card-field-value textarea {
     border-width: 1px 1px 1px 1px;
     border-style: solid;
     border-color: #ccc;
@@ -75,7 +75,7 @@
     height: 40px; /*DO NOT change: this is used as basis inside code calculation in elm code */
 }
 
-.tab-row-value > input
+.tab-row-value input
  {
     border-width: 0 0 1px 0;
     border-style: solid;
@@ -92,7 +92,7 @@ a.primary-link {
     white-space: nowrap;
 }
 
-.tab-row-value > select
+.tab-row-value  select
  {
     border-width: 0 0 1px 0;
     border-style: solid;
@@ -100,6 +100,13 @@ a.primary-link {
     height: 30px;
     background-color: transparent;
 }
+
+.widget-value.is-changed,
+.widget-value.is-changed textarea,
+.widget-value.is-changed input{
+    background-color: #fff6e2;
+}
+
 
 .frozen-head{
     min-width: 120px;
@@ -170,6 +177,11 @@ a.primary-link {
 .row-controls .row-undo,
 .row-controls .row-save {
     color: #ccc;
+}
+
+.row-controls .row-undo.is-active,
+.row-controls .row-save.is-active {
+    color: #333;
 }
 
 .tab-names{

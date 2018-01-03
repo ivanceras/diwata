@@ -3,9 +3,10 @@ module Views.Window.Field
         ( init
         , Model
         , view
-        , Msg
+        , Msg(..)
         , update
         , dropdownPageRequestNeeded
+        , isChanged
         )
 
 import Data.Window.Value as Value exposing (Value(..), ArrayValue(..))
@@ -27,17 +28,25 @@ import Widgets.DropdownDisplay as DropdownDisplay
 import Widgets.FixDropdown as FixDropdown
 import Views.Window.Presentation as Presentation exposing (Presentation(..))
 import Data.Window.TableName as TableName exposing (TableName)
-import Html.Attributes exposing (id, for, name, selected, checked, style, class, type_, value)
+import Html.Attributes exposing (id, for, name, selected, checked, style, class, classList, type_, value)
+import Html.Events exposing (onInput, onCheck)
 
 
 type alias Model =
     { tab : Tab
     , field : Field
+    , presentation : Presentation
     , record : Record
     , value : Maybe Value
     , widget : Widget
+    , editValue : Maybe Value
     , dropdownInfo : Maybe DropdownInfo
     }
+
+
+isChanged : Model -> Bool
+isChanged model =
+    model.value /= model.editValue
 
 
 init : Presentation -> Record -> Tab -> Field -> Model
@@ -65,15 +74,26 @@ init presentation record tab field =
     in
         { tab = tab
         , field = field
+        , presentation = presentation
         , record = record
         , widget = widget
         , value = maybeValue
+        , editValue = maybeValue
         , dropdownInfo = dropdownInfo
         }
 
 
 view : Lookup -> Model -> Html Msg
 view lookup model =
+    div
+        [ class "widget-value"
+        , classList [ ( "is-changed", isChanged model ) ]
+        ]
+        [ viewWidget lookup model ]
+
+
+viewWidget : Lookup -> Model -> Html Msg
+viewWidget lookup model =
     case model.widget of
         HtmlWidget html ->
             html
@@ -193,6 +213,7 @@ createWidget presentation record tab field maybeValue =
                         [ type_ "text"
                         , styles
                         , value valueString
+                        , onInput StringValueChanged
                         ]
                         []
                     )
@@ -229,6 +250,7 @@ createWidget presentation record tab field maybeValue =
                                     [ type_ "text"
                                     , styles
                                     , value valueString
+                                    , onInput StringValueChanged
                                     ]
                                     []
                                 )
@@ -243,6 +265,7 @@ createWidget presentation record tab field maybeValue =
                                 , style [ ( "height", px widgetHeight ) ]
                                 , style [ ( "min-height", px 24 ) ]
                                 , style [ ( "min-width", px 100 ) ]
+                                , onInput StringValueChanged
                                 ]
                                 []
                             )
@@ -253,6 +276,7 @@ createWidget presentation record tab field maybeValue =
                                 [ type_ "text"
                                 , styles
                                 , value valueString
+                                , onInput StringValueChanged
                                 ]
                                 []
                             )
@@ -264,6 +288,7 @@ createWidget presentation record tab field maybeValue =
                         , styles
                         , value valueString
                         , class "uuid-textbox"
+                        , onInput StringValueChanged
                         ]
                         []
                     )
@@ -274,6 +299,7 @@ createWidget presentation record tab field maybeValue =
                         [ type_ "password"
                         , styles
                         , value valueString
+                        , onInput StringValueChanged
                         ]
                         []
                     )
@@ -295,12 +321,14 @@ createWidget presentation record tab field maybeValue =
                                     input
                                         [ type_ "checkbox"
                                         , checkedValue
+                                        , onCheck BoolValueChanged
                                         ]
                                         []
 
                             Nothing ->
                                 input
                                     [ type_ "checkbox"
+                                    , onCheck BoolValueChanged
                                     ]
                                     []
                 in
@@ -565,6 +593,10 @@ viewDatePicker styles maybeValue =
 type Msg
     = DropdownDisplayMsg DropdownDisplay.Model DropdownDisplay.Msg
     | FixDropdownMsg FixDropdown.Model FixDropdown.Msg
+    | StringValueChanged String
+    | BoolValueChanged Bool
+    | ResetChanges
+    | SetValue Value
 
 
 type Widget
@@ -582,8 +614,26 @@ update msg model =
                     let
                         ( newDropdown, subCmd ) =
                             DropdownDisplay.update msg dropdown
+
+                        dropdownSelected =
+                            newDropdown.selected
+
+                        dropdownValue =
+                            case dropdownSelected of
+                                Just dropdownSelected ->
+                                    Field.cast dropdownSelected model.field
+                                        |> Just
+
+                                Nothing ->
+                                    Nothing
+
+                        _ =
+                            Debug.log "dropdownValue" dropdownValue
                     in
-                        { model | widget = TableDropdown newDropdown }
+                        { model
+                            | widget = TableDropdown newDropdown
+                            , editValue = dropdownValue
+                        }
                             => Cmd.map (DropdownDisplayMsg newDropdown) subCmd
 
                 _ ->
@@ -601,3 +651,62 @@ update msg model =
 
                 _ ->
                     model => Cmd.none
+
+        StringValueChanged v ->
+            let
+                value =
+                    Value.Text v
+            in
+                { model | editValue = Just value }
+                    => Cmd.none
+
+        BoolValueChanged v ->
+            let
+                value =
+                    Value.Bool v
+            in
+                { model | editValue = Just value }
+                    => Cmd.none
+
+        ResetChanges ->
+            let
+                updatedWidget =
+                    updateWidgetValue model model.value
+            in
+                { model
+                    | editValue = model.value
+                    , widget = updatedWidget
+                }
+                    => Cmd.none
+
+        SetValue value ->
+            let
+                updatedWidget =
+                    updateWidgetValue model (Just value)
+            in
+                { model
+                    | editValue = Just value
+                    , widget = updatedWidget
+                }
+                    => Cmd.none
+
+
+updateWidgetValue : Model -> Maybe Value -> Widget
+updateWidgetValue model value =
+    let
+        widget =
+            model.widget
+
+        presentation =
+            model.presentation
+
+        record =
+            model.record
+
+        tab =
+            model.tab
+
+        field =
+            model.field
+    in
+        createWidget presentation record tab field value

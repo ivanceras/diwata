@@ -11,6 +11,7 @@ module Views.Window.Row
 
 import Html exposing (..)
 import Html.Attributes exposing (style, type_, attribute, class, classList, href, id, placeholder, src)
+import Html.Events exposing (onClick)
 import Data.Window.Record as Record exposing (Record, RecordId)
 import Data.Window.Value as Value exposing (Value)
 import Route exposing (Route)
@@ -35,6 +36,11 @@ type alias Model =
     , tab : Tab
     , fields : List Field.Model
     }
+
+
+isChanged : Model -> Bool
+isChanged model =
+    List.any Field.isChanged model.fields
 
 
 init : RecordId -> Record -> Tab -> Model
@@ -71,7 +77,10 @@ view lookup model =
 
         -- rearrange fields here if needed
     in
-        div [ class "tab-row" ]
+        div
+            [ class "tab-row"
+            , classList [ ( "is-changed", isChanged model ) ]
+            ]
             (List.map
                 (\value ->
                     div [ class "tab-row-value" ]
@@ -83,13 +92,13 @@ view lookup model =
             )
 
 
-viewRowControls : RecordId -> Tab -> Html msg
-viewRowControls recordId tab =
+viewRowControls : Model -> RecordId -> Tab -> Html Msg
+viewRowControls model recordId tab =
     div [ class "row-controls" ]
         [ viewSelectionControl
         , viewRecordDetail recordId tab
-        , viewUndo
-        , viewSave
+        , viewUndo model
+        , viewSave model
         ]
 
 
@@ -100,28 +109,35 @@ viewSelectionControl =
         ]
 
 
-viewEditInPlace : Html msg
+viewEditInPlace : Html Msg
 viewEditInPlace =
     div [ class "edit-in-place" ]
         [ div [ class "icon icon-pencil" ] []
         ]
 
 
-viewUndo : Html msg
-viewUndo =
-    div [ class "row-undo" ]
+viewUndo : Model -> Html Msg
+viewUndo model =
+    div
+        [ class "row-undo"
+        , classList [ ( "is-active", isChanged model ) ]
+        , onClick ResetChanges
+        ]
         [ div [ class "icon icon-block" ] []
         ]
 
 
-viewSave : Html msg
-viewSave =
-    div [ class "row-save" ]
+viewSave : Model -> Html Msg
+viewSave model =
+    div
+        [ class "row-save"
+        , classList [ ( "is-active", isChanged model ) ]
+        ]
         [ div [ class "icon icon-floppy" ] []
         ]
 
 
-viewRecordDetail : RecordId -> Tab -> Html msg
+viewRecordDetail : RecordId -> Tab -> Html Msg
 viewRecordDetail recordId tab =
     let
         recordIdString =
@@ -148,6 +164,7 @@ dropdownPageRequestNeeded lookup model =
 
 type Msg
     = ValueMsg Field.Model Field.Msg
+    | ResetChanges
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -174,3 +191,24 @@ update msg model =
             in
                 { model | fields = updatedFields }
                     => Cmd.batch subCmds
+
+        ResetChanges ->
+            let
+                ( newFields, subCmds ) =
+                    updateFields Field.ResetChanges model
+                        |> List.unzip
+            in
+                { model | fields = newFields }
+                    => Cmd.batch
+                        (List.map2
+                            (\field cmd ->
+                                Cmd.map (ValueMsg field) cmd
+                            )
+                            newFields
+                            subCmds
+                        )
+
+
+updateFields : Field.Msg -> Model -> List ( Field.Model, Cmd Field.Msg )
+updateFields msg model =
+    List.map (Field.update msg) model.fields

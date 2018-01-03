@@ -15,6 +15,7 @@ module Data.Window.Field
         , sourceTable
         , displayValues
         , fontSize
+        , cast
         )
 
 import Json.Decode as Decode exposing (Decoder)
@@ -146,6 +147,44 @@ simpleDataType field =
 
         Compound _ ->
             Nothing
+
+
+cast : String -> Field -> Value
+cast value field =
+    let
+        dataType =
+            case simpleDataType field of
+                Just dataType ->
+                    dataType
+
+                Nothing ->
+                    Debug.crash "There should be data type"
+    in
+        case dataType of
+            DataType.Text ->
+                Value.Text value
+
+            DataType.Int ->
+                Value.Int (forceInt value)
+
+            DataType.Smallint ->
+                Value.Smallint (forceInt value)
+
+            DataType.Tinyint ->
+                Value.Tinyint (forceInt value)
+
+            _ ->
+                Debug.crash ("unhandled casting of dataType " ++ toString dataType)
+
+
+forceInt : String -> Int
+forceInt value =
+    case String.toInt value of
+        Ok intValue ->
+            intValue
+
+        Err _ ->
+            Debug.crash "this shouldn't happend"
 
 
 columnDataTypes : ColumnDetail -> List DataType

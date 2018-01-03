@@ -6,6 +6,13 @@ import Data.Window.Field as Field exposing (Field)
 import Util exposing (px)
 import Data.Window.Widget as Widget exposing (Widget(..))
 import Data.Window.DataType as DataType exposing (DataType)
+import Data.Window.Value as Value exposing (Value(..))
+
+
+type alias Model =
+    { value1 : Maybe Value
+    , value2 : Maybe Value
+    }
 
 
 textSearch : Attribute msg -> Html msg
