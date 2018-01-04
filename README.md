@@ -1,5 +1,5 @@
 # Diwata 
-Diwata is a database interface with the goal of being usable, user-friendly with its basic and advanced functionality be discoverable by the user.
+Diwata is a database interface for PostgreSQL with the goal of being usable, user-friendly with its basic and advanced functionality be discoverable by the user.
 Goal of diwata is to be a replacement of back-end admin without explicitly writing the code for it.[1]
 An attempt to create back-end to end all back-ends.
 
