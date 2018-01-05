@@ -1,7 +1,8 @@
 [workspace]
 members = [
     "intel",
-    "rustorm",
     "diwata",
 ]
+[target.heroku]
+version = "nightly-2017-12-21"
 

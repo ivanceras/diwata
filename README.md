@@ -30,6 +30,7 @@ Distinguisable referred record in a dropdown
 - elm v0.18 ( elm installation needed npm or yarn)
 - rsync  ( for fast syncing files over and over )
 - google-closure-compiler (optional, for release build)
+- sed (search and replace `app.js` with `app.min.js` in `index.html`
 - sakila database (for demo and testing) [2]
 
 ## Install Dependencies 
