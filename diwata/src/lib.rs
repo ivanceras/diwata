@@ -11,6 +11,7 @@ extern crate rocket_contrib;
 extern crate rustorm;
 use rocket::Rocket;
 use rustorm::Pool;
+use rustorm::pool;
 use rocket_contrib::Json;
 use intel::Window;
 use intel::data_service;
@@ -76,6 +77,12 @@ fn get_pool_em() -> Result<EntityManager, ServiceError> {
         Ok(em) => Ok(em),
         Err(e) => return Err(ServiceError::DbError(e)),
     }
+}
+
+fn test_db_url_connection() -> Result<(), ServiceError> {
+    let db_url = &get_db_url()?;
+    pool::test_connection(db_url)?;
+    Ok(())
 }
 
 fn get_pool_dm() -> Result<RecordManager, ServiceError> {
@@ -345,6 +352,11 @@ fn favicon() -> Option<NamedFile> {
 }
 
 pub fn rocket() -> Rocket {
+    let conn = test_db_url_connection();
+    match conn {
+        Ok(_) => println!("connection is valid"),
+        Err(e) => println!("connection Error: {:?}", e)
+    };
     rocket::ignite()
         .attach(AdHoc::on_response(|_req, resp| {
             resp.set_header(AccessControlAllowOrigin::Any);
