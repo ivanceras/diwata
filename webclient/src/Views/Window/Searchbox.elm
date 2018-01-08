@@ -1,4 +1,4 @@
-module Views.Window.Searchbox exposing (view)
+module Views.Window.Searchbox exposing (Model, init, Msg, view, update)
 
 import Html exposing (..)
 import Html.Attributes exposing (class, style, type_, value)
@@ -7,15 +7,26 @@ import Util exposing (px)
 import Data.Window.Widget as Widget exposing (Widget(..))
 import Data.Window.DataType as DataType exposing (DataType)
 import Data.Window.Value as Value exposing (Value(..))
+import Util exposing ((=>))
+import Html.Events exposing (onInput, onCheck)
 
 
 type alias Model =
-    { value1 : Maybe Value
+    { field : Field
+    , value1 : Maybe Value
     , value2 : Maybe Value
     }
 
 
-textSearch : Attribute msg -> Html msg
+init : Field -> Model
+init field =
+    { field = field
+    , value1 = Nothing
+    , value2 = Nothing
+    }
+
+
+textSearch : Attribute Msg -> Html Msg
 textSearch styles =
     div [ class "column-filter" ]
         [ i
@@ -26,12 +37,13 @@ textSearch styles =
             [ class "filter-value"
             , styles
             , type_ "search"
+            , onInput StringValue1Changed
             ]
             []
         ]
 
 
-numberSearch : Attribute msg -> Html msg
+numberSearch : Attribute Msg -> Html Msg
 numberSearch styles =
     div [ class "column-filter" ]
         [ i
@@ -42,12 +54,13 @@ numberSearch styles =
             [ class "filter-value"
             , type_ "number"
             , styles
+            , onInput NumberValue1Changed
             ]
             []
         ]
 
 
-dropdownFilter : List String -> Attribute msg -> Html msg
+dropdownFilter : List String -> Attribute Msg -> Html Msg
 dropdownFilter list styles =
     div
         [ class "column-filter"
@@ -66,24 +79,25 @@ dropdownFilter list styles =
         ]
 
 
-noSearch : Attribute msg -> Html msg
+noSearch : Attribute Msg -> Html Msg
 noSearch styles =
     div [ styles ] []
 
 
-booleanFilter : Attribute msg -> Html msg
+booleanFilter : Attribute Msg -> Html Msg
 booleanFilter styles =
     div [ class "column-filter" ]
         [ div [ styles ]
             [ input
                 [ type_ "checkbox"
+                , onCheck BooleanValue1Changed
                 ]
                 []
             ]
         ]
 
 
-dateRangeFilter : Attribute msg -> Html msg
+dateRangeFilter : Attribute Msg -> Html Msg
 dateRangeFilter styles =
     let
         dateWidth =
@@ -104,20 +118,30 @@ dateRangeFilter styles =
                 [ type_ "date"
                 , class "start-date"
                 , style [ ( "width", px halfWidth ) ]
+                , onInput DateValue1Changed
                 ]
                 []
             , input
                 [ type_ "date"
                 , class "end-date"
                 , style [ ( "width", px halfWidth ) ]
+                , onInput DateValue2Changed
                 ]
                 []
             ]
 
 
-view : Field -> Html msg
-view field =
+view : Model -> Html Msg
+view model =
+    createSearchbox model
+
+
+createSearchbox : Model -> Html Msg
+createSearchbox model =
     let
+        field =
+            model.field
+
         controlWidget =
             field.controlWidget
 
@@ -221,3 +245,64 @@ view field =
 
             _ ->
                 noSearch noSearchStyles
+
+
+type Msg
+    = StringValue1Changed String
+    | NumberValue1Changed String
+    | BooleanValue1Changed Bool
+    | DateValue1Changed String
+    | DateValue2Changed String
+
+
+update : Model -> Msg -> ( Model, Cmd Msg )
+update model msg =
+    let
+        _ =
+            Debug.log "msg" msg
+    in
+        case msg of
+            StringValue1Changed v ->
+                let
+                    value =
+                        Value.Text (v)
+                in
+                    { model | value1 = Just value }
+                        => Cmd.none
+
+            NumberValue1Changed v ->
+                let
+                    value =
+                        case String.toInt v of
+                            Ok v ->
+                                Value.Int (v)
+
+                            Err _ ->
+                                Value.Text (v)
+                in
+                    { model | value1 = Just value }
+                        => Cmd.none
+
+            BooleanValue1Changed v ->
+                let
+                    value =
+                        Value.Bool (v)
+                in
+                    { model | value1 = Just value }
+                        => Cmd.none
+
+            DateValue1Changed v ->
+                let
+                    value =
+                        Value.Text (v)
+                in
+                    { model | value1 = Just value }
+                        => Cmd.none
+
+            DateValue2Changed v ->
+                let
+                    value =
+                        Value.Text (v)
+                in
+                    { model | value2 = Just value }
+                        => Cmd.none

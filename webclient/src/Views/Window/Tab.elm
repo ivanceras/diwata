@@ -281,10 +281,15 @@ viewColumns model fields =
 
 viewColumnWithSearchbox : Field -> Html Msg
 viewColumnWithSearchbox field =
-    div [ class "tab-column-with-filter" ]
-        [ viewColumn field
-        , Searchbox.view field
-        ]
+    let
+        searchboxModel =
+            Searchbox.init field
+    in
+        div [ class "tab-column-with-filter" ]
+            [ viewColumn field
+            , Searchbox.view searchboxModel
+                |> Html.map (SearchboxMsg searchboxModel)
+            ]
 
 
 viewColumn : Field -> Html Msg
@@ -346,6 +351,7 @@ type Msg
     | NextPageReceived Rows
     | NextPageError String
     | RowMsg Row.Model Row.Msg
+    | SearchboxMsg Searchbox.Model Searchbox.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -409,6 +415,13 @@ update msg model =
                         updatedPage
             in
                 { model | pageRows = pageRows } => Cmd.batch subCmd
+
+        SearchboxMsg searchbox msg ->
+            let
+                ( newSearchbox, subCmd ) =
+                    Searchbox.update searchbox msg
+            in
+                model => Cmd.none
 
 
 subscriptions : Model -> Sub Msg
