@@ -35,11 +35,6 @@ use intel::table_intel;
 
 mod error;
 
-//static DB_URL: &'static str = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
-//static DB_URL: &'static str = "postgres://postgres:p0stgr3s@localhost:5432/bazaar_v8";
-//static DB_URL: &'static str = "postgres://rforum:rforum@localhost:5432/rforum";
-//static DB_URL: &'static str = "postgres://rforum:rforum@localhost:5432/sakila";
-
 
 static PAGE_SIZE: u32 = 40;
 
