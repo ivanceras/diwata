@@ -173,6 +173,9 @@ cast value field =
             DataType.Tinyint ->
                 Value.Tinyint (forceInt value)
 
+            DataType.Uuid ->
+                Value.Uuid value
+
             _ ->
                 Debug.crash ("unhandled casting of dataType " ++ toString dataType)
 
