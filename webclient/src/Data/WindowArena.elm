@@ -8,6 +8,7 @@ module Data.WindowArena
         , argToString
         , Section(..)
         , rerouteNeeded
+        , updateFilter
         )
 
 import Data.Window.TableName as TableName exposing (TableName, tableNameToString)
@@ -15,6 +16,7 @@ import UrlParser
 import Data.Query as Query exposing (orderClauseParser, orderClauseToString)
 import Util exposing (trim)
 import Data.Window.Record as Record exposing (Record, RecordId)
+import Data.Window.Filter as Filter exposing (Condition)
 
 
 {-| WindowArena is the centerpiece of the app.
@@ -85,13 +87,13 @@ Example url:
 -}
 type alias ArenaArg =
     { tableName : TableName
-    , filter : Maybe String
+    , filter : Maybe Condition
     , page : Maybe Int
     , order : Maybe (List Query.Order)
     , selected : Maybe String
     , sectionTable : Maybe ( Section, TableName )
     , sectionViaLinker : Maybe TableName
-    , sectionFilter : Maybe String
+    , sectionFilter : Maybe Condition
     , sectionPage : Maybe Int
     , sectionOrder : Maybe (List Query.Order)
     , sectionSelected : Maybe String
@@ -126,8 +128,8 @@ argToString arg =
 
         appendFilter =
             case arg.filter of
-                Just filter ->
-                    appendTable ++ [ "filter", filter ]
+                Just cond ->
+                    appendTable ++ [ "filter", Filter.toString cond ]
 
                 Nothing ->
                     appendTable
@@ -174,8 +176,8 @@ argToString arg =
 
         appendSectionFilter =
             case arg.sectionFilter of
-                Just filter ->
-                    appendSectionViaLinker ++ [ "section_filter", filter ]
+                Just cond ->
+                    appendSectionViaLinker ++ [ "section_filter", Filter.toString cond ]
 
                 Nothing ->
                     appendSectionViaLinker
@@ -294,7 +296,7 @@ parseArenaArgs url =
                                 (\( key, value ) arg ->
                                     case key of
                                         "filter" ->
-                                            { arg | filter = Just value }
+                                            { arg | filter = Just (Filter.parse value) }
 
                                         "page" ->
                                             { arg
@@ -319,7 +321,7 @@ parseArenaArgs url =
                                             { arg | sectionViaLinker = Just (TableName.fromStringOrBlank value) }
 
                                         "section_filter" ->
-                                            { arg | sectionFilter = Just value }
+                                            { arg | sectionFilter = Just (Filter.parse value) }
 
                                         "section_page" ->
                                             { arg
@@ -346,3 +348,8 @@ parseArenaArgs url =
                     initialArgs
     in
         arenaArgs
+
+
+updateFilter : Condition -> ArenaArg -> ArenaArg
+updateFilter condition oldArenaArg =
+    { oldArenaArg | filter = Just condition }

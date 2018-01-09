@@ -1,4 +1,12 @@
-module Views.Window.Searchbox exposing (Model, init, Msg, view, update)
+module Views.Window.Searchbox
+    exposing
+        ( Model
+        , init
+        , Msg
+        , view
+        , update
+        , getSearchText
+        )
 
 import Html exposing (..)
 import Html.Attributes exposing (class, style, type_, value)
@@ -9,25 +17,45 @@ import Data.Window.DataType as DataType exposing (DataType)
 import Data.Window.Value as Value exposing (Value(..))
 import Util exposing ((=>))
 import Html.Events exposing (onInput, onCheck)
+import Data.Window.Filter as Filter
 
 
 type alias Model =
     { field : Field
-    , value1 : Maybe Value
-    , value2 : Maybe Value
+    , value1 : Maybe String
+    , value2 : Maybe String
     }
 
 
-init : Field -> Model
-init field =
-    { field = field
-    , value1 = Nothing
-    , value2 = Nothing
-    }
+init : Field -> Maybe String -> Model
+init field searchValue =
+    let
+        ( value1, value2 ) =
+            Filter.split searchValue
+    in
+        { field = field
+        , value1 = value1
+        , value2 = value2
+        }
 
 
-textSearch : Attribute Msg -> Html Msg
-textSearch styles =
+getSearchText : Model -> Maybe String
+getSearchText model =
+    case model.value1 of
+        Just value1 ->
+            case model.value2 of
+                Just value2 ->
+                    Just (value1 ++ "," ++ value2)
+
+                Nothing ->
+                    Just value1
+
+        Nothing ->
+            Nothing
+
+
+textSearch : Attribute Msg -> String -> Html Msg
+textSearch styles searchValue =
     div [ class "column-filter" ]
         [ i
             [ class "fa fa-search filter-value-icon"
@@ -37,14 +65,15 @@ textSearch styles =
             [ class "filter-value"
             , styles
             , type_ "search"
+            , value searchValue
             , onInput StringValue1Changed
             ]
             []
         ]
 
 
-numberSearch : Attribute Msg -> Html Msg
-numberSearch styles =
+numberSearch : Attribute Msg -> String -> Html Msg
+numberSearch styles searchValue =
     div [ class "column-filter" ]
         [ i
             [ class "fa fa-search filter-value-icon"
@@ -54,6 +83,7 @@ numberSearch styles =
             [ class "filter-value"
             , type_ "number"
             , styles
+            , value searchValue
             , onInput NumberValue1Changed
             ]
             []
@@ -197,16 +227,22 @@ createSearchbox model =
             style
                 [ ( "width", px defaultWidgetWidth )
                 ]
+
+        value1String =
+            Maybe.withDefault "" model.value1
+
+        value2String =
+            Maybe.withDefault "" model.value2
     in
         case widget of
             Textbox ->
-                textSearch styles
+                textSearch styles value1String
 
             UuidTextbox ->
-                textSearch styles
+                textSearch styles value1String
 
             MultilineText ->
-                textSearch styles
+                textSearch styles value1String
 
             Password ->
                 noSearch noSearchStyles
@@ -223,25 +259,25 @@ createSearchbox model =
             PrimaryUrlLink ->
                 case dataType of
                     DataType.Int ->
-                        numberSearch styles
+                        numberSearch styles value1String
 
                     DataType.Text ->
-                        textSearch styles
+                        textSearch styles value1String
 
                     DataType.Uuid ->
-                        textSearch styles
+                        textSearch styles value1String
 
                     _ ->
                         Debug.crash "Primary url search data type, not yet handled for " dataType
 
             TableLookupDropdown ->
-                textSearch styles
+                textSearch styles value1String
 
             FixDropdown list ->
                 dropdownFilter list styles
 
             TagSelection ->
-                textSearch styles
+                textSearch styles value1String
 
             _ ->
                 noSearch noSearchStyles
@@ -263,46 +299,21 @@ update model msg =
     in
         case msg of
             StringValue1Changed v ->
-                let
-                    value =
-                        Value.Text (v)
-                in
-                    { model | value1 = Just value }
-                        => Cmd.none
+                { model | value1 = Just v }
+                    => Cmd.none
 
             NumberValue1Changed v ->
-                let
-                    value =
-                        case String.toInt v of
-                            Ok v ->
-                                Value.Int (v)
-
-                            Err _ ->
-                                Value.Text (v)
-                in
-                    { model | value1 = Just value }
-                        => Cmd.none
+                { model | value1 = Just v }
+                    => Cmd.none
 
             BooleanValue1Changed v ->
-                let
-                    value =
-                        Value.Bool (v)
-                in
-                    { model | value1 = Just value }
-                        => Cmd.none
+                { model | value1 = Just (toString v) }
+                    => Cmd.none
 
             DateValue1Changed v ->
-                let
-                    value =
-                        Value.Text (v)
-                in
-                    { model | value1 = Just value }
-                        => Cmd.none
+                { model | value1 = Just v }
+                    => Cmd.none
 
             DateValue2Changed v ->
-                let
-                    value =
-                        Value.Text (v)
-                in
-                    { model | value2 = Just value }
-                        => Cmd.none
+                { model | value2 = Just v }
+                    => Cmd.none

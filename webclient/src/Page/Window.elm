@@ -32,6 +32,7 @@ import Request.Profile
 import Route
 import Task exposing (Task)
 import Util exposing ((=>), pair, viewIf)
+import Dict exposing (Dict)
 
 
 --import Views.Window
@@ -46,6 +47,8 @@ import Data.Window.TableName as TableName exposing (TableName)
 import Views.Window.Tab as Tab
 import Window as BrowserWindow
 import Data.Window.Lookup as Lookup exposing (Lookup(..))
+import Data.Window.Filter as Filter exposing (Condition)
+import Data.WindowArena as WindowArena exposing (ArenaArg)
 
 
 -- MODEL --
@@ -58,6 +61,7 @@ type alias Model =
     , mainTab : Tab.Model
     , window : Window
     , lookup : Lookup
+    , arenaArg : Maybe ArenaArg
     , dropdownPageRequestInFlight : Bool
     }
 
@@ -96,11 +100,19 @@ calcMainTabSize browserSize =
         ( width, height )
 
 
-init : Session -> TableName -> Window -> Task PageLoadError Model
-init session tableName window =
+init : Session -> TableName -> Window -> Maybe ArenaArg -> Task PageLoadError Model
+init session tableName window arenaArg =
     let
         maybeAuthToken =
             Maybe.map .token session.user
+
+        condition =
+            case arenaArg of
+                Just arenaArg ->
+                    arenaArg.filter
+
+                Nothing ->
+                    Nothing
 
         getBrowserSize =
             BrowserWindow.size
@@ -138,7 +150,7 @@ init session tableName window =
         mainTabTask =
             Task.map4
                 (\records size lookup totalRecords ->
-                    Tab.init (calcMainTabSize size) window.mainTab records totalRecords
+                    Tab.init (calcMainTabSize size) condition window.mainTab records totalRecords
                 )
                 loadRecords
                 getBrowserSize
@@ -154,6 +166,7 @@ init session tableName window =
                 , mainTab = mainTab
                 , window = window
                 , lookup = lookup
+                , arenaArg = arenaArg
                 , dropdownPageRequestInFlight = False
                 }
             )
@@ -244,11 +257,32 @@ update session msg model =
                                 => requestNextPage newMainTab
                         else
                             newMainTab => Cmd.none
+
+                    tabSearchFilter =
+                        updatedMainTab.searchFilter
+
+                    newArenaArg =
+                        case model.arenaArg of
+                            Just arenaArg ->
+                                WindowArena.updateFilter updatedMainTab.searchFilter arenaArg
+                                    |> Just
+
+                            Nothing ->
+                                Nothing
+
+                    filterCmd =
+                        case tabMsg of
+                            Tab.SearchboxMsg searchbox searchMsg ->
+                                Route.modifyUrl (Route.WindowArena newArenaArg)
+
+                            _ ->
+                                Cmd.none
                 in
                     { model | mainTab = updatedMainTab }
                         => Cmd.batch
                             [ Cmd.map TabMsg subCmd
                             , tabCmd
+                            , filterCmd
                             ]
 
             LookupNextPageReceived ( sourceTable, recordList ) ->

@@ -25,6 +25,8 @@ import Util exposing ((=>), px, onScroll, Scroll)
 import Data.Window.Lookup as Lookup exposing (Lookup)
 import Views.Window.Toolbar as Toolbar
 import Views.Window.Searchbox as Searchbox
+import Dict exposing (Dict)
+import Data.Window.Filter as Filter exposing (Condition)
 
 
 type alias Model =
@@ -36,11 +38,12 @@ type alias Model =
     , currentPage : Int
     , reachedLastPage : Bool
     , totalRecords : Int
+    , searchFilter : Condition
     }
 
 
-init : ( Float, Float ) -> Tab -> Rows -> Int -> Model
-init size tab rows totalRecords =
+init : ( Float, Float ) -> Maybe Condition -> Tab -> Rows -> Int -> Model
+init size condition tab rows totalRecords =
     { tab = tab
     , scroll = Scroll 0 0
     , size = size
@@ -49,6 +52,13 @@ init size tab rows totalRecords =
     , currentPage = 1
     , reachedLastPage = False
     , totalRecords = totalRecords
+    , searchFilter =
+        case condition of
+            Just condition ->
+                condition
+
+            Nothing ->
+                Dict.empty
     }
 
 
@@ -177,7 +187,24 @@ listView lookup model =
                         [ listViewRows lookup model ]
                     ]
                 ]
+            , viewLoadingIndicator model
             ]
+
+
+viewLoadingIndicator : Model -> Html Msg
+viewLoadingIndicator model =
+    if model.pageRequestInFlight then
+        div
+            [ style
+                [ ( "margin-top", px -50 )
+                , ( "left", px 50 )
+                ]
+            , class "animated slideInUp"
+            ]
+            [ i [ class "fa fa-spinner fa-pulse fa-2x fa-fw" ] []
+            ]
+    else
+        text ""
 
 
 viewPageShadow : Model -> Html Msg
@@ -275,15 +302,24 @@ viewColumns model fields =
                 [ class "tab-columns-content"
                 , style [ ( "left", leftPx ) ]
                 ]
-                (List.map viewColumnWithSearchbox fields)
+                (List.map (viewColumnWithSearchbox model) fields)
             ]
 
 
-viewColumnWithSearchbox : Field -> Html Msg
-viewColumnWithSearchbox field =
+viewColumnWithSearchbox : Model -> Field -> Html Msg
+viewColumnWithSearchbox model field =
     let
+        condition =
+            model.searchFilter
+
+        columnName =
+            Field.firstColumnName field
+
+        searchValue =
+            Filter.get columnName condition
+
         searchboxModel =
-            Searchbox.init field
+            Searchbox.init field searchValue
     in
         div [ class "tab-column-with-filter" ]
             [ viewColumn field
@@ -420,8 +456,26 @@ update msg model =
             let
                 ( newSearchbox, subCmd ) =
                     Searchbox.update searchbox msg
+
+                field =
+                    searchbox.field
+
+                columnName =
+                    Field.firstColumnName field
+
+                searchValue =
+                    Searchbox.getSearchText newSearchbox
+
+                updatedSearchFilter =
+                    case searchValue of
+                        Just searchValue ->
+                            Filter.put columnName searchValue model.searchFilter
+
+                        Nothing ->
+                            model.searchFilter
             in
-                model => Cmd.none
+                { model | searchFilter = updatedSearchFilter }
+                    => Cmd.none
 
 
 subscriptions : Model -> Sub Msg

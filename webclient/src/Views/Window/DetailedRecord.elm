@@ -149,7 +149,7 @@ init tableName selectedRow arenaArg window =
                                 in
                                     case rows of
                                         Just rows ->
-                                            Tab.init tabSize hasManyTab rows hasManyRecordCount
+                                            Tab.init tabSize Nothing hasManyTab rows hasManyRecordCount
 
                                         Nothing ->
                                             Debug.crash "Empty row"
@@ -194,7 +194,7 @@ init tableName selectedRow arenaArg window =
                                 in
                                     case rows of
                                         Just rows ->
-                                            ( linker, Tab.init tabSize indirectTab rows indirectRecordCount )
+                                            ( linker, Tab.init tabSize Nothing indirectTab rows indirectRecordCount )
 
                                         Nothing ->
                                             Debug.crash "Empty row"
@@ -819,10 +819,6 @@ update session msg model =
                 in
                     { model | arenaArg = newArenaArg }
                         => Route.modifyUrl (Route.WindowArena (Just newArenaArg))
-
-
-
---=> Cmd.none
 
 
 requestNextPage : Section -> Tab.Model -> Model -> Cmd Msg

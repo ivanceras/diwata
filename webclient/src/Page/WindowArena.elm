@@ -94,7 +94,7 @@ init session arenaArg =
                         (\window ->
                             case window of
                                 Just window ->
-                                    Window.init session tableName window
+                                    Window.init session tableName window arenaArg
                                         |> Task.map Just
                                         |> Task.mapError handleLoadError
 
