@@ -1,6 +1,8 @@
 module Request.Helpers exposing (apiUrl)
 
+import Settings exposing (Settings)
 
-apiUrl : String -> String
-apiUrl str =
-    "http://localhost:8000" ++ str
+
+apiUrl : Settings -> String -> String
+apiUrl settings str =
+    settings.apiEndPoint ++ str
