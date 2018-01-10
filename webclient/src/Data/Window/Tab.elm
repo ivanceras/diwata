@@ -5,6 +5,7 @@ module Data.Window.Tab
         , columnNames
         , primaryFields
         , recordId
+        , TabType(..)
         )
 
 import Json.Decode as Decode exposing (Decoder)
@@ -29,6 +30,19 @@ type alias Tab =
     , isView : Bool
     , display : Maybe IdentifierDisplay
     }
+
+
+{-|
+
+    Tabs has different capabilities
+    InMainTab can have all fields of all rows editable
+    InHasMany adding record will have to search for the distinguisable row of the tab table
+    InIndirect adding record will have to search for the lookup row in a distinguisable lookup/search
+-}
+type TabType
+    = InMain
+    | InHasMany
+    | InIndirect
 
 
 columnNames : Tab -> List String

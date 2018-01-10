@@ -13,6 +13,7 @@ import Data.Window.ColumnName as ColumnName exposing (ColumnName)
 import Data.Window.Value as Value exposing (Value)
 import Array
 import Json.Decode as Decode exposing (Decoder)
+import Http
 
 
 type alias Condition =
@@ -76,10 +77,15 @@ parse arg =
                         value =
                             case Array.get 1 parts of
                                 Just value ->
-                                    value
+                                    case Http.decodeUri value of
+                                        Just value ->
+                                            value
+
+                                        Nothing ->
+                                            value
 
                                 Nothing ->
-                                    Debug.crash "Expecting a value here"
+                                    ""
                     in
                         ( column, value )
                 )
