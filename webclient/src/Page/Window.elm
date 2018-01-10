@@ -56,7 +56,6 @@ import Data.WindowArena as WindowArena exposing (ArenaArg)
 
 type alias Model =
     { errors : List String
-    , commentText : String
     , tableName : TableName
     , mainTab : Tab.Model
     , window : Window
@@ -118,7 +117,7 @@ init session tableName window arenaArg =
             BrowserWindow.size
 
         loadRecords =
-            Request.Window.Records.list maybeAuthToken tableName
+            Request.Window.Records.listWithFilter maybeAuthToken tableName condition
                 |> Http.toTask
                 |> Task.mapError (handleLoadError " inLoadrecords")
 
@@ -161,7 +160,6 @@ init session tableName window arenaArg =
         Task.map2
             (\mainTab lookup ->
                 { errors = []
-                , commentText = ""
                 , tableName = tableName
                 , mainTab = mainTab
                 , window = window
@@ -254,7 +252,7 @@ update session msg model =
                     ( updatedMainTab, tabCmd ) =
                         if Tab.pageRequestNeeded newMainTab then
                             { newMainTab | pageRequestInFlight = True }
-                                => requestNextPage newMainTab
+                                => requestNextPage newMainTab model
                         else
                             newMainTab => Cmd.none
 
@@ -273,7 +271,10 @@ update session msg model =
                     filterCmd =
                         case tabMsg of
                             Tab.SearchboxMsg searchbox searchMsg ->
-                                Route.modifyUrl (Route.WindowArena newArenaArg)
+                                Cmd.batch
+                                    [ refreshPage updatedMainTab model
+                                    , Route.modifyUrl (Route.WindowArena newArenaArg)
+                                    ]
 
                             _ ->
                                 Cmd.none
@@ -319,13 +320,54 @@ dropdownPageRequestNeeded lookup model =
             Nothing
 
 
-requestNextPage : Tab.Model -> Cmd Msg
-requestNextPage tab =
+refreshPage : Tab.Model -> Model -> Cmd Msg
+refreshPage tab model =
     let
+        arenaArg =
+            model.arenaArg
+
+        condition =
+            case arenaArg of
+                Just arenaArg ->
+                    arenaArg.filter
+
+                Nothing ->
+                    Nothing
+
         tabPage =
             tab.currentPage
     in
-        Request.Window.Records.listPage (tabPage + 1) Nothing tab.tab.tableName
+        Request.Window.Records.listPageWithFilter tabPage Nothing tab.tab.tableName condition
+            |> Http.toTask
+            |> Task.attempt
+                (\result ->
+                    case result of
+                        Ok rows ->
+                            TabMsg (Tab.RefreshPageReceived rows)
+
+                        Err e ->
+                            TabMsg (Tab.RefreshPageError (toString e))
+                )
+
+
+requestNextPage : Tab.Model -> Model -> Cmd Msg
+requestNextPage tab model =
+    let
+        arenaArg =
+            model.arenaArg
+
+        condition =
+            case arenaArg of
+                Just arenaArg ->
+                    arenaArg.filter
+
+                Nothing ->
+                    Nothing
+
+        tabPage =
+            tab.currentPage
+    in
+        Request.Window.Records.listPageWithFilter (tabPage + 1) Nothing tab.tab.tableName condition
             |> Http.toTask
             |> Task.attempt
                 (\result ->

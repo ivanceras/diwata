@@ -1,9 +1,10 @@
 module Request.Window.Records
     exposing
         ( delete
-        , list
-        , listPage
-        , post
+          --, list
+        , listWithFilter
+          --, listPage
+        , listPageWithFilter
         , fetchSelected
         , fetchHasManyRecords
         , fetchIndirectRecords
@@ -30,6 +31,7 @@ import Json.Encode as Encode exposing (Value)
 import Request.Helpers exposing (apiUrl)
 import Util exposing ((=>))
 import Data.Window.Lookup as Lookup exposing (Lookup)
+import Data.Window.Filter as Filter exposing (Condition)
 
 
 -- LIST --
@@ -40,6 +42,11 @@ list maybeToken tableName =
     listPage 1 maybeToken tableName
 
 
+listWithFilter : Maybe AuthToken -> TableName -> Maybe Condition -> Http.Request Rows
+listWithFilter maybeToken tableName condition =
+    listPageWithFilter 1 maybeToken tableName condition
+
+
 listPage : Int -> Maybe AuthToken -> TableName -> Http.Request Rows
 listPage page maybeToken tableName =
     apiUrl ("/data/" ++ tableNameToString tableName ++ "/" ++ toString page)
@@ -47,6 +54,24 @@ listPage page maybeToken tableName =
         |> HttpBuilder.withExpect (Http.expectJson Record.rowsDecoder)
         |> withAuthorization maybeToken
         |> HttpBuilder.toRequest
+
+
+listPageWithFilter : Int -> Maybe AuthToken -> TableName -> Maybe Condition -> Http.Request Rows
+listPageWithFilter page maybeToken tableName condition =
+    let
+        filterString =
+            case condition of
+                Just condition ->
+                    "/filter/" ++ Filter.toString condition
+
+                Nothing ->
+                    ""
+    in
+        apiUrl ("/data/" ++ tableNameToString tableName ++ "/" ++ toString page ++ filterString)
+            |> HttpBuilder.get
+            |> HttpBuilder.withExpect (Http.expectJson Record.rowsDecoder)
+            |> withAuthorization maybeToken
+            |> HttpBuilder.toRequest
 
 
 totalRecords : Maybe AuthToken -> TableName -> Http.Request Int
@@ -119,6 +144,7 @@ fetchIndirectRecords tableName selectedRow hasManyTable hasManyPage =
 
 
 
+{--
 -- POST --
 
 
@@ -136,8 +162,7 @@ encodeCommentBody : String -> Value
 encodeCommentBody body =
     Encode.object [ "comment" => Encode.object [ "body" => Encode.string body ] ]
 
-
-
+    --}
 -- DELETE --
 
 

@@ -195,11 +195,7 @@ viewLoadingIndicator : Model -> Html Msg
 viewLoadingIndicator model =
     if model.pageRequestInFlight then
         div
-            [ style
-                [ ( "margin-top", px -50 )
-                , ( "left", px 50 )
-                ]
-            , class "animated slideInUp"
+            [ class "loading-indicator animated slideInUp"
             ]
             [ i [ class "fa fa-spinner fa-pulse fa-2x fa-fw" ] []
             ]
@@ -386,6 +382,8 @@ type Msg
     | ListRowScrolled Scroll
     | NextPageReceived Rows
     | NextPageError String
+    | RefreshPageReceived Rows
+    | RefreshPageError String
     | RowMsg Row.Model Row.Msg
     | SearchboxMsg Searchbox.Model Searchbox.Msg
 
@@ -408,12 +406,37 @@ update msg model =
                 }
                     => Cmd.none
             else
-                { model | reachedLastPage = True } => Cmd.none
+                { model
+                    | reachedLastPage = True
+                    , pageRequestInFlight = False
+                }
+                    => Cmd.none
 
         NextPageError e ->
             let
                 _ =
                     Debug.log "Error receiving next page"
+            in
+                model => Cmd.none
+
+        RefreshPageReceived rows ->
+            if List.length rows.data > 0 then
+                { model
+                    | pageRows = [ createRowsModel model.tab rows ]
+                    , pageRequestInFlight = False
+                }
+                    => Cmd.none
+            else
+                { model
+                    | reachedLastPage = True
+                    , pageRequestInFlight = False
+                }
+                    => Cmd.none
+
+        RefreshPageError e ->
+            let
+                _ =
+                    Debug.log "Error receiving refresh page"
             in
                 model => Cmd.none
 

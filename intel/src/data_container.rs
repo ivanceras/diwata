@@ -35,3 +35,50 @@ pub struct IdentifierDisplay {
     pub pk: Vec<ColumnName>,
     pub separator: Option<String>,
 }
+
+/// a limited condition statement, just needed for the simple usecase
+pub struct Condition {
+    pub left: ColumnName,
+    pub right: String,
+}
+
+impl Condition {
+
+    //TODO: verify if the column is really a column of the involved tables otherwise SQL injection
+    //is possible
+    fn from_str(s: &str) -> Self {
+        let splinters: Vec<&str> = s.split("=").collect();
+        assert_eq!(splinters.len(), 2);
+        let column = splinters[0];
+        let value = splinters[1].to_string();
+        let column_name = ColumnName::from(column);
+        Condition{
+            left: column_name,
+            right: value
+        }
+    }
+}
+
+/// a limited filter structure which is used for the simple usecase of the client
+/// all conditions are AND together, and the operator depends on the data type of the column name
+/// String will be ILIKE '%?'
+/// Date will be in between
+/// number will text_cast then ilike
+pub struct Filter{
+    pub conditions: Vec<Condition>,
+}
+
+impl Filter{
+
+    pub fn from_str(s: &str) -> Self {
+        let splinters: Vec<&str> = s.split("&").collect();
+        let mut conditions = vec![];
+        for splinter in splinters.iter(){
+            let cond = Condition::from_str(splinter);
+            conditions.push(cond);
+        }
+        Filter{
+            conditions
+        }
+    }
+}

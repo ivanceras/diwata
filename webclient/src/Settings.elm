@@ -8,6 +8,7 @@ import Json.Decode as Decode exposing (Value)
 
 type alias Settings =
     { dbUrl : String
+    , api_url : String
     , grouped : Bool
     }
 
@@ -16,6 +17,7 @@ decoder : Decoder Settings
 decoder =
     decode Settings
         |> required "db_url" Decode.string
+        |> required "api_endpoint" Decode.string
         |> required "grouped" Decode.bool
 
 

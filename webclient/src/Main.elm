@@ -62,11 +62,15 @@ type alias Model =
 
 init : Value -> Location -> ( Model, Cmd Msg )
 init val location =
-    setRoute (Route.fromLocation location)
-        { pageState = Loaded initialPage
-        , session = { user = decodeUserFromJson val }
-        , settings = Settings.fromJson val
-        }
+    let
+        _ =
+            Debug.log "settings: " val
+    in
+        setRoute (Route.fromLocation location)
+            { pageState = Loaded initialPage
+            , session = { user = decodeUserFromJson val }
+            , settings = Settings.fromJson val
+            }
 
 
 decodeUserFromJson : Value -> Maybe User
