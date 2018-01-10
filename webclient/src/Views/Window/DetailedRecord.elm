@@ -21,7 +21,7 @@ import Data.Window.TableName as TableName exposing (TableName)
 import Data.Window.Record as Record exposing (Record, Rows)
 import Data.Window as Window exposing (Window)
 import Request.Window
-import Data.Window.Tab as Tab exposing (Tab)
+import Data.Window.Tab as Tab exposing (Tab, TabType(..))
 import Views.Window.Tab as Tab
 import Dict
 import Data.Window.Field as Field exposing (Field)
@@ -43,6 +43,7 @@ import Views.Window.Presentation as Presentation exposing (Presentation(..))
 import Request.Window.Records
 import Views.Window.Toolbar as Toolbar
 import Route
+import Settings exposing (Settings)
 
 
 {-| Example:
@@ -66,6 +67,7 @@ type alias Model =
     , lookup : Lookup
     , values : List Field.Model
     , dropdownPageRequestInFlight : Bool
+    , settings : Settings
     }
 
 
@@ -89,9 +91,9 @@ initialPosition browserSize =
         Position 0 allotedMainHeight
 
 
-getTotalRecords : TableName -> Task PageLoadError Int
-getTotalRecords tableName =
-    Request.Window.Records.totalRecords Nothing tableName
+getTotalRecords : Settings -> TableName -> Task PageLoadError Int
+getTotalRecords settings tableName =
+    Request.Window.Records.totalRecords settings Nothing tableName
         |> Http.toTask
         |> Task.mapError handleLoadError
 
@@ -101,26 +103,26 @@ handleLoadError e =
     pageLoadError Page.WindowArena ("WindowArena DetailedRecord is currently unavailable. Error: " ++ (toString e))
 
 
-init : TableName -> String -> ArenaArg -> Window -> Task PageLoadError Model
-init tableName selectedRow arenaArg window =
+init : Settings -> TableName -> String -> ArenaArg -> Window -> Task PageLoadError Model
+init settings tableName selectedRow arenaArg window =
     let
         browserSize =
             BrowserWindow.size
 
         fetchSelected =
-            Records.fetchSelected tableName selectedRow
+            Records.fetchSelected settings tableName selectedRow
                 |> Http.toTask
                 |> Task.mapError handleLoadError
 
         loadWindowLookups =
-            Records.lookups Nothing tableName
+            Records.lookups settings Nothing tableName
                 |> Http.toTask
                 |> Task.mapError handleLoadError
 
         hasManyTableRecordCounts =
             List.map
                 (\hasManyTab ->
-                    getTotalRecords hasManyTab.tableName
+                    getTotalRecords settings hasManyTab.tableName
                 )
                 window.hasManyTabs
                 |> Task.sequence
@@ -149,7 +151,7 @@ init tableName selectedRow arenaArg window =
                                 in
                                     case rows of
                                         Just rows ->
-                                            Tab.init tabSize Nothing hasManyTab rows hasManyRecordCount
+                                            Tab.init tabSize Nothing hasManyTab InHasMany rows hasManyRecordCount
 
                                         Nothing ->
                                             Debug.crash "Empty row"
@@ -165,7 +167,7 @@ init tableName selectedRow arenaArg window =
         indirectTableRecordCounts =
             List.map
                 (\( _, indirectTab ) ->
-                    getTotalRecords indirectTab.tableName
+                    getTotalRecords settings indirectTab.tableName
                 )
                 window.indirectTabs
                 |> Task.sequence
@@ -194,7 +196,7 @@ init tableName selectedRow arenaArg window =
                                 in
                                     case rows of
                                         Just rows ->
-                                            ( linker, Tab.init tabSize Nothing indirectTab rows indirectRecordCount )
+                                            ( linker, Tab.init tabSize Nothing indirectTab InIndirect rows indirectRecordCount )
 
                                         Nothing ->
                                             Debug.crash "Empty row"
@@ -220,6 +222,7 @@ init tableName selectedRow arenaArg window =
                 , lookup = lookup
                 , values = createFields window.mainTab detail
                 , dropdownPageRequestInFlight = False
+                , settings = settings
                 }
             )
             fetchSelected
@@ -839,10 +842,10 @@ requestNextPage section tab model =
         httpRequest =
             case section of
                 HasMany ->
-                    Records.fetchHasManyRecords mainTable recordId sectionTable (tabPage + 1)
+                    Records.fetchHasManyRecords model.settings mainTable recordId sectionTable (tabPage + 1)
 
                 Indirect ->
-                    Records.fetchIndirectRecords mainTable recordId sectionTable (tabPage + 1)
+                    Records.fetchIndirectRecords model.settings mainTable recordId sectionTable (tabPage + 1)
     in
         httpRequest
             |> Http.toTask
