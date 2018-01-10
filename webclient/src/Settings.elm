@@ -8,7 +8,7 @@ import Json.Decode as Decode exposing (Value)
 
 type alias Settings =
     { dbUrl : String
-    , api_url : String
+    , apiEndPoint : String
     , grouped : Bool
     }
 
@@ -21,8 +21,15 @@ decoder =
         |> required "grouped" Decode.bool
 
 
-fromJson : Value -> Maybe Settings
+fromJson : Value -> Settings
 fromJson json =
-    json
-        |> Decode.decodeValue decoder
-        |> Result.toMaybe
+    let
+        settings =
+            Decode.decodeValue decoder json
+    in
+        case settings of
+            Ok settings ->
+                settings
+
+            Err e ->
+                Debug.crash "Decoding settings should not be error" e
