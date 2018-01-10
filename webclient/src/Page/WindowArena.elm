@@ -34,6 +34,7 @@ import Request.Window.Records
 import Data.Window.Record as Record
 import Data.Window.Lookup as Lookup
 import Data.WindowArena as WindowArena
+import Settings exposing (Settings)
 
 
 -- MODEL --
@@ -45,6 +46,7 @@ type alias Model =
     , groupedWindow : GroupedWindow.Model
     , selectedRow : Maybe DetailedRecord.Model
     , arenaArg : Maybe ArenaArg
+    , settings : Settings
     }
 
 
@@ -58,8 +60,8 @@ rerouteNeeded model arenaArg =
             True
 
 
-init : Session -> Maybe ArenaArg -> Task PageLoadError Model
-init session arenaArg =
+init : Session -> Settings -> Maybe ArenaArg -> Task PageLoadError Model
+init session settings arenaArg =
     let
         _ =
             Debug.log "window arena: " arenaArg
@@ -79,7 +81,7 @@ init session arenaArg =
         loadWindow =
             case tableName of
                 Just tableName ->
-                    Request.Window.get maybeAuthToken tableName
+                    Request.Window.get settings maybeAuthToken tableName
                         |> Http.toTask
                         |> Task.map Just
                         |> Task.mapError handleLoadError
@@ -94,7 +96,7 @@ init session arenaArg =
                         (\window ->
                             case window of
                                 Just window ->
-                                    Window.init session tableName window arenaArg
+                                    Window.init settings session tableName window arenaArg
                                         |> Task.map Just
                                         |> Task.mapError handleLoadError
 
@@ -119,7 +121,7 @@ init session arenaArg =
                                 (\window ->
                                     case window of
                                         Just window ->
-                                            DetailedRecord.init arenaArg.tableName selectedRecord arenaArg window
+                                            DetailedRecord.init settings arenaArg.tableName selectedRecord arenaArg window
                                                 |> Task.map Just
                                                 |> Task.mapError handleLoadError
 
@@ -144,6 +146,7 @@ init session arenaArg =
                 , groupedWindow = groupedWindow
                 , selectedRow = selectedRow
                 , arenaArg = arenaArg
+                , settings = settings
                 }
             )
             loadActiveWindow
@@ -269,7 +272,7 @@ update session msg model =
                                             Lookup.tableLookup sourceTable lookup
                                     in
                                         { newWindow | dropdownPageRequestInFlight = True }
-                                            => requestNextDropdownPageForWindow currentPage sourceTable
+                                            => requestNextDropdownPageForWindow model.settings currentPage sourceTable
 
                                 Nothing ->
                                     newWindow => Cmd.none
@@ -301,7 +304,7 @@ update session msg model =
                                             Lookup.tableLookup sourceTable lookup
                                     in
                                         { newDetailedRecord | dropdownPageRequestInFlight = True }
-                                            => requestNextDropdownPageForDetailedRecord currentPage sourceTable
+                                            => requestNextDropdownPageForDetailedRecord model.settings currentPage sourceTable
 
                                 Nothing ->
                                     newDetailedRecord => Cmd.none
@@ -319,9 +322,9 @@ update session msg model =
             model => Cmd.none
 
 
-requestNextDropdownPageForWindow : Int -> TableName -> Cmd Msg
-requestNextDropdownPageForWindow currentPage sourceTable =
-    Request.Window.Records.lookupPage (currentPage + 1) Nothing sourceTable
+requestNextDropdownPageForWindow : Settings -> Int -> TableName -> Cmd Msg
+requestNextDropdownPageForWindow settings currentPage sourceTable =
+    Request.Window.Records.lookupPage settings (currentPage + 1) Nothing sourceTable
         |> Http.toTask
         |> Task.attempt
             (\result ->
@@ -338,9 +341,9 @@ requestNextDropdownPageForWindow currentPage sourceTable =
             )
 
 
-requestNextDropdownPageForDetailedRecord : Int -> TableName -> Cmd Msg
-requestNextDropdownPageForDetailedRecord currentPage sourceTable =
-    Request.Window.Records.lookupPage (currentPage + 1) Nothing sourceTable
+requestNextDropdownPageForDetailedRecord : Settings -> Int -> TableName -> Cmd Msg
+requestNextDropdownPageForDetailedRecord settings currentPage sourceTable =
+    Request.Window.Records.lookupPage settings (currentPage + 1) Nothing sourceTable
         |> Http.toTask
         |> Task.attempt
             (\result ->
