@@ -1,9 +1,7 @@
 module Request.Window.Records
     exposing
         ( delete
-          --, list
         , listWithFilter
-          --, listPage
         , listPageWithFilter
         , fetchSelected
         , fetchHasManyRecords
@@ -32,32 +30,33 @@ import Request.Helpers exposing (apiUrl)
 import Util exposing ((=>))
 import Data.Window.Lookup as Lookup exposing (Lookup)
 import Data.Window.Filter as Filter exposing (Condition)
+import Settings exposing (Settings)
 
 
 -- LIST --
 
 
-list : Maybe AuthToken -> TableName -> Http.Request Rows
-list maybeToken tableName =
-    listPage 1 maybeToken tableName
+list : Settings -> Maybe AuthToken -> TableName -> Http.Request Rows
+list settings maybeToken tableName =
+    listPage settings 1 maybeToken tableName
 
 
-listWithFilter : Maybe AuthToken -> TableName -> Maybe Condition -> Http.Request Rows
-listWithFilter maybeToken tableName condition =
-    listPageWithFilter 1 maybeToken tableName condition
+listWithFilter : Settings -> Maybe AuthToken -> TableName -> Maybe Condition -> Http.Request Rows
+listWithFilter settings maybeToken tableName condition =
+    listPageWithFilter settings 1 maybeToken tableName condition
 
 
-listPage : Int -> Maybe AuthToken -> TableName -> Http.Request Rows
-listPage page maybeToken tableName =
-    apiUrl ("/data/" ++ tableNameToString tableName ++ "/" ++ toString page)
+listPage : Settings -> Int -> Maybe AuthToken -> TableName -> Http.Request Rows
+listPage settings page maybeToken tableName =
+    apiUrl settings ("/data/" ++ tableNameToString tableName ++ "/" ++ toString page)
         |> HttpBuilder.get
         |> HttpBuilder.withExpect (Http.expectJson Record.rowsDecoder)
         |> withAuthorization maybeToken
         |> HttpBuilder.toRequest
 
 
-listPageWithFilter : Int -> Maybe AuthToken -> TableName -> Maybe Condition -> Http.Request Rows
-listPageWithFilter page maybeToken tableName condition =
+listPageWithFilter : Settings -> Int -> Maybe AuthToken -> TableName -> Maybe Condition -> Http.Request Rows
+listPageWithFilter settings page maybeToken tableName condition =
     let
         filterString =
             case condition of
@@ -67,51 +66,51 @@ listPageWithFilter page maybeToken tableName condition =
                 Nothing ->
                     ""
     in
-        apiUrl ("/data/" ++ tableNameToString tableName ++ "/" ++ toString page ++ filterString)
+        apiUrl settings ("/data/" ++ tableNameToString tableName ++ "/" ++ toString page ++ filterString)
             |> HttpBuilder.get
             |> HttpBuilder.withExpect (Http.expectJson Record.rowsDecoder)
             |> withAuthorization maybeToken
             |> HttpBuilder.toRequest
 
 
-totalRecords : Maybe AuthToken -> TableName -> Http.Request Int
-totalRecords maybeToken tableName =
-    apiUrl ("/record_count/" ++ tableNameToString tableName)
+totalRecords : Settings -> Maybe AuthToken -> TableName -> Http.Request Int
+totalRecords settings maybeToken tableName =
+    apiUrl settings ("/record_count/" ++ tableNameToString tableName)
         |> HttpBuilder.get
         |> HttpBuilder.withExpect (Http.expectJson Decode.int)
         |> withAuthorization maybeToken
         |> HttpBuilder.toRequest
 
 
-lookups : Maybe AuthToken -> TableName -> Http.Request Lookup
-lookups maybeToken tableName =
-    apiUrl ("/lookup_all/" ++ tableNameToString tableName)
+lookups : Settings -> Maybe AuthToken -> TableName -> Http.Request Lookup
+lookups settings maybeToken tableName =
+    apiUrl settings ("/lookup_all/" ++ tableNameToString tableName)
         |> HttpBuilder.get
         |> HttpBuilder.withExpect (Http.expectJson Lookup.decoder)
         |> withAuthorization maybeToken
         |> HttpBuilder.toRequest
 
 
-lookupPage : Int -> Maybe AuthToken -> TableName -> Http.Request Rows
-lookupPage page maybeToken tableName =
-    apiUrl ("/lookup/" ++ tableNameToString tableName ++ "/" ++ toString page)
+lookupPage : Settings -> Int -> Maybe AuthToken -> TableName -> Http.Request Rows
+lookupPage settings page maybeToken tableName =
+    apiUrl settings ("/lookup/" ++ tableNameToString tableName ++ "/" ++ toString page)
         |> HttpBuilder.get
         |> HttpBuilder.withExpect (Http.expectJson Record.rowsDecoder)
         |> withAuthorization maybeToken
         |> HttpBuilder.toRequest
 
 
-fetchSelected : TableName -> String -> Http.Request RecordDetail
-fetchSelected tableName selectedRow =
-    apiUrl ("/data/" ++ tableNameToString tableName ++ "/select/" ++ selectedRow)
+fetchSelected : Settings -> TableName -> String -> Http.Request RecordDetail
+fetchSelected settings tableName selectedRow =
+    apiUrl settings ("/data/" ++ tableNameToString tableName ++ "/select/" ++ selectedRow)
         |> HttpBuilder.get
         |> HttpBuilder.withExpect (Http.expectJson RecordDetail.decoder)
         |> HttpBuilder.toRequest
 
 
-fetchHasManyRecords : TableName -> String -> TableName -> Int -> Http.Request Rows
-fetchHasManyRecords tableName selectedRow hasManyTable hasManyPage =
-    apiUrl
+fetchHasManyRecords : Settings -> TableName -> String -> TableName -> Int -> Http.Request Rows
+fetchHasManyRecords settings tableName selectedRow hasManyTable hasManyPage =
+    apiUrl settings
         ("/data/"
             ++ tableNameToString tableName
             ++ "/select/"
@@ -126,9 +125,9 @@ fetchHasManyRecords tableName selectedRow hasManyTable hasManyPage =
         |> HttpBuilder.toRequest
 
 
-fetchIndirectRecords : TableName -> String -> TableName -> Int -> Http.Request Rows
-fetchIndirectRecords tableName selectedRow hasManyTable hasManyPage =
-    apiUrl
+fetchIndirectRecords : Settings -> TableName -> String -> TableName -> Int -> Http.Request Rows
+fetchIndirectRecords settings tableName selectedRow hasManyTable hasManyPage =
+    apiUrl settings
         ("/data/"
             ++ tableNameToString tableName
             ++ "/select/"
@@ -143,32 +142,9 @@ fetchIndirectRecords tableName selectedRow hasManyTable hasManyPage =
         |> HttpBuilder.toRequest
 
 
-
-{--
--- POST --
-
-
-post : TableName -> String -> AuthToken -> Http.Request Rows
-post tableName body token =
-    apiUrl ("/window/" ++ tableNameToString tableName ++ "/data")
-        |> HttpBuilder.post
-        |> HttpBuilder.withBody (Http.jsonBody (encodeCommentBody body))
-        |> HttpBuilder.withExpect (Http.expectJson Record.rowsDecoder)
-        |> withAuthorization (Just token)
-        |> HttpBuilder.toRequest
-
-
-encodeCommentBody : String -> Value
-encodeCommentBody body =
-    Encode.object [ "comment" => Encode.object [ "body" => Encode.string body ] ]
-
-    --}
--- DELETE --
-
-
-delete : TableName -> RecordId -> AuthToken -> Http.Request ()
-delete tableName recordId token =
-    apiUrl ("/window/" ++ tableNameToString tableName ++ "/data/" ++ Record.idToString recordId)
+delete : Settings -> TableName -> RecordId -> AuthToken -> Http.Request ()
+delete settings tableName recordId token =
+    apiUrl settings ("/window/" ++ tableNameToString tableName ++ "/data/" ++ Record.idToString recordId)
         |> HttpBuilder.delete
         |> withAuthorization (Just token)
         |> HttpBuilder.toRequest
