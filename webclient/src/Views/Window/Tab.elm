@@ -12,7 +12,7 @@ module Views.Window.Tab
 
 import Html exposing (..)
 import Html.Attributes exposing (attribute, class, classList, href, id, placeholder, src, property, type_, style)
-import Data.Window.Tab as Tab exposing (Tab)
+import Data.Window.Tab as Tab exposing (Tab, TabType)
 import Data.Window.TableName as TableName exposing (TableName)
 import Data.Window.Record as Record exposing (Rows, Record, RecordId)
 import Data.Window.Field as Field exposing (Field)
@@ -31,6 +31,7 @@ import Data.Window.Filter as Filter exposing (Condition)
 
 type alias Model =
     { tab : Tab
+    , tabType : TabType
     , scroll : Scroll
     , size : ( Float, Float )
     , pageRows : List (List Row.Model)
@@ -42,9 +43,10 @@ type alias Model =
     }
 
 
-init : ( Float, Float ) -> Maybe Condition -> Tab -> Rows -> Int -> Model
-init size condition tab rows totalRecords =
+init : ( Float, Float ) -> Maybe Condition -> Tab -> TabType -> Rows -> Int -> Model
+init size condition tab tabType rows totalRecords =
     { tab = tab
+    , tabType = tabType
     , scroll = Scroll 0 0
     , size = size
     , pageRows = [ createRowsModel tab rows ]
