@@ -6,7 +6,7 @@ import Data.User as User exposing (Username)
 import Http
 import HttpBuilder exposing (RequestBuilder, withExpect, withQueryParams)
 import Json.Decode as Decode
-import Request.Helpers exposing (apiUrl)
+import Request.Helpers exposing (apiUrlTmp)
 
 
 -- GET --
@@ -14,7 +14,7 @@ import Request.Helpers exposing (apiUrl)
 
 get : Username -> Maybe AuthToken -> Http.Request Profile
 get username maybeToken =
-    apiUrl ("/profiles/" ++ User.usernameToString username)
+    apiUrlTmp ("/profiles/" ++ User.usernameToString username)
         |> HttpBuilder.get
         |> HttpBuilder.withExpect (Http.expectJson (Decode.field "profile" Profile.decoder))
         |> withAuthorization maybeToken
@@ -49,7 +49,7 @@ buildFollow :
     -> AuthToken
     -> Http.Request Profile
 buildFollow builderFromUrl username token =
-    [ apiUrl "/profiles", User.usernameToString username, "follow" ]
+    [ apiUrlTmp "/profiles", User.usernameToString username, "follow" ]
         |> String.join "/"
         |> builderFromUrl
         |> withAuthorization (Just token)

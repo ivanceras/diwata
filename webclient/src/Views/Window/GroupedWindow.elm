@@ -49,6 +49,7 @@ import Views.Page exposing (bodyId)
 import Views.Spinner exposing (spinner)
 import Route exposing (Route)
 import Data.WindowArena as WindowArena
+import Settings exposing (Settings)
 
 
 -- MODEL --
@@ -331,23 +332,23 @@ fetch token activeWindow feedSource =
                             { defaultFeedConfig | offset = offset, limit = windowsPerPage }
                     in
                         token
-                            |> Maybe.map (Request.Window.groupedWindow feedConfig >> Http.toTask)
+                            |> Maybe.map (Request.Window.groupedWindow Settings.empty feedConfig >> Http.toTask)
                             |> Maybe.withDefault (Task.fail (Http.BadUrl "You need to be signed in to view your groupedWindow."))
 
                 GlobalFeed ->
-                    Request.Window.list listConfig token
+                    Request.Window.list Settings.empty listConfig token
                         |> Http.toTask
 
                 TagFeed tagName ->
-                    Request.Window.list { listConfig | tag = Just tagName } token
+                    Request.Window.list Settings.empty { listConfig | tag = Just tagName } token
                         |> Http.toTask
 
                 FavoritedFeed username ->
-                    Request.Window.list { listConfig | favorited = Just username } token
+                    Request.Window.list Settings.empty { listConfig | favorited = Just username } token
                         |> Http.toTask
 
                 AuthorFeed username ->
-                    Request.Window.list { listConfig | author = Just username } token
+                    Request.Window.list Settings.empty { listConfig | author = Just username } token
                         |> Http.toTask
     in
         task

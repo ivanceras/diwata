@@ -60,8 +60,8 @@ rerouteNeeded model arenaArg =
             True
 
 
-init : Session -> Settings -> Maybe ArenaArg -> Task PageLoadError Model
-init session settings arenaArg =
+init : Settings -> Session -> Maybe ArenaArg -> Task PageLoadError Model
+init settings session arenaArg =
     let
         _ =
             Debug.log "window arena: " arenaArg

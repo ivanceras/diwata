@@ -17,6 +17,7 @@ import Validate exposing (ifBlank)
 import Views.Form as Form
 import Views.Page as Page
 import Data.WindowArena as WindowArena
+import Settings exposing (Settings)
 
 
 -- MODEL --
@@ -50,7 +51,7 @@ initEdit session tableName =
             session.user
                 |> Maybe.map .token
     in
-        Request.Window.get maybeAuthToken tableName
+        Request.Window.get Settings.empty maybeAuthToken tableName
             |> Http.toTask
             |> Task.mapError (\_ -> pageLoadError Page.Other "Window is currently unavailable.")
             |> Task.map
@@ -152,7 +153,7 @@ update user msg model =
                     case model.editingWindow of
                         Nothing ->
                             user.token
-                                |> Request.Window.create model
+                                |> Request.Window.create Settings.empty model
                                 |> Http.send CreateCompleted
                                 |> pair { model | errors = [] }
 

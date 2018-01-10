@@ -56,7 +56,7 @@ type PageState
 type alias Model =
     { session : Session
     , pageState : PageState
-    , settings : Maybe Settings
+    , settings : Settings
     }
 
 
@@ -289,11 +289,8 @@ setRoute maybeRoute model =
                     Nothing ->
                         errored Page.Settings "You must be signed in to access your settings."
 
-            Just (Route.WindowArena Nothing) ->
-                transition HomeLoaded (WindowArena.init model.session Nothing)
-
-            Just (Route.WindowArena (Just arenaArg)) ->
-                transition HomeLoaded (WindowArena.init model.session (Just arenaArg))
+            Just (Route.WindowArena arenaArg) ->
+                transition HomeLoaded (WindowArena.init model.settings model.session arenaArg)
 
             Just Route.Login ->
                 { model | pageState = Loaded (Login Login.initialModel) } => Cmd.none
