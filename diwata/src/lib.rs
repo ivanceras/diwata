@@ -32,6 +32,9 @@ use rocket::response::Redirect;
 use intel::tab::Tab;
 use intel::data_container::Lookup;
 use intel::table_intel;
+use rocket::Config;
+use rocket::config::ConfigError;
+use intel::data_container::Filter;
 
 mod error;
 
@@ -150,6 +153,31 @@ fn get_data_with_page(table_name: String, page: u32) -> Result<Option<Json<Rows>
         Some(window) => {
             let rows: Rows =
                 data_service::get_maintable_data(&em, &tables, &window, None, page, PAGE_SIZE)?;
+            Ok(Some(Json(rows)))
+        }
+        None => Ok(None),
+    }
+}
+
+#[get("/<table_name>/filter/<filter>")]
+fn get_data_with_filter(table_name: String, filter: String) -> Result<Option<Json<Rows>>, ServiceError> {
+    get_data_with_page_filter(table_name, 1, filter)
+}
+
+#[get("/<table_name>/<page>/filter/<filter>")]
+fn get_data_with_page_filter(table_name: String, page: u32, filter: String) -> Result<Option<Json<Rows>>, ServiceError> {
+    let em = get_pool_em()?;
+    let db_url = &get_db_url()?;
+    let mut cache_pool = cache::CACHE_POOL.lock().unwrap();
+    let windows = cache_pool.get_cached_windows(&em, db_url)?;
+    let table_name = TableName::from(&table_name);
+    let window = window::get_window(&table_name, &windows);
+    let tables = cache_pool.get_cached_tables(&em, db_url)?;
+    let filter = Filter::from_str(&filter);
+    match window {
+        Some(window) => {
+            let rows: Rows =
+                data_service::get_maintable_data(&em, &tables, &window, Some(filter), page, PAGE_SIZE)?;
             Ok(Some(Json(rows)))
         }
         None => Ok(None),
@@ -346,13 +374,27 @@ fn favicon() -> Option<NamedFile> {
     NamedFile::open(Path::new("./public/img/favicon.ico")).ok()
 }
 
-pub fn rocket() -> Rocket {
+pub fn rocket(address: Option<String>, port: Option<u16>) -> Result<Rocket, ConfigError> {
+    let address = match address{
+        Some(address) => address,
+        None => "0.0.0.0".to_string(),
+    };
+    let port = match port{
+        Some(port) => port,
+        None => 8000,
+    };
+    println!("address: {:?}", address);
+    println!("port: {:?}", port);
+    let mut config = Config::development()?;
+    config.set_port(port);
+    config.set_address(address)?;
     let conn = test_db_url_connection();
     match conn {
         Ok(_) => println!("connection is valid"),
         Err(e) => println!("connection Error: {:?}", e)
     };
-    rocket::ignite()
+    let server = 
+        rocket::custom(config, true)
         .attach(AdHoc::on_response(|_req, resp| {
             resp.set_header(AccessControlAllowOrigin::Any);
         }))
@@ -363,6 +405,8 @@ pub fn rocket() -> Rocket {
             routes![
                 get_data,
                 get_data_with_page,
+                get_data_with_filter,
+                get_data_with_page_filter,
                 get_detailed_record,
                 get_has_many_records,
                 get_indirect_records,
@@ -372,5 +416,6 @@ pub fn rocket() -> Rocket {
         .mount("/lookup_all", routes![get_window_lookup_data])
         .mount("/record_count", routes![get_total_records])
         .mount("/window", routes![get_window,])
-        .mount("/windows", routes![get_windows,])
+        .mount("/windows", routes![get_windows,]);
+    Ok(server)
 }

@@ -14,7 +14,7 @@ module Page.Window
 -}
 
 import Data.Window as Window exposing (Window)
-import Data.Window.Author as Author exposing (Author)
+import Data.Window.Tab as Tab exposing (TabType(..))
 import Data.Window.Record as Record exposing (Rows, Record, RecordId)
 import Data.Session as Session exposing (Session)
 import Data.User as User exposing (User)
@@ -28,20 +28,13 @@ import Http
 import Page.Errored as Errored exposing (PageLoadError, pageLoadError)
 import Request.Window
 import Request.Window.Records
-import Request.Profile
 import Route
 import Task exposing (Task)
 import Util exposing ((=>), pair, viewIf)
 import Dict exposing (Dict)
-
-
---import Views.Window
-
 import Views.Window.Favorite as Favorite
-import Views.Author
 import Views.Errors
 import Views.Page as Page
-import Views.User.Follow as Follow
 import Data.Window.GroupedWindow as GroupedWindow exposing (GroupedWindow, WindowName)
 import Data.Window.TableName as TableName exposing (TableName)
 import Views.Window.Tab as Tab
@@ -49,6 +42,7 @@ import Window as BrowserWindow
 import Data.Window.Lookup as Lookup exposing (Lookup(..))
 import Data.Window.Filter as Filter exposing (Condition)
 import Data.WindowArena as WindowArena exposing (ArenaArg)
+import Settings exposing (Settings)
 
 
 -- MODEL --
@@ -56,13 +50,13 @@ import Data.WindowArena as WindowArena exposing (ArenaArg)
 
 type alias Model =
     { errors : List String
-    , commentText : String
     , tableName : TableName
     , mainTab : Tab.Model
     , window : Window
     , lookup : Lookup
     , arenaArg : Maybe ArenaArg
     , dropdownPageRequestInFlight : Bool
+    , settings : Settings
     }
 
 
@@ -100,8 +94,8 @@ calcMainTabSize browserSize =
         ( width, height )
 
 
-init : Session -> TableName -> Window -> Maybe ArenaArg -> Task PageLoadError Model
-init session tableName window arenaArg =
+init : Settings -> Session -> TableName -> Window -> Maybe ArenaArg -> Task PageLoadError Model
+init settings session tableName window arenaArg =
     let
         maybeAuthToken =
             Maybe.map .token session.user
@@ -118,18 +112,18 @@ init session tableName window arenaArg =
             BrowserWindow.size
 
         loadRecords =
-            Request.Window.Records.list maybeAuthToken tableName
+            Request.Window.Records.listWithFilter settings maybeAuthToken tableName condition
                 |> Http.toTask
                 |> Task.mapError (handleLoadError " inLoadrecords")
 
         getTotalRecords =
-            Request.Window.Records.totalRecords maybeAuthToken tableName
+            Request.Window.Records.totalRecords settings maybeAuthToken tableName
                 |> Http.toTask
                 |> Task.mapError (handleLoadError "In getTotalRecords")
 
         loadWindowLookups : Task PageLoadError Lookup
         loadWindowLookups =
-            Request.Window.Records.lookups maybeAuthToken tableName
+            Request.Window.Records.lookups settings maybeAuthToken tableName
                 |> Http.toTask
                 |> Task.mapError (handleLoadError "In loadWindowLookups")
 
@@ -150,7 +144,7 @@ init session tableName window arenaArg =
         mainTabTask =
             Task.map4
                 (\records size lookup totalRecords ->
-                    Tab.init (calcMainTabSize size) condition window.mainTab records totalRecords
+                    Tab.init (calcMainTabSize size) condition window.mainTab InMain records totalRecords
                 )
                 loadRecords
                 getBrowserSize
@@ -161,13 +155,13 @@ init session tableName window arenaArg =
         Task.map2
             (\mainTab lookup ->
                 { errors = []
-                , commentText = ""
                 , tableName = tableName
                 , mainTab = mainTab
                 , window = window
                 , lookup = lookup
                 , arenaArg = arenaArg
                 , dropdownPageRequestInFlight = False
+                , settings = settings
                 }
             )
             mainTabTask
@@ -229,7 +223,7 @@ update session msg model =
                 let
                     cmdFromAuth authToken =
                         authToken
-                            |> Request.Window.Records.delete tableName id
+                            |> Request.Window.Records.delete model.settings tableName id
                             |> Http.send (RecordDeleted id)
                 in
                     session
@@ -254,7 +248,7 @@ update session msg model =
                     ( updatedMainTab, tabCmd ) =
                         if Tab.pageRequestNeeded newMainTab then
                             { newMainTab | pageRequestInFlight = True }
-                                => requestNextPage newMainTab
+                                => requestNextPage newMainTab model
                         else
                             newMainTab => Cmd.none
 
@@ -273,7 +267,10 @@ update session msg model =
                     filterCmd =
                         case tabMsg of
                             Tab.SearchboxMsg searchbox searchMsg ->
-                                Route.modifyUrl (Route.WindowArena newArenaArg)
+                                Cmd.batch
+                                    [ refreshPage updatedMainTab model
+                                    , Route.modifyUrl (Route.WindowArena newArenaArg)
+                                    ]
 
                             _ ->
                                 Cmd.none
@@ -319,13 +316,54 @@ dropdownPageRequestNeeded lookup model =
             Nothing
 
 
-requestNextPage : Tab.Model -> Cmd Msg
-requestNextPage tab =
+refreshPage : Tab.Model -> Model -> Cmd Msg
+refreshPage tab model =
     let
+        arenaArg =
+            model.arenaArg
+
+        condition =
+            case arenaArg of
+                Just arenaArg ->
+                    arenaArg.filter
+
+                Nothing ->
+                    Nothing
+
         tabPage =
             tab.currentPage
     in
-        Request.Window.Records.listPage (tabPage + 1) Nothing tab.tab.tableName
+        Request.Window.Records.listPageWithFilter model.settings tabPage Nothing tab.tab.tableName condition
+            |> Http.toTask
+            |> Task.attempt
+                (\result ->
+                    case result of
+                        Ok rows ->
+                            TabMsg (Tab.RefreshPageReceived rows)
+
+                        Err e ->
+                            TabMsg (Tab.RefreshPageError (toString e))
+                )
+
+
+requestNextPage : Tab.Model -> Model -> Cmd Msg
+requestNextPage tab model =
+    let
+        arenaArg =
+            model.arenaArg
+
+        condition =
+            case arenaArg of
+                Just arenaArg ->
+                    arenaArg.filter
+
+                Nothing ->
+                    Nothing
+
+        tabPage =
+            tab.currentPage
+    in
+        Request.Window.Records.listPageWithFilter model.settings (tabPage + 1) Nothing tab.tab.tableName condition
             |> Http.toTask
             |> Task.attempt
                 (\result ->

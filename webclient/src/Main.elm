@@ -56,17 +56,21 @@ type PageState
 type alias Model =
     { session : Session
     , pageState : PageState
-    , settings : Maybe Settings
+    , settings : Settings
     }
 
 
 init : Value -> Location -> ( Model, Cmd Msg )
 init val location =
-    setRoute (Route.fromLocation location)
-        { pageState = Loaded initialPage
-        , session = { user = decodeUserFromJson val }
-        , settings = Settings.fromJson val
-        }
+    let
+        _ =
+            Debug.log "settings: " val
+    in
+        setRoute (Route.fromLocation location)
+            { pageState = Loaded initialPage
+            , session = { user = decodeUserFromJson val }
+            , settings = Settings.fromJson val
+            }
 
 
 decodeUserFromJson : Value -> Maybe User
@@ -285,11 +289,8 @@ setRoute maybeRoute model =
                     Nothing ->
                         errored Page.Settings "You must be signed in to access your settings."
 
-            Just (Route.WindowArena Nothing) ->
-                transition HomeLoaded (WindowArena.init model.session Nothing)
-
-            Just (Route.WindowArena (Just arenaArg)) ->
-                transition HomeLoaded (WindowArena.init model.session (Just arenaArg))
+            Just (Route.WindowArena arenaArg) ->
+                transition HomeLoaded (WindowArena.init model.settings model.session arenaArg)
 
             Just Route.Login ->
                 { model | pageState = Loaded (Login Login.initialModel) } => Cmd.none

@@ -599,3 +599,8 @@ a.primary-link {
 .multi-column-sort input{
     margin: 0;
 }
+
+.loading-indicator{
+    margin-top: -40px;
+    margin-left: 150px;
+}

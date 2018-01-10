@@ -12,7 +12,7 @@ module Views.Window.Tab
 
 import Html exposing (..)
 import Html.Attributes exposing (attribute, class, classList, href, id, placeholder, src, property, type_, style)
-import Data.Window.Tab as Tab exposing (Tab)
+import Data.Window.Tab as Tab exposing (Tab, TabType)
 import Data.Window.TableName as TableName exposing (TableName)
 import Data.Window.Record as Record exposing (Rows, Record, RecordId)
 import Data.Window.Field as Field exposing (Field)
@@ -31,6 +31,7 @@ import Data.Window.Filter as Filter exposing (Condition)
 
 type alias Model =
     { tab : Tab
+    , tabType : TabType
     , scroll : Scroll
     , size : ( Float, Float )
     , pageRows : List (List Row.Model)
@@ -42,9 +43,10 @@ type alias Model =
     }
 
 
-init : ( Float, Float ) -> Maybe Condition -> Tab -> Rows -> Int -> Model
-init size condition tab rows totalRecords =
+init : ( Float, Float ) -> Maybe Condition -> Tab -> TabType -> Rows -> Int -> Model
+init size condition tab tabType rows totalRecords =
     { tab = tab
+    , tabType = tabType
     , scroll = Scroll 0 0
     , size = size
     , pageRows = [ createRowsModel tab rows ]
@@ -195,11 +197,7 @@ viewLoadingIndicator : Model -> Html Msg
 viewLoadingIndicator model =
     if model.pageRequestInFlight then
         div
-            [ style
-                [ ( "margin-top", px -50 )
-                , ( "left", px 50 )
-                ]
-            , class "animated slideInUp"
+            [ class "loading-indicator animated slideInUp"
             ]
             [ i [ class "fa fa-spinner fa-pulse fa-2x fa-fw" ] []
             ]
@@ -386,6 +384,8 @@ type Msg
     | ListRowScrolled Scroll
     | NextPageReceived Rows
     | NextPageError String
+    | RefreshPageReceived Rows
+    | RefreshPageError String
     | RowMsg Row.Model Row.Msg
     | SearchboxMsg Searchbox.Model Searchbox.Msg
 
@@ -408,12 +408,37 @@ update msg model =
                 }
                     => Cmd.none
             else
-                { model | reachedLastPage = True } => Cmd.none
+                { model
+                    | reachedLastPage = True
+                    , pageRequestInFlight = False
+                }
+                    => Cmd.none
 
         NextPageError e ->
             let
                 _ =
                     Debug.log "Error receiving next page"
+            in
+                model => Cmd.none
+
+        RefreshPageReceived rows ->
+            if List.length rows.data > 0 then
+                { model
+                    | pageRows = [ createRowsModel model.tab rows ]
+                    , pageRequestInFlight = False
+                }
+                    => Cmd.none
+            else
+                { model
+                    | reachedLastPage = True
+                    , pageRequestInFlight = False
+                }
+                    => Cmd.none
+
+        RefreshPageError e ->
+            let
+                _ =
+                    Debug.log "Error receiving refresh page"
             in
                 model => Cmd.none
 

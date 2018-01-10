@@ -1,4 +1,4 @@
-module Settings exposing (Settings, decoder, fromJson)
+module Settings exposing (Settings, decoder, fromJson, empty)
 
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Extra
@@ -8,7 +8,20 @@ import Json.Decode as Decode exposing (Value)
 
 type alias Settings =
     { dbUrl : String
+    , apiEndPoint : String
     , grouped : Bool
+    }
+
+
+
+--TODO: remove this after refactoring
+
+
+empty : Settings
+empty =
+    { dbUrl = ""
+    , apiEndPoint = ""
+    , grouped = False
     }
 
 
@@ -16,11 +29,19 @@ decoder : Decoder Settings
 decoder =
     decode Settings
         |> required "db_url" Decode.string
+        |> required "api_endpoint" Decode.string
         |> required "grouped" Decode.bool
 
 
-fromJson : Value -> Maybe Settings
+fromJson : Value -> Settings
 fromJson json =
-    json
-        |> Decode.decodeValue decoder
-        |> Result.toMaybe
+    let
+        settings =
+            Decode.decodeValue decoder json
+    in
+        case settings of
+            Ok settings ->
+                settings
+
+            Err e ->
+                Debug.crash "Decoding settings should not be error" e

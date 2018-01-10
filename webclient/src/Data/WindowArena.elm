@@ -102,22 +102,10 @@ type alias ArenaArg =
 
 {-| Reroute needed when
 tableName != tableName,
-
-No reroute needed when
-tableName == tableName and sectionTable != sectionTable
-
 -}
-noRerouteNeeded : ArenaArg -> ArenaArg -> Bool
-noRerouteNeeded oldArg newArg =
-    oldArg.tableName
-        == newArg.tableName
-        && oldArg.sectionTable
-        /= newArg.sectionTable
-
-
 rerouteNeeded : ArenaArg -> ArenaArg -> Bool
 rerouteNeeded oldArg newArg =
-    not (noRerouteNeeded oldArg newArg)
+    oldArg.tableName /= newArg.tableName
 
 
 argToString : ArenaArg -> String

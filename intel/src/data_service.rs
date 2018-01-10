@@ -20,8 +20,8 @@ use rustorm::FromDao;
 use dao;
 use bigdecimal::BigDecimal;
 use std::str::FromStr;
+use data_container::Filter;
 
-pub struct Filter;
 
 pub fn get_main_table<'a>(window: &Window, tables: &'a Vec<Table>) -> Option<&'a Table> {
     let main_tablename = &window.main_tab.table_name;
@@ -49,7 +49,7 @@ pub fn get_maintable_data(
     em: &EntityManager,
     tables: &Vec<Table>,
     window: &Window,
-    _filter: Option<Filter>,
+    filter: Option<Filter>,
     page: u32,
     page_size: u32,
 ) -> Result<Rows, DbError> {
@@ -123,12 +123,38 @@ pub fn get_maintable_data(
             None => (),
         }
     }
+    let mut params = vec![];
+    match filter{
+        Some(filter) => {
+            sql += "WHERE ";
+            for (i,cond) in filter.conditions.iter().enumerate(){
+                if i > 0 {
+                    sql += "AND ";
+                }
+                let column_name = &cond.left;
+                let value_str = format!("{}%", cond.right.to_string());
+                let value = Value::Text(value_str);
+                validate_column(&column_name, window, tables)?;
+                sql += &format!("{} ILIKE ${} ", column_name.complete_name(), i+1); 
+                params.push(value);
+            }
+
+        },
+        None => (),
+    }
     sql += &format!("\nLIMIT {} ", page_size);
     sql += &format!("OFFSET {} ", calc_offset(page, page_size));
     println!("SQL: {}", sql);
-    let result: Result<Rows, DbError> = em.db().execute_sql_with_return(&sql, &[]);
+    println!("PARAMS: {:#?}", params);
+    let result: Result<Rows, DbError> = em.db().execute_sql_with_return(&sql, &params);
     println!("result: {:?}", result);
     result
+}
+
+//TODO: validate the column name here that it should exist to any of the tables
+//that belong to this window, otherwise raise a SQL injection attempt error
+fn validate_column(_column_name: &ColumnName, _window: &Window, _tables: &Vec<Table>) -> Result<(), DbError>{
+    Ok(())
 }
 
 /// extract record id from comma separated value

@@ -8,7 +8,7 @@ import Json.Decode as Decode
 import Json.Encode as Encode
 import Json.Encode.Extra as EncodeExtra
 import Ports
-import Request.Helpers exposing (apiUrl)
+import Request.Helpers exposing (apiUrlTmp)
 import Util exposing ((=>))
 
 
@@ -34,7 +34,7 @@ login { email, password } =
                 |> Http.jsonBody
     in
         Decode.field "user" User.decoder
-            |> Http.post (apiUrl "/users/login") body
+            |> Http.post (apiUrlTmp "/users/login") body
 
 
 register : { r | username : String, email : String, password : String } -> Http.Request User
@@ -52,7 +52,7 @@ register { username, email, password } =
                 |> Http.jsonBody
     in
         Decode.field "user" User.decoder
-            |> Http.post (apiUrl "/users") body
+            |> Http.post (apiUrlTmp "/users") body
 
 
 edit :
@@ -87,7 +87,7 @@ edit { username, email, bio, password, image } maybeToken =
                 |> Decode.field "user"
                 |> Http.expectJson
     in
-        apiUrl "/user"
+        apiUrlTmp "/user"
             |> HttpBuilder.put
             |> HttpBuilder.withExpect expect
             |> HttpBuilder.withBody body
