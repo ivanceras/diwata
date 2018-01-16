@@ -35,6 +35,9 @@ import Data.Window.Record as Record
 import Data.Window.Lookup as Lookup
 import Data.WindowArena as WindowArena
 import Settings exposing (Settings)
+import Views.Window.Field as Field
+import Views.Window.Row as Row
+import Views.Window.Tab as Tab
 
 
 -- MODEL --
@@ -171,12 +174,31 @@ view session model =
                 , div [ class "pane window-arena" ]
                     [ div [ class "tab-names" ]
                         [ viewTabNames model ]
-                    , div []
-                        [ viewWindowOrSelectedRow session model ]
+
+                    --, div []
+                    --    [ viewWindowOrSelectedRow session model ]
+                    , div [ class "window-and-selected-row" ]
+                        [ viewWindow session model.activeWindow
+                        , viewSelectedRow session model
+                        ]
                     ]
                 ]
             ]
         ]
+
+
+viewSelectedRow : Session -> Model -> Html Msg
+viewSelectedRow session model =
+    case model.selectedRow of
+        Just selectedRow ->
+            div [ class "detailed-selected-row" ]
+                [ DetailedRecord.view
+                    selectedRow
+                    |> Html.map DetailedRecordMsg
+                ]
+
+        Nothing ->
+            text ""
 
 
 viewWindowOrSelectedRow : Session -> Model -> Html Msg
@@ -194,8 +216,12 @@ viewWindow : Session -> Maybe Window.Model -> Html Msg
 viewWindow session activeWindow =
     case activeWindow of
         Just activeWindow ->
-            Window.view session activeWindow
-                |> Html.map WindowMsg
+            div [ class "window-view" ]
+                [ Window.view
+                    session
+                    activeWindow
+                    |> Html.map WindowMsg
+                ]
 
         Nothing ->
             text "No active window"
@@ -253,6 +279,13 @@ update session msg model =
                     GroupedWindow.update session subMsg model.groupedWindow
             in
                 { model | groupedWindow = newFeed } => Cmd.map GroupedWindowMsg subCmd
+
+        WindowMsg (Window.TabMsg (Tab.RowMsg rowModel (Row.FieldMsg fieldModel (Field.PrimaryLinkClicked tableName recordIdString)))) ->
+            let
+                _ =
+                    Debug.log "PrimaryLinkClicked" recordIdString
+            in
+                model => Cmd.none
 
         WindowMsg subMsg ->
             case model.activeWindow of

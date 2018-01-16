@@ -61,7 +61,7 @@ type alias Model =
     , hasManyTabs : List Tab.Model
     , indirectTabs : List ( TableName, Tab.Model )
     , position : Position
-    , drag : Maybe Drag
+    , drag : Maybe DragPosition
     , size : ( Float, Float )
     , arenaArg : ArenaArg
     , lookup : Lookup
@@ -71,7 +71,7 @@ type alias Model =
     }
 
 
-type alias Drag =
+type alias DragPosition =
     { start : Position
     , current : Position
     }
@@ -291,10 +291,16 @@ splitTabHeights : Window -> Position -> ( Float, Float ) -> ( Float, Float )
 splitTabHeights window position size =
     let
         toolbar =
-            80
+            90
+
+        detailTabNamesHeight =
+            40
+
+        separatorHeight =
+            10
 
         totalDeductions =
-            100 + toolbar
+            toolbar + detailTabNamesHeight + separatorHeight
 
         ( width, height ) =
             size
@@ -630,7 +636,19 @@ getPosition model =
 
 onMouseDown : Attribute Msg
 onMouseDown =
-    on "mousedown" (Decode.map DragStart Mouse.position)
+    on "mousedown"
+        (Decode.map
+            (\p ->
+                Drag (Start p)
+            )
+            Mouse.position
+        )
+
+
+type Drag
+    = Start Position
+    | At Position
+    | End Position
 
 
 
@@ -638,9 +656,7 @@ onMouseDown =
 
 
 type Msg
-    = DragStart Position
-    | DragAt Position
-    | DragEnd Position
+    = Drag Drag
     | WindowResized BrowserWindow.Size
     | TabMsg ( Section, Tab.Model, Tab.Msg )
     | TabMsgAll Tab.Msg
@@ -648,6 +664,36 @@ type Msg
     | LookupNextPageReceived ( TableName, List Record )
     | LookupNextPageErrored String
     | ChangeActiveTab Section TableName (Maybe TableName)
+
+
+updateDrag : Session -> Drag -> Model -> ( Model, Cmd Msg )
+updateDrag session drag model =
+    case drag of
+        Start xy ->
+            let
+                newModel =
+                    { model | drag = Just (DragPosition xy xy) }
+            in
+                updateSizes session newModel
+
+        At xy ->
+            let
+                newModel =
+                    { model
+                        | drag = Maybe.map (\{ start } -> DragPosition start xy) model.drag
+                    }
+            in
+                updateSizes session newModel
+
+        End _ ->
+            let
+                newModel =
+                    { model
+                        | position = getPosition model
+                        , drag = Nothing
+                    }
+            in
+                updateSizes session newModel
 
 
 update : Session -> Msg -> Model -> ( Model, Cmd Msg )
@@ -660,32 +706,8 @@ update session msg model =
             model.drag
     in
         case msg of
-            DragStart xy ->
-                let
-                    newModel =
-                        { model | drag = Just (Drag xy xy) }
-                in
-                    updateSizes session newModel
-
-            DragAt xy ->
-                let
-                    newModel =
-                        { model
-                            | position = position
-                            , drag = Maybe.map (\{ start } -> Drag start xy) drag
-                        }
-                in
-                    updateSizes session newModel
-
-            DragEnd _ ->
-                let
-                    newModel =
-                        { model
-                            | position = getPosition model
-                            , drag = Nothing
-                        }
-                in
-                    updateSizes session newModel
+            Drag drag ->
+                updateDrag session drag model
 
             WindowResized browserSize ->
                 let
@@ -931,4 +953,4 @@ dividerHeightSubscriptions model =
             Sub.none
 
         Just _ ->
-            Sub.batch [ Mouse.moves DragAt, Mouse.ups DragEnd ]
+            Sub.batch [ Sub.map Drag (Mouse.moves At), Sub.map Drag (Mouse.ups End) ]

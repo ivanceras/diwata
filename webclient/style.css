@@ -528,6 +528,7 @@ a.primary-link {
     overflow-x: auto;
     padding: 50px 0 10px 0;
     margin-left: 20px;
+    background-color: #f5f5f4;
 }
 
 .toolbar {
@@ -603,4 +604,15 @@ a.primary-link {
 .loading-indicator{
     margin-top: -40px;
     margin-left: 150px;
+}
+
+.window-and-selected-row{
+}
+
+.detailed-selected-row{
+    position: absolute;
+}
+
+.window-view {
+    position: absolute;
 }

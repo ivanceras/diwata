@@ -2,7 +2,7 @@ module Views.Window.Row
     exposing
         ( view
         , viewRowControls
-        , Msg
+        , Msg(..)
         , Model
         , update
         , init
@@ -85,7 +85,7 @@ view lookup model =
                 (\value ->
                     div [ class "tab-row-value" ]
                         [ Field.view lookup value
-                            |> Html.map (ValueMsg value)
+                            |> Html.map (FieldMsg value)
                         ]
                 )
                 model.fields
@@ -163,14 +163,14 @@ dropdownPageRequestNeeded lookup model =
 
 
 type Msg
-    = ValueMsg Field.Model Field.Msg
+    = FieldMsg Field.Model Field.Msg
     | ResetChanges
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        ValueMsg argValue msg ->
+        FieldMsg argValue msg ->
             let
                 updated =
                     List.map
@@ -180,7 +180,7 @@ update msg model =
                                     ( newValue, subCmd ) =
                                         Field.update msg value
                                 in
-                                    ( newValue, Cmd.map (ValueMsg newValue) subCmd )
+                                    ( newValue, Cmd.map (FieldMsg newValue) subCmd )
                             else
                                 value => Cmd.none
                         )
@@ -202,7 +202,7 @@ update msg model =
                     => Cmd.batch
                         (List.map2
                             (\field cmd ->
-                                Cmd.map (ValueMsg field) cmd
+                                Cmd.map (FieldMsg field) cmd
                             )
                             newFields
                             subCmds

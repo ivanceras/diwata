@@ -29,7 +29,7 @@ import Widgets.FixDropdown as FixDropdown
 import Views.Window.Presentation as Presentation exposing (Presentation(..))
 import Data.Window.TableName as TableName exposing (TableName)
 import Html.Attributes exposing (id, for, name, selected, checked, style, class, classList, type_, value)
-import Html.Events exposing (onInput, onCheck)
+import Html.Events exposing (onInput, onCheck, onClick)
 
 
 type alias Model =
@@ -238,6 +238,7 @@ createWidget presentation record tab field maybeValue =
                                     ]
                                     [ a
                                         [ class "primary-link"
+                                        , onClick (PrimaryLinkClicked tableName recordIdString)
                                         , Route.href (Route.WindowArena (Just (WindowArena.initArgWithRecordId tableName recordIdString)))
                                         ]
                                         [ text valueString ]
@@ -597,6 +598,7 @@ type Msg
     | BoolValueChanged Bool
     | ResetChanges
     | SetValue Value
+    | PrimaryLinkClicked TableName String
 
 
 type Widget
@@ -689,6 +691,10 @@ update msg model =
                     , widget = updatedWidget
                 }
                     => Cmd.none
+
+        -- this should be listened in the windowArena
+        PrimaryLinkClicked tableName recordIdString ->
+            model => Cmd.none
 
 
 updateWidgetValue : Model -> Maybe Value -> Widget
