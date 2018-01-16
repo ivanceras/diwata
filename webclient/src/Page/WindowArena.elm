@@ -38,6 +38,7 @@ import Settings exposing (Settings)
 import Views.Window.Field as Field
 import Views.Window.Row as Row
 import Views.Window.Tab as Tab
+import Views.Window.Toolbar as Toolbar
 
 
 -- MODEL --
@@ -50,6 +51,7 @@ type alias Model =
     , selectedRow : Maybe DetailedRecord.Model
     , arenaArg : Maybe ArenaArg
     , settings : Settings
+    , errors : List String
     }
 
 
@@ -61,6 +63,10 @@ rerouteNeeded model arenaArg =
 
         Nothing ->
             True
+
+
+handleLoadError e =
+    pageLoadError Page.WindowArena ("WindowArena is currently unavailable. Error: " ++ (toString e))
 
 
 init : Settings -> Session -> Maybe ArenaArg -> Task PageLoadError Model
@@ -138,9 +144,6 @@ init settings session arenaArg =
 
                 Nothing ->
                     Task.succeed Nothing
-
-        handleLoadError e =
-            pageLoadError Page.WindowArena ("WindowArena is currently unavailable. Error: " ++ (toString e))
     in
         Task.map3
             (\activeWindow groupedWindow selectedRow ->
@@ -150,6 +153,7 @@ init settings session arenaArg =
                 , selectedRow = selectedRow
                 , arenaArg = arenaArg
                 , settings = settings
+                , errors = []
                 }
             )
             loadActiveWindow
@@ -268,6 +272,8 @@ type Msg
     | WindowMsg Window.Msg
     | DetailedRecordMsg DetailedRecord.Msg
     | WindowResized BrowserWindow.Size
+    | InitializedSelectedRow DetailedRecord.Model
+    | FailedToInitializeSelectedRow
 
 
 update : Session -> Msg -> Model -> ( Model, Cmd Msg )
@@ -284,8 +290,45 @@ update session msg model =
             let
                 _ =
                     Debug.log "PrimaryLinkClicked" recordIdString
+
+                arenaArg =
+                    case model.arenaArg of
+                        Just arenaArg ->
+                            arenaArg
+
+                        Nothing ->
+                            Debug.crash "There should be an arena arg"
+
+                activeWindow =
+                    case model.activeWindow of
+                        Just activeWindow ->
+                            activeWindow.window
+
+                        Nothing ->
+                            Debug.crash "There should be an activeWindow"
+
+                initSelectedRow =
+                    DetailedRecord.init model.settings tableName recordIdString arenaArg activeWindow
             in
-                model => Cmd.none
+                model
+                    => Task.attempt
+                        (\result ->
+                            case result of
+                                Ok result ->
+                                    InitializedSelectedRow result
+
+                                Err e ->
+                                    FailedToInitializeSelectedRow
+                        )
+                        initSelectedRow
+
+        InitializedSelectedRow selectedRow ->
+            { model | selectedRow = Just selectedRow }
+                => Cmd.none
+
+        FailedToInitializeSelectedRow ->
+            { model | errors = "Failed to initialize selected row" :: model.errors }
+                => Cmd.none
 
         WindowMsg subMsg ->
             case model.activeWindow of
@@ -318,6 +361,10 @@ update session msg model =
 
                 Nothing ->
                     model => Cmd.none
+
+        DetailedRecordMsg (DetailedRecord.ToolbarMsg Toolbar.ClickedClose) ->
+            { model | selectedRow = Nothing }
+                => Cmd.none
 
         DetailedRecordMsg subMsg ->
             case model.selectedRow of

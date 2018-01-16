@@ -609,8 +609,10 @@ a.primary-link {
 .window-and-selected-row{
 }
 
-.detailed-selected-row{
+.detailed-selected-row {
     position: absolute;
+    border-left: 1px solid #ccc;
+    background-color: #f5f5f4;
 }
 
 .window-view {

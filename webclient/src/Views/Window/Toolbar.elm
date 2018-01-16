@@ -1,7 +1,17 @@
-module Views.Window.Toolbar exposing (viewForMain, viewForDetailRecord)
+module Views.Window.Toolbar
+    exposing
+        ( Msg(..)
+        , viewForMain
+        , viewForDetailRecord
+        )
 
 import Html exposing (..)
 import Html.Attributes exposing (class, type_)
+import Html.Events exposing (onClick)
+
+
+type Msg
+    = ClickedClose
 
 
 viewForMain : Html msg
@@ -69,7 +79,7 @@ viewForMain =
         ]
 
 
-viewForDetailRecord : Html msg
+viewForDetailRecord : Html Msg
 viewForDetailRecord =
     div [ class "toolbar btn-group" ]
         [ button [ class "btn btn-large btn-default tooltip" ]
@@ -121,7 +131,10 @@ viewForDetailRecord =
             , text "Restore Size"
             , span [ class "tooltip-text" ] [ text "Restore the default detail record view" ]
             ]
-        , button [ class "btn btn-large btn-default tooltip" ]
+        , button
+            [ class "btn btn-large btn-default tooltip"
+            , onClick ClickedClose
+            ]
             [ span [ class "icon icon-text icon-cancel" ] []
             , text "Close"
             , span [ class "tooltip-text" ] [ text "Close the detail record view and display the list" ]

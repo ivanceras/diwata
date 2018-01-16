@@ -355,6 +355,7 @@ view model =
                 [ class "toolbar-area"
                 ]
                 [ Toolbar.viewForDetailRecord
+                    |> Html.map ToolbarMsg
                 ]
             , div
                 [ class "main-tab-selected"
@@ -664,6 +665,7 @@ type Msg
     | LookupNextPageReceived ( TableName, List Record )
     | LookupNextPageErrored String
     | ChangeActiveTab Section TableName (Maybe TableName)
+    | ToolbarMsg Toolbar.Msg
 
 
 updateDrag : Session -> Drag -> Model -> ( Model, Cmd Msg )
@@ -844,6 +846,10 @@ update session msg model =
                 in
                     { model | arenaArg = newArenaArg }
                         => Route.modifyUrl (Route.WindowArena (Just newArenaArg))
+
+            -- handle this in WindowArena
+            ToolbarMsg toolbarMsg ->
+                model => Cmd.none
 
 
 requestNextPage : Section -> Tab.Model -> Model -> Cmd Msg
