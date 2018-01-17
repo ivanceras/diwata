@@ -26,6 +26,8 @@ Freeze column
 Distinguisable referred record in a dropdown
 ![](https://raw.githubusercontent.com/ivanceras/ivanceras.github.io/master/diwata/meaningful-dropdown.gif)
 
+### [Sakila Demo](http://web01.jcesar.clh.no:8000)
+
 ### Needed Dependencies
 - elm v0.18 ( elm installation needed npm or yarn)
 - rsync  ( for fast syncing files over and over )

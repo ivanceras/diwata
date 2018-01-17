@@ -267,8 +267,11 @@ createSearchbox model =
                     DataType.Uuid ->
                         textSearch styles value1String
 
+                    DataType.Numeric ->
+                        textSearch styles value1String
+
                     _ ->
-                        Debug.crash "Primary url search data type, not yet handled for " dataType
+                        Debug.crash ("Primary url search data type, not yet handled for " ++ toString dataType)
 
             TableLookupDropdown ->
                 textSearch styles value1String
