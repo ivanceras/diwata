@@ -240,6 +240,42 @@ update session msg model =
             CloseWindow ->
                 model => Cmd.none
 
+            TabMsg (Tab.SearchboxMsg searchbox searchMsg) ->
+                let
+                    _ =
+                        Debug.log "searchbox changed.. refereshing page.." searchMsg
+
+                    ( updatedMainTab, subCmd ) =
+                        Tab.update (Tab.SearchboxMsg searchbox searchMsg) model.mainTab
+
+                    tabSearchFilter =
+                        updatedMainTab.searchFilter
+
+                    _ =
+                        Debug.log "tabSearchfilter" tabSearchFilter
+
+                    newArenaArg =
+                        case model.arenaArg of
+                            Just arenaArg ->
+                                WindowArena.updateFilter tabSearchFilter arenaArg
+                                    |> Just
+
+                            Nothing ->
+                                Nothing
+
+                    updatedModel =
+                        { model
+                            | mainTab = updatedMainTab
+                            , arenaArg = newArenaArg
+                        }
+                in
+                    updatedModel
+                        => Cmd.batch
+                            [ Cmd.map TabMsg subCmd
+                            , refreshPage updatedMainTab updatedModel
+                            , Route.modifyUrl (Route.WindowArena newArenaArg)
+                            ]
+
             TabMsg tabMsg ->
                 let
                     ( newMainTab, subCmd ) =
@@ -251,35 +287,11 @@ update session msg model =
                                 => requestNextPage newMainTab model
                         else
                             newMainTab => Cmd.none
-
-                    tabSearchFilter =
-                        updatedMainTab.searchFilter
-
-                    newArenaArg =
-                        case model.arenaArg of
-                            Just arenaArg ->
-                                WindowArena.updateFilter updatedMainTab.searchFilter arenaArg
-                                    |> Just
-
-                            Nothing ->
-                                Nothing
-
-                    filterCmd =
-                        case tabMsg of
-                            Tab.SearchboxMsg searchbox searchMsg ->
-                                Cmd.batch
-                                    [ refreshPage updatedMainTab model
-                                    , Route.modifyUrl (Route.WindowArena newArenaArg)
-                                    ]
-
-                            _ ->
-                                Cmd.none
                 in
                     { model | mainTab = updatedMainTab }
                         => Cmd.batch
                             [ Cmd.map TabMsg subCmd
                             , tabCmd
-                            , filterCmd
                             ]
 
             LookupNextPageReceived ( sourceTable, recordList ) ->
@@ -329,6 +341,9 @@ refreshPage tab model =
 
                 Nothing ->
                     Nothing
+
+        _ =
+            Debug.log "refreshing Page... " condition
 
         tabPage =
             tab.currentPage

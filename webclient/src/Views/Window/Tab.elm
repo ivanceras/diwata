@@ -422,18 +422,11 @@ update msg model =
                 model => Cmd.none
 
         RefreshPageReceived rows ->
-            if List.length rows.data > 0 then
-                { model
-                    | pageRows = [ createRowsModel model.tab rows ]
-                    , pageRequestInFlight = False
-                }
-                    => Cmd.none
-            else
-                { model
-                    | reachedLastPage = True
-                    , pageRequestInFlight = False
-                }
-                    => Cmd.none
+            { model
+                | pageRows = [ createRowsModel model.tab rows ]
+                , pageRequestInFlight = False
+            }
+                => Cmd.none
 
         RefreshPageError e ->
             let
@@ -483,7 +476,7 @@ update msg model =
                     Searchbox.update searchbox msg
 
                 field =
-                    searchbox.field
+                    newSearchbox.field
 
                 columnName =
                     Field.firstColumnName field
