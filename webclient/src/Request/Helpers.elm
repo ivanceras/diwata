@@ -13,4 +13,13 @@ apiUrlTmp str =
 
 apiUrl : Settings -> String -> String
 apiUrl settings str =
-    settings.apiEndPoint ++ str
+    let
+        apiEndPoint =
+            settings.apiEndPoint
+    in
+        case apiEndPoint of
+            Just apiEndPoint ->
+                apiEndPoint ++ str
+
+            Nothing ->
+                str

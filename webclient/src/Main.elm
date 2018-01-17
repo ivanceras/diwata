@@ -7,7 +7,6 @@ import Html exposing (..)
 import Json.Decode as Decode exposing (Value)
 import Navigation exposing (Location)
 import Page.Window as Window
-import Page.Window.Editor as Editor
 import Page.Errored as Errored exposing (PageLoadError)
 import Page.WindowArena as WindowArena
 import Page.Login as Login
@@ -40,7 +39,6 @@ type Page
     | Register Register.Model
     | Profile Username Profile.Model
     | Window Window.Model
-    | Editor (Maybe TableName) Editor.Model
 
 
 type PageState
@@ -65,6 +63,23 @@ init val location =
     let
         _ =
             Debug.log "settings: " val
+
+        _ =
+            Debug.log "location: " location
+
+        settings =
+            Settings.fromJson val
+
+        correctedSettings =
+            case settings.apiEndPoint of
+                Just apiEndPoint ->
+                    settings
+
+                Nothing ->
+                    { settings | apiEndPoint = Just location.origin }
+
+        _ =
+            Debug.log "corrected settings: " correctedSettings
     in
         setRoute (Route.fromLocation location)
             { pageState = Loaded initialPage
@@ -151,18 +166,6 @@ viewPage session isLoading page =
                     |> frame Page.Other
                     |> Html.map WindowMsg
 
-            Editor maybeSlug subModel ->
-                let
-                    framePage =
-                        if maybeSlug == Nothing then
-                            Page.NewWindow
-                        else
-                            Page.Other
-                in
-                    Editor.view subModel
-                        |> frame framePage
-                        |> Html.map EditorMsg
-
 
 
 -- SUBSCRIPTIONS --
@@ -224,11 +227,11 @@ pageSubscriptions page =
         Window _ ->
             Sub.none
 
-        Editor _ _ ->
-            Sub.none
 
 
-
+{- Editor _ _ ->
+   Sub.none
+-}
 -- UPDATE --
 
 
@@ -237,7 +240,6 @@ type Msg
     | HomeLoaded (Result PageLoadError WindowArena.Model)
     | WindowLoaded (Result PageLoadError Window.Model)
     | ProfileLoaded Username (Result PageLoadError Profile.Model)
-    | EditWindowLoaded TableName (Result PageLoadError Editor.Model)
     | WindowArenaMsg WindowArena.Msg
     | SettingsMsg Settings.Msg
     | SetUser (Maybe User)
@@ -245,7 +247,6 @@ type Msg
     | RegisterMsg Register.Msg
     | ProfileMsg Profile.Msg
     | WindowMsg Window.Msg
-    | EditorMsg Editor.Msg
 
 
 setRoute : Maybe Route -> Model -> ( Model, Cmd Msg )
@@ -264,22 +265,6 @@ setRoute maybeRoute model =
         case maybeRoute of
             Nothing ->
                 { model | pageState = Loaded NotFound } => Cmd.none
-
-            Just Route.NewWindow ->
-                case model.session.user of
-                    Just user ->
-                        { model | pageState = Loaded (Editor Nothing Editor.initNew) } => Cmd.none
-
-                    Nothing ->
-                        errored Page.NewWindow "You must be signed in to post an window."
-
-            Just (Route.EditWindow tableName) ->
-                case model.session.user of
-                    Just user ->
-                        transition (EditWindowLoaded tableName) (Editor.initEdit model.session tableName)
-
-                    Nothing ->
-                        errored Page.Other "You must be signed in to edit an window."
 
             Just Route.Settings ->
                 case model.session.user of
@@ -385,12 +370,6 @@ updatePage page msg model =
             ( WindowLoaded (Err error), _ ) ->
                 { model | pageState = Loaded (Errored error) } => Cmd.none
 
-            ( EditWindowLoaded slug (Ok subModel), _ ) ->
-                { model | pageState = Loaded (Editor (Just slug) subModel) } => Cmd.none
-
-            ( EditWindowLoaded slug (Err error), _ ) ->
-                { model | pageState = Loaded (Errored error) } => Cmd.none
-
             ( SetUser user, _ ) ->
                 let
                     session =
@@ -474,19 +453,6 @@ updatePage page msg model =
 
             ( WindowMsg subMsg, Window subModel ) ->
                 toPage Window WindowMsg (Window.update model.session) subMsg subModel
-
-            ( EditorMsg subMsg, Editor slug subModel ) ->
-                case model.session.user of
-                    Nothing ->
-                        if slug == Nothing then
-                            errored Page.NewWindow
-                                "You must be signed in to post windows."
-                        else
-                            errored Page.Other
-                                "You must be signed in to edit windows."
-
-                    Just user ->
-                        toPage (Editor slug) EditorMsg (Editor.update user) subMsg subModel
 
             ( _, NotFound ) ->
                 -- Disregard incoming messages when we're on the

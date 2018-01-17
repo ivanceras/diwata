@@ -28,8 +28,6 @@ type Route
     | Register
     | Settings
     | Profile Username
-    | NewWindow
-    | EditWindow TableName
 
 
 route : Parser (Route -> a) a
@@ -40,8 +38,6 @@ route =
         , Url.map Settings (s "settings")
         , Url.map Profile (s "profile" </> User.usernameParser)
         , Url.map Register (s "register")
-        , Url.map NewWindow (s "editor")
-        , Url.map EditWindow (s "editor" </> tableNameParser)
         , Url.map (WindowArena Nothing) (s "")
         ]
 
@@ -77,12 +73,6 @@ routeToString page =
 
                 Profile username ->
                     [ "profile", User.usernameToString username ]
-
-                NewWindow ->
-                    [ "editor" ]
-
-                EditWindow tableName ->
-                    [ "editor", tableNameToString tableName ]
     in
         "#/" ++ String.join "/" pieces
 

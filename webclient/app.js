@@ -2,7 +2,7 @@
 function init(){
     app = Elm.Main.fullscreen(
         { db_url: "postgres://postgres:p0stgr3s@localhost:5432/mock",
-          api_endpoint: "http://localhost:8000",
+            api_endpoint: null,
           grouped: true,
         }
     );

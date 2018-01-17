@@ -75,8 +75,7 @@ viewSignIn page user =
                 ]
 
             Just user ->
-                [ linkTo Route.NewWindow [ i [ class "ion-compose" ] [], text " New Post" ]
-                , linkTo Route.Settings [ i [ class "ion-gear-a" ] [], text " Settings" ]
+                [ linkTo Route.Settings [ i [ class "ion-gear-a" ] [], text " Settings" ]
                 , linkTo
                     (Route.Profile user.username)
                     [ img [ class "user-pic", UserPhoto.src user.image ] []
@@ -123,9 +122,6 @@ isActive page route =
 
         ( Profile pageUsername, Route.Profile routeUsername ) ->
             pageUsername == routeUsername
-
-        ( NewWindow, Route.NewWindow ) ->
-            True
 
         _ ->
             False
