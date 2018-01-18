@@ -163,6 +163,15 @@ listView lookup model =
 
         ( width, height ) =
             model.size
+
+        adjustedWidth =
+            adjustWidth width model
+
+        _ =
+            Debug.log "width" width
+
+        _ =
+            Debug.log ("adjustedWidth for " ++ model.tab.name) adjustedWidth
     in
         div []
             [ div
@@ -183,7 +192,7 @@ listView lookup model =
                         , onScroll ListRowScrolled
                         , style
                             [ ( "height", px height )
-                            , ( "width", px width )
+                            , ( "width", px adjustedWidth )
                             ]
                         ]
                         [ listViewRows lookup model ]
@@ -280,6 +289,23 @@ viewFrozenHead model =
             ]
 
 
+adjustWidth : Float -> Model -> Float
+adjustWidth width model =
+    let
+        detailedMarginLeft =
+            200
+    in
+        case model.tabType of
+            Tab.InMain ->
+                width
+
+            Tab.InHasMany ->
+                width - detailedMarginLeft
+
+            Tab.InIndirect ->
+                width - detailedMarginLeft
+
+
 viewColumns : Model -> List Field -> Html Msg
 viewColumns model fields =
     let
@@ -291,10 +317,13 @@ viewColumns model fields =
 
         ( width, height ) =
             model.size
+
+        adjustedWidth =
+            adjustWidth width model
     in
         div
             [ class "tab-columns"
-            , style [ ( "width", px width ) ]
+            , style [ ( "width", px adjustedWidth ) ]
             ]
             [ div
                 [ class "tab-columns-content"

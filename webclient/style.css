@@ -275,7 +275,7 @@ a.primary-link {
 .tab-list-view {
     display: inline-block;
     border: 1px solid #ccc;
-    margin-left: 20px;
+    margin: 10px 20px;
 }
 
 .list-view-rows {
@@ -352,10 +352,9 @@ a.primary-link {
     color: #656565;
 }
 
-
-
 .indirect-tab {
     background-color: #eddac9;
+    border-radius: 0;
 }
 
 .detail-tab-names {
@@ -610,9 +609,11 @@ a.primary-link {
 }
 
 .detailed-selected-row {
+    box-shadow: -9px 9px 28px 0px rgba(50, 50, 50, 0.73);
     position: absolute;
     border-left: 1px solid #ccc;
     background-color: #f5f5f4;
+    margin-left: 200px; /* This is used in calculation in elm code Tab.elm */
 }
 
 .window-view {

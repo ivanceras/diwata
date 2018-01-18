@@ -59,7 +59,7 @@ parse arg =
             String.split "&" arg
 
         condition =
-            List.map
+            List.filterMap
                 (\splinter ->
                     let
                         parts =
@@ -76,18 +76,25 @@ parse arg =
 
                         value =
                             case Array.get 1 parts of
+                                Just "" ->
+                                    Nothing
+
                                 Just value ->
                                     case Http.decodeUri value of
                                         Just value ->
-                                            value
+                                            Just value
 
                                         Nothing ->
-                                            value
+                                            Just value
 
                                 Nothing ->
-                                    ""
+                                    Nothing
                     in
-                        ( column, value )
+                        Maybe.map
+                            (\value ->
+                                ( column, value )
+                            )
+                            value
                 )
                 splinters
     in
@@ -100,9 +107,14 @@ toString condition =
         kv =
             Dict.toList condition
     in
-        List.map
+        List.filterMap
             (\( k, v ) ->
-                k ++ "=" ++ v
+                case v of
+                    "" ->
+                        Nothing
+
+                    v ->
+                        Just (k ++ "=" ++ v)
             )
             kv
             |> String.join "&"
