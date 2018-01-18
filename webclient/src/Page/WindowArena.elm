@@ -15,7 +15,7 @@ module Page.WindowArena
 import Data.Window as Window exposing (Tag)
 import Data.Session as Session exposing (Session)
 import Html exposing (..)
-import Html.Attributes exposing (class, classList, id)
+import Html.Attributes exposing (class, classList, id, style)
 import Http
 import Page.Errored as Errored exposing (PageLoadError, pageLoadError)
 import Request.Window
@@ -39,6 +39,7 @@ import Views.Window.Field as Field
 import Views.Window.Row as Row
 import Views.Window.Tab as Tab
 import Views.Window.Toolbar as Toolbar
+import Constant
 
 
 -- MODEL --
@@ -195,7 +196,10 @@ viewSelectedRow : Session -> Model -> Html Msg
 viewSelectedRow session model =
     case model.selectedRow of
         Just selectedRow ->
-            div [ class "detailed-selected-row" ]
+            div
+                [ class "detailed-selected-row"
+                , Constant.detailedSelectedRowStyle
+                ]
                 [ DetailedRecord.view
                     selectedRow
                     |> Html.map DetailedRecordMsg

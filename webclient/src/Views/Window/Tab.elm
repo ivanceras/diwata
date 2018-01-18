@@ -27,6 +27,7 @@ import Views.Window.Toolbar as Toolbar
 import Views.Window.Searchbox as Searchbox
 import Dict exposing (Dict)
 import Data.Window.Filter as Filter exposing (Condition)
+import Constant
 
 
 type alias Model =
@@ -99,7 +100,7 @@ estimatedListHeight : Model -> Float
 estimatedListHeight model =
     let
         rowHeight =
-            40.0
+            Constant.tabRowValueHeight
 
         rowLength =
             numberOfRecords model
@@ -301,7 +302,7 @@ adjustWidth : Float -> Model -> Float
 adjustWidth width model =
     let
         detailedMarginLeft =
-            200
+            Constant.detailedMarginLeft
     in
         case model.tabType of
             Tab.InMain ->

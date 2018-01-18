@@ -27,6 +27,7 @@ import Data.Window.Lookup as Lookup exposing (Lookup)
 import Views.Window.Field as Field
 import Util exposing ((=>), pair, viewIf)
 import Views.Window.Presentation as Presentation exposing (Presentation(..))
+import Constant
 
 
 type alias Model =
@@ -83,7 +84,10 @@ view lookup model =
             ]
             (List.map
                 (\value ->
-                    div [ class "tab-row-value" ]
+                    div
+                        [ class "tab-row-value"
+                        , Constant.tabRowValueStyle
+                        ]
                         [ Field.view lookup value
                             |> Html.map (FieldMsg value)
                         ]

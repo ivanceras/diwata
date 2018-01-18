@@ -72,11 +72,13 @@ Roadmap checklist:
 - [ ] Update records
 - [ ] Insert records
 - [ ] Undo update/delete records
-- [ ] Search and filter data
+- [X] Search and filter data
+- [ ] Drag and resize columns
+- [ ] Multi column sorting
 - [ ] Smart delete cascade messages
 - [ ] Error messages display
 - [ ] Interactive/dynamic record count indicator for toolbar buttons
-- [ ] Loading indicator
+- [X] Loading indicator
 - [ ] Page transition animation
 
 Notes:
