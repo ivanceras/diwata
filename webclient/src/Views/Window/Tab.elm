@@ -167,17 +167,25 @@ listView lookup model =
         adjustedWidth =
             adjustWidth width model
 
-        _ =
-            Debug.log "width" width
+        tabType =
+            model.tabType
 
-        _ =
-            Debug.log ("adjustedWidth for " ++ model.tab.name) adjustedWidth
+        viewToolbar =
+            case tabType of
+                Tab.InMain ->
+                    Toolbar.viewForMain
+
+                Tab.InHasMany ->
+                    Toolbar.viewForHasMany
+
+                Tab.InIndirect ->
+                    Toolbar.viewForIndirect
     in
         div []
             [ div
                 [ class "toolbar-area"
                 ]
-                [ Toolbar.viewForMain ]
+                [ viewToolbar ]
             , div
                 [ class "tab-list-view"
                 ]

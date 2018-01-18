@@ -364,7 +364,7 @@ update session msg model =
 
         DetailedRecordMsg (DetailedRecord.ToolbarMsg Toolbar.ClickedClose) ->
             { model | selectedRow = Nothing }
-                => Cmd.none
+                => Route.modifyUrl (Route.WindowArena model.arenaArg)
 
         DetailedRecordMsg subMsg ->
             case model.selectedRow of

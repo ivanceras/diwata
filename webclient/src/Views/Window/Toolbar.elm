@@ -2,6 +2,8 @@ module Views.Window.Toolbar
     exposing
         ( Msg(..)
         , viewForMain
+        , viewForHasMany
+        , viewForIndirect
         , viewForDetailRecord
         )
 
@@ -77,6 +79,75 @@ viewForMain =
             , span [ class "tooltip-text" ] [ text "Export to spreadsheet" ]
             ]
         ]
+
+
+{-|
+
+    Toolbars for HasMany differs from the main tab
+    HasMany tab should not have an Export button
+-}
+viewForHasMany : Html msg
+viewForHasMany =
+    div [ class "toolbar btn-group" ]
+        [ button [ class "btn btn-large btn-default tooltip" ]
+            [ span [ class "icon icon-plus icon-text tab-action" ] []
+            , text "New record"
+            , span [ class "tooltip-text" ] [ text "Create a new record in a form" ]
+            ]
+        , button
+            [ class "btn btn-large btn-default tooltip" ]
+            [ span [ class "icon icon-floppy icon-text" ] []
+            , text "Save"
+            , span [ class "tooltip-text" ] [ text "Save changes to records" ]
+            ]
+        , button
+            [ class "btn btn-large btn-default tooltip" ]
+            [ span [ class "icon icon-block icon-text" ] []
+            , text "Cancel"
+            , span [ class "tooltip-text" ] [ text "Cancel changes to records" ]
+            ]
+        , button
+            [ class "btn btn-large btn-default tooltip" ]
+            [ span [ class "icon icon-trash icon-text" ] []
+            , text "Delete"
+            , span [ class "tooltip-text" ] [ text "Delete selected records" ]
+            ]
+        , button
+            [ class "btn btn-large btn-default tooltip" ]
+            [ span [ class "icon icon-arrows-ccw icon-text" ] []
+            , text "Refresh"
+            , span [ class "tooltip-text" ] [ text "Get record list from server" ]
+            ]
+        , button
+            [ class "btn btn-large btn-default tooltip" ]
+            [ i [ class "toolbar-fa fa fa-filter" ] []
+            , text "Clear Filters"
+            , span [ class "tooltip-text" ] [ text "Clear filters" ]
+            ]
+        , button
+            [ class "btn btn-large btn-default tooltip" ]
+            [ i [ class "toolbar-fa fa fa-filter" ] []
+            , text "Advance filter"
+            , span [ class "tooltip-text" ] [ text "Open modal filter with advance functionality" ]
+            ]
+        , button
+            [ class "btn btn-large btn-default tooltip" ]
+            [ i [ class "toolbar-fa fa fa-sort-numeric-asc" ] []
+            , text "Reset sorting"
+            , span [ class "tooltip-text" ] [ text "Reset the order of sorting" ]
+            ]
+        , div
+            [ class "multi-column-sort btn btn-large btn-default tooltip" ]
+            [ input [ type_ "checkbox" ] []
+            , i [ class "toolbar-fa fa fa-sort-numeric-asc" ] []
+            , text "Multi sort"
+            , span [ class "tooltip-text" ] [ text "Do multi-column sort" ]
+            ]
+        ]
+
+
+viewForIndirect =
+    viewForHasMany
 
 
 viewForDetailRecord : Html Msg

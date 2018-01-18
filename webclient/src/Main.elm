@@ -61,12 +61,6 @@ type alias Model =
 init : Value -> Location -> ( Model, Cmd Msg )
 init val location =
     let
-        _ =
-            Debug.log "settings: " val
-
-        _ =
-            Debug.log "location: " location
-
         settings =
             Settings.fromJson val
 
@@ -229,9 +223,6 @@ pageSubscriptions page =
 
 
 
-{- Editor _ _ ->
-   Sub.none
--}
 -- UPDATE --
 
 
