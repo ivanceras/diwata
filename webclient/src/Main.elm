@@ -329,28 +329,26 @@ updatePage page msg model =
             pageErrored model
     in
         case ( msg, page ) of
-            ( SetRoute route, _ ) ->
-                case page of
-                    WindowArena arenaModel ->
-                        let
-                            rerouteNeeded =
-                                case route of
-                                    Just (Route.WindowArena (Just newArenaArg)) ->
-                                        WindowArena.rerouteNeeded arenaModel newArenaArg
+            ( SetRoute route, WindowArena arenaModel ) ->
+                let
+                    rerouteNeeded =
+                        case route of
+                            Just (Route.WindowArena (Just newArenaArg)) ->
+                                WindowArena.rerouteNeeded arenaModel newArenaArg
 
-                                    _ ->
-                                        False
+                            _ ->
+                                False
 
-                            _ =
-                                Debug.log "RerouteNeeded: " rerouteNeeded
-                        in
-                            if rerouteNeeded then
-                                setRoute route model
-                            else
-                                model => Cmd.none
-
-                    _ ->
+                    _ =
+                        Debug.log "RerouteNeeded: " rerouteNeeded
+                in
+                    if rerouteNeeded then
                         setRoute route model
+                    else
+                        model => Cmd.none
+
+            ( SetRoute route, _ ) ->
+                setRoute route model
 
             ( HomeLoaded (Ok subModel), _ ) ->
                 { model | pageState = Loaded (WindowArena subModel) } => Cmd.none
