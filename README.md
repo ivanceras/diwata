@@ -27,6 +27,9 @@ Freeze column
 Distinguisable referred record in a dropdown
 ![](https://raw.githubusercontent.com/ivanceras/ivanceras.github.io/master/diwata/meaningful-dropdown.gif)
 
+Dynamic toolbar displaying the exact information of what the button actually does
+![](https://raw.githubusercontent.com/ivanceras/ivanceras.github.io/master/diwata/dynamic-toolbar.gif)
+
 ### [Sakila Demo](http://web01.jcesar.clh.no:8000)
 
 ### Needed Dependencies
@@ -89,7 +92,7 @@ Roadmap checklist:
 - [ ] Multi column sorting
 - [ ] Smart delete cascade messages
 - [ ] Error messages display
-- [ ] Interactive/dynamic record count indicator for toolbar buttons
+- [X] Interactive/dynamic record count indicator for toolbar buttons
 - [X] Loading indicator
 - [ ] Page transition animation
 
