@@ -134,7 +134,7 @@ pub fn get_maintable_data(
                 let column_name = &cond.left;
                 let value_str = format!("{}%", cond.right.to_string());
                 let value = Value::Text(value_str);
-                validate_column(&column_name, window, tables)?;
+                validate_column(&column_name, window)?;
                 sql += &format!("{} ILIKE ${} ", column_name.complete_name(), i+1); 
                 params.push(value);
             }
@@ -153,8 +153,13 @@ pub fn get_maintable_data(
 
 //TODO: validate the column name here that it should exist to any of the tables
 //that belong to this window, otherwise raise a SQL injection attempt error
-fn validate_column(_column_name: &ColumnName, _window: &Window, _tables: &Vec<Table>) -> Result<(), DbError>{
-    Ok(())
+fn validate_column(column_name: &ColumnName, window: &Window) -> Result<(), DbError>{
+    if window.has_column_name(column_name){
+        Ok(())
+    }else{
+        Err(DbError::SqlInjectionAttempt(
+                    format!("Column:'{}' does not exist", column_name.complete_name())))
+    }
 }
 
 /// extract record id from comma separated value

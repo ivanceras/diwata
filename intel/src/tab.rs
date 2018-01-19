@@ -178,4 +178,9 @@ impl Tab {
             None => vec![],
         }
     }
+
+    pub fn has_column_name(&self, column_name: &ColumnName) -> bool {
+        self.fields.iter()
+            .any(|field| field.has_column_name(column_name))
+    }
 }

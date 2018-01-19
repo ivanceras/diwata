@@ -48,6 +48,15 @@ impl ColumnDetail {
                 .collect(),
         }
     }
+
+    fn has_column_name(&self, arg_column_name: &ColumnName) -> bool {
+        match *self {
+            ColumnDetail::Simple(ref column_name, _) => column_name == arg_column_name,
+            ColumnDetail::Compound(ref column_names_types) => column_names_types
+                .iter()
+                .any(|&(ref column_name, _)| column_name == arg_column_name)
+        }
+    }
 }
 
 impl<'a> From<&'a Column> for ColumnDetail {
@@ -302,6 +311,10 @@ impl Field {
             println!("column '{}' is not yet dealt with", column_name);
             None
         }
+    }
+
+    pub fn has_column_name(&self, column_name: &ColumnName) -> bool {
+        self.column_detail.has_column_name(column_name)
     }
 }
 

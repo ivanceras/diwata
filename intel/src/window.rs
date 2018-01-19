@@ -9,6 +9,7 @@ use table_intel::IndirectTable;
 use table_intel;
 use cache;
 use error::IntelError;
+use rustorm::ColumnName;
 
 #[derive(Debug, Serialize, Clone)]
 pub struct Window {
@@ -97,6 +98,16 @@ impl Window {
             indirect_tabs,
             is_view,
         }
+    }
+
+    pub fn has_column_name(&self, column_name: &ColumnName) -> bool {
+        self.main_tab.has_column_name(column_name)
+            || 
+        self.has_many_tabs.iter()
+            .any(|tab| tab.has_column_name(column_name))
+            ||
+        self.indirect_tabs.iter()
+            .any(|&(_,ref tab)| tab.has_column_name(column_name))
     }
 }
 
