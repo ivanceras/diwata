@@ -133,9 +133,22 @@ isScrolledBottom model =
 
 pageRequestNeeded : Model -> Bool
 pageRequestNeeded model =
-    isScrolledBottom model
-        && not model.pageRequestInFlight
-        && not model.reachedLastPage
+    let
+        needed =
+            isScrolledBottom model && not model.pageRequestInFlight && not model.reachedLastPage
+
+        _ =
+            Debug.log
+                ("in pageRequestNeeded --> isScrolledBottom: "
+                    ++ toString (isScrolledBottom model)
+                    ++ " pageReqeustInFlight: "
+                    ++ (toString model.pageRequestInFlight)
+                    ++ " reachedLastPage: "
+                    ++ (toString model.reachedLastPage)
+                )
+                needed
+    in
+        needed
 
 
 dropdownPageRequestNeeded : Lookup -> Model -> Maybe TableName
@@ -463,6 +476,10 @@ update msg model =
             { model
                 | pageRows = [ createRowsModel model.tab rows ]
                 , pageRequestInFlight = False
+
+                -- any change to search/filter will have to reset the current page
+                , currentPage = 1
+                , reachedLastPage = False
             }
                 => Cmd.none
 
@@ -524,13 +541,20 @@ update msg model =
 
                 updatedSearchFilter =
                     case searchValue of
+                        -- remove the filter for a column when search value is empty
+                        Just "" ->
+                            Filter.remove columnName model.searchFilter
+
                         Just searchValue ->
                             Filter.put columnName searchValue model.searchFilter
 
                         Nothing ->
                             model.searchFilter
             in
-                { model | searchFilter = updatedSearchFilter }
+                { model
+                    | searchFilter = updatedSearchFilter
+                    , currentPage = 0
+                }
                     => Cmd.none
 
 

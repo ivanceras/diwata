@@ -2,6 +2,7 @@ module Request.Window.Records
     exposing
         ( delete
         , listWithFilter
+        , listPage
         , listPageWithFilter
         , fetchSelected
         , fetchHasManyRecords

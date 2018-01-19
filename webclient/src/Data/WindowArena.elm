@@ -117,7 +117,12 @@ argToString arg =
         appendFilter =
             case arg.filter of
                 Just cond ->
-                    appendTable ++ [ "filter", Filter.toString cond ]
+                    case Filter.toString cond of
+                        "" ->
+                            appendTable
+
+                        str ->
+                            appendTable ++ [ "filter", str ]
 
                 Nothing ->
                     appendTable

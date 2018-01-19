@@ -6,6 +6,7 @@ module Data.Window.Filter
         , get
         , split
         , put
+        , remove
         )
 
 import Dict exposing (Dict)
@@ -127,3 +128,12 @@ put columnName searchValue oldCondition =
             ColumnName.completeName columnName
     in
         Dict.insert columnString searchValue oldCondition
+
+
+remove : ColumnName -> Condition -> Condition
+remove columnName oldCondition =
+    let
+        columnString =
+            ColumnName.completeName columnName
+    in
+        Dict.remove columnString oldCondition

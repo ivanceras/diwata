@@ -281,6 +281,9 @@ update session msg model =
                     ( newMainTab, subCmd ) =
                         Tab.update tabMsg model.mainTab
 
+                    _ =
+                        Debug.log "request page needed? " (Tab.pageRequestNeeded newMainTab)
+
                     ( updatedMainTab, tabCmd ) =
                         if Tab.pageRequestNeeded newMainTab then
                             { newMainTab | pageRequestInFlight = True }
@@ -342,13 +345,30 @@ refreshPage tab model =
                 Nothing ->
                     Nothing
 
+        hasFilter =
+            case condition of
+                Just cond ->
+                    not (Dict.isEmpty cond)
+
+                Nothing ->
+                    False
+
         _ =
             Debug.log "refreshing Page... " condition
 
+        _ =
+            Debug.log "Has filter.. " hasFilter
+
         tabPage =
-            tab.currentPage
+            tab.currentPage + 1
+
+        request =
+            if hasFilter then
+                Request.Window.Records.listPageWithFilter model.settings tabPage Nothing tab.tab.tableName condition
+            else
+                Request.Window.Records.listPage model.settings tabPage Nothing tab.tab.tableName
     in
-        Request.Window.Records.listPageWithFilter model.settings tabPage Nothing tab.tab.tableName condition
+        request
             |> Http.toTask
             |> Task.attempt
                 (\result ->
@@ -370,15 +390,27 @@ requestNextPage tab model =
         condition =
             case arenaArg of
                 Just arenaArg ->
-                    arenaArg.filter
+                    let
+                        filter =
+                            arenaArg.filter
+                    in
+                        case filter of
+                            Just filter ->
+                                if Dict.isEmpty filter then
+                                    Nothing
+                                else
+                                    Just filter
+
+                            Nothing ->
+                                Nothing
 
                 Nothing ->
                     Nothing
 
         tabPage =
-            tab.currentPage
+            tab.currentPage + 1
     in
-        Request.Window.Records.listPageWithFilter model.settings (tabPage + 1) Nothing tab.tab.tableName condition
+        Request.Window.Records.listPageWithFilter model.settings tabPage Nothing tab.tab.tableName condition
             |> Http.toTask
             |> Task.attempt
                 (\result ->

@@ -1,6 +1,7 @@
 # Diwata 
 Diwata is a database interface for PostgreSQL with the goal of being usable, user-friendly with its basic and advanced functionality be discoverable by the user.
 Goal of diwata is to be a replacement of back-end admin without explicitly writing the code for it.[1]
+It is content aware, and renders records as it sees fits.
 An attempt to create back-end to end all back-ends.
 
 [![](https://travis-ci.org/ivanceras/diwata.svg?branch=master)](https://travis-ci.org/ivanceras/diwata)
@@ -64,6 +65,17 @@ cargo run -p diwata -- --dburl postgres://postgres:passwd@localhost:5432/sakila
 see `run.sh` for the accurate content of command
 
 Then visit http://localhost:8000/
+
+## Content Aware
+Using heristic method, diwata is able to infer the content of a table.
+- When it a column is a boolean it make sense to display it with a checkbox rather than just 'true' and 'false'
+    Dates will be rendered with a dropdown calender.
+- Country lookup will be rendered with a dropdown list of country alongside their flags 
+- Images will be displayed in line when in grid view, and will be fully displayed when in card view
+- Attachments such as pdf,xls,csv,svg,md,txt,source codes will be rendered to their corresponding document editors
+- Urls are linked and clickable automatically
+- Embed common web objects: youtube videos, tweets, images, map locations
+- tags are rendered as such
 
 Roadmap checklist:
 - [X] Infinite load-on-deman scrolling
