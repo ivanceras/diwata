@@ -449,6 +449,13 @@ createWidget presentation record tab field maybeValue =
                 in
                     TableDropdown dropdownModel
 
+            AutocompleteDropdown ->
+                let
+                    dropdownModel =
+                        DropdownDisplay.init alignment widgetWidth maybeValueString
+                in
+                    TableDropdown dropdownModel
+
             _ ->
                 Debug.crash ("unable to handle widget:" ++ toString controlWidget)
 
