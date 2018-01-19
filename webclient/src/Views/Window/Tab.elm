@@ -12,6 +12,7 @@ module Views.Window.Tab
 
 import Html exposing (..)
 import Html.Attributes exposing (attribute, class, classList, href, id, placeholder, src, property, type_, style)
+import Html.Events exposing (onCheck)
 import Data.Window.Tab as Tab exposing (Tab, TabType)
 import Data.Window.TableName as TableName exposing (TableName)
 import Data.Window.Record as Record exposing (Rows, Record, RecordId)
@@ -341,7 +342,11 @@ viewFrozenHead model =
                 ]
             , div
                 [ class "frozen-head-controls" ]
-                [ input [ type_ "checkbox" ] []
+                [ input
+                    [ type_ "checkbox"
+                    , onCheck ToggleSelectAllRows
+                    ]
+                    []
                 , div [ class "filter-btn" ]
                     [ i [ class "fa fa-filter" ] [] ]
                 ]
@@ -476,6 +481,7 @@ type Msg
     | RefreshPageError String
     | RowMsg Row.Model Row.Msg
     | SearchboxMsg Searchbox.Model Searchbox.Msg
+    | ToggleSelectAllRows Bool
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -593,6 +599,37 @@ update msg model =
                     , currentPage = 0
                 }
                     => Cmd.none
+
+        ToggleSelectAllRows v ->
+            let
+                ( pageRows, cmds ) =
+                    toggleSelectAllRows v model.pageRows
+            in
+                { model | pageRows = pageRows }
+                    => Cmd.batch cmds
+
+
+toggleSelectAllRows : Bool -> List (List Row.Model) -> ( List (List Row.Model), List (Cmd Msg) )
+toggleSelectAllRows value pageList =
+    let
+        ( updatedRowModel, rowCmds ) =
+            List.map
+                (\page ->
+                    List.map
+                        (\row ->
+                            let
+                                ( updatedRow, rowCmd ) =
+                                    Row.update (Row.ToggleSelect value) row
+                            in
+                                ( updatedRow, rowCmd |> Cmd.map (RowMsg updatedRow) )
+                        )
+                        page
+                        |> List.unzip
+                )
+                pageList
+                |> List.unzip
+    in
+        ( updatedRowModel, List.concat rowCmds )
 
 
 subscriptions : Model -> Sub Msg

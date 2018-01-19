@@ -630,6 +630,7 @@ a.primary-link {
 	left: 20px;
 	top: -3px;
     font-size: 9px;
+    padding: 2px 3px;
 }
 
 .badge-modified{

@@ -93,7 +93,7 @@ viewForMain model =
                 [ class "btn btn-large btn-default tooltip" ]
                 [ span [ class "icon icon-block icon-text" ] []
                 , text "Cancel"
-                , span [ class "tooltip-text" ] [ text ("Cancel changes to " ++ toString modified ++ " records") ]
+                , span [ class "tooltip-text" ] [ text cancelTooltip ]
                 ]
             , button
                 [ class "btn btn-large btn-default tooltip" ]

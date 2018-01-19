@@ -11,7 +11,7 @@ module Views.Window.Row
         )
 
 import Html exposing (..)
-import Html.Attributes exposing (style, type_, attribute, class, classList, href, id, placeholder, src)
+import Html.Attributes exposing (style, type_, attribute, class, classList, href, id, placeholder, src, checked)
 import Html.Events exposing (onClick, onCheck)
 import Data.Window.Record as Record exposing (Record, RecordId)
 import Data.Window.Value as Value exposing (Value)
@@ -100,19 +100,20 @@ view lookup model =
 viewRowControls : Model -> RecordId -> Tab -> Html Msg
 viewRowControls model recordId tab =
     div [ class "row-controls" ]
-        [ viewSelectionControl
+        [ viewSelectionControl model
         , viewRecordDetail recordId tab
         , viewUndo model
         , viewSave model
         ]
 
 
-viewSelectionControl : Html Msg
-viewSelectionControl =
+viewSelectionControl : Model -> Html Msg
+viewSelectionControl model =
     div [ class "row-select" ]
         [ input
             [ type_ "checkbox"
             , onCheck ToggleSelect
+            , checked model.selected
             ]
             []
         ]
