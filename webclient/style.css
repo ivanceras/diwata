@@ -101,9 +101,9 @@ a.primary-link {
     background-color: transparent;
 }
 
-.widget-value.is-changed,
-.widget-value.is-changed textarea,
-.widget-value.is-changed input{
+.widget-value.is-modified,
+.widget-value.is-modified textarea,
+.widget-value.is-modified input{
     background-color: #fff6e2;
 }
 
@@ -618,4 +618,20 @@ a.primary-link {
 
 .window-view {
     position: absolute;
+}
+
+.badge {
+	position: absolute;
+	background: #ff4081;
+	min-width: 15px;
+	text-align: center;
+	border-radius: 50%;
+	color: white;
+	left: 20px;
+	top: -3px;
+    font-size: 9px;
+}
+
+.badge-modified{
+    background:#5fba7d;
 }

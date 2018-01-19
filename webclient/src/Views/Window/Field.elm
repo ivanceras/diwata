@@ -6,7 +6,7 @@ module Views.Window.Field
         , Msg(..)
         , update
         , dropdownPageRequestNeeded
-        , isChanged
+        , isModified
         )
 
 import Data.Window.Value as Value exposing (Value(..), ArrayValue(..))
@@ -44,8 +44,8 @@ type alias Model =
     }
 
 
-isChanged : Model -> Bool
-isChanged model =
+isModified : Model -> Bool
+isModified model =
     model.value /= model.editValue
 
 
@@ -87,7 +87,7 @@ view : Lookup -> Model -> Html Msg
 view lookup model =
     div
         [ class "widget-value"
-        , classList [ ( "is-changed", isChanged model ) ]
+        , classList [ ( "is-modified", isModified model ) ]
         ]
         [ viewWidget lookup model ]
 

@@ -7,11 +7,12 @@ module Views.Window.Row
         , update
         , init
         , dropdownPageRequestNeeded
+        , isModified
         )
 
 import Html exposing (..)
 import Html.Attributes exposing (style, type_, attribute, class, classList, href, id, placeholder, src)
-import Html.Events exposing (onClick)
+import Html.Events exposing (onClick, onCheck)
 import Data.Window.Record as Record exposing (Record, RecordId)
 import Data.Window.Value as Value exposing (Value)
 import Route exposing (Route)
@@ -39,9 +40,9 @@ type alias Model =
     }
 
 
-isChanged : Model -> Bool
-isChanged model =
-    List.any Field.isChanged model.fields
+isModified : Model -> Bool
+isModified model =
+    List.any Field.isModified model.fields
 
 
 init : RecordId -> Record -> Tab -> Model
@@ -80,7 +81,7 @@ view lookup model =
     in
         div
             [ class "tab-row"
-            , classList [ ( "is-changed", isChanged model ) ]
+            , classList [ ( "is-modified", isModified model ) ]
             ]
             (List.map
                 (\value ->
@@ -106,10 +107,14 @@ viewRowControls model recordId tab =
         ]
 
 
-viewSelectionControl : Html msg
+viewSelectionControl : Html Msg
 viewSelectionControl =
     div [ class "row-select" ]
-        [ input [ type_ "checkbox" ] []
+        [ input
+            [ type_ "checkbox"
+            , onCheck ToggleSelect
+            ]
+            []
         ]
 
 
@@ -124,7 +129,7 @@ viewUndo : Model -> Html Msg
 viewUndo model =
     div
         [ class "row-undo"
-        , classList [ ( "is-active", isChanged model ) ]
+        , classList [ ( "is-active", isModified model ) ]
         , onClick ResetChanges
         ]
         [ div [ class "icon icon-block" ] []
@@ -135,7 +140,7 @@ viewSave : Model -> Html Msg
 viewSave model =
     div
         [ class "row-save"
-        , classList [ ( "is-active", isChanged model ) ]
+        , classList [ ( "is-active", isModified model ) ]
         ]
         [ div [ class "icon icon-floppy" ] []
         ]
@@ -169,6 +174,7 @@ dropdownPageRequestNeeded lookup model =
 type Msg
     = FieldMsg Field.Model Field.Msg
     | ResetChanges
+    | ToggleSelect Bool
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -211,6 +217,10 @@ update msg model =
                             newFields
                             subCmds
                         )
+
+        ToggleSelect v ->
+            { model | selected = v }
+                => Cmd.none
 
 
 updateFields : Field.Msg -> Model -> List ( Field.Model, Cmd Field.Msg )

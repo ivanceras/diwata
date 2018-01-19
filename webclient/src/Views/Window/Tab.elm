@@ -184,10 +184,15 @@ listView lookup model =
         tabType =
             model.tabType
 
+        toolbarModel =
+            { selected = countAllSelectedRows model
+            , modified = countAllModifiedRows model
+            }
+
         viewToolbar =
             case tabType of
                 Tab.InMain ->
-                    Toolbar.viewForMain
+                    Toolbar.viewForMain toolbarModel
 
                 Tab.InHasMany ->
                     Toolbar.viewForHasMany
@@ -267,6 +272,38 @@ viewPageShadow model =
                     model.pageRows
                 )
             ]
+
+
+countAllSelectedRows : Model -> Int
+countAllSelectedRows model =
+    List.foldl
+        (\page sum ->
+            sum + (countRowSelectedInPage page)
+        )
+        0
+        model.pageRows
+
+
+countRowSelectedInPage : List Row.Model -> Int
+countRowSelectedInPage pageRow =
+    List.filter .selected pageRow
+        |> List.length
+
+
+countAllModifiedRows : Model -> Int
+countAllModifiedRows model =
+    List.foldl
+        (\page sum ->
+            sum + (countRowModifiedInPage page)
+        )
+        0
+        model.pageRows
+
+
+countRowModifiedInPage : List Row.Model -> Int
+countRowModifiedInPage pageRow =
+    List.filter Row.isModified pageRow
+        |> List.length
 
 
 viewRowShadow : List Row.Model -> Tab -> Html Msg

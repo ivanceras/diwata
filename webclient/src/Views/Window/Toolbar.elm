@@ -1,6 +1,7 @@
 module Views.Window.Toolbar
     exposing
         ( Msg(..)
+        , Model
         , viewForMain
         , viewForHasMany
         , viewForIndirect
@@ -12,73 +13,132 @@ import Html.Attributes exposing (class, type_)
 import Html.Events exposing (onClick)
 
 
+type alias Model =
+    { selected : Int
+    , modified : Int
+    }
+
+
 type Msg
     = ClickedClose
 
 
-viewForMain : Html msg
-viewForMain =
-    div [ class "toolbar btn-group" ]
-        [ button [ class "btn btn-large btn-default tooltip" ]
-            [ span [ class "icon icon-plus icon-text tab-action" ] []
-            , text "New record"
-            , span [ class "tooltip-text" ] [ text "Create a new record in a form" ]
+viewForMain : Model -> Html msg
+viewForMain model =
+    let
+        selected =
+            model.selected
+
+        modified =
+            model.modified
+
+        deleteBadge =
+            if selected > 0 then
+                span [ class "badge animated fadeIn" ]
+                    [ text (toString selected) ]
+            else
+                text ""
+
+        selectedRecords =
+            if selected > 1 then
+                "records"
+            else
+                "record"
+
+        modifiedRecords =
+            if modified > 1 then
+                "records"
+            else
+                "record"
+
+        deleteTooltip =
+            if selected == 0 then
+                "No selected records to delete"
+            else
+                "Delete " ++ (toString selected) ++ " " ++ selectedRecords ++ " from the database"
+
+        saveTooltip =
+            if modified == 0 then
+                "No changes to save"
+            else
+                "Save " ++ (toString modified) ++ " " ++ modifiedRecords ++ " into the database"
+
+        cancelTooltip =
+            if modified == 0 then
+                "No modifications to cancel"
+            else
+                "Cancel changes to " ++ (toString modified) ++ " " ++ modifiedRecords ++ ""
+
+        modifiedBadge =
+            if modified > 0 then
+                span [ class "badge badge-modified animated fadeIn" ]
+                    [ text (toString modified) ]
+            else
+                text ""
+    in
+        div [ class "toolbar btn-group" ]
+            [ button [ class "btn btn-large btn-default tooltip" ]
+                [ span [ class "icon icon-plus icon-text tab-action" ] []
+                , text "New record"
+                , span [ class "tooltip-text" ] [ text "Create a new record in a form" ]
+                ]
+            , button
+                [ class "btn btn-large btn-default tooltip" ]
+                [ span [ class "icon icon-floppy icon-text" ] []
+                , text "Save"
+                , modifiedBadge
+                , span [ class "tooltip-text" ] [ text saveTooltip ]
+                ]
+            , button
+                [ class "btn btn-large btn-default tooltip" ]
+                [ span [ class "icon icon-block icon-text" ] []
+                , text "Cancel"
+                , span [ class "tooltip-text" ] [ text ("Cancel changes to " ++ toString modified ++ " records") ]
+                ]
+            , button
+                [ class "btn btn-large btn-default tooltip" ]
+                [ span [ class "icon icon-trash icon-text" ] []
+                , text "Delete"
+                , deleteBadge
+                , span [ class "tooltip-text" ] [ text deleteTooltip ]
+                ]
+            , button
+                [ class "btn btn-large btn-default tooltip" ]
+                [ span [ class "icon icon-arrows-ccw icon-text" ] []
+                , text "Refresh"
+                , span [ class "tooltip-text" ] [ text "Get record list from server" ]
+                ]
+            , button
+                [ class "btn btn-large btn-default tooltip" ]
+                [ i [ class "toolbar-fa fa fa-filter" ] []
+                , text "Clear Filters"
+                , span [ class "tooltip-text" ] [ text "Clear filters" ]
+                ]
+            , button
+                [ class "btn btn-large btn-default tooltip" ]
+                [ i [ class "toolbar-fa fa fa-filter" ] []
+                , text "Advance filter"
+                , span [ class "tooltip-text" ] [ text "Open modal filter with advance functionality" ]
+                ]
+            , div
+                [ class "multi-column-sort btn btn-large btn-default tooltip" ]
+                [ input [ type_ "checkbox" ] []
+                , i [ class "toolbar-fa fa fa-sort-numeric-asc" ] []
+                , text "Multi sort"
+                , span [ class "tooltip-text" ] [ text "Do multi-column sort" ]
+                ]
+            , button
+                [ class "btn btn-large btn-default tooltip" ]
+                [ i [ class "toolbar-fa fa fa-sort-numeric-asc" ] []
+                , text "Reset sorting"
+                , span [ class "tooltip-text" ] [ text "Reset the order of sorting" ]
+                ]
+            , button [ class "btn btn-large btn-default tooltip" ]
+                [ span [ class "icon icon-export icon-text" ] []
+                , text "Export"
+                , span [ class "tooltip-text" ] [ text "Export to spreadsheet" ]
+                ]
             ]
-        , button
-            [ class "btn btn-large btn-default tooltip" ]
-            [ span [ class "icon icon-floppy icon-text" ] []
-            , text "Save"
-            , span [ class "tooltip-text" ] [ text "Save changes to records" ]
-            ]
-        , button
-            [ class "btn btn-large btn-default tooltip" ]
-            [ span [ class "icon icon-block icon-text" ] []
-            , text "Cancel"
-            , span [ class "tooltip-text" ] [ text "Cancel changes to records" ]
-            ]
-        , button
-            [ class "btn btn-large btn-default tooltip" ]
-            [ span [ class "icon icon-trash icon-text" ] []
-            , text "Delete"
-            , span [ class "tooltip-text" ] [ text "Delete selected records" ]
-            ]
-        , button
-            [ class "btn btn-large btn-default tooltip" ]
-            [ span [ class "icon icon-arrows-ccw icon-text" ] []
-            , text "Refresh"
-            , span [ class "tooltip-text" ] [ text "Get record list from server" ]
-            ]
-        , button
-            [ class "btn btn-large btn-default tooltip" ]
-            [ i [ class "toolbar-fa fa fa-filter" ] []
-            , text "Clear Filters"
-            , span [ class "tooltip-text" ] [ text "Clear filters" ]
-            ]
-        , button
-            [ class "btn btn-large btn-default tooltip" ]
-            [ i [ class "toolbar-fa fa fa-filter" ] []
-            , text "Advance filter"
-            , span [ class "tooltip-text" ] [ text "Open modal filter with advance functionality" ]
-            ]
-        , button
-            [ class "btn btn-large btn-default tooltip" ]
-            [ i [ class "toolbar-fa fa fa-sort-numeric-asc" ] []
-            , text "Reset sorting"
-            , span [ class "tooltip-text" ] [ text "Reset the order of sorting" ]
-            ]
-        , div
-            [ class "multi-column-sort btn btn-large btn-default tooltip" ]
-            [ input [ type_ "checkbox" ] []
-            , i [ class "toolbar-fa fa fa-sort-numeric-asc" ] []
-            , text "Multi sort"
-            , span [ class "tooltip-text" ] [ text "Do multi-column sort" ]
-            ]
-        , button [ class "btn btn-large btn-default tooltip" ]
-            [ span [ class "icon icon-export icon-text" ] []
-            , text "Export"
-            , span [ class "tooltip-text" ] [ text "Export to spreadsheet" ]
-            ]
-        ]
 
 
 {-|
@@ -130,18 +190,18 @@ viewForHasMany =
             , text "Advance filter"
             , span [ class "tooltip-text" ] [ text "Open modal filter with advance functionality" ]
             ]
-        , button
-            [ class "btn btn-large btn-default tooltip" ]
-            [ i [ class "toolbar-fa fa fa-sort-numeric-asc" ] []
-            , text "Reset sorting"
-            , span [ class "tooltip-text" ] [ text "Reset the order of sorting" ]
-            ]
         , div
             [ class "multi-column-sort btn btn-large btn-default tooltip" ]
             [ input [ type_ "checkbox" ] []
             , i [ class "toolbar-fa fa fa-sort-numeric-asc" ] []
             , text "Multi sort"
             , span [ class "tooltip-text" ] [ text "Do multi-column sort" ]
+            ]
+        , button
+            [ class "btn btn-large btn-default tooltip" ]
+            [ i [ class "toolbar-fa fa fa-sort-numeric-asc" ] []
+            , text "Reset sorting"
+            , span [ class "tooltip-text" ] [ text "Reset the order of sorting" ]
             ]
         ]
 
