@@ -52,13 +52,14 @@ Compile and run
 ```
 git clone https://github.com/ivanceras/diwata
 cd diwata
-rustup override set nightly-2017-12-21
+rustup self update && rustup update
+rustup override set nightly
 cd webclient && ./compile.sh && cd ..
 
 cargo run -p diwata -- --dburl <db_url>
 
 ```
-Note: Needed to use specific nightly until [this montogmery issue is resolved](https://github.com/rust-lang/rust/issues/46936)
+Note: You need to use the latest nightly. 
 
 ## Specify a database ( sakila database example )
 
@@ -71,14 +72,13 @@ Then visit http://localhost:8000/
 
 ## Content Aware
 Using heristic method, diwata is able to infer the content of a table.
-- When it a column is a boolean it make sense to display it with a checkbox rather than just 'true' and 'false'
+- When it a column is a boolean it make sense to display it with a checkbox rather than just 'true' and 'false'.
     Dates will be rendered with a dropdown calender.
 - Country lookup will be rendered with a dropdown list of country alongside their flags 
 - Images will be displayed in line when in grid view, and will be fully displayed when in card view
 - Attachments such as pdf,xls,csv,svg,md,txt,source codes will be rendered to their corresponding document editors
 - Urls are linked and clickable automatically
 - Embed common web objects: youtube videos, tweets, images, map locations
-- tags are rendered as such
 
 Roadmap checklist:
 - [X] Infinite load-on-deman scrolling
@@ -97,6 +97,8 @@ Roadmap checklist:
 - [ ] Page transition animation
 
 Notes:
+
 [1]: This has been tried before (compiere, adempiere, openbravo, salesforce) etc.
+
 [2]: You can use sakila database dump as demo database https://github.com/ivanceras/sakila
 
