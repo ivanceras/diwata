@@ -185,7 +185,7 @@ init settings tableName selectedRow arenaArg window =
                             splitTabHeights window (initialPosition browserSize) size
 
                         ( allotedWidth, _ ) =
-                            allotedSize browserSize
+                            size
 
                         tabSize =
                             ( allotedWidth, detailTabHeight )
@@ -284,7 +284,17 @@ createFields tab detail =
 
 allotedSize : BrowserWindow.Size -> ( Float, Float )
 allotedSize browserSize =
-    Window.calcMainTabSize browserSize
+    let
+        ( width, height ) =
+            Window.calcMainWindowSize browserSize
+
+        margins =
+            60
+
+        totalWidthDeductions =
+            Constant.detailedMarginLeft + margins
+    in
+        ( width - totalWidthDeductions, height )
 
 
 {-| Split tab heights (MainRecordHeight, DetailRecordHeight)
@@ -292,41 +302,50 @@ allotedSize browserSize =
 splitTabHeights : Window -> Position -> ( Float, Float ) -> ( Float, Float )
 splitTabHeights window position size =
     let
-        toolbar =
+        cardToolbar =
+            90
+
+        detailToolbar =
             90
 
         detailTabNamesHeight =
             40
 
+        detailColumnHeights =
+            70
+
         separatorHeight =
             10
 
-        totalDeductions =
-            toolbar + detailTabNamesHeight + separatorHeight
+        cardTotalDeductions =
+            cardToolbar
+
+        detailTotalDeductions =
+            cardToolbar + detailToolbar + detailTabNamesHeight + separatorHeight + detailColumnHeights
 
         ( width, height ) =
             size
 
         allotedHeight =
             if Window.hasDetails window then
-                height - totalDeductions
+                height - detailTotalDeductions
             else
-                height + totalDeductions
+                height - cardTotalDeductions
 
         detailRecordHeight =
             allotedHeight - toFloat position.y
 
+        clampDetailRecordHeight =
+            clamp 0 allotedHeight detailRecordHeight
+
         mainRecordHeight =
             if Window.hasDetails window then
-                allotedHeight - detailRecordHeight
+                allotedHeight - clampDetailRecordHeight
             else
                 allotedHeight
 
         clampMainRecordHeight =
             clamp 0 allotedHeight mainRecordHeight
-
-        clampDetailRecordHeight =
-            clamp 0 allotedHeight detailRecordHeight
     in
         ( clampMainRecordHeight, clampDetailRecordHeight )
 
@@ -407,14 +426,11 @@ oneOneCardView model detail tab =
         record =
             RecordDetail.oneOneRecordOfTable detail tab.tableName
 
-        detailedMarginLeft =
-            Constant.detailedMarginLeft
-
         ( width, height ) =
             model.size
 
         cardWidth =
-            width - detailedMarginLeft
+            width
     in
         div
             [ class "one-one-tab"
@@ -446,14 +462,11 @@ cardViewRecord model record tab =
                 Nothing ->
                     200
 
-        detailedMarginLeft =
-            Constant.detailedMarginLeft
-
         ( width, height ) =
             model.size
 
         cardWidth =
-            width - detailedMarginLeft
+            width
     in
         div []
             [ div

@@ -7,6 +7,7 @@ module Page.Window
         , view
         , subscriptions
         , calcMainTabSize
+        , calcMainWindowSize
         , dropdownPageRequestNeeded
         )
 
@@ -60,38 +61,62 @@ type alias Model =
     }
 
 
-calcMainTabSize : BrowserWindow.Size -> ( Float, Float )
-calcMainTabSize browserSize =
+calcMainWindowSize : BrowserWindow.Size -> ( Float, Float )
+calcMainWindowSize browserSize =
     let
-        -- have to hardcode here until the Dom.Size module is exposed https://github.com/elm-lang/dom/issues/15 https://github.com/elm-lang/dom/pull/19
+        bannerHeight =
+            100
+
+        tabNameHeight =
+            41
+
+        marginBottom =
+            50
+
+        totalHeightDeductions =
+            bannerHeight + tabNameHeight + marginBottom
+
+        sidebarWidth =
+            220
+
+        totalWidthDeductions =
+            sidebarWidth
+
         browserHeight =
             toFloat browserSize.height
 
         browserWidth =
             toFloat browserSize.width
+    in
+        ( browserWidth - totalWidthDeductions
+        , browserHeight - totalHeightDeductions
+        )
 
-        -- style.css .toolbar-area margin + .toolbar height
+
+calcMainTabSize : BrowserWindow.Size -> ( Float, Float )
+calcMainTabSize browserSize =
+    let
+        ( mainWindowWidth, mainWindowHeight ) =
+            calcMainWindowSize browserSize
+
         toolbarHeight =
             90.0
 
-        --scrollbar heights : 40 when overflow-x: auto kicks in in toolbars and in tabnames
-        scrollbarHeights =
-            50
+        tabColumnHeights =
+            70
 
-        -- banner: 100, window-tabs: 40, columns: 50, allowance: 10 (borders etc)
+        margins =
+            60
+
         heightDeductions =
-            200.0 + toolbarHeight + scrollbarHeights
-
-        height =
-            browserHeight - heightDeductions
+            toolbarHeight + tabColumnHeights
 
         widthDeductions =
-            400
-
-        width =
-            browserWidth - widthDeductions
+            margins
     in
-        ( width, height )
+        ( mainWindowWidth - widthDeductions
+        , mainWindowHeight - heightDeductions
+        )
 
 
 init : Settings -> Session -> TableName -> Window -> Maybe ArenaArg -> Task PageLoadError Model

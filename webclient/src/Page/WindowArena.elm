@@ -197,7 +197,7 @@ viewSelectedRow session model =
     case model.selectedRow of
         Just selectedRow ->
             div
-                [ class "detailed-selected-row"
+                [ class "detailed-selected-row animated fadeInDown"
                 , Constant.detailedSelectedRowStyle
                 ]
                 [ DetailedRecord.view

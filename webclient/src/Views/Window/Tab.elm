@@ -360,18 +360,13 @@ viewFrozenHead model =
 adjustWidth : Float -> Model -> Float
 adjustWidth width model =
     let
-        detailedMarginLeft =
-            Constant.detailedMarginLeft
+        rowShadowWidth =
+            120
+
+        totalDeductions =
+            rowShadowWidth
     in
-        case model.tabType of
-            Tab.InMain ->
-                width
-
-            Tab.InHasMany ->
-                width - detailedMarginLeft
-
-            Tab.InIndirect ->
-                width - detailedMarginLeft
+        width - totalDeductions
 
 
 viewColumns : Model -> List Field -> Html Msg
