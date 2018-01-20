@@ -155,6 +155,7 @@ viewRecordDetail recordId tab =
     in
         a
             [ class "link-to-form"
+            , onClick ClickDetailedLink
             , Route.href (Route.WindowArena (Just (WindowArena.initArgWithRecordId tab.tableName recordIdString)))
             ]
             [ div [ class "icon icon-pencil" ]
@@ -176,6 +177,7 @@ type Msg
     = FieldMsg Field.Model Field.Msg
     | ResetChanges
     | ToggleSelect Bool
+    | ClickDetailedLink
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -222,6 +224,10 @@ update msg model =
         ToggleSelect v ->
             { model | selected = v }
                 => Cmd.none
+
+        -- handled in WindowArena
+        ClickDetailedLink ->
+            model => Cmd.none
 
 
 updateFields : Field.Msg -> Model -> List ( Field.Model, Cmd Field.Msg )

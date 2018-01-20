@@ -179,9 +179,6 @@ view session model =
                 , div [ class "pane window-arena" ]
                     [ div [ class "tab-names" ]
                         [ viewTabNames model ]
-
-                    --, div []
-                    --    [ viewWindowOrSelectedRow session model ]
                     , div [ class "window-and-selected-row" ]
                         [ viewWindow session model.activeWindow
                         , viewSelectedRow session model
@@ -290,11 +287,47 @@ update session msg model =
             in
                 { model | groupedWindow = newFeed } => Cmd.map GroupedWindowMsg subCmd
 
+        WindowMsg (Window.TabMsg (Tab.RowMsg rowModel Row.ClickDetailedLink)) ->
+            let
+                recordIdString =
+                    Record.idToString rowModel.recordId
+
+                tableName =
+                    rowModel.tab.tableName
+
+                arenaArg =
+                    case model.arenaArg of
+                        Just arenaArg ->
+                            arenaArg
+
+                        Nothing ->
+                            Debug.crash "There should be an arena arg"
+
+                activeWindow =
+                    case model.activeWindow of
+                        Just activeWindow ->
+                            activeWindow.window
+
+                        Nothing ->
+                            Debug.crash "There should be an activeWindow"
+
+                initSelectedRow =
+                    DetailedRecord.init model.settings tableName recordIdString arenaArg activeWindow
+            in
+                model
+                    => Task.attempt
+                        (\result ->
+                            case result of
+                                Ok result ->
+                                    InitializedSelectedRow result
+
+                                Err e ->
+                                    FailedToInitializeSelectedRow
+                        )
+                        initSelectedRow
+
         WindowMsg (Window.TabMsg (Tab.RowMsg rowModel (Row.FieldMsg fieldModel (Field.PrimaryLinkClicked tableName recordIdString)))) ->
             let
-                _ =
-                    Debug.log "PrimaryLinkClicked" recordIdString
-
                 arenaArg =
                     case model.arenaArg of
                         Just arenaArg ->

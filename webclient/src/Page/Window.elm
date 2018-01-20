@@ -127,13 +127,6 @@ init settings session tableName window arenaArg =
                 |> Http.toTask
                 |> Task.mapError (handleLoadError "In loadWindowLookups")
 
-        _ =
-            Task.map
-                (\records ->
-                    Debug.log "loaded records" records
-                )
-                loadRecords
-
         handleLoadError s e =
             let
                 _ =
@@ -242,17 +235,11 @@ update session msg model =
 
             TabMsg (Tab.SearchboxMsg searchbox searchMsg) ->
                 let
-                    _ =
-                        Debug.log "searchbox changed.. refereshing page.." searchMsg
-
                     ( updatedMainTab, subCmd ) =
                         Tab.update (Tab.SearchboxMsg searchbox searchMsg) model.mainTab
 
                     tabSearchFilter =
                         updatedMainTab.searchFilter
-
-                    _ =
-                        Debug.log "tabSearchfilter" tabSearchFilter
 
                     newArenaArg =
                         case model.arenaArg of
@@ -280,9 +267,6 @@ update session msg model =
                 let
                     ( newMainTab, subCmd ) =
                         Tab.update tabMsg model.mainTab
-
-                    _ =
-                        Debug.log "request page needed? " (Tab.pageRequestNeeded newMainTab)
 
                     ( updatedMainTab, tabCmd ) =
                         if Tab.pageRequestNeeded newMainTab then
@@ -352,12 +336,6 @@ refreshPage tab model =
 
                 Nothing ->
                     False
-
-        _ =
-            Debug.log "refreshing Page... " condition
-
-        _ =
-            Debug.log "Has filter.. " hasFilter
 
         tabPage =
             tab.currentPage + 1
