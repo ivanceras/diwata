@@ -188,18 +188,22 @@ listView lookup model =
         toolbarModel =
             { selected = countAllSelectedRows model
             , modified = countAllModifiedRows model
+            , showIconText = width > Constant.showIconTextMinWidth
             }
 
         viewToolbar =
             case tabType of
                 Tab.InMain ->
                     Toolbar.viewForMain toolbarModel
+                        |> Html.map ToolbarMsg
 
                 Tab.InHasMany ->
-                    Toolbar.viewForHasMany
+                    Toolbar.viewForHasMany toolbarModel
+                        |> Html.map ToolbarMsg
 
                 Tab.InIndirect ->
-                    Toolbar.viewForIndirect
+                    Toolbar.viewForIndirect toolbarModel
+                        |> Html.map ToolbarMsg
     in
         div []
             [ div
@@ -482,6 +486,7 @@ type Msg
     | RowMsg Row.Model Row.Msg
     | SearchboxMsg Searchbox.Model Searchbox.Msg
     | ToggleSelectAllRows Bool
+    | ToolbarMsg Toolbar.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -607,6 +612,9 @@ update msg model =
             in
                 { model | pageRows = pageRows }
                     => Cmd.batch cmds
+
+        ToolbarMsg toolbarMsg ->
+            model => Cmd.none
 
 
 toggleSelectAllRows : Bool -> List (List Row.Model) -> ( List (List Row.Model), List (Cmd Msg) )

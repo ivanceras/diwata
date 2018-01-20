@@ -28,3 +28,11 @@ tabRowValueHeight =
 
 tabRowValueStyle =
     style [ ( "height", px tabRowValueHeight ) ]
+
+
+{-|
+
+    When window width is lesser than this value, the icon text is not shown
+-}
+showIconTextMinWidth =
+    800

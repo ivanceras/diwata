@@ -44,6 +44,8 @@ import Request.Window.Records
 import Views.Window.Toolbar as Toolbar
 import Route
 import Settings exposing (Settings)
+import Data.WindowArena as WindowArena
+import Constant
 
 
 {-| Example:
@@ -349,12 +351,18 @@ view model =
 
         ( width, height ) =
             model.size
+
+        toolbarModel =
+            { selected = 0
+            , modified = 0
+            , showIconText = width > Constant.showIconTextMinWidth
+            }
     in
         div []
             [ div
                 [ class "toolbar-area"
                 ]
-                [ Toolbar.viewForDetailRecord
+                [ Toolbar.viewForDetailRecord toolbarModel
                     |> Html.map ToolbarMsg
                 ]
             , div
@@ -398,8 +406,20 @@ oneOneCardView model detail tab =
     let
         record =
             RecordDetail.oneOneRecordOfTable detail tab.tableName
+
+        detailedMarginLeft =
+            Constant.detailedMarginLeft
+
+        ( width, height ) =
+            model.size
+
+        cardWidth =
+            width - detailedMarginLeft
     in
-        div [ class "one-one-tab" ]
+        div
+            [ class "one-one-tab"
+            , style [ ( "width", px cardWidth ) ]
+            ]
             [ div [ class "one-one-tab-separator" ] [ text tab.name ]
             , cardViewRecord model record tab
             ]
@@ -425,9 +445,21 @@ cardViewRecord model record tab =
 
                 Nothing ->
                     200
+
+        detailedMarginLeft =
+            Constant.detailedMarginLeft
+
+        ( width, height ) =
+            model.size
+
+        cardWidth =
+            width - detailedMarginLeft
     in
         div []
-            [ div [ class "card-view" ]
+            [ div
+                [ class "card-view"
+                , style [ ( "width", px cardWidth ) ]
+                ]
                 (List.map
                     (\value ->
                         viewFieldInCard fieldLabelWidth lookup value
@@ -573,8 +605,10 @@ viewDetailTabs model =
                                 arenaArg =
                                     model.arenaArg
 
-                                sectionArenaArg =
-                                    { arenaArg | sectionTable = Just ( section, tab.tableName ) }
+                                -- Clicking will open the tab,
+                                -- opening the tab in a new tab will open it in it's own window
+                                tabLinkArenaArg =
+                                    WindowArena.initArg tab.tableName
                             in
                                 a
                                     [ class "detail-tab-name"
@@ -583,7 +617,7 @@ viewDetailTabs model =
                                         , ( "indirect-tab", section == Indirect )
                                         , ( "active-detail-tab", isActiveTab )
                                         ]
-                                    , Route.href (Route.WindowArena (Just sectionArenaArg))
+                                    , Route.href (Route.WindowArena (Just tabLinkArenaArg))
                                     , onClickPreventDefault (ChangeActiveTab section tab.tableName linker)
                                     ]
                                     [ text tab.name ]
