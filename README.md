@@ -88,6 +88,7 @@ Using heristic method, diwata is able to infer the content of a table.
 Roadmap checklist:
 - [X] Infinite load-on-deman scrolling
 - [X] Meaningful dropdown lookup
+- [X] Seamless url-based navigation
 - [ ] Delete records
 - [ ] Update records
 - [ ] Insert records
