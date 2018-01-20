@@ -18,6 +18,7 @@ An attempt to create back-end to end all back-ends.
 - Infinite scrolling / loading of page on scrolling
 - User friendly granular search and filter
 - Diplay descriptive referred records. (ie: Instead of displaying the foreign_key value integer or uuid, display the referred records in such a way it is distinguisable by the user)
+- Well integrated with the browsers, clickable tables, records and tabs can be openned in a new window and displays the data as though clicking on it.
 
 Freeze row
 ![](https://raw.githubusercontent.com/ivanceras/ivanceras.github.io/master/diwata/diwata-freeze-row.gif)
@@ -29,6 +30,10 @@ Distinguisable referred record in a dropdown
 
 Dynamic toolbar displaying the exact information of what the button actually does
 ![](https://raw.githubusercontent.com/ivanceras/ivanceras.github.io/master/diwata/dynamic-toolbar.gif)
+
+Navigating through the apps and opening other window in another browser window/tab is seamless
+![](https://raw.githubusercontent.com/ivanceras/ivanceras.github.io/master/diwata/seamless-url-navigation.gif)
+
 
 ### [Sakila Demo](http://web01.jcesar.clh.no:8000)
 
