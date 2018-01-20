@@ -116,6 +116,7 @@ textarea {
 
 #banner{
     height: 100px;
+    display: flex;
 }
 
 
@@ -949,6 +950,10 @@ a.primary-link {
 .loading-indicator{
     margin-top: -40px;
     margin-left: 150px;
+}
+
+.selected-record-loading-indicator{
+    margin: auto;
 }
 
 .window-and-selected-row{

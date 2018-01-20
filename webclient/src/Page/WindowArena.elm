@@ -40,6 +40,7 @@ import Views.Window.Row as Row
 import Views.Window.Tab as Tab
 import Views.Window.Toolbar as Toolbar
 import Constant
+import Util exposing (viewIf)
 
 
 -- MODEL --
@@ -53,6 +54,7 @@ type alias Model =
     , arenaArg : Maybe ArenaArg
     , settings : Settings
     , errors : List String
+    , loadingSelectedRecord : Bool
     }
 
 
@@ -155,6 +157,7 @@ init settings session arenaArg =
                 , arenaArg = arenaArg
                 , settings = settings
                 , errors = []
+                , loadingSelectedRecord = False
                 }
             )
             loadActiveWindow
@@ -169,7 +172,7 @@ init settings session arenaArg =
 view : Session -> Model -> Html Msg
 view session model =
     div [ class "window" ]
-        [ viewBanner
+        [ viewBanner model
         , div [ class "window-content" ]
             [ div [ class "pane-group" ]
                 [ div [ class "pane pane-sm sidebar" ]
@@ -251,16 +254,27 @@ viewTabNames model =
                 text "no tab"
 
 
-viewBanner : Html msg
-viewBanner =
+viewBanner : Model -> Html Msg
+viewBanner model =
     div
         [ class "banner"
         , id "banner"
         ]
-        [ div [ class "container" ]
+        [ div [ class "head" ]
             [ h3 [ class "logo-font" ] [ text "Diwata" ]
             , text "a user-friendly database interface"
             ]
+        , viewLoadingIndicator
+            |> viewIf model.loadingSelectedRecord
+        ]
+
+
+viewLoadingIndicator : Html Msg
+viewLoadingIndicator =
+    div
+        [ class "selected-record-loading-indicator"
+        ]
+        [ i [ class "fa fa-spinner fa-pulse fa-2x fa-fw" ] []
         ]
 
 
@@ -314,7 +328,7 @@ update session msg model =
                 initSelectedRow =
                     DetailedRecord.init model.settings tableName recordIdString arenaArg activeWindow
             in
-                model
+                { model | loadingSelectedRecord = True }
                     => Task.attempt
                         (\result ->
                             case result of
@@ -347,7 +361,7 @@ update session msg model =
                 initSelectedRow =
                     DetailedRecord.init model.settings tableName recordIdString arenaArg activeWindow
             in
-                model
+                { model | loadingSelectedRecord = True }
                     => Task.attempt
                         (\result ->
                             case result of
@@ -360,11 +374,17 @@ update session msg model =
                         initSelectedRow
 
         InitializedSelectedRow selectedRow ->
-            { model | selectedRow = Just selectedRow }
+            { model
+                | selectedRow = Just selectedRow
+                , loadingSelectedRecord = False
+            }
                 => Cmd.none
 
         FailedToInitializeSelectedRow ->
-            { model | errors = "Failed to initialize selected row" :: model.errors }
+            { model
+                | errors = "Failed to initialize selected row" :: model.errors
+                , loadingSelectedRecord = False
+            }
                 => Cmd.none
 
         WindowMsg subMsg ->
