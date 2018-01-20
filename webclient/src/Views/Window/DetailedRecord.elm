@@ -317,11 +317,14 @@ splitTabHeights window position size =
         separatorHeight =
             10
 
+        margins =
+            20
+
         cardTotalDeductions =
-            cardToolbar
+            cardToolbar + margins
 
         detailTotalDeductions =
-            cardToolbar + detailToolbar + detailTabNamesHeight + separatorHeight + detailColumnHeights
+            cardToolbar + margins + detailToolbar + detailTabNamesHeight + separatorHeight + detailColumnHeights
 
         ( width, height ) =
             size

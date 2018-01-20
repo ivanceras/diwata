@@ -821,6 +821,8 @@ a.primary-link {
 }
 
 .toolbar {
+  display: flex;
+  flex-wrap: nowrap;
   min-height: 22px;
   box-shadow: inset 0 1px 0 #f5f4f5;
   background-color: #e8e6e8;
