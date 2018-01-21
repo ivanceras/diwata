@@ -246,8 +246,19 @@ setRoute maybeRoute model =
         _ =
             Debug.log "setting route"
 
+        prevPage =
+            getPage model.pageState
+
+        updatedPrevPage =
+            case prevPage of
+                WindowArena windowArena ->
+                    WindowArena { windowArena | loadingSelectedRecord = True }
+
+                _ ->
+                    prevPage
+
         transition toMsg task =
-            { model | pageState = TransitioningFrom (getPage model.pageState) }
+            { model | pageState = TransitioningFrom updatedPrevPage }
                 => Task.attempt toMsg task
 
         errored =
@@ -332,6 +343,9 @@ updatePage page msg model =
 
                     _ =
                         Debug.log "RerouteNeeded: " rerouteNeeded
+
+                    _ =
+                        Debug.log "Starting to load windowArena" ""
                 in
                     if rerouteNeeded then
                         setRoute route model
@@ -342,7 +356,11 @@ updatePage page msg model =
                 setRoute route model
 
             ( HomeLoaded (Ok subModel), _ ) ->
-                { model | pageState = Loaded (WindowArena subModel) } => Cmd.none
+                let
+                    _ =
+                        Debug.log "WindowArena is now loaded" ""
+                in
+                    { model | pageState = Loaded (WindowArena subModel) } => Cmd.none
 
             ( HomeLoaded (Err error), _ ) ->
                 { model | pageState = Loaded (Errored error) } => Cmd.none
