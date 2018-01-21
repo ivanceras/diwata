@@ -11,7 +11,7 @@ import Util exposing (px)
     tabs and columns widths
 -}
 detailedMarginLeft =
-    200
+    400
 
 
 detailedSelectedRowStyle =
@@ -36,3 +36,7 @@ tabRowValueStyle =
 -}
 showIconTextMinWidth =
     800
+
+
+isDetailedRecordMaximized =
+    False

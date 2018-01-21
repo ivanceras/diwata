@@ -69,11 +69,8 @@ calcMainWindowSize browserSize =
         tabNameHeight =
             41
 
-        marginBottom =
-            50
-
         totalHeightDeductions =
-            bannerHeight + tabNameHeight + marginBottom
+            bannerHeight + tabNameHeight
 
         sidebarWidth =
             220
@@ -104,14 +101,17 @@ calcMainTabSize browserSize =
         tabColumnHeights =
             70
 
-        margins =
+        sideMargins =
+            60
+
+        marginBottom =
             60
 
         heightDeductions =
-            toolbarHeight + tabColumnHeights
+            toolbarHeight + tabColumnHeights + marginBottom
 
         widthDeductions =
-            margins
+            sideMargins
     in
         ( mainWindowWidth - widthDeductions
         , mainWindowHeight - heightDeductions

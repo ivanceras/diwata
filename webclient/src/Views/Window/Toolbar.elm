@@ -23,6 +23,7 @@ type alias Model =
 
 type Msg
     = ClickedClose
+    | ClickedMaximize Bool
 
 
 viewForMain : Model -> Html Msg
@@ -218,13 +219,19 @@ viewForDetailRecord model =
                     |> viewIf showText
                 , span [ class "tooltip-text" ] [ text "Show detail of next record" ]
                 ]
-            , button [ class "btn btn-large btn-default tooltip" ]
+            , button
+                [ class "btn btn-large btn-default tooltip"
+                , onClick (ClickedMaximize True)
+                ]
                 [ span [ class "icon icon-text icon-resize-full" ] []
                 , text "Maximize"
                     |> viewIf showText
                 , span [ class "tooltip-text" ] [ text "Maximize the detail record view" ]
                 ]
-            , button [ class "btn btn-large btn-default tooltip" ]
+            , button
+                [ class "btn btn-large btn-default tooltip"
+                , onClick (ClickedMaximize False)
+                ]
                 [ span [ class "icon icon-text icon-resize-small" ] []
                 , text "Restore Size"
                     |> viewIf showText

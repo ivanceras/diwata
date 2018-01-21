@@ -7,6 +7,7 @@ module Util
         , onClickPreventDefault
         , pair
         , viewIf
+        , styleIf
         , trim
         , isJust
         , onScroll
@@ -19,6 +20,7 @@ import Html.Events exposing (defaultOptions, onWithOptions)
 import Json.Decode as Decode
 import Task exposing (Task)
 import Html.Events exposing (on)
+import Html.Attributes exposing (style)
 import Json.Decode as Decode exposing (Decoder)
 
 
@@ -59,6 +61,14 @@ viewIf condition content =
         content
     else
         Html.text ""
+
+
+styleIf : Bool -> Attribute msg -> Attribute msg
+styleIf condition attribute =
+    if condition then
+        attribute
+    else
+        style []
 
 
 onClickStopPropagation : msg -> Attribute msg

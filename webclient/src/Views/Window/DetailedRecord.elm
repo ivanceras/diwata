@@ -64,12 +64,13 @@ type alias Model =
     , indirectTabs : List ( TableName, Tab.Model )
     , position : Position
     , drag : Maybe DragPosition
-    , size : ( Float, Float )
+    , browserSize : BrowserWindow.Size
     , arenaArg : ArenaArg
     , lookup : Lookup
     , values : List Field.Model
     , dropdownPageRequestInFlight : Bool
     , settings : Settings
+    , isMaximized : Bool
     }
 
 
@@ -79,11 +80,11 @@ type alias DragPosition =
     }
 
 
-initialPosition : BrowserWindow.Size -> Position
-initialPosition browserSize =
+initialPosition : Bool -> BrowserWindow.Size -> Position
+initialPosition isMaximized browserSize =
     let
         ( allotedWidth, allotedHeight ) =
-            allotedSize browserSize
+            allotedSize isMaximized browserSize
 
         allotedMainHeight =
             round (allotedHeight * 0.6)
@@ -105,8 +106,8 @@ handleLoadError e =
     pageLoadError Page.WindowArena ("WindowArena DetailedRecord is currently unavailable. Error: " ++ (toString e))
 
 
-init : Settings -> TableName -> String -> ArenaArg -> Window -> Task PageLoadError Model
-init settings tableName selectedRow arenaArg window =
+init : Bool -> Settings -> TableName -> String -> ArenaArg -> Window -> Task PageLoadError Model
+init isMaximized settings tableName selectedRow arenaArg window =
     let
         browserSize =
             BrowserWindow.size
@@ -133,14 +134,11 @@ init settings tableName selectedRow arenaArg window =
             Task.map4
                 (\browserSize detailRows lookup recordCounts ->
                     let
-                        size =
-                            allotedSize browserSize
-
                         ( mainRecordHeight, detailTabHeight ) =
-                            splitTabHeights window (initialPosition browserSize) size
+                            splitTabHeights window (initialPosition isMaximized browserSize) isMaximized browserSize
 
                         ( allotedWidth, allotedHeight ) =
-                            size
+                            allotedSize isMaximized browserSize
 
                         tabSize =
                             ( allotedWidth, detailTabHeight )
@@ -178,14 +176,11 @@ init settings tableName selectedRow arenaArg window =
             Task.map4
                 (\browserSize detailRows lookup recordCounts ->
                     let
-                        size =
-                            allotedSize browserSize
-
                         ( mainRecordHeight, detailTabHeight ) =
-                            splitTabHeights window (initialPosition browserSize) size
+                            splitTabHeights window (initialPosition isMaximized browserSize) isMaximized browserSize
 
-                        ( allotedWidth, _ ) =
-                            size
+                        ( allotedWidth, allotedHeight ) =
+                            allotedSize isMaximized browserSize
 
                         tabSize =
                             ( allotedWidth, detailTabHeight )
@@ -217,14 +212,15 @@ init settings tableName selectedRow arenaArg window =
                 , window = window
                 , hasManyTabs = hasManyTabs
                 , indirectTabs = indirectTabs
-                , position = initialPosition browserSize
+                , position = initialPosition isMaximized browserSize
                 , drag = Nothing
-                , size = allotedSize browserSize
+                , browserSize = browserSize
                 , arenaArg = arenaArg
                 , lookup = lookup
                 , values = createFields window.mainTab detail
                 , dropdownPageRequestInFlight = False
                 , settings = settings
+                , isMaximized = isMaximized
                 }
             )
             fetchSelected
@@ -282,25 +278,37 @@ createFields tab detail =
         tab.fields
 
 
-allotedSize : BrowserWindow.Size -> ( Float, Float )
-allotedSize browserSize =
+allotedSize : Bool -> BrowserWindow.Size -> ( Float, Float )
+allotedSize isMaximized browserSize =
     let
         ( width, height ) =
             Window.calcMainWindowSize browserSize
 
-        margins =
+        sideMargins =
             60
 
+        marginBottom =
+            40
+
         totalWidthDeductions =
-            Constant.detailedMarginLeft + margins
+            if isMaximized then
+                sideMargins
+            else
+                Constant.detailedMarginLeft + sideMargins
+
+        totalHeightDeductions =
+            if isMaximized then
+                marginBottom
+            else
+                marginBottom + 80
     in
-        ( width - totalWidthDeductions, height )
+        ( width - totalWidthDeductions, height - totalHeightDeductions )
 
 
 {-| Split tab heights (MainRecordHeight, DetailRecordHeight)
 -}
-splitTabHeights : Window -> Position -> ( Float, Float ) -> ( Float, Float )
-splitTabHeights window position size =
+splitTabHeights : Window -> Position -> Bool -> BrowserWindow.Size -> ( Float, Float )
+splitTabHeights window position isMaximized browserSize =
     let
         cardToolbar =
             90
@@ -327,7 +335,7 @@ splitTabHeights window position size =
             cardToolbar + margins + detailToolbar + detailTabNamesHeight + separatorHeight + detailColumnHeights
 
         ( width, height ) =
-            size
+            allotedSize isMaximized browserSize
 
         allotedHeight =
             if Window.hasDetails window then
@@ -368,16 +376,22 @@ view model =
         realPosition =
             getPosition model
 
-        ( mainRecordHeight, detailTabHeight ) =
-            splitTabHeights window realPosition model.size
+        isMaximized =
+            model.isMaximized
 
-        ( width, height ) =
-            model.size
+        browserSize =
+            model.browserSize
+
+        ( mainRecordHeight, detailTabHeight ) =
+            splitTabHeights window realPosition isMaximized browserSize
+
+        ( allotedWidth, allotedHeight ) =
+            allotedSize model.isMaximized model.browserSize
 
         toolbarModel =
             { selected = 0
             , modified = 0
-            , showIconText = width > Constant.showIconTextMinWidth
+            , showIconText = allotedWidth > Constant.showIconTextMinWidth
             }
     in
         div []
@@ -429,11 +443,11 @@ oneOneCardView model detail tab =
         record =
             RecordDetail.oneOneRecordOfTable detail tab.tableName
 
-        ( width, height ) =
-            model.size
+        ( allotedWidth, allotedHeight ) =
+            allotedSize model.isMaximized model.browserSize
 
         cardWidth =
-            width
+            allotedWidth
     in
         div
             [ class "one-one-tab"
@@ -465,11 +479,17 @@ cardViewRecord model record tab =
                 Nothing ->
                     200
 
-        ( width, height ) =
-            model.size
+        isMaximized =
+            model.isMaximized
+
+        browserSize =
+            model.browserSize
+
+        ( allotedWidth, allotedHeight ) =
+            allotedSize isMaximized browserSize
 
         cardWidth =
-            width
+            allotedWidth
     in
         div []
             [ div
@@ -716,6 +736,7 @@ type Msg
     | LookupNextPageErrored String
     | ChangeActiveTab Section TableName (Maybe TableName)
     | ToolbarMsg Toolbar.Msg
+    | Maximize Bool
 
 
 updateDrag : Session -> Drag -> Model -> ( Model, Cmd Msg )
@@ -764,9 +785,12 @@ update session msg model =
             WindowResized browserSize ->
                 let
                     newModel =
-                        { model | size = allotedSize browserSize }
+                        { model | browserSize = browserSize }
+
+                    ( updatedModel, cmd ) =
+                        updateSizes session newModel
                 in
-                    updateSizes session newModel
+                    updatedModel => cmd
 
             TabMsgAll tabMsg ->
                 let
@@ -901,6 +925,16 @@ update session msg model =
             ToolbarMsg toolbarMsg ->
                 model => Cmd.none
 
+            Maximize v ->
+                let
+                    newModel =
+                        { model | isMaximized = v }
+
+                    ( updatedModel, cmd ) =
+                        updateSizes session newModel
+                in
+                    updatedModel => cmd
+
 
 requestNextPage : Section -> Tab.Model -> Model -> Cmd Msg
 requestNextPage section tab model =
@@ -947,14 +981,17 @@ updateSizes session model =
         window =
             model.window
 
-        size =
-            model.size
+        ( mainRecordHeight, detailTabHeight ) =
+            splitTabHeights window realPosition model.isMaximized model.browserSize
+
+        isMaximized =
+            model.isMaximized
+
+        browserSize =
+            model.browserSize
 
         ( allotedWidth, allotedHeight ) =
-            size
-
-        ( mainRecordHeight, detailTabHeight ) =
-            splitTabHeights window realPosition size
+            allotedSize isMaximized browserSize
 
         tabSize =
             ( allotedWidth, detailTabHeight )
