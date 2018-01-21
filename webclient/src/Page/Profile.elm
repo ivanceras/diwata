@@ -81,8 +81,6 @@ view session model =
                         [ viewProfileInfo isMyProfile profile ]
                     ]
                 ]
-            , div [ class "container" ]
-                [ div [ class "row" ] [ viewFeed model.groupedWindow ] ]
             ]
 
 
@@ -94,14 +92,6 @@ viewProfileInfo isMyProfile profile =
         , p [] [ text (Maybe.withDefault "" profile.bio) ]
         , viewIf (not isMyProfile) (followButton profile)
         ]
-
-
-viewFeed : GroupedWindow.Model -> Html Msg
-viewFeed groupedWindow =
-    div [ class "col-xs-12 col-md-10 offset-md-1" ] <|
-        div [ class "windows-toggle" ]
-            [ GroupedWindow.viewFeedSources groupedWindow |> Html.map FeedMsg ]
-            :: (GroupedWindow.viewWindowNames groupedWindow |> List.map (Html.map FeedMsg))
 
 
 

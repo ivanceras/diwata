@@ -33,7 +33,6 @@ import Route
 import Task exposing (Task)
 import Util exposing ((=>), pair, viewIf)
 import Dict exposing (Dict)
-import Views.Window.Favorite as Favorite
 import Views.Errors
 import Views.Page as Page
 import Data.Window.GroupedWindow as GroupedWindow exposing (GroupedWindow, WindowName)

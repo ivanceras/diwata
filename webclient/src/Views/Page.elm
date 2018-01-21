@@ -10,7 +10,6 @@ import Html.Attributes exposing (..)
 import Html.Lazy exposing (lazy2)
 import Route exposing (Route)
 import Util exposing ((=>))
-import Views.Spinner exposing (spinner)
 
 
 {-| Determines which navbar link (if any) will be rendered as active.
@@ -54,10 +53,6 @@ viewHeader page user isLoading =
         [ div [ class "container" ]
             [ a [ class "navbar-brand", Route.href (Route.WindowArena Nothing) ]
                 [ text "Diwata" ]
-            , ul [ class "nav navbar-nav pull-xs-right" ] <|
-                lazy2 Util.viewIf isLoading spinner
-                    :: navbarLink page (Route.WindowArena Nothing) [ text "WindowArena" ]
-                    :: viewSignIn page user
             ]
         ]
 

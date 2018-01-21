@@ -12,7 +12,6 @@ module Views.Window.GroupedWindow
         , update
         , view
         , viewWindowNames
-        , viewFeedSources
         , yourFeed
         )
 
@@ -46,7 +45,6 @@ import Task exposing (Task)
 import Util exposing ((=>), onClickStopPropagation, pair, viewIf)
 import Views.Errors as Errors
 import Views.Page exposing (bodyId)
-import Views.Spinner exposing (spinner)
 import Route exposing (Route)
 import Data.WindowArena as WindowArena
 import Settings exposing (Settings)
@@ -141,13 +139,6 @@ viewWindowGroup activeWindow groupedWindow =
 viewWindowNames : Model -> List (Html Msg)
 viewWindowNames (Model { activeWindow, groupedWindow, feedSources }) =
     List.map (viewWindowGroup activeWindow) groupedWindow
-
-
-viewFeedSources : Model -> Html Msg
-viewFeedSources (Model { feedSources, isLoading, errors }) =
-    ul [ class "nav nav-pills outline-active" ] <|
-        SelectList.toList (SelectList.mapBy viewFeedSource feedSources)
-            ++ [ Errors.view DismissErrors errors, viewIf isLoading spinner ]
 
 
 viewFeedSource : Position -> FeedSource -> Html Msg
