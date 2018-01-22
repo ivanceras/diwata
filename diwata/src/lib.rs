@@ -215,6 +215,9 @@ fn get_detailed_record(
     }
 }
 
+/// retrieve the first page of all lookup data
+/// used in this window
+/// Note: window is identified by it's table name of the main tab
 #[get("/<table_name>")]
 fn get_window_lookup_data(table_name: String) -> Result<Option<Json<Lookup>>, ServiceError> {
     let dm = get_pool_dm()?;
@@ -235,6 +238,11 @@ fn get_window_lookup_data(table_name: String) -> Result<Option<Json<Lookup>>, Se
     }
 }
 
+/// retrieve the lookup data of this table at next page
+/// Usually the first page of the lookup data is preloaded with the window that
+/// may display them in order for the user to see something when clicking on the dropdown list.
+/// When the user scrolls to the bottom of the dropdown, a http request is done to retrieve the
+/// next page. All other lookup that points to the same table is also updated
 #[get("/<table_name>/<page>")]
 fn get_lookup_data(table_name: String, page: u32) -> Result<Option<Json<Rows>>, ServiceError> {
     let dm = get_pool_dm()?;

@@ -273,15 +273,20 @@ viewBanner model =
             [ h3 [ class "logo-font" ] [ text "Diwata" ]
             , text "a user-friendly database interface"
             ]
-        , viewLoadingIndicator
-            |> viewIf model.loadingSelectedRecord
+        , viewLoadingIndicator model
         ]
 
 
-viewLoadingIndicator : Html Msg
-viewLoadingIndicator =
+viewLoadingIndicator : Model -> Html Msg
+viewLoadingIndicator model =
     div
         [ class "selected-record-loading-indicator"
+
+        -- display none to be able to preload it
+        , if model.loadingSelectedRecord then
+            style [ ( "display", "block" ) ]
+          else
+            style [ ( "display", "none" ) ]
         ]
         [ i [ class "fa fa-spinner fa-pulse fa-2x fa-fw" ] []
         ]
