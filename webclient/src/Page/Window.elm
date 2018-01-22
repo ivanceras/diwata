@@ -132,6 +132,9 @@ init settings session tableName window arenaArg =
                 Nothing ->
                     Nothing
 
+        selectedRecordId =
+            Nothing
+
         getBrowserSize =
             BrowserWindow.size
 
@@ -161,7 +164,7 @@ init settings session tableName window arenaArg =
         mainTabTask =
             Task.map4
                 (\records size lookup totalRecords ->
-                    Tab.init (calcMainTabSize size) condition window.mainTab InMain records totalRecords
+                    Tab.init selectedRecordId (calcMainTabSize size) condition window.mainTab InMain records totalRecords
                 )
                 loadRecords
                 getBrowserSize

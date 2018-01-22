@@ -88,16 +88,3 @@ oneOneRecordOfTable detail tableName =
 
         Nothing ->
             Nothing
-
-
-
-{-
-   hasManyRecordsOfTable : RecordDetail -> TableName -> Maybe Rows
-   hasManyRecordsOfTable detail tableName =
-       contentInTable detail.hasMany tableName
-
-
-   indirectRecordsOfTable : RecordDetail -> TableName -> Maybe Rows
-   indirectRecordsOfTable detail tableName =
-       contentInTable detail.indirect tableName
--}

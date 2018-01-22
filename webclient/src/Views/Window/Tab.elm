@@ -42,16 +42,17 @@ type alias Model =
     , reachedLastPage : Bool
     , totalRecords : Int
     , searchFilter : Condition
+    , selectedRecordId : Maybe RecordId
     }
 
 
-init : ( Float, Float ) -> Maybe Condition -> Tab -> TabType -> Rows -> Int -> Model
-init size condition tab tabType rows totalRecords =
+init : Maybe RecordId -> ( Float, Float ) -> Maybe Condition -> Tab -> TabType -> Rows -> Int -> Model
+init selectedRecordId size condition tab tabType rows totalRecords =
     { tab = tab
     , tabType = tabType
     , scroll = Scroll 0 0
     , size = size
-    , pageRows = [ createRowsModel tab rows ]
+    , pageRows = [ createRowsModel selectedRecordId tab rows ]
     , pageRequestInFlight = False
     , currentPage = 1
     , reachedLastPage = False
@@ -63,11 +64,12 @@ init size condition tab tabType rows totalRecords =
 
             Nothing ->
                 Dict.empty
+    , selectedRecordId = selectedRecordId
     }
 
 
-createRowsModel : Tab -> Rows -> List Row.Model
-createRowsModel tab rows =
+createRowsModel : Maybe RecordId -> Tab -> Rows -> List Row.Model
+createRowsModel selectedRecordId tab rows =
     let
         recordList =
             Record.rowsToRecordList rows
@@ -77,8 +79,16 @@ createRowsModel tab rows =
                 let
                     recordId =
                         Tab.recordId record tab
+
+                    isFocused =
+                        case selectedRecordId of
+                            Just focusRecordId ->
+                                recordId == focusRecordId
+
+                            Nothing ->
+                                False
                 in
-                    Row.init recordId record tab
+                    Row.init isFocused recordId record tab
             )
             recordList
 
@@ -482,6 +492,7 @@ type Msg
     | SearchboxMsg Searchbox.Model Searchbox.Msg
     | ToggleSelectAllRows Bool
     | ToolbarMsg Toolbar.Msg
+    | SetFocusedRecord RecordId
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -496,7 +507,7 @@ update msg model =
         NextPageReceived rows ->
             if List.length rows.data > 0 then
                 { model
-                    | pageRows = model.pageRows ++ [ createRowsModel model.tab rows ]
+                    | pageRows = model.pageRows ++ [ createRowsModel model.selectedRecordId model.tab rows ]
                     , pageRequestInFlight = False
                     , currentPage = model.currentPage + 1
                 }
@@ -517,7 +528,7 @@ update msg model =
 
         RefreshPageReceived rows ->
             { model
-                | pageRows = [ createRowsModel model.tab rows ]
+                | pageRows = [ createRowsModel model.selectedRecordId model.tab rows ]
                 , pageRequestInFlight = False
 
                 -- any change to search/filter will have to reset the current page
@@ -611,6 +622,17 @@ update msg model =
         ToolbarMsg toolbarMsg ->
             model => Cmd.none
 
+        SetFocusedRecord recordId ->
+            let
+                newModel =
+                    { model | selectedRecordId = Just recordId }
+
+                ( pageRows, cmds ) =
+                    updateAllRowsSetFocusedRecord recordId newModel.pageRows
+            in
+                { newModel | pageRows = pageRows }
+                    => Cmd.batch cmds
+
 
 toggleSelectAllRows : Bool -> List (List Row.Model) -> ( List (List Row.Model), List (Cmd Msg) )
 toggleSelectAllRows value pageList =
@@ -623,6 +645,32 @@ toggleSelectAllRows value pageList =
                             let
                                 ( updatedRow, rowCmd ) =
                                     Row.update (Row.ToggleSelect value) row
+                            in
+                                ( updatedRow, rowCmd |> Cmd.map (RowMsg updatedRow) )
+                        )
+                        page
+                        |> List.unzip
+                )
+                pageList
+                |> List.unzip
+    in
+        ( updatedRowModel, List.concat rowCmds )
+
+
+updateAllRowsSetFocusedRecord : RecordId -> List (List Row.Model) -> ( List (List Row.Model), List (Cmd Msg) )
+updateAllRowsSetFocusedRecord recordId pageList =
+    let
+        ( updatedRowModel, rowCmds ) =
+            List.map
+                (\page ->
+                    List.map
+                        (\row ->
+                            let
+                                isFocused =
+                                    row.recordId == recordId
+
+                                ( updatedRow, rowCmd ) =
+                                    Row.update (Row.SetFocused isFocused) row
                             in
                                 ( updatedRow, rowCmd |> Cmd.map (RowMsg updatedRow) )
                         )

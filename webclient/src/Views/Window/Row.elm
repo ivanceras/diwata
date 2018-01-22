@@ -37,6 +37,7 @@ type alias Model =
     , record : Record
     , tab : Tab
     , fields : List Field.Model
+    , isFocused : Bool
     }
 
 
@@ -45,13 +46,14 @@ isModified model =
     List.any Field.isModified model.fields
 
 
-init : RecordId -> Record -> Tab -> Model
-init recordId record tab =
+init : Bool -> RecordId -> Record -> Tab -> Model
+init isFocused recordId record tab =
     { selected = False
     , recordId = recordId
     , record = record
     , tab = tab
     , fields = createFields record tab
+    , isFocused = isFocused
     }
 
 
@@ -100,10 +102,19 @@ view lookup model =
 viewRowControls : Model -> RecordId -> Tab -> Html Msg
 viewRowControls model recordId tab =
     div [ class "row-controls" ]
-        [ viewSelectionControl model
+        [ viewFocusIndicator model
+        , viewSelectionControl model
         , viewRecordDetail recordId tab
         , viewUndo model
         , viewSave model
+        ]
+
+
+viewFocusIndicator : Model -> Html Msg
+viewFocusIndicator model =
+    div [ class "row-focus-indicator" ]
+        [ i [ class "fa fa-caret-right" ] []
+            |> viewIf model.isFocused
         ]
 
 
@@ -178,6 +189,7 @@ type Msg
     | ResetChanges
     | ToggleSelect Bool
     | ClickDetailedLink
+    | SetFocused Bool
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -228,6 +240,10 @@ update msg model =
         -- handled in WindowArena
         ClickDetailedLink ->
             model => Cmd.none
+
+        SetFocused v ->
+            { model | isFocused = v }
+                => Cmd.none
 
 
 updateFields : Field.Msg -> Model -> List ( Field.Model, Cmd Field.Msg )

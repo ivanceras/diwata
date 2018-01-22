@@ -264,7 +264,7 @@ a.primary-link {
     height: 40px;
     font-size: 14px;
     padding-top: 10px;
-    padding-left: 40px;
+    padding-left: 30px;
 }
 
 .row-controls  a {
@@ -273,6 +273,10 @@ a.primary-link {
 }
 .row-controls > div {
     padding: 0 3px;
+}
+
+.row-controls .row-focus-indicator {
+
 }
 
 .row-controls .row-undo,

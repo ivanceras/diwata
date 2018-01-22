@@ -151,7 +151,7 @@ init isMaximized settings tableName selectedRow arenaArg window =
                                 in
                                     case rows of
                                         Just rows ->
-                                            Tab.init tabSize Nothing hasManyTab InHasMany rows hasManyRecordCount
+                                            Tab.init Nothing tabSize Nothing hasManyTab InHasMany rows hasManyRecordCount
 
                                         Nothing ->
                                             Debug.crash "Empty row"
@@ -193,7 +193,7 @@ init isMaximized settings tableName selectedRow arenaArg window =
                                 in
                                     case rows of
                                         Just rows ->
-                                            ( linker, Tab.init tabSize Nothing indirectTab InIndirect rows indirectRecordCount )
+                                            ( linker, Tab.init Nothing tabSize Nothing indirectTab InIndirect rows indirectRecordCount )
 
                                         Nothing ->
                                             Debug.crash "Empty row"

@@ -31,7 +31,7 @@ import Views.Window.DetailedRecord as DetailedRecord
 import Window as BrowserWindow
 import Route
 import Request.Window.Records
-import Data.Window.Record as Record
+import Data.Window.Record as Record exposing (RecordId)
 import Data.Window.Lookup as Lookup
 import Data.WindowArena as WindowArena
 import Settings exposing (Settings)
@@ -296,7 +296,7 @@ type Msg
     | WindowMsg Window.Msg
     | DetailedRecordMsg DetailedRecord.Msg
     | WindowResized BrowserWindow.Size
-    | InitializedSelectedRow DetailedRecord.Model
+    | InitializedSelectedRow ( DetailedRecord.Model, RecordId )
     | FailedToInitializeSelectedRow
 
 
@@ -346,7 +346,7 @@ update session msg model =
                             (\result ->
                                 case result of
                                     Ok result ->
-                                        InitializedSelectedRow result
+                                        InitializedSelectedRow ( result, rowModel.recordId )
 
                                     Err e ->
                                         FailedToInitializeSelectedRow
@@ -379,19 +379,33 @@ update session msg model =
                             (\result ->
                                 case result of
                                     Ok result ->
-                                        InitializedSelectedRow result
+                                        InitializedSelectedRow ( result, rowModel.recordId )
 
                                     Err e ->
                                         FailedToInitializeSelectedRow
                             )
                             initSelectedRow
 
-            InitializedSelectedRow selectedRow ->
-                { model
-                    | selectedRow = Just selectedRow
-                    , loadingSelectedRecord = False
-                }
-                    => Cmd.none
+            InitializedSelectedRow ( selectedRow, recordId ) ->
+                let
+                    ( updatedActiveWindow, windowCmd ) =
+                        case model.activeWindow of
+                            Just activeWindow ->
+                                let
+                                    ( updatedWindow, windowCmd ) =
+                                        Window.update session (Window.TabMsg (Tab.SetFocusedRecord recordId)) activeWindow
+                                in
+                                    ( Just updatedWindow, Cmd.map WindowMsg windowCmd )
+
+                            Nothing ->
+                                ( Nothing, Cmd.none )
+                in
+                    { model
+                        | selectedRow = Just selectedRow
+                        , loadingSelectedRecord = False
+                        , activeWindow = updatedActiveWindow
+                    }
+                        => windowCmd
 
             FailedToInitializeSelectedRow ->
                 { model
