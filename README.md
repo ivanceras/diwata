@@ -108,3 +108,6 @@ Notes:
 
 [2]: You can use sakila database dump as demo database https://github.com/ivanceras/sakila
 
+## Patreon:
+Please support me on [patreon](https://www.patreon.com/ivanceras), so I can dedicate more time to the development of this project
+
