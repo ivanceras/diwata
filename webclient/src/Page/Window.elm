@@ -43,6 +43,8 @@ import Data.Window.Lookup as Lookup exposing (Lookup(..))
 import Data.Window.Filter as Filter exposing (Condition)
 import Data.WindowArena as WindowArena exposing (ArenaArg)
 import Settings exposing (Settings)
+import Request.Window.Delete
+import Views.Window.Toolbar as Toolbar
 
 
 -- MODEL --
@@ -221,8 +223,8 @@ viewMainTab model =
 
 type Msg
     = DismissErrors
-    | DeleteRecord RecordId
-    | RecordDeleted RecordId (Result Http.Error ())
+    | RecordsDeleteError String
+    | RecordsDeleted Rows
     | CloseWindow
     | TabMsg Tab.Msg
     | LookupNextPageReceived ( TableName, List Record )
@@ -234,31 +236,47 @@ update session msg model =
     let
         tableName =
             model.tableName
+
+        mainTab =
+            model.mainTab
+
+        mainTableName =
+            mainTab.tab.tableName
     in
         case msg of
             DismissErrors ->
                 { model | errors = [] } => Cmd.none
 
-            DeleteRecord id ->
+            RecordsDeleted rows ->
                 let
-                    cmdFromAuth authToken =
-                        authToken
-                            |> Request.Window.Records.delete model.settings tableName id
-                            |> Http.send (RecordDeleted id)
+                    _ =
+                        Debug.log "records deleted: " rows
                 in
-                    session
-                        |> Session.attempt "delete records" cmdFromAuth
-                        |> Tuple.mapFirst (Util.appendErrors model)
+                    model => refreshPage mainTab model
 
-            RecordDeleted id (Ok ()) ->
-                model => Cmd.none
-
-            RecordDeleted id (Err error) ->
-                { model | errors = model.errors ++ [ "Server error while trying to delete comment." ] }
+            RecordsDeleteError error ->
+                { model | errors = model.errors ++ [ error ] }
                     => Cmd.none
 
             CloseWindow ->
                 model => Cmd.none
+
+            TabMsg (Tab.ToolbarMsg Toolbar.ClickedMainDelete) ->
+                let
+                    selectedCount =
+                        Tab.selectedRowCount model.mainTab
+
+                    settings =
+                        model.settings
+
+                    selectedRecordIdList =
+                        Tab.selectedRows mainTab
+                            |> List.map .recordId
+
+                    _ =
+                        Debug.log ("Initiating delete on  " ++ toString selectedCount ++ " records") ""
+                in
+                    model => requestDeleteRecords settings mainTableName selectedRecordIdList
 
             TabMsg (Tab.SearchboxMsg searchbox searchMsg) ->
                 let
@@ -426,6 +444,25 @@ requestNextPage tab model =
                         Err e ->
                             TabMsg (Tab.NextPageError (toString e))
                 )
+
+
+{-|
+
+    Delete records from the main table
+-}
+requestDeleteRecords : Settings -> TableName -> List RecordId -> Cmd Msg
+requestDeleteRecords settings tableName recordIds =
+    Request.Window.Delete.deleteRecords settings Nothing tableName recordIds
+        |> Http.toTask
+        |> Task.attempt
+            (\result ->
+                case result of
+                    Ok rows ->
+                        RecordsDeleted rows
+
+                    Err e ->
+                        RecordsDeleteError (toString e)
+            )
 
 
 subscriptions : Model -> Sub Msg

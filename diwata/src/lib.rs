@@ -35,6 +35,7 @@ use intel::table_intel;
 use rocket::Config;
 use rocket::config::ConfigError;
 use intel::data_container::Filter;
+use intel::data_modify;
 
 mod error;
 
@@ -382,6 +383,31 @@ fn favicon() -> Option<NamedFile> {
     NamedFile::open(Path::new("./public/img/favicon.ico")).ok()
 }
 
+#[delete("/<table_name>", data="<record_ids>")]
+fn delete_records(table_name: String, record_ids: Json<Vec<String>>) -> Result<Option<Json<Rows>>, ServiceError>{
+    let dm = get_pool_dm()?;
+    let em = get_pool_em()?;
+    let db_url = &get_db_url()?;
+    let table_name = TableName::from(&table_name);
+    let mut cache_pool = cache::CACHE_POOL.lock().unwrap();
+    let windows = cache_pool.get_cached_windows(&em, db_url)?;
+    let window = window::get_window(&table_name, &windows);
+    let tables = cache_pool.get_cached_tables(&em, db_url)?;
+    match window {
+        Some(window) => {
+            let main_table = data_service::get_main_table(window, &tables);
+            assert!(main_table.is_some());
+            let main_table = main_table.unwrap();
+            println!("delete these records: {:?} from table: {:?}", record_ids, table_name);
+            let rows = data_modify::delete_records(&dm, &main_table, &*record_ids)?;
+            Ok(Some(Json(rows)))
+        }
+        None => {
+            Ok(None)
+        }
+    }
+}
+
 pub fn rocket(address: Option<String>, port: Option<u16>) -> Result<Rocket, ConfigError> {
     let address = match address{
         Some(address) => address,
@@ -418,6 +444,7 @@ pub fn rocket(address: Option<String>, port: Option<u16>) -> Result<Rocket, Conf
                 get_detailed_record,
                 get_has_many_records,
                 get_indirect_records,
+                delete_records,
             ],
         )
         .mount("/lookup", routes![get_lookup_data])

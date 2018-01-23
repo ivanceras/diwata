@@ -24,6 +24,7 @@ type alias Model =
 type Msg
     = ClickedClose
     | ClickedMaximize Bool
+    | ClickedMainDelete
 
 
 viewForMain : Model -> Html Msg
@@ -105,7 +106,9 @@ viewForMain model =
                 , span [ class "tooltip-text" ] [ text cancelTooltip ]
                 ]
             , button
-                [ class "btn btn-large btn-default tooltip" ]
+                [ class "btn btn-large btn-default tooltip"
+                , onClick ClickedMainDelete
+                ]
                 [ span [ class "icon icon-trash icon-text" ] []
                 , text "Delete"
                     |> viewIf showText

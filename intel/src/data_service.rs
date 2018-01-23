@@ -163,8 +163,7 @@ fn validate_column(column_name: &ColumnName, window: &Window) -> Result<(), DbEr
 }
 
 /// extract record id from comma separated value
-/// TODO: deal with edge case quoting, when there us comma in individual values
-fn extract_record_id<'a>(
+pub fn extract_record_id<'a>(
     record_id: &str,
     pk_types: &Vec<&SqlType>,
     pk_columns: &Vec<&'a ColumnName>,

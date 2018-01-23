@@ -8,6 +8,8 @@ module Views.Window.Tab
         , subscriptions
         , pageRequestNeeded
         , dropdownPageRequestNeeded
+        , selectedRowCount
+        , selectedRows
         )
 
 import Html exposing (..)
@@ -196,7 +198,7 @@ listView lookup model =
             model.tabType
 
         toolbarModel =
-            { selected = countAllSelectedRows model
+            { selected = selectedRowCount model
             , modified = countAllModifiedRows model
             , showIconText = width > Constant.showIconTextMinWidth
             }
@@ -289,19 +291,20 @@ viewPageShadow model =
             ]
 
 
-countAllSelectedRows : Model -> Int
-countAllSelectedRows model =
-    List.foldl
-        (\page sum ->
-            sum + (countRowSelectedInPage page)
-        )
-        0
-        model.pageRows
+allRows : Model -> List Row.Model
+allRows model =
+    List.concat model.pageRows
 
 
-countRowSelectedInPage : List Row.Model -> Int
-countRowSelectedInPage pageRow =
-    List.filter .selected pageRow
+selectedRows : Model -> List Row.Model
+selectedRows model =
+    allRows model
+        |> List.filter .selected
+
+
+selectedRowCount : Model -> Int
+selectedRowCount model =
+    selectedRows model
         |> List.length
 
 
