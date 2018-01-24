@@ -398,7 +398,16 @@ view model =
             [ div
                 [ class "toolbar-area"
                 ]
-                [ Toolbar.viewForDetailRecord toolbarModel
+                [ div
+                    [ class "detail-record-window-cmd-buttons"
+                    ]
+                    [ div
+                        [ class "window-cmd-close"
+                        , onClick ClickedCloseButton
+                        ]
+                        [ i [ class "fa fa-times-circle-o fa-2x" ] [] ]
+                    ]
+                , Toolbar.viewForDetailRecord toolbarModel
                     |> Html.map ToolbarMsg
                 ]
             , div
@@ -737,6 +746,7 @@ type Msg
     | ChangeActiveTab Section TableName (Maybe TableName)
     | ToolbarMsg Toolbar.Msg
     | Maximize Bool
+    | ClickedCloseButton
 
 
 updateDrag : Session -> Drag -> Model -> ( Model, Cmd Msg )
@@ -934,6 +944,10 @@ update session msg model =
                         updateSizes session newModel
                 in
                     updatedModel => cmd
+
+            -- handled in WindowArena
+            ClickedCloseButton ->
+                model => Cmd.none
 
 
 requestNextPage : Section -> Tab.Model -> Model -> Cmd Msg

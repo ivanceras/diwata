@@ -634,6 +634,19 @@ a.primary-link {
     margin-left: 20px;
     background-color: #f5f5f4;
 }
+.detail-record-window-cmd-buttons {
+    position: absolute;
+    top: 0;
+    right: 0;
+    margin-right: -5px;
+    margin-top: -8px;
+    display: flex;
+}
+
+.window-cmd-maximize,
+.window-cmd-restore{
+    padding: 8px 8px;
+}
 
 .btn {
   display: inline-block;

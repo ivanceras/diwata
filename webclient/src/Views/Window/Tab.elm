@@ -13,7 +13,7 @@ module Views.Window.Tab
         )
 
 import Html exposing (..)
-import Html.Attributes exposing (attribute, class, classList, href, id, placeholder, src, property, type_, style)
+import Html.Attributes exposing (checked, attribute, class, classList, href, id, placeholder, src, property, type_, style)
 import Html.Events exposing (onCheck)
 import Data.Window.Tab as Tab exposing (Tab, TabType)
 import Data.Window.TableName as TableName exposing (TableName)
@@ -362,6 +362,7 @@ viewFrozenHead model =
                 [ input
                     [ type_ "checkbox"
                     , onCheck ToggleSelectAllRows
+                    , checked False
                     ]
                     []
                 , div [ class "filter-btn" ]

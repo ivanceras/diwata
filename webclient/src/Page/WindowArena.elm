@@ -455,6 +455,10 @@ update session msg model =
                 { model | selectedRow = Nothing }
                     => Route.modifyUrl (Route.WindowArena model.arenaArg)
 
+            DetailedRecordMsg DetailedRecord.ClickedCloseButton ->
+                { model | selectedRow = Nothing }
+                    => Route.modifyUrl (Route.WindowArena model.arenaArg)
+
             DetailedRecordMsg (DetailedRecord.ToolbarMsg (Toolbar.ClickedMaximize v)) ->
                 let
                     ( updatedSelectedRow, cmd ) =
