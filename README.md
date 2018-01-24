@@ -35,7 +35,7 @@ Navigating through the apps and opening other window in another browser window/t
 ![](https://raw.githubusercontent.com/ivanceras/ivanceras.github.io/master/diwata/seamless-url-navigation.gif)
 
 
-### [Sakila Demo](http://web01.jcesar.clh.no:8000)
+### [Demo](http://web01.jcesar.clh.no:8000/web/#/window/public.film) using the sakila database example
 
 ### Needed Dependencies
 - elm v0.18 ( elm installation needed npm or yarn)
@@ -85,11 +85,11 @@ Using heristic method, diwata is able to infer the content of a table.
 - Urls are linked and clickable automatically
 - Embed common web objects: youtube videos, tweets, images, map locations
 
-Roadmap checklist:
+## Roadmap checklist:
 - [X] Infinite load-on-deman scrolling
 - [X] Meaningful dropdown lookup
 - [X] Seamless url-based navigation
-- [ ] Delete records
+- [X] Delete records
 - [ ] Update records
 - [ ] Insert records
 - [ ] Undo update/delete records
@@ -98,9 +98,16 @@ Roadmap checklist:
 - [ ] Multi column sorting
 - [ ] Smart delete cascade messages
 - [ ] Error messages display
+- [ ] Display of images and file attachments
 - [X] Interactive/dynamic record count indicator for toolbar buttons
 - [X] Loading indicator
 - [ ] Page transition animation
+
+## Next iteration development
+- [ ] Plugin and module system
+- [ ] Custom validation on field
+- [ ] Custom buttons for application specific functionality
+
 
 Notes:
 

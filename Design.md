@@ -31,6 +31,12 @@ we need a high static typing compiler that
 - google-closure-compiler
 - elm 0.18
 
+## Plugin / module system design
+Plugins and module system is needed to be able to make a custom functionalities specific
+to the applications you are building.
+
 ## Nice to haves
 - pure rust webclient [yew](https://github.com/DenisKolodin/yew)
 - native-client [relm](https://github.com/antoyo/relm)
+- use [web-view](https://github.com/Boscop/web-view) to for a local binary installation
+   without opening a port
