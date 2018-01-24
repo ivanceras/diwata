@@ -35,7 +35,7 @@ Navigating through the apps and opening other window in another browser window/t
 ![](https://raw.githubusercontent.com/ivanceras/ivanceras.github.io/master/diwata/seamless-url-navigation.gif)
 
 
-### [Sakila Demo](http://web01.jcesar.clh.no:8000)
+### [Demo](http://web01.jcesar.clh.no:8000/web/#/window/public.film) using the sakila database example
 
 ### Needed Dependencies
 - elm v0.18 ( elm installation needed npm or yarn)
@@ -89,7 +89,7 @@ Roadmap checklist:
 - [X] Infinite load-on-deman scrolling
 - [X] Meaningful dropdown lookup
 - [X] Seamless url-based navigation
-- [ ] Delete records
+- [X] Delete records
 - [ ] Update records
 - [ ] Insert records
 - [ ] Undo update/delete records
