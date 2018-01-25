@@ -16,6 +16,7 @@ module Data.Window.Field
         , displayValues
         , fontSize
         , cast
+        , FieldWidth(..)
         )
 
 import Json.Decode as Decode exposing (Decoder)
@@ -339,12 +340,17 @@ widgetWidthListValue field =
     widgetWidthListColumn field
 
 
+type FieldWidth
+    = Short
+    | Long
+
+
 {-|
 
-    0 to 40 - 200px
-    41 to ~ - 800px
+    0 to 40 - 200px (Short)
+    41 to ~ - 800px (Long)
 -}
-shortOrLongWidth : Field -> ( Int, Int )
+shortOrLongWidth : Field -> ( FieldWidth, Int )
 shortOrLongWidth field =
     let
         width =
@@ -357,6 +363,6 @@ shortOrLongWidth field =
             round (toFloat width / 100) + 1
     in
         if width < 40 then
-            ( 200, fontHeight )
+            ( Short, fontHeight )
         else
-            ( 800, lines * fontHeight )
+            ( Long, lines * fontHeight )

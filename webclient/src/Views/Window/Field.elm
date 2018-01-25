@@ -191,7 +191,16 @@ createWidget presentation record tab field maybeValue =
         ( widgetWidth, widgetHeight ) =
             case presentation of
                 InCard ->
-                    Field.shortOrLongWidth field
+                    let
+                        ( fieldWidth, fieldHeight ) =
+                            Field.shortOrLongWidth field
+                    in
+                        case fieldWidth of
+                            Field.Short ->
+                                ( 200, fieldHeight )
+
+                            Field.Long ->
+                                ( 800, fieldHeight )
 
                 InList ->
                     let
