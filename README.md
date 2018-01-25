@@ -38,7 +38,8 @@ Binary data detected as images would be rendered as such
 ![](https://raw.githubusercontent.com/ivanceras/ivanceras.github.io/master/diwata/image-render.gif)
 
 
-### [Demo](http://web01.jcesar.clh.no:8000/web/#/window/public.film) using the sakila database example
+### [Demo - Sakila (films)](http://web01.jcesar.clh.no:8000/web/#/window/public.film) using the sakila database example
+### [Demo - Dota2 heroes](http://web01.jcesar.clh.no:8222/web/#/window/public.hero) using dota2 hero and abilities data
 
 ### Needed Dependencies
 - elm v0.18 ( elm installation needed npm or yarn)
