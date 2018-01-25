@@ -28,6 +28,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "base64"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "byteorder 1.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "safemem 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "bigdecimal"
 version = "0.0.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -697,6 +706,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "rustorm"
 version = "0.10.0"
 dependencies = [
+ "base64 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "bigdecimal 0.0.10 (registry+https://github.com/rust-lang/crates.io-index)",
  "byteorder 1.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "cfg-if 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1022,6 +1032,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum antidote 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)" = "34fde25430d87a9388dadbe6e34d7f72a462c8b43ac8d309b42b0a8505d7e2a5"
 "checksum atty 0.2.6 (registry+https://github.com/rust-lang/crates.io-index)" = "8352656fd42c30a0c3c89d26dea01e3b77c0ab2af18230835c15e2e13cd51859"
 "checksum base64 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)" = "96434f987501f0ed4eb336a411e0631ecd1afa11574fe148587adc4ff96143c9"
+"checksum base64 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)" = "229d032f1a99302697f10b27167ae6d03d49d032e6a8e2550e8d3fc13356d2b4"
 "checksum bigdecimal 0.0.10 (registry+https://github.com/rust-lang/crates.io-index)" = "bbe25700d5bafc2f57ee77fb22281e88f231a38431c3abceba0fc716d6f5c5d8"
 "checksum bitflags 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)" = "b3c30d3802dfb7281680d6285f2ccdaa8c2d8fee41f93805dba5c4cf50dc23cf"
 "checksum block-buffer 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "1339a1042f5d9f295737ad4d9a6ab6bf81c84a933dba110b9200cd6d1448b814"

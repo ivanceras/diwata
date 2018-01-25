@@ -1008,3 +1008,11 @@ a.primary-link {
 .badge-modified{
     background:#5fba7d;
 }
+
+.row-value-image img{
+    height: 30px;
+}
+
+.card-value-image {
+    border: 1px solid #ccc;
+}

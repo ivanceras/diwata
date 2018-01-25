@@ -28,7 +28,7 @@ import Widgets.DropdownDisplay as DropdownDisplay
 import Widgets.FixDropdown as FixDropdown
 import Views.Window.Presentation as Presentation exposing (Presentation(..))
 import Data.Window.TableName as TableName exposing (TableName)
-import Html.Attributes exposing (id, for, name, selected, checked, style, class, classList, type_, value)
+import Html.Attributes exposing (id, src, for, name, selected, checked, style, class, classList, type_, value)
 import Html.Events exposing (onInput, onCheck, onClick)
 
 
@@ -383,13 +383,24 @@ createWidget presentation record tab field maybeValue =
                         (Tagger.view styles tags)
 
             FileUpload ->
-                HtmlWidget
-                    (input
-                        [ styles
-                        , type_ "file"
-                        ]
-                        []
-                    )
+                let
+                    _ =
+                        Debug.log "fileupload for" valueString
+                in
+                    case presentation of
+                        InList ->
+                            HtmlWidget
+                                (div [ class "row-value-image" ]
+                                    [ img [ src valueString ] []
+                                    ]
+                                )
+
+                        InCard ->
+                            HtmlWidget
+                                (div [ class "card-value-image" ]
+                                    [ img [ src valueString ] []
+                                    ]
+                                )
 
             Radiogroup list ->
                 case presentation of

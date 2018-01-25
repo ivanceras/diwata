@@ -25,6 +25,7 @@ type Value
     | Time String
     | Timestamp Date
     | Blob (List Int)
+    | ImageUri String
     | Array ArrayValue
 
 
@@ -53,6 +54,7 @@ decoder =
         , timestampDecoder
         , uuidDecoder
         , blobDecoder
+        , imageUriDecoder
         , arrayDecoder
         ]
 
@@ -195,6 +197,12 @@ blobDecoder =
         |> required "Blob" (Decode.list Decode.int)
 
 
+imageUriDecoder : Decoder Value
+imageUriDecoder =
+    decode ImageUri
+        |> required "ImageUri" Decode.string
+
+
 dateDecoder : Decoder Value
 dateDecoder =
     decode Date
@@ -300,6 +308,9 @@ valueToString value =
 
         Blob v ->
             toString v
+
+        ImageUri v ->
+            v
 
         Array v ->
             toString v
