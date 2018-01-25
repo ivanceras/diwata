@@ -147,7 +147,6 @@ pub fn get_maintable_data(
     println!("SQL: {}", sql);
     println!("PARAMS: {:#?}", params);
     let result: Result<Rows, DbError> = em.db().execute_sql_with_return(&sql, &params);
-    println!("result: {:?}", result);
     result
 }
 
@@ -531,7 +530,6 @@ fn get_one_one_record(
     println!("ONE ONE SQL: {}", one_one_sql);
     println!("ONE_ONE_PARAMS: {:?}", one_one_params);
     let one_record = dm.execute_sql_with_maybe_one_return(&one_one_sql, &one_one_params)?;
-    println!("one_record: {:#?}", one_record);
     Ok(one_record)
 }
 
@@ -681,7 +679,6 @@ fn get_has_many_records(
     println!("HAS_MANY SQL: {}", has_many_sql);
     println!("HAS_MANY_PARAMS: {:?}", has_many_params);
     let rows = dm.execute_sql_with_return(&has_many_sql, &has_many_params)?;
-    println!("rows: {:#?}", rows);
     Ok(rows)
 }
 
@@ -860,7 +857,6 @@ fn get_indirect_records(
     println!("INDIRECT SQL: {}", indirect_sql);
     println!("INDIRECT PARAMS: {:?}", indirect_params);
     let rows = dm.execute_sql_with_return(&indirect_sql, &indirect_params)?;
-    println!("rows: {:#?}", rows);
     Ok(rows)
 }
 
@@ -991,7 +987,6 @@ pub fn get_lookup_data_of_table_with_display_columns(
 
     println!("sql: {}", sql);
     let rows = dm.execute_sql_with_return(&sql, &[])?;
-    println!("rows: {:?}", rows);
     Ok(rows)
 }
 
