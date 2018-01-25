@@ -200,7 +200,7 @@ createWidget presentation record tab field maybeValue =
                                 ( 200, fieldHeight )
 
                             Field.Long ->
-                                ( 800, fieldHeight )
+                                ( 1000, fieldHeight )
 
                 InList ->
                     let
@@ -399,14 +399,20 @@ createWidget presentation record tab field maybeValue =
                     case presentation of
                         InList ->
                             HtmlWidget
-                                (div [ class "row-value-image" ]
+                                (div
+                                    [ class "row-value-image"
+                                    , styles
+                                    ]
                                     [ img [ src valueString ] []
                                     ]
                                 )
 
                         InCard ->
                             HtmlWidget
-                                (div [ class "card-value-image" ]
+                                (div
+                                    [ class "card-value-image"
+                                    , styles
+                                    ]
                                     [ img [ src valueString ] []
                                     ]
                                 )
