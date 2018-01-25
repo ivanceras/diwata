@@ -34,6 +34,9 @@ Dynamic toolbar displaying the exact information of what the button actually doe
 Navigating through the apps and opening other window in another browser window/tab is seamless
 ![](https://raw.githubusercontent.com/ivanceras/ivanceras.github.io/master/diwata/seamless-url-navigation.gif)
 
+Binary data detected as images would be rendered as such
+![](https://raw.githubusercontent.com/ivanceras/ivanceras.github.io/master/diwata/image-render.gif)
+
 
 ### [Demo](http://web01.jcesar.clh.no:8000/web/#/window/public.film) using the sakila database example
 
@@ -98,9 +101,9 @@ Using heristic method, diwata is able to infer the content of a table.
 - [ ] Multi column sorting
 - [ ] Smart delete cascade messages
 - [ ] Error messages display
-- [ ] Display of images and file attachments
+- [X] Display of images and file attachments
 - [X] Interactive/dynamic record count indicator for toolbar buttons
-- [X] Loading indicator
+- [X] Loading indicators
 - [ ] Page transition animation
 
 ## Next iteration development
