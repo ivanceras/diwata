@@ -429,6 +429,7 @@ createWidget presentation record tab field maybeValue =
                                                 [ type_ "radio"
                                                 , name field.name
                                                 , value choice
+                                                , checked (choice == valueString)
                                                 , id choice
                                                 ]
                                                 []
