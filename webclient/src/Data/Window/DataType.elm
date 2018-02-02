@@ -34,6 +34,7 @@ type DataType
     | Uuid
     | IpAddress
     | Date
+    | DateTime
     | Timestamp
     | TimestampTz
     | Time
@@ -128,6 +129,9 @@ simpleDecoder =
 
                     "Date" ->
                         Decode.succeed Date
+
+                    "DateTime" ->
+                        Decode.succeed DateTime
 
                     "Timestamp" ->
                         Decode.succeed Timestamp

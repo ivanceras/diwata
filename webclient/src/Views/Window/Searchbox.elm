@@ -258,6 +258,12 @@ createSearchbox model =
 
             PrimaryUrlLink ->
                 case dataType of
+                    DataType.Tinyint ->
+                        numberSearch styles value1String
+
+                    DataType.Smallint ->
+                        numberSearch styles value1String
+
                     DataType.Int ->
                         numberSearch styles value1String
 

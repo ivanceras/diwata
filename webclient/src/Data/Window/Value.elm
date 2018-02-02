@@ -22,6 +22,7 @@ type Value
     | Json String
     | Uuid String
     | Date Date
+    | DateTime Date
     | Time String
     | Timestamp Date
     | Blob (List Int)
@@ -51,6 +52,7 @@ decoder =
         , jsonDecoder
         , dateDecoder
         , timeDecoder
+        , dateTimeDecoder
         , timestampDecoder
         , uuidDecoder
         , blobDecoder
@@ -209,6 +211,12 @@ dateDecoder =
         |> required "Date" dateValueDecoder
 
 
+dateTimeDecoder : Decoder Value
+dateTimeDecoder =
+    decode DateTime
+        |> required "DateTime" dateValueDecoder
+
+
 
 {--the same as above only longer
 dateDecoder: Decoder Value
@@ -302,6 +310,9 @@ valueToString value =
 
         Time v ->
             v
+
+        DateTime v ->
+            Date.Format.format "%Y-%m-%d" v
 
         Timestamp v ->
             Date.Format.format "%Y-%m-%d" v

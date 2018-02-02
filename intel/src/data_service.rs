@@ -21,6 +21,8 @@ use dao;
 use bigdecimal::BigDecimal;
 use std::str::FromStr;
 use data_container::Filter;
+use rustorm::common;
+use std::collections::BTreeMap;
 
 
 pub fn get_main_table<'a>(window: &Window, tables: &'a Vec<Table>) -> Option<&'a Table> {
@@ -59,6 +61,10 @@ pub fn get_maintable_data(
 
     let main_tablename = &main_table.name;
     let mut sql = format!("SELECT {}.* ", main_tablename.name);
+    let mut column_datatypes:BTreeMap<String, SqlType> = BTreeMap::new();
+    for column in main_table.columns.iter(){
+        column_datatypes.insert(column.name.name.clone(), column.get_sql_type());
+    }
 
     // select the display columns of the lookup tables, left joined in this query
     for field in &window.main_tab.fields {
@@ -66,17 +72,26 @@ pub fn get_maintable_data(
         match dropdown_info {
             Some(ref dropdown_info) => {
                 let source_tablename = &dropdown_info.source.name;
+                let source_table = table_intel::get_table(&dropdown_info.source, tables);
+                assert!(source_table.is_some());
+                let source_table = source_table.unwrap();
+                for column in source_table.columns.iter(){
+                    column_datatypes.insert(column.name.name.clone(), column.get_sql_type());
+                }
                 let field_column_name = &field.first_column_name().name;
                 let source_table_rename = format!("{}_{}", field_column_name, source_tablename);
                 for display_column in &dropdown_info.display.columns {
                     let display_column_name = &display_column.name;
-                    sql += &format!(
-                        ", {}.{} as \"{}.{}.{}\" ",
-                        source_table_rename,
-                        display_column_name,
+                    let rename = format!("{}.{}.{}",
                         field_column_name,
                         source_tablename,
                         display_column_name
+                    );
+                    sql += &format!(
+                        ", {}.{} as \"{}\" ",
+                        source_table_rename,
+                        display_column_name,
+                        rename
                     );
                 }
             }
@@ -95,10 +110,15 @@ pub fn get_maintable_data(
                 let source_table = table_intel::get_table(&dropdown_info.source, tables);
                 assert!(source_table.is_some());
                 let source_table = source_table.unwrap();
+                for column in source_table.columns.iter(){
+                    column_datatypes.insert(column.name.name.clone(), column.get_sql_type());
+                }
                 let source_pk = source_table.get_primary_column_names();
                 let field_column_name = &field.first_column_name().name;
                 let field_column_names = field.column_names();
                 let source_table_rename = format!("{}_{}", field_column_name, source_tablename);
+                println!("source_pk: {:?}", source_pk);
+                println!("field_column_names: {:?}", field_column_names);
                 assert_eq!(source_pk.len(), field_column_names.len());
                 sql += &format!(
                     "\nLEFT JOIN {} AS {} ",
@@ -147,7 +167,32 @@ pub fn get_maintable_data(
     println!("SQL: {}", sql);
     println!("PARAMS: {:#?}", params);
     let result: Result<Rows, DbError> = em.db().execute_sql_with_return(&sql, &params);
+    let result = result.map(|rows| cast_types(rows, column_datatypes));
     result
+}
+
+fn cast_types(rows: Rows, column_datatypes: BTreeMap<String, SqlType>) -> Rows {
+    let new_columns:Vec<String> = rows.columns.iter().map(|c|c.to_owned()).collect();
+    let mut casted_rows = Rows::new(new_columns);
+    for dao in rows.iter(){
+        let mut new_row = vec![];
+        for col in rows.columns.iter(){
+            let sql_type = column_datatypes.get(col);
+            let value = dao.get_value(col);
+            assert!(value.is_some());
+            let value = value.unwrap();
+            if let Some(sql_type) = sql_type{
+                let casted = common::cast_type(value, sql_type);
+                println!("casted: {:?}", casted);
+                new_row.push(casted);
+            }
+            else{
+                new_row.push(value.clone());
+            }
+        }
+        casted_rows.push(new_row);
+    }
+    casted_rows
 }
 
 //TODO: validate the column name here that it should exist to any of the tables
@@ -400,28 +445,9 @@ fn find_value<'a>(
     record_id
         .iter()
         .find(|&&(ref column_name, _)| *column_name == needle)
-        .map(|&(_, ref value)| cast(value, required_type))
+        .map(|&(_, ref value)| common::cast_type(value, required_type))
 }
 
-fn cast(value: &Value, required_type: &SqlType) -> Value {
-    if required_type.same_type(value) {
-        value.to_owned()
-    } else {
-        match *value {
-            Value::Int(v) => match *required_type {
-                SqlType::Smallint => Value::Smallint(v as i16),
-                _ => panic!(
-                    "unsupported conversion from {:?} to {:?}",
-                    value, required_type
-                ),
-            },
-            _ => panic!(
-                "unsupported conversion from {:?} to {:?}",
-                value, required_type
-            ),
-        }
-    }
-}
 
 fn get_one_one_record(
     dm: &RecordManager,
@@ -721,12 +747,14 @@ fn get_indirect_records(
     let indirect_table = table_intel::get_table(&indirect_tab.table_name, tables);
     assert!(indirect_table.is_some());
     let indirect_table = indirect_table.unwrap();
-    //let indirect_pk = indirect_table.get_primary_column_names();
+    let mut column_datatypes:BTreeMap<String, SqlType> = BTreeMap::new();
+    for column in indirect_table.columns.iter(){
+        column_datatypes.insert(column.name.name.clone(), column.get_sql_type());
+    }
 
     let linker_table = table_intel::get_table(linker_table_name, tables);
     assert!(linker_table.is_some());
     let linker_table = linker_table.unwrap();
-    //let _linker_pk = linker_table.get_primary_column_names();
     let linker_pk_data_types = linker_table.get_primary_column_types();
 
     let indirect_tablename = &indirect_table.name;
@@ -739,17 +767,26 @@ fn get_indirect_records(
         match dropdown_info {
             Some(ref dropdown_info) => {
                 let source_tablename = &dropdown_info.source.name;
+                let source_table = table_intel::get_table(&dropdown_info.source, tables);
+                assert!(source_table.is_some());
+                let source_table = source_table.unwrap();
+                for column in source_table.columns.iter(){
+                    column_datatypes.insert(column.name.name.clone(), column.get_sql_type());
+                }
                 let field_column_name = &field.first_column_name().name;
                 let source_table_rename = format!("{}_{}", field_column_name, source_tablename);
                 for display_column in &dropdown_info.display.columns {
                     let display_column_name = &display_column.name;
-                    indirect_sql += &format!(
-                        ", {}.{} as \"{}.{}.{}\" ",
-                        source_table_rename,
-                        display_column_name,
+                    let rename = format!("{}.{}.{}",
                         field_column_name,
                         source_tablename,
                         display_column_name
+                    );
+                    indirect_sql += &format!(
+                        ", {}.{} as \"{}\" ",
+                        source_table_rename,
+                        display_column_name,
+                        rename
                     );
                 }
             }
@@ -799,6 +836,9 @@ fn get_indirect_records(
                 let source_table = table_intel::get_table(&dropdown_info.source, tables);
                 assert!(source_table.is_some());
                 let source_table = source_table.unwrap();
+                for column in source_table.columns.iter(){
+                    column_datatypes.insert(column.name.name.clone(), column.get_sql_type());
+                }
                 let source_pk = source_table.get_primary_column_names();
                 let field_column_name = &field.first_column_name().name;
                 let field_column_names = field.column_names();
@@ -857,6 +897,7 @@ fn get_indirect_records(
     println!("INDIRECT SQL: {}", indirect_sql);
     println!("INDIRECT PARAMS: {:?}", indirect_params);
     let rows = dm.execute_sql_with_return(&indirect_sql, &indirect_params)?;
+    let rows = cast_types(rows, column_datatypes);
     Ok(rows)
 }
 
@@ -890,16 +931,24 @@ pub fn get_all_lookup_for_window(
     lookup_tables.dedup_by(|a,b|a.0.name == b.0.name);
     println!("after dedup: {} {:#?}", lookup_tables.len(), lookup_tables);
     let mut lookup_data = vec![];
-    for (lookup_table, display_columns) in lookup_tables {
+    for (lookup_table_name, display_columns) in lookup_tables {
         let rows = get_lookup_data_of_table_with_display_columns(
             dm,
             tables,
-            lookup_table,
+            lookup_table_name,
             &display_columns,
             page_size,
             1,
         )?;
-        lookup_data.push((lookup_table.to_owned(), rows));
+        let lookup_table = table_intel::get_table(lookup_table_name, tables);
+        assert!(lookup_table.is_some());
+        let lookup_table = lookup_table.unwrap();
+        let mut column_datatypes:BTreeMap<String, SqlType> = BTreeMap::new();
+        for column in lookup_table.columns.iter(){
+            column_datatypes.insert(column.name.name.clone(), column.get_sql_type());
+        }
+        let rows = cast_types(rows, column_datatypes);
+        lookup_data.push((lookup_table_name.to_owned(), rows));
     }
     Ok(Lookup(lookup_data))
 }
