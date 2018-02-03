@@ -611,8 +611,11 @@ viewDatePicker styles maybeValue =
                         Value.Date v ->
                             Date.Format.format "%Y-%m-%d" v
 
+                        Value.DateTime v ->
+                            Date.Format.format "%Y-%m-%d" v
+
                         _ ->
-                            ""
+                            Debug.crash ("This is not a supported date: " ++ toString value)
 
                 Nothing ->
                     ""

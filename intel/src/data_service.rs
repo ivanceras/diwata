@@ -61,6 +61,7 @@ pub fn get_maintable_data(
 
     let main_tablename = &main_table.name;
     let mut sql = format!("SELECT {}.* ", main_tablename.name);
+
     let mut column_datatypes:BTreeMap<String, SqlType> = BTreeMap::new();
     for column in main_table.columns.iter(){
         column_datatypes.insert(column.name.name.clone(), column.get_sql_type());
@@ -72,12 +73,14 @@ pub fn get_maintable_data(
         match dropdown_info {
             Some(ref dropdown_info) => {
                 let source_tablename = &dropdown_info.source.name;
+
                 let source_table = table_intel::get_table(&dropdown_info.source, tables);
                 assert!(source_table.is_some());
                 let source_table = source_table.unwrap();
                 for column in source_table.columns.iter(){
                     column_datatypes.insert(column.name.name.clone(), column.get_sql_type());
                 }
+
                 let field_column_name = &field.first_column_name().name;
                 let source_table_rename = format!("{}_{}", field_column_name, source_tablename);
                 for display_column in &dropdown_info.display.columns {
@@ -195,6 +198,22 @@ fn cast_types(rows: Rows, column_datatypes: BTreeMap<String, SqlType>) -> Rows {
     casted_rows
 }
 
+fn cast_record(record: Record, column_datatypes: BTreeMap<String, SqlType>) -> Record {
+    let mut new_rec = Record::new();
+    for (k,_v) in record.0.iter(){
+        let column = k.to_string();
+        let sql_type = column_datatypes.get(&column);
+        let value = record.get_value(&column);
+        assert!(value.is_some());
+        let value = value.unwrap();
+        if let Some(sql_type) = sql_type{
+            let casted = common::cast_type(&value, sql_type);
+            new_rec.insert_value(column, casted); 
+        }
+    }
+    new_rec
+}
+
 //TODO: validate the column name here that it should exist to any of the tables
 //that belong to this window, otherwise raise a SQL injection attempt error
 fn validate_column(column_name: &ColumnName, window: &Window) -> Result<(), DbError>{
@@ -290,6 +309,10 @@ pub fn get_selected_record_detail(
     let main_table = get_main_table(window, tables);
     assert!(main_table.is_some());
     let main_table = main_table.unwrap();
+    let mut column_datatypes:BTreeMap<String, SqlType> = BTreeMap::new();
+    for column in main_table.columns.iter(){
+        column_datatypes.insert(column.name.name.clone(), column.get_sql_type());
+    }
     let pk_types = main_table.get_primary_column_types();
     let primary_columns = main_table.get_primary_column_names();
     let record_id = extract_record_id(record_id, &pk_types, &primary_columns)?;
@@ -377,6 +400,7 @@ pub fn get_selected_record_detail(
     println!("PARAMS: {:?}", params);
 
     let record: Option<Record> = dm.execute_sql_with_maybe_one_return(&sql, &params)?;
+    let record = record.map(|r|cast_record(r, column_datatypes));
 
     match record {
         Some(record) => {
@@ -460,6 +484,12 @@ fn get_one_one_record(
     let one_one_table = table_intel::get_table(&one_one_tab.table_name, tables);
     assert!(one_one_table.is_some());
     let one_one_table = one_one_table.unwrap();
+
+    let mut column_datatypes:BTreeMap<String, SqlType> = BTreeMap::new();
+    for column in one_one_table.columns.iter(){
+        column_datatypes.insert(column.name.name.clone(), column.get_sql_type());
+    }
+
     let mut one_one_sql = format!("SELECT {}.* ", one_one_table.name.name);
     // select the display columns of the lookup tables, left joined in this query
     for field in &one_one_tab.fields {
@@ -492,6 +522,14 @@ fn get_one_one_record(
         match dropdown_info {
             Some(ref dropdown_info) => {
                 let source_tablename = &dropdown_info.source.name;
+
+                let source_table = table_intel::get_table(&dropdown_info.source, tables);
+                assert!(source_table.is_some());
+                let source_table = source_table.unwrap();
+                for column in source_table.columns.iter(){
+                    column_datatypes.insert(column.name.name.clone(), column.get_sql_type());
+                }
+
                 let source_table = table_intel::get_table(&dropdown_info.source, tables);
                 assert!(source_table.is_some());
                 let source_table = source_table.unwrap();
@@ -556,6 +594,7 @@ fn get_one_one_record(
     println!("ONE ONE SQL: {}", one_one_sql);
     println!("ONE_ONE_PARAMS: {:?}", one_one_params);
     let one_record = dm.execute_sql_with_maybe_one_return(&one_one_sql, &one_one_params)?;
+    let one_record = one_record.map(|r|cast_record(r, column_datatypes));
     Ok(one_record)
 }
 
@@ -602,12 +641,25 @@ fn get_has_many_records(
     println!("has many table: {} ", has_many_table.name.name);
     let mut has_many_sql = format!("SELECT {}.* ", has_many_table.name.name);
 
+    let mut column_datatypes:BTreeMap<String, SqlType> = BTreeMap::new();
+    for column in has_many_table.columns.iter(){
+        column_datatypes.insert(column.name.name.clone(), column.get_sql_type());
+    }
+
     // select the display columns of the lookup tables, left joined in this query
     for field in &has_many_tab.fields {
         let dropdown_info = field.get_dropdown_info();
         match dropdown_info {
             Some(ref dropdown_info) => {
                 let source_tablename = &dropdown_info.source.name;
+
+                let source_table = table_intel::get_table(&dropdown_info.source, tables);
+                assert!(source_table.is_some());
+                let source_table = source_table.unwrap();
+                for column in source_table.columns.iter(){
+                    column_datatypes.insert(column.name.name.clone(), column.get_sql_type());
+                }
+
                 let field_column_name = &field.first_column_name().name;
                 let source_table_rename = format!("{}_{}", field_column_name, source_tablename);
                 for display_column in &dropdown_info.display.columns {
@@ -634,6 +686,7 @@ fn get_has_many_records(
         match dropdown_info {
             Some(ref dropdown_info) => {
                 let source_tablename = &dropdown_info.source.name;
+
                 let source_table = table_intel::get_table(&dropdown_info.source, tables);
                 assert!(source_table.is_some());
                 let source_table = source_table.unwrap();
@@ -705,6 +758,7 @@ fn get_has_many_records(
     println!("HAS_MANY SQL: {}", has_many_sql);
     println!("HAS_MANY_PARAMS: {:?}", has_many_params);
     let rows = dm.execute_sql_with_return(&has_many_sql, &has_many_params)?;
+    let rows = cast_types(rows, column_datatypes);
     Ok(rows)
 }
 
@@ -767,6 +821,7 @@ fn get_indirect_records(
         match dropdown_info {
             Some(ref dropdown_info) => {
                 let source_tablename = &dropdown_info.source.name;
+
                 let source_table = table_intel::get_table(&dropdown_info.source, tables);
                 assert!(source_table.is_some());
                 let source_table = source_table.unwrap();
@@ -833,6 +888,7 @@ fn get_indirect_records(
         match dropdown_info {
             Some(ref dropdown_info) => {
                 let source_tablename = &dropdown_info.source.name;
+
                 let source_table = table_intel::get_table(&dropdown_info.source, tables);
                 assert!(source_table.is_some());
                 let source_table = source_table.unwrap();

@@ -5,6 +5,8 @@ import Json.Decode.Extra
 import Json.Decode.Pipeline as Pipeline exposing (decode, required)
 import Date exposing (Date)
 import Date.Format
+import DateParser
+import Date.Extra.Config.Config_en_us
 
 
 type Value
@@ -44,6 +46,7 @@ decoder =
         , tinyintDecoder
         , smallintDecoder
         , intDecoder
+        , bigintDecoder
         , floatDecoder
         , doubleDecoder
         , bigDecimalDecoder
@@ -129,6 +132,12 @@ intDecoder =
         |> required "Int" Decode.int
 
 
+bigintDecoder : Decoder Value
+bigintDecoder =
+    decode Int
+        |> required "Bigint" Decode.int
+
+
 floatDecoder : Decoder Value
 floatDecoder =
     decode Float
@@ -211,12 +220,6 @@ dateDecoder =
         |> required "Date" dateValueDecoder
 
 
-dateTimeDecoder : Decoder Value
-dateTimeDecoder =
-    decode DateTime
-        |> required "DateTime" dateValueDecoder
-
-
 
 {--the same as above only longer
 dateDecoder: Decoder Value
@@ -230,6 +233,33 @@ dateDecoder =
         )
     |> Decode.map Date
 --}
+
+
+dateTimeDecoder : Decoder Value
+dateTimeDecoder =
+    decode DateTime
+        |> required "DateTime" dateTimeValueDecoder
+
+
+{-| example: 2018-01-29T09:58:19
+_issue with: 2005-08-18T00:14:03
+-}
+dateTimeValueDecoder : Decoder Date
+dateTimeValueDecoder =
+    Decode.string
+        |> Decode.andThen
+            (\v ->
+                case DateParser.parse Date.Extra.Config.Config_en_us.config "%Y-%m-%dT%H:%M:%S" v of
+                    Ok v ->
+                        Decode.succeed v
+
+                    Err e ->
+                        let
+                            _ =
+                                Debug.log ("fail to decode date: " ++ toString v ++ "due to: ") e
+                        in
+                            Decode.fail ("Invalid date:" ++ toString e)
+            )
 
 
 timeDecoder : Decoder Value
