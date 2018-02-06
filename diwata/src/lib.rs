@@ -14,7 +14,7 @@ use rustorm::Pool;
 use rustorm::pool;
 use rocket_contrib::Json;
 use intel::Window;
-use intel::data_service;
+use intel::data_read;
 use intel::window::{self, GroupedWindow};
 use std::sync::{Arc, Mutex};
 use rustorm::TableName;
@@ -24,7 +24,7 @@ use rustorm::Rows;
 use rustorm::EntityManager;
 use error::ServiceError;
 use intel::cache;
-use intel::data_service::RecordDetail;
+use intel::data_read::RecordDetail;
 use rustorm::RecordManager;
 use std::path::{Path, PathBuf};
 use rocket::response::NamedFile;
@@ -36,6 +36,7 @@ use rocket::Config;
 use rocket::config::ConfigError;
 use intel::data_container::Filter;
 use intel::data_modify;
+use intel::tab;
 
 mod error;
 
@@ -129,7 +130,7 @@ fn get_total_records(table_name: String) -> Result<Option<Json<u64>>, ServiceErr
     let table = table_intel::get_table(&table_name, &tables); 
     match table{
         Some(table) => {
-            let count = data_service::get_total_records(&em, &table.name)?;
+            let count = data_read::get_total_records(&em, &table.name)?;
             Ok(Some(Json(count)))
         }
         None => Ok(None)
@@ -153,7 +154,7 @@ fn get_data_with_page(table_name: String, page: u32) -> Result<Option<Json<Rows>
     match window {
         Some(window) => {
             let rows: Rows =
-                data_service::get_maintable_data(&em, &tables, &window, None, page, PAGE_SIZE)?;
+                data_read::get_maintable_data(&em, &tables, &window, None, page, PAGE_SIZE)?;
             Ok(Some(Json(rows)))
         }
         None => Ok(None),
@@ -178,7 +179,7 @@ fn get_data_with_page_filter(table_name: String, page: u32, filter: String) -> R
     match window {
         Some(window) => {
             let rows: Rows =
-                data_service::get_maintable_data(&em, &tables, &window, Some(filter), page, PAGE_SIZE)?;
+                data_read::get_maintable_data(&em, &tables, &window, Some(filter), page, PAGE_SIZE)?;
             Ok(Some(Json(rows)))
         }
         None => Ok(None),
@@ -200,7 +201,7 @@ fn get_detailed_record(
     let tables = cache_pool.get_cached_tables(&em, db_url)?;
     match window {
         Some(window) => {
-            let dao: Option<RecordDetail> = data_service::get_selected_record_detail(
+            let dao: Option<RecordDetail> = data_read::get_selected_record_detail(
                 &dm,
                 &tables,
                 &window,
@@ -232,7 +233,7 @@ fn get_window_lookup_data(table_name: String) -> Result<Option<Json<Lookup>>, Se
     match window {
         Some(window) => {
             let lookup: Lookup =
-                data_service::get_all_lookup_for_window(&dm, &tables, &window, PAGE_SIZE)?;
+                data_read::get_all_lookup_for_window(&dm, &tables, &window, PAGE_SIZE)?;
             Ok(Some(Json(lookup)))
         }
         None => Ok(None),
@@ -256,7 +257,7 @@ fn get_lookup_data(table_name: String, page: u32) -> Result<Option<Json<Rows>>, 
     let tables = cache_pool.get_cached_tables(&em, db_url)?;
     match window {
         Some(window) => {
-            let rows: Rows = data_service::get_lookup_data_of_tab(
+            let rows: Rows = data_read::get_lookup_data_of_tab(
                 &dm,
                 &tables,
                 &window.main_tab,
@@ -289,13 +290,13 @@ fn get_has_many_records(
     let has_many_table_name = TableName::from(&has_many_table);
     match window {
         Some(window) => {
-            let main_table = data_service::get_main_table(window, &tables);
+            let main_table = data_read::get_main_table(window, &tables);
             assert!(main_table.is_some());
             let main_table = main_table.unwrap();
-            let has_many_tab = data_service::find_tab(&window.has_many_tabs, &has_many_table_name);
+            let has_many_tab = tab::find_tab(&window.has_many_tabs, &has_many_table_name);
             match has_many_tab {
                 Some(has_many_tab) => {
-                    let rows = data_service::get_has_many_records_service(
+                    let rows = data_read::get_has_many_records_service(
                         &dm,
                         &tables,
                         &main_table,
@@ -333,7 +334,7 @@ fn get_indirect_records(
     let indirect_table_name = TableName::from(&indirect_table);
     match window {
         Some(window) => {
-            let main_table = data_service::get_main_table(window, &tables);
+            let main_table = data_read::get_main_table(window, &tables);
             assert!(main_table.is_some());
             let main_table = main_table.unwrap();
 
@@ -344,7 +345,7 @@ fn get_indirect_records(
 
             match indirect_tab {
                 Some(&(ref linker_table, ref indirect_tab)) => {
-                    let rows = data_service::get_indirect_records_service(
+                    let rows = data_read::get_indirect_records_service(
                         &dm,
                         &tables,
                         &main_table,
@@ -395,7 +396,7 @@ fn delete_records(table_name: String, record_ids: Json<Vec<String>>) -> Result<O
     let tables = cache_pool.get_cached_tables(&em, db_url)?;
     match window {
         Some(window) => {
-            let main_table = data_service::get_main_table(window, &tables);
+            let main_table = data_read::get_main_table(window, &tables);
             assert!(main_table.is_some());
             let main_table = main_table.unwrap();
             println!("delete these records: {:?} from table: {:?}", record_ids, table_name);

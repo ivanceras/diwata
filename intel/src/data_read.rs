@@ -1,4 +1,3 @@
-//! provides data service for window
 use rustorm::EntityManager;
 use rustorm::TableName;
 use window::Window;
@@ -9,7 +8,6 @@ use rustorm::DbError;
 use error::IntelError;
 use rustorm::Value;
 use rustorm::types::SqlType;
-use uuid::Uuid;
 use rustorm::Record;
 use rustorm::RecordManager;
 use rustorm::ColumnName;
@@ -18,12 +16,9 @@ pub use data_container::RecordDetail;
 use data_container::Lookup;
 use rustorm::FromDao;
 use dao;
-use bigdecimal::BigDecimal;
-use std::str::FromStr;
 use data_container::Filter;
-use rustorm::common;
 use std::collections::BTreeMap;
-
+use common;
 
 pub fn get_main_table<'a>(window: &Window, tables: &'a Vec<Table>) -> Option<&'a Table> {
     let main_tablename = &window.main_tab.table_name;
@@ -31,9 +26,6 @@ pub fn get_main_table<'a>(window: &Window, tables: &'a Vec<Table>) -> Option<&'a
     main_table
 }
 
-fn calc_offset(page: u32, page_size: u32) -> u32 {
-    (page - 1) * page_size
-}
 
 pub fn get_total_records(em: &EntityManager, table_name: &TableName) -> Result<u64, DbError> {
     #[derive(FromDao)]
@@ -157,7 +149,7 @@ pub fn get_maintable_data(
                 let column_name = &cond.left;
                 let value_str = format!("{}%", cond.right.to_string());
                 let value = Value::Text(value_str);
-                validate_column(&column_name, window)?;
+                common::validate_column(&column_name, window)?;
                 sql += &format!("{} ILIKE ${} ", column_name.complete_name(), i+1); 
                 params.push(value);
             }
@@ -166,136 +158,12 @@ pub fn get_maintable_data(
         None => (),
     }
     sql += &format!("\nLIMIT {} ", page_size);
-    sql += &format!("OFFSET {} ", calc_offset(page, page_size));
+    sql += &format!("OFFSET {} ", common::calc_offset(page, page_size));
     println!("SQL: {}", sql);
     println!("PARAMS: {:#?}", params);
     let result: Result<Rows, DbError> = em.db().execute_sql_with_return(&sql, &params);
-    let result = result.map(|rows| cast_types(rows, column_datatypes));
+    let result = result.map(|rows| common::cast_types(rows, column_datatypes));
     result
-}
-
-fn cast_types(rows: Rows, column_datatypes: BTreeMap<String, SqlType>) -> Rows {
-    let new_columns:Vec<String> = rows.columns.iter().map(|c|c.to_owned()).collect();
-    let mut casted_rows = Rows::new(new_columns);
-    for dao in rows.iter(){
-        let mut new_row = vec![];
-        for col in rows.columns.iter(){
-            let sql_type = column_datatypes.get(col);
-            let value = dao.get_value(col);
-            assert!(value.is_some());
-            let value = value.unwrap();
-            if let Some(sql_type) = sql_type{
-                let casted = common::cast_type(value, sql_type);
-                println!("casted: {:?}", casted);
-                new_row.push(casted);
-            }
-            else{
-                new_row.push(value.clone());
-            }
-        }
-        casted_rows.push(new_row);
-    }
-    casted_rows
-}
-
-fn cast_record(record: Record, column_datatypes: BTreeMap<String, SqlType>) -> Record {
-    let mut new_rec = Record::new();
-    for (k,_v) in record.0.iter(){
-        let column = k.to_string();
-        let sql_type = column_datatypes.get(&column);
-        let value = record.get_value(&column);
-        assert!(value.is_some());
-        let value = value.unwrap();
-        if let Some(sql_type) = sql_type{
-            let casted = common::cast_type(&value, sql_type);
-            new_rec.insert_value(column, casted); 
-        }
-    }
-    new_rec
-}
-
-//TODO: validate the column name here that it should exist to any of the tables
-//that belong to this window, otherwise raise a SQL injection attempt error
-fn validate_column(column_name: &ColumnName, window: &Window) -> Result<(), DbError>{
-    if window.has_column_name(column_name){
-        Ok(())
-    }else{
-        Err(DbError::SqlInjectionAttempt(
-                    format!("Column:'{}' does not exist", column_name.complete_name())))
-    }
-}
-
-/// extract record id from comma separated value
-pub fn extract_record_id<'a>(
-    record_id: &str,
-    pk_types: &Vec<&SqlType>,
-    pk_columns: &Vec<&'a ColumnName>,
-) -> Result<Vec<(&'a ColumnName, Value)>, IntelError> {
-    let splinters: Vec<&str> = record_id.split(",").collect();
-    let mut record_id = Vec::with_capacity(splinters.len());
-    assert_eq!(splinters.len(), pk_types.len());
-    assert_eq!(pk_columns.len(), pk_types.len());
-    for (i, splinter) in splinters.iter().enumerate() {
-        let pk_type = pk_types[i];
-        let pk_column = pk_columns[i];
-        let value = match *pk_type {
-            SqlType::Int => {
-                let v = splinter.parse();
-                match v {
-                    Ok(v) => Value::Int(v),
-                    Err(e) => {
-                        return Err(IntelError::ParamParseError(format!(
-                            "Invalid for type {:?}: {}, Error: {}",
-                            pk_type, splinter, e
-                        )));
-                    }
-                }
-            }
-            SqlType::Smallint => {
-                let v = splinter.parse();
-                match v {
-                    Ok(v) => Value::Smallint(v),
-                    Err(e) => {
-                        return Err(IntelError::ParamParseError(format!(
-                            "Invalid for type {:?}: {}, Error: {}",
-                            pk_type, splinter, e
-                        )));
-                    }
-                }
-            }
-            SqlType::Uuid => {
-                let uuid = Uuid::parse_str(splinter);
-                match uuid {
-                    Ok(uuid) => Value::Uuid(uuid),
-                    Err(e) => {
-                        return Err(IntelError::ParamParseError(format!(
-                            "Invalid for type {:?}: {}, Error: {}",
-                            pk_type, splinter, e
-                        )));
-                    }
-                }
-            }
-            SqlType::Numeric => {
-                let v = BigDecimal::from_str(splinter);
-                match v {
-                    Ok(v) => Value::BigDecimal(v),
-                    Err(e) => {
-                        return Err(IntelError::ParamParseError(format!(
-                            "Invalid for type {:?}: {}, Error: {}",
-                            pk_type, splinter, e
-                        )));
-                    }
-                }
-            }
-
-            SqlType::Varchar => {
-                  Value::Text(splinter.to_string()) 
-            }
-            _ => panic!("primary with type {:?} is not yet covered", pk_type),
-        };
-        record_id.push((pk_column, value));
-    }
-    Ok(record_id)
 }
 
 /// get the detail of the selected record data
@@ -315,7 +183,7 @@ pub fn get_selected_record_detail(
     }
     let pk_types = main_table.get_primary_column_types();
     let primary_columns = main_table.get_primary_column_names();
-    let record_id = extract_record_id(record_id, &pk_types, &primary_columns)?;
+    let record_id = common::extract_record_id(record_id, &pk_types, &primary_columns)?;
     println!("arg record_id: {:#?}", record_id);
     let mut sql = format!("SELECT {}.* ", main_table.name.name);
     // select the display columns of the lookup tables, left joined in this query
@@ -400,7 +268,7 @@ pub fn get_selected_record_detail(
     println!("PARAMS: {:?}", params);
 
     let record: Option<Record> = dm.execute_sql_with_maybe_one_return(&sql, &params)?;
-    let record = record.map(|r|cast_record(r, column_datatypes));
+    let record = record.map(|r|common::cast_record(r, column_datatypes));
 
     match record {
         Some(record) => {
@@ -455,21 +323,6 @@ pub fn get_selected_record_detail(
         }
         None => Ok(None),
     }
-}
-
-/// get the value which matches the column name and cast the value to the required data type
-/// supported casting:
-/// Int -> SmallInt
-///
-fn find_value<'a>(
-    needle: &ColumnName,
-    record_id: &'a Vec<(&ColumnName, Value)>,
-    required_type: &SqlType,
-) -> Option<Value> {
-    record_id
-        .iter()
-        .find(|&&(ref column_name, _)| *column_name == needle)
-        .map(|&(_, ref value)| common::cast_type(value, required_type))
 }
 
 
@@ -582,7 +435,7 @@ fn get_one_one_record(
                 i + 1
             );
             let required_type = one_one_pk_data_types[i];
-            find_value(rc, record_id, required_type).map(|v| one_one_params.push(v.clone()));
+            common::find_value(rc, record_id, required_type).map(|v| one_one_params.push(v.clone()));
         }
     }
     one_one_sql += &format!("\nLIMIT {} ", page_size);
@@ -594,12 +447,8 @@ fn get_one_one_record(
     println!("ONE ONE SQL: {}", one_one_sql);
     println!("ONE_ONE_PARAMS: {:?}", one_one_params);
     let one_record = dm.execute_sql_with_maybe_one_return(&one_one_sql, &one_one_params)?;
-    let one_record = one_record.map(|r|cast_record(r, column_datatypes));
+    let one_record = one_record.map(|r|common::cast_record(r, column_datatypes));
     Ok(one_record)
-}
-
-pub fn find_tab<'a>(tabs: &'a Vec<Tab>, table_name: &TableName) -> Option<&'a Tab> {
-    tabs.iter().find(|tab| tab.table_name == *table_name)
 }
 
 pub fn get_has_many_records_service(
@@ -613,7 +462,7 @@ pub fn get_has_many_records_service(
 ) -> Result<Rows, IntelError> {
     let pk_types = main_table.get_primary_column_types();
     let primary_columns = main_table.get_primary_column_names();
-    let record_id = extract_record_id(record_id, &pk_types, &primary_columns)?;
+    let record_id = common::extract_record_id(record_id, &pk_types, &primary_columns)?;
     let rows = get_has_many_records(
         dm,
         tables,
@@ -744,12 +593,12 @@ fn get_has_many_records(
             i + 1
         );
         let required_type = has_many_fk_data_types[i];
-        find_value(referred_column, main_record_id, required_type)
+        common::find_value(referred_column, main_record_id, required_type)
             .map(|v| has_many_params.push(v.clone()));
     }
 
     has_many_sql += &format!("LIMIT {} ", page_size);
-    has_many_sql += &format!("OFFSET {} ", calc_offset(page, page_size));
+    has_many_sql += &format!("OFFSET {} ", common::calc_offset(page, page_size));
     println!(
         "referred column to main table: {:?}",
         referred_columns_to_main_table
@@ -758,7 +607,7 @@ fn get_has_many_records(
     println!("HAS_MANY SQL: {}", has_many_sql);
     println!("HAS_MANY_PARAMS: {:?}", has_many_params);
     let rows = dm.execute_sql_with_return(&has_many_sql, &has_many_params)?;
-    let rows = cast_types(rows, column_datatypes);
+    let rows = common::cast_types(rows, column_datatypes);
     Ok(rows)
 }
 
@@ -774,7 +623,7 @@ pub fn get_indirect_records_service(
 ) -> Result<Rows, IntelError> {
     let pk_types = main_table.get_primary_column_types();
     let primary_columns = main_table.get_primary_column_names();
-    let record_id = extract_record_id(record_id, &pk_types, &primary_columns)?;
+    let record_id = common::extract_record_id(record_id, &pk_types, &primary_columns)?;
     let rows = get_indirect_records(
         dm,
         tables,
@@ -946,14 +795,14 @@ fn get_indirect_records(
         );
         let required_type: &SqlType = linker_pk_data_types[i];
         let rc = &linker_fc_referring_columns[i];
-        find_value(rc, record_id, required_type).map(|v| indirect_params.push(v.clone()));
+        common::find_value(rc, record_id, required_type).map(|v| indirect_params.push(v.clone()));
     }
     indirect_sql += &format!("\nLIMIT {} ", page_size);
-    indirect_sql += &format!("OFFSET {} ", calc_offset(page, page_size));
+    indirect_sql += &format!("OFFSET {} ", common::calc_offset(page, page_size));
     println!("INDIRECT SQL: {}", indirect_sql);
     println!("INDIRECT PARAMS: {:?}", indirect_params);
     let rows = dm.execute_sql_with_return(&indirect_sql, &indirect_params)?;
-    let rows = cast_types(rows, column_datatypes);
+    let rows = common::cast_types(rows, column_datatypes);
     Ok(rows)
 }
 
@@ -1003,7 +852,7 @@ pub fn get_all_lookup_for_window(
         for column in lookup_table.columns.iter(){
             column_datatypes.insert(column.name.name.clone(), column.get_sql_type());
         }
-        let rows = cast_types(rows, column_datatypes);
+        let rows = common::cast_types(rows, column_datatypes);
         lookup_data.push((lookup_table_name.to_owned(), rows));
     }
     Ok(Lookup(lookup_data))
@@ -1087,7 +936,7 @@ pub fn get_lookup_data_of_table_with_display_columns(
     sql += &format!(
         "LIMIT {} OFFSET {} ",
         page_size,
-        calc_offset(page, page_size)
+        common::calc_offset(page, page_size)
     );
 
     println!("sql: {}", sql);

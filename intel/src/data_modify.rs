@@ -8,8 +8,7 @@ use rustorm::Table;
 use rustorm::Rows;
 use rustorm::DbError;
 use rustorm::RecordManager;
-
-use data_service;
+use common;
 
 
 /// delete the records with the following record_ids
@@ -22,7 +21,7 @@ pub fn delete_records(dm: &RecordManager,
     let primary_columns = &main_table.get_primary_column_names();
     let mut record_id_values = Vec::with_capacity(record_ids.len());
     for rid in record_ids.iter(){
-        let record_id_value: Vec<(&ColumnName, Value)> = data_service::extract_record_id(rid, pk_types, primary_columns)?;
+        let record_id_value: Vec<(&ColumnName, Value)> = common::extract_record_id(rid, pk_types, primary_columns)?;
         record_id_values.push(record_id_value);
     }
     if primary_columns.len() == 1 {
@@ -56,4 +55,16 @@ fn delete_records_from_single_primary_column(dm: &RecordManager, main_table: &Ta
     sql += "RETURNING *";
     let rows = dm.execute_sql_with_return(&sql, &pk_values)?;
     Ok(rows)
+}
+
+
+/// triggered by the main tab
+fn update_records_in_main_table(_dm: &RecordManager, _main_table: &Table,
+                  _rows: Rows,) -> Result<Rows,IntelError> {
+    panic!("not yet");
+}
+
+/// from the main tab
+fn insert_records_to_main_table(_dm: &RecordManager, _main_table: &Table, _rows: Rows) -> Result<Rows, IntelError> {
+    panic!("not yet");
 }

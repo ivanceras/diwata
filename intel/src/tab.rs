@@ -184,3 +184,7 @@ impl Tab {
             .any(|field| field.has_column_name(column_name))
     }
 }
+
+pub fn find_tab<'a>(tabs: &'a Vec<Tab>, table_name: &TableName) -> Option<&'a Tab> {
+    tabs.iter().find(|tab| tab.table_name == *table_name)
+}
