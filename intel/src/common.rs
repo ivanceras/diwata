@@ -162,6 +162,22 @@ pub fn find_value<'a>(
         .map(|&(_, ref value)| common::cast_type(value, required_type))
 }
 
+/// convert Vec<Record> to Rows
+pub fn records_to_rows(columns: &Vec<String>, records: Vec<Record>) -> Rows {
+    let mut rows = Rows::new(columns.clone());
+    for record in records{
+        let mut values = vec![];
+        for col in columns.iter(){
+            let value = record.get_value(&col);
+            assert!(value.is_some());
+            let value = value.unwrap();
+            values.push(value); 
+        }
+        rows.push(values);
+    }
+    rows
+}
+
 
 
 
