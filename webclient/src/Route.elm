@@ -27,7 +27,6 @@ type Route
     | Logout
     | Register
     | Settings
-    | Profile Username
 
 
 route : Parser (Route -> a) a
@@ -36,7 +35,6 @@ route =
         [ Url.map Login (s "login")
         , Url.map Logout (s "logout")
         , Url.map Settings (s "settings")
-        , Url.map Profile (s "profile" </> User.usernameParser)
         , Url.map Register (s "register")
         , Url.map (WindowArena Nothing) (s "")
         ]
@@ -70,9 +68,6 @@ routeToString page =
 
                 Settings ->
                     [ "settings" ]
-
-                Profile username ->
-                    [ "profile", User.usernameToString username ]
     in
         "#/" ++ String.join "/" pieces
 

@@ -24,6 +24,7 @@ type alias Model =
 type Msg
     = ClickedClose
     | ClickedMaximize Bool
+    | ClickedNewButton
     | ClickedMainDelete
 
 
@@ -84,7 +85,11 @@ viewForMain model =
             model.showIconText
     in
         div [ class "toolbar btn-group" ]
-            [ button [ class "btn btn-large btn-default tooltip" ]
+            [ button
+                [ class "btn btn-large btn-default tooltip"
+                , onClick
+                    ClickedNewButton
+                ]
                 [ span [ class "icon icon-plus icon-text tab-action" ] []
                 , text "New record"
                     |> viewIf showText

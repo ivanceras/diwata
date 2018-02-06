@@ -71,11 +71,6 @@ viewSignIn page user =
 
             Just user ->
                 [ linkTo Route.Settings [ i [ class "ion-gear-a" ] [], text " Settings" ]
-                , linkTo
-                    (Route.Profile user.username)
-                    [ img [ class "user-pic", UserPhoto.src user.image ] []
-                    , User.usernameToHtml user.username
-                    ]
                 , linkTo Route.Logout [ text "Sign out" ]
                 ]
 
@@ -114,9 +109,6 @@ isActive page route =
 
         ( Settings, Route.Settings ) ->
             True
-
-        ( Profile pageUsername, Route.Profile routeUsername ) ->
-            pageUsername == routeUsername
 
         _ ->
             False

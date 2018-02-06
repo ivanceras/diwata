@@ -11,7 +11,6 @@ import Page.Errored as Errored exposing (PageLoadError)
 import Page.WindowArena as WindowArena
 import Page.Login as Login
 import Page.NotFound as NotFound
-import Page.Profile as Profile
 import Page.Register as Register
 import Page.Settings as Settings
 import Ports
@@ -37,7 +36,6 @@ type Page
     | Settings Settings.Model
     | Login Login.Model
     | Register Register.Model
-    | Profile Username Profile.Model
     | Window Window.Model
 
 
@@ -150,11 +148,6 @@ viewPage session isLoading page =
                     |> frame Page.Other
                     |> Html.map RegisterMsg
 
-            Profile username subModel ->
-                Profile.view session subModel
-                    |> frame (Page.Profile username)
-                    |> Html.map ProfileMsg
-
             Window subModel ->
                 Window.view session subModel
                     |> frame Page.Other
@@ -215,9 +208,6 @@ pageSubscriptions page =
         Register _ ->
             Sub.none
 
-        Profile _ _ ->
-            Sub.none
-
         Window _ ->
             Sub.none
 
@@ -230,13 +220,11 @@ type Msg
     = SetRoute (Maybe Route)
     | HomeLoaded (Result PageLoadError WindowArena.Model)
     | WindowLoaded (Result PageLoadError Window.Model)
-    | ProfileLoaded Username (Result PageLoadError Profile.Model)
     | WindowArenaMsg WindowArena.Msg
     | SettingsMsg Settings.Msg
     | SetUser (Maybe User)
     | LoginMsg Login.Msg
     | RegisterMsg Register.Msg
-    | ProfileMsg Profile.Msg
     | WindowMsg Window.Msg
 
 
@@ -295,9 +283,6 @@ setRoute maybeRoute model =
 
             Just Route.Register ->
                 { model | pageState = Loaded (Register Register.initialModel) } => Cmd.none
-
-            Just (Route.Profile username) ->
-                transition (ProfileLoaded username) (Profile.init model.session username)
 
 
 pageErrored : Model -> ActivePage -> String -> ( Model, Cmd msg )
@@ -363,12 +348,6 @@ updatePage page msg model =
                     { model | pageState = Loaded (WindowArena subModel) } => Cmd.none
 
             ( HomeLoaded (Err error), _ ) ->
-                { model | pageState = Loaded (Errored error) } => Cmd.none
-
-            ( ProfileLoaded username (Ok subModel), _ ) ->
-                { model | pageState = Loaded (Profile username subModel) } => Cmd.none
-
-            ( ProfileLoaded username (Err error), _ ) ->
                 { model | pageState = Loaded (Errored error) } => Cmd.none
 
             ( WindowLoaded (Ok subModel), _ ) ->
@@ -454,9 +433,6 @@ updatePage page msg model =
 
             ( WindowArenaMsg subMsg, WindowArena subModel ) ->
                 toPage WindowArena WindowArenaMsg (WindowArena.update session) subMsg subModel
-
-            ( ProfileMsg subMsg, Profile username subModel ) ->
-                toPage (Profile username) ProfileMsg (Profile.update model.session) subMsg subModel
 
             ( WindowMsg subMsg, Window subModel ) ->
                 toPage Window WindowMsg (Window.update model.session) subMsg subModel

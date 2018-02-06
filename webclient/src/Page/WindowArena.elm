@@ -22,7 +22,7 @@ import Request.Window
 import SelectList exposing (SelectList)
 import Task exposing (Task)
 import Util exposing ((=>))
-import Views.Window.GroupedWindow as GroupedWindow exposing (FeedSource, globalFeed, yourFeed)
+import Views.Window.GroupedWindow as GroupedWindow
 import Views.Page as Page
 import Page.Window as Window
 import Data.Window.TableName as TableName exposing (TableName)
@@ -82,12 +82,6 @@ init settings session arenaArg =
         isDetailedRecordMaximized =
             Constant.isDetailedRecordMaximized
 
-        feedSources =
-            if session.user == Nothing then
-                SelectList.singleton globalFeed
-            else
-                SelectList.fromLists [] yourFeed [ globalFeed ]
-
         maybeAuthToken =
             Maybe.map .token session.user
 
@@ -125,7 +119,7 @@ init settings session arenaArg =
                     Task.succeed Nothing
 
         loadWindowList =
-            GroupedWindow.init session tableName feedSources
+            GroupedWindow.init session tableName
                 |> Task.mapError handleLoadError
 
         loadSelectedRecord =
