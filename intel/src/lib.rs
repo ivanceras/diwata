@@ -24,6 +24,7 @@ pub mod data_container;
 pub mod cache;
 pub mod error;
 mod common;
+mod query_builder;
 
 pub use window::Window;
 

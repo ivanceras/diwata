@@ -19,6 +19,18 @@ use dao;
 use data_container::Filter;
 use std::collections::BTreeMap;
 use common;
+use query_builder::Query;
+
+
+macro_rules! some {
+    ($expr: expr) => {
+        {
+            let value = $expr;
+            assert!(value.is_some());
+            value.unwrap()
+        }
+    }
+}
 
 pub fn get_main_table<'a>(window: &Window, tables: &'a Vec<Table>) -> Option<&'a Table> {
     let main_tablename = &window.main_tab.table_name;
@@ -47,17 +59,13 @@ pub fn get_maintable_data(
     page: u32,
     page_size: u32,
 ) -> Result<Rows, DbError> {
-    let main_table = get_main_table(window, tables);
-    assert!(main_table.is_some());
-    let main_table = main_table.unwrap();
+    let main_table = some!(get_main_table(window, tables));
 
     let main_tablename = &main_table.name;
-    let mut sql = format!("SELECT {}.* ", main_tablename.name);
+    let mut query = Query::new();
+    query.select_all(&main_tablename);
 
-    let mut column_datatypes:BTreeMap<String, SqlType> = BTreeMap::new();
-    for column in main_table.columns.iter(){
-        column_datatypes.insert(column.name.name.clone(), column.get_sql_type());
-    }
+    query.add_table_datatypes(&main_table);
 
     // select the display columns of the lookup tables, left joined in this query
     for field in &window.main_tab.fields {
@@ -66,12 +74,8 @@ pub fn get_maintable_data(
             Some(ref dropdown_info) => {
                 let source_tablename = &dropdown_info.source.name;
 
-                let source_table = table_intel::get_table(&dropdown_info.source, tables);
-                assert!(source_table.is_some());
-                let source_table = source_table.unwrap();
-                for column in source_table.columns.iter(){
-                    column_datatypes.insert(column.name.name.clone(), column.get_sql_type());
-                }
+                let source_table = some!(table_intel::get_table(&dropdown_info.source, tables));
+                query.add_table_datatypes(source_table);
 
                 let field_column_name = &field.first_column_name().name;
                 let source_table_rename = format!("{}_{}", field_column_name, source_tablename);
@@ -82,19 +86,19 @@ pub fn get_maintable_data(
                         source_tablename,
                         display_column_name
                     );
-                    sql += &format!(
+                    query.append(&format!(
                         ", {}.{} as \"{}\" ",
                         source_table_rename,
                         display_column_name,
                         rename
-                    );
+                    ));
                 }
             }
             None => (),
         }
     }
 
-    sql += &format!("\nFROM {} \n", main_tablename.complete_name());
+    query.from(&main_tablename);
     // left join the table that is looked up by the fields, so as to be able to retrieve the
     // identifiable column values
     for field in &window.main_tab.fields {
@@ -102,12 +106,7 @@ pub fn get_maintable_data(
         match dropdown_info {
             Some(ref dropdown_info) => {
                 let source_tablename = &dropdown_info.source.name;
-                let source_table = table_intel::get_table(&dropdown_info.source, tables);
-                assert!(source_table.is_some());
-                let source_table = source_table.unwrap();
-                for column in source_table.columns.iter(){
-                    column_datatypes.insert(column.name.name.clone(), column.get_sql_type());
-                }
+                let source_table = some!(table_intel::get_table(&dropdown_info.source, tables));
                 let source_pk = source_table.get_primary_column_names();
                 let field_column_name = &field.first_column_name().name;
                 let field_column_names = field.column_names();
@@ -115,55 +114,49 @@ pub fn get_maintable_data(
                 println!("source_pk: {:?}", source_pk);
                 println!("field_column_names: {:?}", field_column_names);
                 assert_eq!(source_pk.len(), field_column_names.len());
-                sql += &format!(
+                query.append(&format!(
                     "\nLEFT JOIN {} AS {} ",
                     source_table.complete_name(),
                     source_table_rename
-                );
+                ));
                 for (i, spk) in source_pk.iter().enumerate() {
                     if i == 0 {
-                        sql += "\nON "
+                        query.append("\nON ");
                     } else {
-                        sql += "\nAND "
+                        query.append("\nAND ");
                     }
-                    sql += &format!(
+                    query.append(&format!(
                         "{}.{} = {}.{} ",
                         source_table_rename,
                         spk.name,
                         main_tablename.name,
                         field_column_names[i].name
-                    )
+                    ));
                 }
             }
             None => (),
         }
     }
-    let mut params = vec![];
     match filter{
         Some(filter) => {
-            sql += "WHERE ";
+            query.append("WHERE ");
             for (i,cond) in filter.conditions.iter().enumerate(){
                 if i > 0 {
-                    sql += "AND ";
+                    query.append("AND ");
                 }
                 let column_name = &cond.left;
                 let value_str = format!("{}%", cond.right.to_string());
                 let value = Value::Text(value_str);
                 common::validate_column(&column_name, window)?;
-                sql += &format!("{} ILIKE ${} ", column_name.complete_name(), i+1); 
-                params.push(value);
+                query.append(&format!("{} ILIKE ${} ", column_name.complete_name(), i+1));
+                query.add_param(value);
             }
 
         },
         None => (),
     }
-    sql += &format!("\nLIMIT {} ", page_size);
-    sql += &format!("OFFSET {} ", common::calc_offset(page, page_size));
-    println!("SQL: {}", sql);
-    println!("PARAMS: {:#?}", params);
-    let result: Result<Rows, DbError> = em.db().execute_sql_with_return(&sql, &params);
-    let result = result.map(|rows| common::cast_types(rows, column_datatypes));
-    result
+    query.set_page(page, page_size);
+    query.collect_rows(em)
 }
 
 /// get the detail of the selected record data
@@ -174,18 +167,14 @@ pub fn get_selected_record_detail(
     record_id: &str,
     page_size: u32,
 ) -> Result<Option<RecordDetail>, IntelError> {
-    let main_table = get_main_table(window, tables);
-    assert!(main_table.is_some());
-    let main_table = main_table.unwrap();
-    let mut column_datatypes:BTreeMap<String, SqlType> = BTreeMap::new();
-    for column in main_table.columns.iter(){
-        column_datatypes.insert(column.name.name.clone(), column.get_sql_type());
-    }
+    let main_table = some!(get_main_table(window, tables));
     let pk_types = main_table.get_primary_column_types();
     let primary_columns = main_table.get_primary_column_names();
     let record_id = common::extract_record_id(record_id, &pk_types, &primary_columns)?;
     println!("arg record_id: {:#?}", record_id);
-    let mut sql = format!("SELECT {}.* ", main_table.name.name);
+    let mut query = Query::new();
+    query.add_table_datatypes(&main_table);
+    query.select_all(&main_table.name);
     // select the display columns of the lookup tables, left joined in this query
     for field in &window.main_tab.fields {
         let dropdown_info = field.get_dropdown_info();
@@ -196,20 +185,20 @@ pub fn get_selected_record_detail(
                 let source_table_rename = format!("{}_{}", field_column_name, source_tablename);
                 for display_column in &dropdown_info.display.columns {
                     let display_column_name = &display_column.name;
-                    sql += &format!(
+                    query.append(&format!(
                         ", {}.{} as \"{}.{}.{}\" ",
                         source_table_rename,
                         display_column_name,
                         field_column_name,
                         source_tablename,
                         display_column_name
-                    );
+                    ));
                 }
             }
             None => (),
         }
     }
-    sql += &format!("\nFROM {} ", main_table.complete_name());
+    query.from(&main_table.name);
     // left join the table that is looked up by the fields, so as to be able to retrieve the
     // identifiable column values
     for field in &window.main_tab.fields {
@@ -217,58 +206,52 @@ pub fn get_selected_record_detail(
         match dropdown_info {
             Some(ref dropdown_info) => {
                 let source_tablename = &dropdown_info.source.name;
-                let source_table = table_intel::get_table(&dropdown_info.source, tables);
-                assert!(source_table.is_some());
-                let source_table = source_table.unwrap();
+                let source_table = some!(table_intel::get_table(&dropdown_info.source, tables));
                 let source_pk = source_table.get_primary_column_names();
                 let field_column_name = &field.first_column_name().name;
                 let field_column_names = field.column_names();
                 let source_table_rename = format!("{}_{}", field_column_name, source_tablename);
                 assert_eq!(source_pk.len(), field_column_names.len());
-                sql += &format!(
+                query.append(&format!(
                     "\nLEFT JOIN {} AS {} ",
                     source_table.complete_name(),
                     source_table_rename
-                );
+                ));
                 for (i, spk) in source_pk.iter().enumerate() {
                     if i == 0 {
-                        sql += "\nON "
+                        query.append("\nON ");
                     } else {
-                        sql += "\nAND "
+                        query.append("\nAND ");
                     }
-                    sql += &format!(
+                    query.append(&format!(
                         "{}.{} = {}.{} ",
                         source_table_rename,
                         spk.name,
                         main_table.name.name,
                         field_column_names[i].name
-                    )
+                    ));
                 }
             }
             None => (),
         }
     }
-    let mut params: Vec<Value> = Vec::with_capacity(record_id.len());
     for (i, &(pk, ref value)) in record_id.iter().enumerate() {
         if i == 0 {
-            sql += "\nWHERE ";
+            query.append("\nWHERE ");
         } else {
-            sql += "\nAND ";
+            query.append("\nAND ");
         }
-        sql += &format!(
+        query.append(&format!(
             "{}.{} = ${} ",
             main_table.name.name,
             pk.complete_name(),
             i + 1
-        );
-        params.push(value.clone());
+        ));
+        query.add_param(value.clone());
     }
 
-    println!("SQL: {}", sql);
-    println!("PARAMS: {:?}", params);
 
-    let record: Option<Record> = dm.execute_sql_with_maybe_one_return(&sql, &params)?;
-    let record = record.map(|r|common::cast_record(r, column_datatypes));
+    let record: Option<Record> = query.collect_maybe_record(dm)?; 
 
     match record {
         Some(record) => {
@@ -334,16 +317,12 @@ fn get_one_one_record(
     record_id: &Vec<(&ColumnName, Value)>,
     page_size: u32,
 ) -> Result<Option<Record>, DbError> {
-    let one_one_table = table_intel::get_table(&one_one_tab.table_name, tables);
-    assert!(one_one_table.is_some());
-    let one_one_table = one_one_table.unwrap();
+    let one_one_table = some!(table_intel::get_table(&one_one_tab.table_name, tables));
 
-    let mut column_datatypes:BTreeMap<String, SqlType> = BTreeMap::new();
-    for column in one_one_table.columns.iter(){
-        column_datatypes.insert(column.name.name.clone(), column.get_sql_type());
-    }
+    let mut query = Query::new();
+    query.add_table_datatypes(&one_one_table);
+    query.select_all(&one_one_table.name);
 
-    let mut one_one_sql = format!("SELECT {}.* ", one_one_table.name.name);
     // select the display columns of the lookup tables, left joined in this query
     for field in &one_one_tab.fields {
         let dropdown_info = field.get_dropdown_info();
@@ -354,20 +333,20 @@ fn get_one_one_record(
                 let source_table_rename = format!("{}_{}", field_column_name, source_tablename);
                 for display_column in &dropdown_info.display.columns {
                     let display_column_name = &display_column.name;
-                    one_one_sql += &format!(
+                    query.append(&format!(
                         ", {}.{} as \"{}.{}.{}\" ",
                         source_table_rename,
                         display_column_name,
                         field_column_name,
                         source_tablename,
                         display_column_name
-                    );
+                    ));
                 }
             }
             None => (),
         }
     }
-    one_one_sql += &format!("FROM {} ", one_one_table.complete_name());
+    query.from(&one_one_table.name);
     // left join the table that is looked up by the fields, so as to be able to retrieve the
     // identifiable column values
     for field in &one_one_tab.fields {
@@ -376,39 +355,32 @@ fn get_one_one_record(
             Some(ref dropdown_info) => {
                 let source_tablename = &dropdown_info.source.name;
 
-                let source_table = table_intel::get_table(&dropdown_info.source, tables);
-                assert!(source_table.is_some());
-                let source_table = source_table.unwrap();
-                for column in source_table.columns.iter(){
-                    column_datatypes.insert(column.name.name.clone(), column.get_sql_type());
-                }
+                let source_table = some!(table_intel::get_table(&dropdown_info.source, tables));
+                query.add_table_datatypes(&source_table);
 
-                let source_table = table_intel::get_table(&dropdown_info.source, tables);
-                assert!(source_table.is_some());
-                let source_table = source_table.unwrap();
                 let source_pk = source_table.get_primary_column_names();
                 let field_column_name = &field.first_column_name().name;
                 let field_column_names = field.column_names();
                 let source_table_rename = format!("{}_{}", field_column_name, source_tablename);
                 assert_eq!(source_pk.len(), field_column_names.len());
-                one_one_sql += &format!(
+                query.append(&format!(
                     "\nLEFT JOIN {} AS {} ",
                     source_table.complete_name(),
                     source_table_rename
-                );
+                ));
                 for (i, spk) in source_pk.iter().enumerate() {
                     if i == 0 {
-                        one_one_sql += "\nON "
+                        query.append("\nON ");
                     } else {
-                        one_one_sql += "\nAND "
+                        query.append("\nAND ");
                     }
-                    one_one_sql += &format!(
+                    query.append(&format!(
                         "{}.{} = {}.{} ",
                         source_table_rename,
                         spk.name,
                         one_one_table.name.name,
                         field_column_names[i].name
-                    )
+                    ));
                 }
             }
             None => (),
@@ -419,36 +391,26 @@ fn get_one_one_record(
     let one_one_pk = one_one_table.get_primary_column_names();
     let one_one_pk_data_types = one_one_table.get_primary_column_types();
 
-    let mut one_one_params = Vec::with_capacity(one_one_pk.len());
 
     for referred_columns in referred_columns_to_main_table.iter() {
         for (i, rc) in referred_columns.iter().enumerate() {
             if i == 0 {
-                one_one_sql += "\nWHERE ";
+                query.append("\nWHERE ");
             } else {
-                one_one_sql += "\nAND ";
+                query.append("\nAND ");
             }
-            one_one_sql += &format!(
+            query.append(&format!(
                 " {}.{} = ${} ",
                 one_one_table.name.name,
                 one_one_pk[i].complete_name(),
                 i + 1
-            );
+            ));
             let required_type = one_one_pk_data_types[i];
-            common::find_value(rc, record_id, required_type).map(|v| one_one_params.push(v.clone()));
+            common::find_value(rc, record_id, required_type).map(|v| query.add_param(v.clone()));
         }
     }
-    one_one_sql += &format!("\nLIMIT {} ", page_size);
-    println!(
-        "referred column to main table: {:?}",
-        referred_columns_to_main_table
-    );
-    println!("one one pk: {:?}", one_one_pk);
-    println!("ONE ONE SQL: {}", one_one_sql);
-    println!("ONE_ONE_PARAMS: {:?}", one_one_params);
-    let one_record = dm.execute_sql_with_maybe_one_return(&one_one_sql, &one_one_params)?;
-    let one_record = one_record.map(|r|common::cast_record(r, column_datatypes));
-    Ok(one_record)
+    query.append(&format!("\nLIMIT {} ", page_size));
+    query.collect_maybe_record(dm)
 }
 
 pub fn get_has_many_records_service(
@@ -484,16 +446,11 @@ fn get_has_many_records(
     page_size: u32,
     page: u32,
 ) -> Result<Rows, DbError> {
-    let has_many_table = table_intel::get_table(&has_many_tab.table_name, tables);
-    assert!(has_many_table.is_some());
-    let has_many_table = has_many_table.unwrap();
-    println!("has many table: {} ", has_many_table.name.name);
-    let mut has_many_sql = format!("SELECT {}.* ", has_many_table.name.name);
+    let has_many_table = some!(table_intel::get_table(&has_many_tab.table_name, tables));
+    let mut query = Query::new();
+    query.select_all(&has_many_table.name);
 
-    let mut column_datatypes:BTreeMap<String, SqlType> = BTreeMap::new();
-    for column in has_many_table.columns.iter(){
-        column_datatypes.insert(column.name.name.clone(), column.get_sql_type());
-    }
+    query.add_table_datatypes(&has_many_table);
 
     // select the display columns of the lookup tables, left joined in this query
     for field in &has_many_tab.fields {
@@ -502,31 +459,27 @@ fn get_has_many_records(
             Some(ref dropdown_info) => {
                 let source_tablename = &dropdown_info.source.name;
 
-                let source_table = table_intel::get_table(&dropdown_info.source, tables);
-                assert!(source_table.is_some());
-                let source_table = source_table.unwrap();
-                for column in source_table.columns.iter(){
-                    column_datatypes.insert(column.name.name.clone(), column.get_sql_type());
-                }
+                let source_table = some!(table_intel::get_table(&dropdown_info.source, tables));
+                query.add_table_datatypes(&source_table);
 
                 let field_column_name = &field.first_column_name().name;
                 let source_table_rename = format!("{}_{}", field_column_name, source_tablename);
                 for display_column in &dropdown_info.display.columns {
                     let display_column_name = &display_column.name;
-                    has_many_sql += &format!(
+                    query.append(&format!(
                         ", {}.{} as \"{}.{}.{}\" ",
                         source_table_rename,
                         display_column_name,
                         field_column_name,
                         source_tablename,
                         display_column_name
-                    );
+                    ));
                 }
             }
             None => (),
         }
     }
-    has_many_sql += &format!("\nFROM {} ", has_many_table.complete_name());
+    query.from(&has_many_table.name);
 
     // left join the table that is looked up by the fields, so as to be able to retrieve the
     // identifiable column values
@@ -536,32 +489,30 @@ fn get_has_many_records(
             Some(ref dropdown_info) => {
                 let source_tablename = &dropdown_info.source.name;
 
-                let source_table = table_intel::get_table(&dropdown_info.source, tables);
-                assert!(source_table.is_some());
-                let source_table = source_table.unwrap();
+                let source_table = some!(table_intel::get_table(&dropdown_info.source, tables));
                 let source_pk = source_table.get_primary_column_names();
                 let field_column_name = &field.first_column_name().name;
                 let field_column_names = field.column_names();
                 let source_table_rename = format!("{}_{}", field_column_name, source_tablename);
                 assert_eq!(source_pk.len(), field_column_names.len());
-                has_many_sql += &format!(
+                query.append(&format!(
                     "\nLEFT JOIN {} AS {} ",
                     source_table.complete_name(),
                     source_table_rename
-                );
+                ));
                 for (i, spk) in source_pk.iter().enumerate() {
                     if i == 0 {
-                        has_many_sql += "\nON "
+                        query.append("\nON ");
                     } else {
-                        has_many_sql += "\nAND "
+                        query.append("\nAND ");
                     }
-                    has_many_sql += &format!(
+                    query.append(&format!(
                         "{}.{} = {}.{} ",
                         source_table_rename,
                         spk.name,
                         has_many_table.name.name,
                         field_column_names[i].name
-                    )
+                    ))
                 }
             }
             None => (),
@@ -572,7 +523,6 @@ fn get_has_many_records(
     let has_many_fk_data_types = has_many_table.get_foreign_column_types_to_table(&main_table.name);
     assert_eq!(has_many_fk.len(), has_many_fk_data_types.len());
 
-    let mut has_many_params = Vec::with_capacity(has_many_fk.len());
 
     let referred_columns_to_main_table: Option<&Vec<ColumnName>> =
         has_many_table.get_referred_columns_to_table(&main_table.name);
@@ -582,33 +532,23 @@ fn get_has_many_records(
 
     for (i, referred_column) in referred_columns_to_main_table.iter().enumerate() {
         if i == 0 {
-            has_many_sql += "\nWHERE ";
+            query.append("\nWHERE ");
         } else {
-            has_many_sql += "\nAND ";
+            query.append("\nAND ");
         }
-        has_many_sql += &format!(
+        query.append(&format!(
             " {}.{} = ${} ",
             has_many_table.name.name,
             has_many_fk[i].complete_name(),
             i + 1
-        );
+        ));
         let required_type = has_many_fk_data_types[i];
         common::find_value(referred_column, main_record_id, required_type)
-            .map(|v| has_many_params.push(v.clone()));
+            .map(|v| query.add_param(v.clone()));
     }
 
-    has_many_sql += &format!("LIMIT {} ", page_size);
-    has_many_sql += &format!("OFFSET {} ", common::calc_offset(page, page_size));
-    println!(
-        "referred column to main table: {:?}",
-        referred_columns_to_main_table
-    );
-    println!("has_many fk: {:?}", has_many_fk);
-    println!("HAS_MANY SQL: {}", has_many_sql);
-    println!("HAS_MANY_PARAMS: {:?}", has_many_params);
-    let rows = dm.execute_sql_with_return(&has_many_sql, &has_many_params)?;
-    let rows = common::cast_types(rows, column_datatypes);
-    Ok(rows)
+    query.set_page(page, page_size);
+    query.collect_rows_with_dm(dm)
 }
 
 pub fn get_indirect_records_service(
@@ -647,22 +587,16 @@ fn get_indirect_records(
     page_size: u32,
     page: u32,
 ) -> Result<Rows, DbError> {
-    let indirect_table = table_intel::get_table(&indirect_tab.table_name, tables);
-    assert!(indirect_table.is_some());
-    let indirect_table = indirect_table.unwrap();
-    let mut column_datatypes:BTreeMap<String, SqlType> = BTreeMap::new();
-    for column in indirect_table.columns.iter(){
-        column_datatypes.insert(column.name.name.clone(), column.get_sql_type());
-    }
+    let indirect_table = some!(table_intel::get_table(&indirect_tab.table_name, tables));
+    let mut query = Query::new();
+    query.add_table_datatypes(&indirect_table);
 
-    let linker_table = table_intel::get_table(linker_table_name, tables);
-    assert!(linker_table.is_some());
-    let linker_table = linker_table.unwrap();
+    let linker_table = some!(table_intel::get_table(linker_table_name, tables));
     let linker_pk_data_types = linker_table.get_primary_column_types();
 
     let indirect_tablename = &indirect_table.name;
 
-    let mut indirect_sql = format!("SELECT {}.* ", indirect_tablename.name,);
+    query.select_all(&indirect_tablename);
 
     // select the display columns of the lookup tables, left joined in this query
     for field in &indirect_tab.fields {
@@ -671,12 +605,8 @@ fn get_indirect_records(
             Some(ref dropdown_info) => {
                 let source_tablename = &dropdown_info.source.name;
 
-                let source_table = table_intel::get_table(&dropdown_info.source, tables);
-                assert!(source_table.is_some());
-                let source_table = source_table.unwrap();
-                for column in source_table.columns.iter(){
-                    column_datatypes.insert(column.name.name.clone(), column.get_sql_type());
-                }
+                let source_table = some!(table_intel::get_table(&dropdown_info.source, tables));
+                query.add_table_datatypes(&source_table);
                 let field_column_name = &field.first_column_name().name;
                 let source_table_rename = format!("{}_{}", field_column_name, source_tablename);
                 for display_column in &dropdown_info.display.columns {
@@ -686,49 +616,39 @@ fn get_indirect_records(
                         source_tablename,
                         display_column_name
                     );
-                    indirect_sql += &format!(
+                    query.append(&format!(
                         ", {}.{} as \"{}\" ",
                         source_table_rename,
                         display_column_name,
                         rename
-                    );
+                    ));
                 }
             }
             None => (),
         }
     }
-    indirect_sql += &format!("\nFROM {} ", linker_table.complete_name());
-    indirect_sql += &format!("\nLEFT JOIN {} ", indirect_table.complete_name());
-    println!("indirect table: {:?}", indirect_table.complete_name());
+    query.from(&linker_table.name);
+    query.append(&format!("\nLEFT JOIN {} ", indirect_table.complete_name()));
     let linker_rc_to_indirect_table =
         linker_table.get_referred_columns_to_table(indirect_tablename);
-    println!(
-        "indirect table referred columns to linker table: {:?} --> {:?}",
-        linker_table_name.complete_name(),
-        linker_rc_to_indirect_table
-    );
     assert!(linker_rc_to_indirect_table.is_some());
-    //let linker_rc_to_indirect_table = linker_rc_to_indirect_table.unwrap();
-    let linker_fc = linker_table.get_foreign_key_to_table(indirect_tablename);
-    assert!(linker_fc.is_some());
-    let linker_fc = linker_fc.unwrap();
+
+    let linker_fc = some!(linker_table.get_foreign_key_to_table(indirect_tablename));
     let foreign_columns = &linker_fc.columns;
     let referring_columns = &linker_fc.referred_columns;
-    println!("foreign columns: {:?}", foreign_columns);
-    println!("referring column: {:?}", referring_columns);
     for (i, fc) in foreign_columns.iter().enumerate() {
         if i == 0 {
-            indirect_sql += "ON "
+            query.append("ON ");
         } else {
-            indirect_sql += "AND "
+            query.append("AND ");
         }
-        indirect_sql += &format!(
+        query.append(&format!(
             " {}.{} = {}.{} ",
             linker_table.name.name,
             fc.complete_name(),
             indirect_table.name.name,
             referring_columns[i].complete_name()
-        );
+        ));
     }
     // left join the table that is looked up by the fields, so as to be able to retrieve the
     // identifiable column values
@@ -738,72 +658,58 @@ fn get_indirect_records(
             Some(ref dropdown_info) => {
                 let source_tablename = &dropdown_info.source.name;
 
-                let source_table = table_intel::get_table(&dropdown_info.source, tables);
-                assert!(source_table.is_some());
-                let source_table = source_table.unwrap();
-                for column in source_table.columns.iter(){
-                    column_datatypes.insert(column.name.name.clone(), column.get_sql_type());
-                }
+                let source_table = some!(table_intel::get_table(&dropdown_info.source, tables));
+                query.add_table_datatypes(&source_table);
+
                 let source_pk = source_table.get_primary_column_names();
                 let field_column_name = &field.first_column_name().name;
                 let field_column_names = field.column_names();
                 let source_table_rename = format!("{}_{}", field_column_name, source_tablename);
                 assert_eq!(source_pk.len(), field_column_names.len());
-                indirect_sql += &format!(
+                query.append(&format!(
                     "\nLEFT JOIN {} AS {} ",
                     source_table.complete_name(),
                     source_table_rename
-                );
+                ));
                 for (i, spk) in source_pk.iter().enumerate() {
                     if i == 0 {
-                        indirect_sql += "ON "
+                        query.append("ON ");
                     } else {
-                        indirect_sql += "AND "
+                        query.append("AND ");
                     }
-                    indirect_sql += &format!(
+                    query.append(&format!(
                         "{}.{} = {}.{} ",
                         source_table_rename,
                         spk.name,
                         indirect_table.name.name,
                         field_column_names[i].name
-                    )
+                    ))
                 }
             }
             None => (),
         }
     }
-    println!("---> In indirect, main table: {}", main_table.name.complete_name());
-    println!("---> linker table: {}", linker_table.complete_name());
-    let linker_fc_to_main_table = linker_table.get_foreign_key_to_table(&main_table.name);
-    println!("---> linker rc: {:#?}", linker_fc_to_main_table);
-    assert!(linker_fc_to_main_table.is_some());
-    let linker_fc_to_main_table = linker_fc_to_main_table.unwrap();
-    let mut indirect_params =  vec![];
+    let linker_fc_to_main_table = some!(linker_table.get_foreign_key_to_table(&main_table.name));
     let linker_fc_foreign_columns = &linker_fc_to_main_table.columns;
     let linker_fc_referring_columns = &linker_fc_to_main_table.referred_columns;
     for (i, fc) in linker_fc_foreign_columns.iter().enumerate() {
         if i == 0 {
-            indirect_sql += "\nWHERE ";
+            query.append("\nWHERE ");
         } else {
-            indirect_sql += "\nAND ";
+            query.append("\nAND ");
         }
-        indirect_sql += &format!(
+        query.append(&format!(
             "{}.{} = ${} ",
             linker_table.name.name,
             fc.name,
             i + 1
-        );
+        ));
         let required_type: &SqlType = linker_pk_data_types[i];
         let rc = &linker_fc_referring_columns[i];
-        common::find_value(rc, record_id, required_type).map(|v| indirect_params.push(v.clone()));
+        common::find_value(rc, record_id, required_type).map(|v| query.add_param(v.clone()));
     }
-    indirect_sql += &format!("\nLIMIT {} ", page_size);
-    indirect_sql += &format!("OFFSET {} ", common::calc_offset(page, page_size));
-    println!("INDIRECT SQL: {}", indirect_sql);
-    println!("INDIRECT PARAMS: {:?}", indirect_params);
-    let rows = dm.execute_sql_with_return(&indirect_sql, &indirect_params)?;
-    let rows = common::cast_types(rows, column_datatypes);
-    Ok(rows)
+    query.set_page(page, page_size);
+    query.collect_rows_with_dm(dm)
 }
 
 /// for all fields in the all tabs of the window
@@ -831,7 +737,6 @@ pub fn get_all_lookup_for_window(
         lookup_tables.append(&mut lookup);
     }
     println!("total tables: {} {:#?}", lookup_tables.len(), lookup_tables);
-    //lookup_tables.dedup();
     lookup_tables.sort_by(|a,b|a.0.name.cmp(&b.0.name));
     lookup_tables.dedup_by(|a,b|a.0.name == b.0.name);
     println!("after dedup: {} {:#?}", lookup_tables.len(), lookup_tables);
@@ -845,14 +750,12 @@ pub fn get_all_lookup_for_window(
             page_size,
             1,
         )?;
-        let lookup_table = table_intel::get_table(lookup_table_name, tables);
-        assert!(lookup_table.is_some());
-        let lookup_table = lookup_table.unwrap();
+        let lookup_table = some!(table_intel::get_table(lookup_table_name, tables));
         let mut column_datatypes:BTreeMap<String, SqlType> = BTreeMap::new();
         for column in lookup_table.columns.iter(){
             column_datatypes.insert(column.name.name.clone(), column.get_sql_type());
         }
-        let rows = common::cast_types(rows, column_datatypes);
+        let rows = common::cast_types(rows, &column_datatypes);
         lookup_data.push((lookup_table_name.to_owned(), rows));
     }
     Ok(Lookup(lookup_data))
@@ -905,9 +808,7 @@ pub fn get_lookup_data_of_table_with_display_columns(
     page_size: u32,
     page: u32,
 ) -> Result<Rows, IntelError> {
-    let table = table_intel::get_table(table_name, tables);
-    assert!(table.is_some());
-    let table = table.unwrap();
+    let table = some!(table_intel::get_table(table_name, tables));
 
     let primary_columns = table.get_primary_column_names();
     assert!(primary_columns.len() > 0);
