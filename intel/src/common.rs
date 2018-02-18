@@ -23,7 +23,7 @@ pub fn calc_offset(page: u32, page_size: u32) -> u32 {
 
 
 
-pub fn cast_types(rows: Rows, column_datatypes: &BTreeMap<String, SqlType>) -> Rows {
+pub fn cast_rows(rows: Rows, column_datatypes: &BTreeMap<String, SqlType>) -> Rows {
     let new_columns:Vec<String> = rows.columns.iter().map(|c|c.to_owned()).collect();
     let mut casted_rows = Rows::new(new_columns);
     for dao in rows.iter(){
