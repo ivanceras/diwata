@@ -1,4 +1,11 @@
-module Data.Query exposing (Order, orderClauseParser, maybeFilterParser, orderClauseToString)
+module Data.Query
+    exposing
+        ( Order
+        , OrderDirection(..)
+        , maybeFilterParser
+        , orderClauseParser
+        , orderClauseToString
+        )
 
 import UrlParser as Url
 
@@ -42,12 +49,12 @@ orderClauseParser arg =
                 )
                 segments
     in
-        case List.isEmpty orders of
-            True ->
-                Nothing
+    case List.isEmpty orders of
+        True ->
+            Nothing
 
-            False ->
-                Just orders
+        False ->
+            Just orders
 
 
 orderClauseToString : List Order -> String
@@ -76,24 +83,24 @@ orderParser arg =
             last =
                 List.head reverse
         in
-            case last of
-                Just "asc" ->
-                    Just
-                        { column = column
-                        , direction = ASC
-                        }
+        case last of
+            Just "asc" ->
+                Just
+                    { column = column
+                    , direction = ASC
+                    }
 
-                Just "desc" ->
-                    Just
-                        { column = column
-                        , direction = DESC
-                        }
+            Just "desc" ->
+                Just
+                    { column = column
+                    , direction = DESC
+                    }
 
-                _ ->
-                    Just
-                        { column = (String.join "." splinters)
-                        , direction = ASC
-                        }
+            _ ->
+                Just
+                    { column = String.join "." splinters
+                    , direction = ASC
+                    }
     else
         Just
             { column = arg
@@ -113,4 +120,4 @@ maybeFilterParser : Url.Parser (Maybe String -> a) a
 maybeFilterParser =
     Url.custom "MAYBE_FILTER" <|
         \segment ->
-            (maybeParseFilter segment)
+            maybeParseFilter segment

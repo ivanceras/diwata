@@ -14,6 +14,7 @@ module Page.Window
 {-| Viewing an individual window.
 -}
 
+import Data.Query as Query
 import Data.Session as Session exposing (Session)
 import Data.User as User exposing (User)
 import Data.UserPhoto as UserPhoto
@@ -134,6 +135,15 @@ init settings session tableName window arenaArg =
                 Nothing ->
                     Nothing
 
+        sort : Maybe (List Query.Order)
+        sort =
+            case arenaArg of
+                Just arenaArg ->
+                    arenaArg.order
+
+                Nothing ->
+                    Nothing
+
         selectedRecordId =
             Nothing
 
@@ -166,7 +176,7 @@ init settings session tableName window arenaArg =
         mainTabTask =
             Task.map4
                 (\records size lookup totalRecords ->
-                    Tab.init selectedRecordId (calcMainTabSize size) condition window.mainTab InMain records totalRecords
+                    Tab.init selectedRecordId (calcMainTabSize size) condition sort window.mainTab InMain records totalRecords
                 )
                 loadRecords
                 getBrowserSize

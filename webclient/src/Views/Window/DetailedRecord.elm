@@ -1,51 +1,47 @@
 module Views.Window.DetailedRecord
     exposing
-        ( init
-        , Model
-        , view
-        , subscriptions
-        , update
+        ( Model
         , Msg(..)
         , dropdownPageRequestNeeded
+        , init
+        , subscriptions
+        , update
+        , view
         )
 
-import Data.Window.RecordDetail as RecordDetail exposing (RecordDetail)
-import Task exposing (Task)
-import Http
-import Html exposing (..)
-import Html.Attributes exposing (style, attribute, class, classList, href, id, placeholder, src)
-import Html.Events exposing (on, onClick)
-import Request.Window.Records as Records
-import Page.Errored as Errored exposing (PageLoadError, pageLoadError)
-import Data.Window.TableName as TableName exposing (TableName)
-import Data.Window.Record as Record exposing (Record, Rows)
-import Data.Window as Window exposing (Window)
-import Request.Window
-import Data.Window.Tab as Tab exposing (Tab, TabType(..))
-import Views.Window.Tab as Tab
-import Dict
-import Data.Window.Field as Field exposing (Field)
-import Data.Window.Value as Value exposing (Value)
-import Views.Window.Field as Field
-import Mouse exposing (Position)
+import Constant
+import Data.Query as Query
 import Data.Session as Session exposing (Session)
-import Util exposing ((=>))
-import Json.Decode as Decode
-import Window as BrowserWindow
-import Views.Page as Page
-import Page.Window as Window
-import Util exposing (px, viewIf)
-import Data.WindowArena exposing (ArenaArg, Section(..))
-import Route
+import Data.Window as Window exposing (Window)
+import Data.Window.Field as Field exposing (Field)
 import Data.Window.Lookup as Lookup exposing (Lookup)
-import Util exposing (onClickPreventDefault)
-import Views.Window.Presentation as Presentation exposing (Presentation(..))
-import Request.Window.Records
-import Views.Window.Toolbar as Toolbar
+import Data.Window.Record as Record exposing (Record, Rows)
+import Data.Window.RecordDetail as RecordDetail exposing (RecordDetail)
+import Data.Window.Tab as Tab exposing (Tab, TabType(..))
+import Data.Window.TableName as TableName exposing (TableName)
+import Data.Window.Value as Value exposing (Value)
+import Data.WindowArena as WindowArena exposing (ArenaArg, Section(..))
+import Dict
+import Html exposing (..)
+import Html.Attributes exposing (attribute, class, classList, href, id, placeholder, src, style)
+import Html.Events exposing (on, onClick)
+import Http
+import Json.Decode as Decode
+import Mouse exposing (Position)
+import Page.Errored as Errored exposing (PageLoadError, pageLoadError)
+import Page.Window as Window
+import Request.Window
+import Request.Window.Records as Records
 import Route
 import Settings exposing (Settings)
-import Data.WindowArena as WindowArena
-import Constant
+import Task exposing (Task)
+import Util exposing ((=>), onClickPreventDefault, px, viewIf)
+import Views.Page as Page
+import Views.Window.Field as Field
+import Views.Window.Presentation as Presentation exposing (Presentation(..))
+import Views.Window.Tab as Tab
+import Views.Window.Toolbar as Toolbar
+import Window as BrowserWindow
 
 
 {-| Example:
@@ -91,19 +87,19 @@ initialPosition isMaximized browserSize =
 
         -- 60% main tab, 40% detail tabs
     in
-        Position 0 allotedMainHeight
+    Position 0 allotedMainHeight
 
 
 getTotalRecords : Settings -> TableName -> Task PageLoadError Int
 getTotalRecords settings tableName =
-    Request.Window.Records.totalRecords settings Nothing tableName
+    Records.totalRecords settings Nothing tableName
         |> Http.toTask
         |> Task.mapError handleLoadError
 
 
 handleLoadError : Http.Error -> PageLoadError
 handleLoadError e =
-    pageLoadError Page.WindowArena ("WindowArena DetailedRecord is currently unavailable. Error: " ++ (toString e))
+    pageLoadError Page.WindowArena ("WindowArena DetailedRecord is currently unavailable. Error: " ++ toString e)
 
 
 init : Bool -> Settings -> TableName -> String -> ArenaArg -> Window -> Task PageLoadError Model
@@ -130,6 +126,26 @@ init isMaximized settings tableName selectedRow arenaArg window =
                 window.hasManyTabs
                 |> Task.sequence
 
+        sectionSort : Maybe (List Query.Order)
+        sectionSort =
+            arenaArg.sectionOrder
+
+        hasManySort =
+            case WindowArena.activeSection arenaArg of
+                Just HasMany ->
+                    sectionSort
+
+                _ ->
+                    Nothing
+
+        indirectSort =
+            case WindowArena.activeSection arenaArg of
+                Just Indirect ->
+                    sectionSort
+
+                _ ->
+                    Nothing
+
         initHasManyTabs =
             Task.map4
                 (\browserSize detailRows lookup recordCounts ->
@@ -143,21 +159,21 @@ init isMaximized settings tableName selectedRow arenaArg window =
                         tabSize =
                             ( allotedWidth, detailTabHeight )
                     in
-                        List.map2
-                            (\hasManyTab hasManyRecordCount ->
-                                let
-                                    rows =
-                                        RecordDetail.contentInTable detailRows.hasMany hasManyTab.tableName
-                                in
-                                    case rows of
-                                        Just rows ->
-                                            Tab.init Nothing tabSize Nothing hasManyTab InHasMany rows hasManyRecordCount
+                    List.map2
+                        (\hasManyTab hasManyRecordCount ->
+                            let
+                                rows =
+                                    RecordDetail.contentInTable detailRows.hasMany hasManyTab.tableName
+                            in
+                            case rows of
+                                Just rows ->
+                                    Tab.init Nothing tabSize Nothing sectionSort hasManyTab InHasMany rows hasManyRecordCount
 
-                                        Nothing ->
-                                            Debug.crash "Empty row"
-                            )
-                            window.hasManyTabs
-                            recordCounts
+                                Nothing ->
+                                    Debug.crash "Empty row"
+                        )
+                        window.hasManyTabs
+                        recordCounts
                 )
                 browserSize
                 fetchSelected
@@ -185,50 +201,49 @@ init isMaximized settings tableName selectedRow arenaArg window =
                         tabSize =
                             ( allotedWidth, detailTabHeight )
                     in
-                        List.map2
-                            (\( linker, indirectTab ) indirectRecordCount ->
-                                let
-                                    rows =
-                                        RecordDetail.contentInIndirectTable detailRows.indirect linker indirectTab.tableName
-                                in
-                                    case rows of
-                                        Just rows ->
-                                            ( linker, Tab.init Nothing tabSize Nothing indirectTab InIndirect rows indirectRecordCount )
+                    List.map2
+                        (\( linker, indirectTab ) indirectRecordCount ->
+                            let
+                                rows =
+                                    RecordDetail.contentInIndirectTable detailRows.indirect linker indirectTab.tableName
+                            in
+                            case rows of
+                                Just rows ->
+                                    ( linker, Tab.init Nothing tabSize Nothing sectionSort indirectTab InIndirect rows indirectRecordCount )
 
-                                        Nothing ->
-                                            Debug.crash "Empty row"
-                            )
-                            window.indirectTabs
-                            recordCounts
+                                Nothing ->
+                                    Debug.crash "Empty row"
+                        )
+                        window.indirectTabs
+                        recordCounts
                 )
                 browserSize
                 fetchSelected
                 loadWindowLookups
                 indirectTableRecordCounts
     in
-        (Task.map5
-            (\detail hasManyTabs indirectTabs browserSize lookup ->
-                { selectedRow = detail
-                , window = window
-                , hasManyTabs = hasManyTabs
-                , indirectTabs = indirectTabs
-                , position = initialPosition isMaximized browserSize
-                , drag = Nothing
-                , browserSize = browserSize
-                , arenaArg = arenaArg
-                , lookup = lookup
-                , values = createFields window.mainTab detail
-                , dropdownPageRequestInFlight = False
-                , settings = settings
-                , isMaximized = isMaximized
-                }
-            )
-            fetchSelected
-            initHasManyTabs
-            initIndirectTabs
-            browserSize
-            loadWindowLookups
+    Task.map5
+        (\detail hasManyTabs indirectTabs browserSize lookup ->
+            { selectedRow = detail
+            , window = window
+            , hasManyTabs = hasManyTabs
+            , indirectTabs = indirectTabs
+            , position = initialPosition isMaximized browserSize
+            , drag = Nothing
+            , browserSize = browserSize
+            , arenaArg = arenaArg
+            , lookup = lookup
+            , values = createFields window.mainTab detail
+            , dropdownPageRequestInFlight = False
+            , settings = settings
+            , isMaximized = isMaximized
+            }
         )
+        fetchSelected
+        initHasManyTabs
+        initIndirectTabs
+        browserSize
+        loadWindowLookups
 
 
 dropdownPageRequestNeeded : Lookup -> Model -> Maybe TableName
@@ -263,10 +278,10 @@ dropdownPageRequestNeeded lookup model =
                 ++ indirectTabFields
                 |> List.head
     in
-        if not model.dropdownPageRequestInFlight then
-            sourceTable
-        else
-            Nothing
+    if not model.dropdownPageRequestInFlight then
+        sourceTable
+    else
+        Nothing
 
 
 createFields : Tab -> RecordDetail -> List Field.Model
@@ -302,7 +317,7 @@ allotedSize isMaximized browserSize =
             else
                 marginBottom + 80
     in
-        ( width - totalWidthDeductions, height - totalHeightDeductions )
+    ( width - totalWidthDeductions, height - totalHeightDeductions )
 
 
 {-| Split tab heights (MainRecordHeight, DetailRecordHeight)
@@ -358,7 +373,7 @@ splitTabHeights window position isMaximized browserSize =
         clampMainRecordHeight =
             clamp 0 allotedHeight mainRecordHeight
     in
-        ( clampMainRecordHeight, clampDetailRecordHeight )
+    ( clampMainRecordHeight, clampDetailRecordHeight )
 
 
 view : Model -> Html Msg
@@ -392,45 +407,46 @@ view model =
             { selected = 0
             , modified = 0
             , showIconText = allotedWidth > Constant.showIconTextMinWidth
+            , multiColumnSort = False
             }
     in
-        div []
+    div []
+        [ div
+            [ class "toolbar-area"
+            ]
             [ div
-                [ class "toolbar-area"
+                [ class "detail-record-window-cmd-buttons"
                 ]
                 [ div
-                    [ class "detail-record-window-cmd-buttons"
+                    [ class "window-cmd-close"
+                    , onClick ClickedCloseButton
                     ]
-                    [ div
-                        [ class "window-cmd-close"
-                        , onClick ClickedCloseButton
-                        ]
-                        [ i [ class "fa fa-times-circle-o fa-2x" ] [] ]
-                    ]
-                , Toolbar.viewForDetailRecord toolbarModel
-                    |> Html.map ToolbarMsg
+                    [ i [ class "fa fa-times-circle-o fa-2x" ] [] ]
                 ]
-            , div
-                [ class "main-tab-selected"
-                , style [ ( "height", px (mainRecordHeight) ) ]
-                ]
-                [ cardViewRecord model (Just mainSelectedRecord) mainTab
-                , viewOneOneTabs model
-                ]
-            , viewIf (Window.hasDetails model.window)
-                (div
-                    [ class "detail-tabs-with-separator"
-                    ]
-                    [ div [ onMouseDown, class "detail-separator" ]
-                        [ i
-                            [ class "icon icon-dot-3"
-                            ]
-                            []
-                        ]
-                    , viewDetailTabs model
-                    ]
-                )
+            , Toolbar.viewForDetailRecord toolbarModel
+                |> Html.map ToolbarMsg
             ]
+        , div
+            [ class "main-tab-selected"
+            , style [ ( "height", px mainRecordHeight ) ]
+            ]
+            [ cardViewRecord model (Just mainSelectedRecord) mainTab
+            , viewOneOneTabs model
+            ]
+        , viewIf (Window.hasDetails model.window)
+            (div
+                [ class "detail-tabs-with-separator"
+                ]
+                [ div [ onMouseDown, class "detail-separator" ]
+                    [ i
+                        [ class "icon icon-dot-3"
+                        ]
+                        []
+                    ]
+                , viewDetailTabs model
+                ]
+            )
+        ]
 
 
 viewOneOneTabs : Model -> Html Msg
@@ -442,8 +458,8 @@ viewOneOneTabs model =
         selectedRow =
             model.selectedRow
     in
-        div []
-            (List.map (oneOneCardView model selectedRow) window.oneOneTabs)
+    div []
+        (List.map (oneOneCardView model selectedRow) window.oneOneTabs)
 
 
 oneOneCardView : Model -> RecordDetail -> Tab -> Html Msg
@@ -458,13 +474,13 @@ oneOneCardView model detail tab =
         cardWidth =
             allotedWidth
     in
-        div
-            [ class "one-one-tab"
-            , style [ ( "width", px cardWidth ) ]
-            ]
-            [ div [ class "one-one-tab-separator" ] [ text tab.name ]
-            , cardViewRecord model record tab
-            ]
+    div
+        [ class "one-one-tab"
+        , style [ ( "width", px cardWidth ) ]
+        ]
+        [ div [ class "one-one-tab-separator" ] [ text tab.name ]
+        , cardViewRecord model record tab
+        ]
 
 
 cardViewRecord : Model -> Maybe Record -> Tab -> Html Msg
@@ -500,18 +516,18 @@ cardViewRecord model record tab =
         cardWidth =
             allotedWidth
     in
-        div []
-            [ div
-                [ class "card-view"
-                , style [ ( "width", px cardWidth ) ]
-                ]
-                (List.map
-                    (\value ->
-                        viewFieldInCard fieldLabelWidth lookup value
-                    )
-                    model.values
-                )
+    div []
+        [ div
+            [ class "card-view"
+            , style [ ( "width", px cardWidth ) ]
             ]
+            (List.map
+                (\value ->
+                    viewFieldInCard fieldLabelWidth lookup value
+                )
+                model.values
+            )
+        ]
 
 
 viewFieldInCard : Int -> Lookup -> Field.Model -> Html Msg
@@ -520,19 +536,19 @@ viewFieldInCard labelWidth lookup value =
         field =
             value.field
     in
-        div [ class "card-field" ]
-            [ div
-                [ class "card-field-name"
-                , style [ ( "width", px labelWidth ) ]
-                ]
-                [ label [ class "card-field-label" ]
-                    [ text (field.name ++ ": ") ]
-                ]
-            , div [ class "card-field-value" ]
-                [ Field.view lookup value
-                    |> Html.map (FieldMsg value)
-                ]
+    div [ class "card-field" ]
+        [ div
+            [ class "card-field-name"
+            , style [ ( "width", px labelWidth ) ]
             ]
+            [ label [ class "card-field-label" ]
+                [ text (field.name ++ ": ") ]
+            ]
+        , div [ class "card-field-value" ]
+            [ Field.view lookup value
+                |> Html.map (FieldMsg value)
+            ]
+        ]
 
 
 viewDetailTabs : Model -> Html Msg
@@ -585,7 +601,7 @@ viewDetailTabs model =
                             )
 
         detailTabViews =
-            (List.map
+            List.map
                 (\hasMany ->
                     let
                         isActive =
@@ -599,81 +615,79 @@ viewDetailTabs model =
                                 Nothing ->
                                     False
                     in
-                        listView isActive model.lookup HasMany hasMany
+                    listView isActive model.lookup HasMany hasMany
                 )
                 hasManyTabs
-            )
-                ++ (List.map
-                        (\( linker, indirectTab ) ->
-                            let
-                                isActive =
-                                    case activeTab of
-                                        Just ( activeSection, activeTable, activeLinker ) ->
-                                            activeSection
-                                                == Indirect
-                                                && activeTable
-                                                == indirectTab.tab.tableName
-                                                && Just linker
-                                                == activeLinker
+                ++ List.map
+                    (\( linker, indirectTab ) ->
+                        let
+                            isActive =
+                                case activeTab of
+                                    Just ( activeSection, activeTable, activeLinker ) ->
+                                        activeSection
+                                            == Indirect
+                                            && activeTable
+                                            == indirectTab.tab.tableName
+                                            && Just linker
+                                            == activeLinker
 
-                                        Nothing ->
-                                            False
-                            in
-                                listView isActive model.lookup Indirect indirectTab
-                        )
-                        indirectTabs
-                   )
-    in
-        if (List.length detailTabs) > 0 then
-            div []
-                [ div [ class "detail-tab-names" ]
-                    (List.map
-                        (\( section, tabModel, linker ) ->
-                            let
-                                tab : Tab
-                                tab =
-                                    tabModel.tab
-
-                                isActiveTab =
-                                    case activeTab of
-                                        Just ( activeSection, activeTable, activeLinker ) ->
-                                            section
-                                                == activeSection
-                                                && activeTable
-                                                == tab.tableName
-                                                && linker
-                                                == activeLinker
-
-                                        Nothing ->
-                                            False
-
-                                arenaArg =
-                                    model.arenaArg
-
-                                -- Clicking will open the tab,
-                                -- opening the tab in a new tab will open it in it's own window
-                                tabLinkArenaArg =
-                                    WindowArena.initArg tab.tableName
-                            in
-                                a
-                                    [ class "detail-tab-name"
-                                    , classList
-                                        [ ( "has-many-tab", section == HasMany )
-                                        , ( "indirect-tab", section == Indirect )
-                                        , ( "active-detail-tab", isActiveTab )
-                                        ]
-                                    , Route.href (Route.WindowArena (Just tabLinkArenaArg))
-                                    , onClickPreventDefault (ChangeActiveTab section tab.tableName linker)
-                                    ]
-                                    [ text tab.name ]
-                        )
-                        detailTabs
+                                    Nothing ->
+                                        False
+                        in
+                        listView isActive model.lookup Indirect indirectTab
                     )
-                , div [ class "detail-tabs" ]
-                    detailTabViews
-                ]
-        else
-            text "No detail tabs"
+                    indirectTabs
+    in
+    if List.length detailTabs > 0 then
+        div []
+            [ div [ class "detail-tab-names" ]
+                (List.map
+                    (\( section, tabModel, linker ) ->
+                        let
+                            tab : Tab
+                            tab =
+                                tabModel.tab
+
+                            isActiveTab =
+                                case activeTab of
+                                    Just ( activeSection, activeTable, activeLinker ) ->
+                                        section
+                                            == activeSection
+                                            && activeTable
+                                            == tab.tableName
+                                            && linker
+                                            == activeLinker
+
+                                    Nothing ->
+                                        False
+
+                            arenaArg =
+                                model.arenaArg
+
+                            -- Clicking will open the tab,
+                            -- opening the tab in a new tab will open it in it's own window
+                            tabLinkArenaArg =
+                                WindowArena.initArg tab.tableName
+                        in
+                        a
+                            [ class "detail-tab-name"
+                            , classList
+                                [ ( "has-many-tab", section == HasMany )
+                                , ( "indirect-tab", section == Indirect )
+                                , ( "active-detail-tab", isActiveTab )
+                                ]
+                            , Route.href (Route.WindowArena (Just tabLinkArenaArg))
+                            , onClickPreventDefault (ChangeActiveTab section tab.tableName linker)
+                            ]
+                            [ text tab.name ]
+                    )
+                    detailTabs
+                )
+            , div [ class "detail-tabs" ]
+                detailTabViews
+            ]
+    else
+        text "No detail tabs"
 
 
 listView : Bool -> Lookup -> Section -> Tab.Model -> Html Msg
@@ -691,11 +705,11 @@ listView isTabActive lookup section tab =
             Tab.listView lookup tab
                 |> Html.map (\tabMsg -> TabMsg ( section, tab, tabMsg ))
     in
-        div
-            [ class "detail-tab"
-            , styleDisplay
-            ]
-            [ detailRecordView ]
+    div
+        [ class "detail-tab"
+        , styleDisplay
+        ]
+        [ detailRecordView ]
 
 
 getPosition : Model -> Position
@@ -704,14 +718,14 @@ getPosition model =
         position =
             model.position
     in
-        case model.drag of
-            Nothing ->
-                position
+    case model.drag of
+        Nothing ->
+            position
 
-            Just { start, current } ->
-                Position
-                    (position.x + current.x - start.x)
-                    (position.y + current.y - start.y)
+        Just { start, current } ->
+            Position
+                (position.x + current.x - start.x)
+                (position.y + current.y - start.y)
 
 
 onMouseDown : Attribute Msg
@@ -757,7 +771,7 @@ updateDrag session drag model =
                 newModel =
                     { model | drag = Just (DragPosition xy xy) }
             in
-                updateSizes session newModel
+            updateSizes session newModel
 
         At xy ->
             let
@@ -766,7 +780,7 @@ updateDrag session drag model =
                         | drag = Maybe.map (\{ start } -> DragPosition start xy) model.drag
                     }
             in
-                updateSizes session newModel
+            updateSizes session newModel
 
         End _ ->
             let
@@ -776,7 +790,7 @@ updateDrag session drag model =
                         , drag = Nothing
                     }
             in
-                updateSizes session newModel
+            updateSizes session newModel
 
 
 update : Session -> Msg -> Model -> ( Model, Cmd Msg )
@@ -788,166 +802,165 @@ update session msg model =
         drag =
             model.drag
     in
-        case msg of
-            Drag drag ->
-                updateDrag session drag model
+    case msg of
+        Drag drag ->
+            updateDrag session drag model
 
-            WindowResized browserSize ->
-                let
-                    newModel =
-                        { model | browserSize = browserSize }
+        WindowResized browserSize ->
+            let
+                newModel =
+                    { model | browserSize = browserSize }
 
-                    ( updatedModel, cmd ) =
-                        updateSizes session newModel
-                in
-                    updatedModel => cmd
+                ( updatedModel, cmd ) =
+                    updateSizes session newModel
+            in
+            updatedModel => cmd
 
-            TabMsgAll tabMsg ->
-                let
-                    ( updatedHasManyTabs, hasManySubCmds ) =
-                        List.map (Tab.update tabMsg) model.hasManyTabs
-                            |> List.unzip
+        TabMsgAll tabMsg ->
+            let
+                ( updatedHasManyTabs, hasManySubCmds ) =
+                    List.map (Tab.update tabMsg) model.hasManyTabs
+                        |> List.unzip
 
-                    ( updatedIndirectTabs, indirectSubCmds ) =
-                        List.map
-                            (\( linker, tab ) ->
-                                let
-                                    ( updatedTab, cmd ) =
-                                        Tab.update tabMsg tab
-                                in
-                                    ( ( linker, updatedTab ), cmd )
-                            )
-                            model.indirectTabs
-                            |> List.unzip
-                in
-                    { model
-                        | hasManyTabs = updatedHasManyTabs
-                        , indirectTabs = updatedIndirectTabs
-                    }
-                        => Cmd.batch (List.map (Cmd.map TabMsgAll) (hasManySubCmds ++ indirectSubCmds))
+                ( updatedIndirectTabs, indirectSubCmds ) =
+                    List.map
+                        (\( linker, tab ) ->
+                            let
+                                ( updatedTab, cmd ) =
+                                    Tab.update tabMsg tab
+                            in
+                            ( ( linker, updatedTab ), cmd )
+                        )
+                        model.indirectTabs
+                        |> List.unzip
+            in
+            { model
+                | hasManyTabs = updatedHasManyTabs
+                , indirectTabs = updatedIndirectTabs
+            }
+                => Cmd.batch (List.map (Cmd.map TabMsgAll) (hasManySubCmds ++ indirectSubCmds))
 
-            TabMsg ( section, tabModel, tabMsg ) ->
-                let
-                    ( newTabModel, subCmd ) =
-                        Tab.update tabMsg tabModel
+        TabMsg ( section, tabModel, tabMsg ) ->
+            let
+                ( newTabModel, subCmd ) =
+                    Tab.update tabMsg tabModel
 
-                    ( updatedTabModel, tabCmd ) =
-                        case Tab.pageRequestNeeded newTabModel of
-                            True ->
-                                { newTabModel | pageRequestInFlight = True }
-                                    => requestNextPage section newTabModel model
+                ( updatedTabModel, tabCmd ) =
+                    case Tab.pageRequestNeeded newTabModel of
+                        True ->
+                            { newTabModel | pageRequestInFlight = True }
+                                => requestNextPage section newTabModel model
 
-                            False ->
-                                newTabModel => Cmd.none
+                        False ->
+                            newTabModel => Cmd.none
 
-                    ( updatedHasManyTabs, hasManyCmds ) =
-                        updateTabModels tabMsg model.hasManyTabs updatedTabModel
-                            |> List.unzip
+                ( updatedHasManyTabs, hasManyCmds ) =
+                    updateTabModels tabMsg model.hasManyTabs updatedTabModel
+                        |> List.unzip
 
-                    ( updatedIndirectTabs, indirectCmds ) =
-                        updateIndirectTabModels tabMsg model.indirectTabs updatedTabModel
-                            |> List.unzip
-                in
-                    { model
-                        | hasManyTabs = updatedHasManyTabs
-                        , indirectTabs = updatedIndirectTabs
-                    }
-                        => Cmd.batch
-                            ([ tabCmd
-                             , Cmd.map (\tabMsg -> TabMsg ( section, updatedTabModel, tabMsg )) subCmd
-                             ]
-                                ++ (List.map2
-                                        (\hasManyModel hasManyCmd ->
-                                            Cmd.map
-                                                (\tabMsg ->
-                                                    TabMsg ( HasMany, hasManyModel, tabMsg )
-                                                )
-                                                hasManyCmd
+                ( updatedIndirectTabs, indirectCmds ) =
+                    updateIndirectTabModels tabMsg model.indirectTabs updatedTabModel
+                        |> List.unzip
+            in
+            { model
+                | hasManyTabs = updatedHasManyTabs
+                , indirectTabs = updatedIndirectTabs
+            }
+                => Cmd.batch
+                    ([ tabCmd
+                     , Cmd.map (\tabMsg -> TabMsg ( section, updatedTabModel, tabMsg )) subCmd
+                     ]
+                        ++ (List.map2
+                                (\hasManyModel hasManyCmd ->
+                                    Cmd.map
+                                        (\tabMsg ->
+                                            TabMsg ( HasMany, hasManyModel, tabMsg )
                                         )
-                                        updatedHasManyTabs
-                                        hasManyCmds
-                                        ++ (List.map2
-                                                (\( linker, indirectModel ) hasManyCmd ->
-                                                    Cmd.map
-                                                        (\tabMsg ->
-                                                            TabMsg ( Indirect, indirectModel, tabMsg )
-                                                        )
-                                                        hasManyCmd
-                                                )
-                                                updatedIndirectTabs
-                                                indirectCmds
-                                           )
-                                   )
-                            )
+                                        hasManyCmd
+                                )
+                                updatedHasManyTabs
+                                hasManyCmds
+                                ++ List.map2
+                                    (\( linker, indirectModel ) hasManyCmd ->
+                                        Cmd.map
+                                            (\tabMsg ->
+                                                TabMsg ( Indirect, indirectModel, tabMsg )
+                                            )
+                                            hasManyCmd
+                                    )
+                                    updatedIndirectTabs
+                                    indirectCmds
+                           )
+                    )
 
-            FieldMsg argField valueMsg ->
-                let
-                    valueUpdate : List ( Field.Model, Cmd Msg )
-                    valueUpdate =
-                        List.map
-                            (\value ->
-                                if argField == value then
-                                    let
-                                        ( newField, cmd ) =
-                                            Field.update valueMsg value
-                                    in
-                                        ( newField, Cmd.map (FieldMsg newField) cmd )
-                                else
-                                    value => Cmd.none
-                            )
-                            model.values
+        FieldMsg argField valueMsg ->
+            let
+                valueUpdate : List ( Field.Model, Cmd Msg )
+                valueUpdate =
+                    List.map
+                        (\value ->
+                            if argField == value then
+                                let
+                                    ( newField, cmd ) =
+                                        Field.update valueMsg value
+                                in
+                                ( newField, Cmd.map (FieldMsg newField) cmd )
+                            else
+                                value => Cmd.none
+                        )
+                        model.values
 
-                    ( updatedFields, subCmd ) =
-                        List.unzip valueUpdate
-                in
-                    { model | values = updatedFields }
-                        => Cmd.batch subCmd
+                ( updatedFields, subCmd ) =
+                    List.unzip valueUpdate
+            in
+            { model | values = updatedFields }
+                => Cmd.batch subCmd
 
-            LookupNextPageReceived ( sourceTable, recordList ) ->
-                let
-                    updatedLookup =
-                        Lookup.addPage sourceTable recordList model.lookup
-                in
-                    { model
-                        | lookup = updatedLookup
-                        , dropdownPageRequestInFlight = False
+        LookupNextPageReceived ( sourceTable, recordList ) ->
+            let
+                updatedLookup =
+                    Lookup.addPage sourceTable recordList model.lookup
+            in
+            { model
+                | lookup = updatedLookup
+                , dropdownPageRequestInFlight = False
+            }
+                => Cmd.none
+
+        LookupNextPageErrored e ->
+            Debug.crash "Error loading next page lookup" e
+
+        ChangeActiveTab section tableName linker ->
+            let
+                arenaArg =
+                    model.arenaArg
+
+                newArenaArg =
+                    { arenaArg
+                        | sectionTable = Just ( section, tableName )
+                        , sectionViaLinker = linker
                     }
-                        => Cmd.none
+            in
+            { model | arenaArg = newArenaArg }
+                => Route.modifyUrl (Route.WindowArena (Just newArenaArg))
 
-            LookupNextPageErrored e ->
-                Debug.crash "Error loading next page lookup" e
+        -- handle this in WindowArena
+        ToolbarMsg toolbarMsg ->
+            model => Cmd.none
 
-            ChangeActiveTab section tableName linker ->
-                let
-                    arenaArg =
-                        model.arenaArg
+        Maximize v ->
+            let
+                newModel =
+                    { model | isMaximized = v }
 
-                    newArenaArg =
-                        { arenaArg
-                            | sectionTable = Just ( section, tableName )
-                            , sectionViaLinker = linker
-                        }
-                in
-                    { model | arenaArg = newArenaArg }
-                        => Route.modifyUrl (Route.WindowArena (Just newArenaArg))
+                ( updatedModel, cmd ) =
+                    updateSizes session newModel
+            in
+            updatedModel => cmd
 
-            -- handle this in WindowArena
-            ToolbarMsg toolbarMsg ->
-                model => Cmd.none
-
-            Maximize v ->
-                let
-                    newModel =
-                        { model | isMaximized = v }
-
-                    ( updatedModel, cmd ) =
-                        updateSizes session newModel
-                in
-                    updatedModel => cmd
-
-            -- handled in WindowArena
-            ClickedCloseButton ->
-                model => Cmd.none
+        -- handled in WindowArena
+        ClickedCloseButton ->
+            model => Cmd.none
 
 
 requestNextPage : Section -> Tab.Model -> Model -> Cmd Msg
@@ -973,17 +986,17 @@ requestNextPage section tab model =
                 Indirect ->
                     Records.fetchIndirectRecords model.settings mainTable recordId sectionTable (tabPage + 1)
     in
-        httpRequest
-            |> Http.toTask
-            |> Task.attempt
-                (\result ->
-                    case result of
-                        Ok rows ->
-                            TabMsg ( section, tab, (Tab.NextPageReceived rows) )
+    httpRequest
+        |> Http.toTask
+        |> Task.attempt
+            (\result ->
+                case result of
+                    Ok rows ->
+                        TabMsg ( section, tab, Tab.NextPageReceived rows )
 
-                        Err e ->
-                            TabMsg ( section, tab, (Tab.NextPageError (toString e)) )
-                )
+                    Err e ->
+                        TabMsg ( section, tab, Tab.NextPageError (toString e) )
+            )
 
 
 updateSizes : Session -> Model -> ( Model, Cmd Msg )
@@ -1010,7 +1023,7 @@ updateSizes session model =
         tabSize =
             ( allotedWidth, detailTabHeight )
     in
-        update session (TabMsgAll (Tab.SetSize tabSize)) model
+    update session (TabMsgAll (Tab.SetSize tabSize)) model
 
 
 updateTabModels : Tab.Msg -> List Tab.Model -> Tab.Model -> List ( Tab.Model, Cmd Tab.Msg )
@@ -1034,7 +1047,7 @@ updateIndirectTabModels tabMsg modelList tabModel =
                     ( updatedTab, cmd ) =
                         Tab.update tabMsg model
                 in
-                    ( ( linker, updatedTab ), cmd )
+                ( ( linker, updatedTab ), cmd )
             else
                 ( ( linker, model ), Cmd.none )
         )

@@ -1,36 +1,37 @@
 module Views.Window.Tab
     exposing
-        ( listView
-        , Model
-        , init
-        , update
+        ( Model
         , Msg(..)
-        , subscriptions
-        , pageRequestNeeded
         , dropdownPageRequestNeeded
+        , init
+        , listView
+        , pageRequestNeeded
         , selectedRowCount
         , selectedRows
+        , subscriptions
+        , update
         )
 
-import Html exposing (..)
-import Html.Attributes exposing (checked, attribute, class, classList, href, id, placeholder, src, property, type_, style)
-import Html.Events exposing (onCheck)
+import Constant
+import Data.Query as Query exposing (OrderDirection(..))
+import Data.Window.Field as Field exposing (Field)
+import Data.Window.Filter as Filter exposing (Condition)
+import Data.Window.Lookup as Lookup exposing (Lookup)
+import Data.Window.Record as Record exposing (Record, RecordId, Rows)
 import Data.Window.Tab as Tab exposing (Tab, TabType)
 import Data.Window.TableName as TableName exposing (TableName)
-import Data.Window.Record as Record exposing (Rows, Record, RecordId)
-import Data.Window.Field as Field exposing (Field)
-import Views.Window.Row as Row
-import Task exposing (Task)
-import Page.Errored as Errored exposing (PageLoadError, pageLoadError)
+import Dict exposing (Dict)
+import Html exposing (..)
+import Html.Attributes exposing (attribute, checked, class, classList, href, id, placeholder, property, src, style, type_)
+import Html.Events exposing (onCheck)
 import Json.Decode as Decode exposing (Decoder)
 import Json.Encode as Encode
-import Util exposing ((=>), px, onScroll, Scroll)
-import Data.Window.Lookup as Lookup exposing (Lookup)
-import Views.Window.Toolbar as Toolbar
+import Page.Errored as Errored exposing (PageLoadError, pageLoadError)
+import Task exposing (Task)
+import Util exposing ((=>), Scroll, onScroll, px, viewIf)
+import Views.Window.Row as Row
 import Views.Window.Searchbox as Searchbox
-import Dict exposing (Dict)
-import Data.Window.Filter as Filter exposing (Condition)
-import Constant
+import Views.Window.Toolbar as Toolbar
 
 
 type alias Model =
@@ -44,12 +45,13 @@ type alias Model =
     , reachedLastPage : Bool
     , totalRecords : Int
     , searchFilter : Condition
+    , sort : Maybe (List Query.Order)
     , selectedRecordId : Maybe RecordId
     }
 
 
-init : Maybe RecordId -> ( Float, Float ) -> Maybe Condition -> Tab -> TabType -> Rows -> Int -> Model
-init selectedRecordId size condition tab tabType rows totalRecords =
+init : Maybe RecordId -> ( Float, Float ) -> Maybe Condition -> Maybe (List Query.Order) -> Tab -> TabType -> Rows -> Int -> Model
+init selectedRecordId size condition sort tab tabType rows totalRecords =
     { tab = tab
     , tabType = tabType
     , scroll = Scroll 0 0
@@ -66,8 +68,24 @@ init selectedRecordId size condition tab tabType rows totalRecords =
 
             Nothing ->
                 Dict.empty
+    , sort = sort
     , selectedRecordId = selectedRecordId
     }
+
+
+multiColumnSort : Model -> Bool
+multiColumnSort model =
+    isMultiSort model.sort
+
+
+isMultiSort : Maybe (List Query.Order) -> Bool
+isMultiSort sort =
+    case sort of
+        Just sort ->
+            List.length sort > 1
+
+        Nothing ->
+            False
 
 
 createRowsModel : Maybe RecordId -> Tab -> Rows -> List Row.Model
@@ -76,23 +94,23 @@ createRowsModel selectedRecordId tab rows =
         recordList =
             Record.rowsToRecordList rows
     in
-        List.map
-            (\record ->
-                let
-                    recordId =
-                        Tab.recordId record tab
+    List.map
+        (\record ->
+            let
+                recordId =
+                    Tab.recordId record tab
 
-                    isFocused =
-                        case selectedRecordId of
-                            Just focusRecordId ->
-                                recordId == focusRecordId
+                isFocused =
+                    case selectedRecordId of
+                        Just focusRecordId ->
+                            recordId == focusRecordId
 
-                            Nothing ->
-                                False
-                in
-                    Row.init isFocused recordId record tab
-            )
-            recordList
+                        Nothing ->
+                            False
+            in
+            Row.init isFocused recordId record tab
+        )
+        recordList
 
 
 numberOfRecords : Model -> Int
@@ -118,7 +136,7 @@ estimatedListHeight model =
         rowLength =
             numberOfRecords model
     in
-        rowHeight * (toFloat rowLength)
+    rowHeight * toFloat rowLength
 
 
 {-| The list is scrolled to Bottom, this is an estimated calculation
@@ -140,8 +158,8 @@ isScrolledBottom model =
         ( width, height ) =
             model.size
     in
-        --Debug.log ("scrollTop("++toString scrollTop++") + model.height("++toString model.height ++") > contentHeight("++toString contentHeight++") - bottomAllowance("++toString bottomAllowance++")")
-        (scrollTop + height > contentHeight - bottomAllowance)
+    --Debug.log ("scrollTop("++toString scrollTop++") + model.height("++toString model.height ++") > contentHeight("++toString contentHeight++") - bottomAllowance("++toString bottomAllowance++")")
+    scrollTop + height > contentHeight - bottomAllowance
 
 
 pageRequestNeeded : Model -> Bool
@@ -155,13 +173,13 @@ pageRequestNeeded model =
                 ("in pageRequestNeeded --> isScrolledBottom: "
                     ++ toString (isScrolledBottom model)
                     ++ " pageReqeustInFlight: "
-                    ++ (toString model.pageRequestInFlight)
+                    ++ toString model.pageRequestInFlight
                     ++ " reachedLastPage: "
-                    ++ (toString model.reachedLastPage)
+                    ++ toString model.reachedLastPage
                 )
                 needed
     in
-        needed
+    needed
 
 
 dropdownPageRequestNeeded : Lookup -> Model -> Maybe TableName
@@ -201,6 +219,7 @@ listView lookup model =
             { selected = selectedRowCount model
             , modified = countAllModifiedRows model
             , showIconText = width > Constant.showIconTextMinWidth
+            , multiColumnSort = multiColumnSort model
             }
 
         viewToolbar =
@@ -217,33 +236,33 @@ listView lookup model =
                     Toolbar.viewForIndirect toolbarModel
                         |> Html.map ToolbarMsg
     in
-        div []
-            [ div
-                [ class "toolbar-area"
-                ]
-                [ viewToolbar ]
-            , div
-                [ class "tab-list-view"
-                ]
-                [ div [ class "frozen-head-columns" ]
-                    [ viewFrozenHead model
-                    , viewColumns model fields
-                    ]
-                , div [ class "page-shadow-and-list-rows" ]
-                    [ viewPageShadow model
-                    , div
-                        [ class "list-view-rows"
-                        , onScroll ListRowScrolled
-                        , style
-                            [ ( "height", px height )
-                            , ( "width", px adjustedWidth )
-                            ]
-                        ]
-                        [ listViewRows lookup model ]
-                    ]
-                ]
-            , viewLoadingIndicator model
+    div []
+        [ div
+            [ class "toolbar-area"
             ]
+            [ viewToolbar ]
+        , div
+            [ class "tab-list-view"
+            ]
+            [ div [ class "frozen-head-columns" ]
+                [ viewFrozenHead model
+                , viewColumns model fields
+                ]
+            , div [ class "page-shadow-and-list-rows" ]
+                [ viewPageShadow model
+                , div
+                    [ class "list-view-rows"
+                    , onScroll ListRowScrolled
+                    , style
+                        [ ( "height", px height )
+                        , ( "width", px adjustedWidth )
+                        ]
+                    ]
+                    [ listViewRows lookup model ]
+                ]
+            ]
+        , viewLoadingIndicator model
+        ]
 
 
 viewLoadingIndicator : Model -> Html Msg
@@ -265,7 +284,7 @@ viewPageShadow model =
             model.scroll.top
 
         topPx =
-            px (-scrollTop)
+            px -scrollTop
 
         tab =
             model.tab
@@ -273,22 +292,22 @@ viewPageShadow model =
         ( width, height ) =
             model.size
     in
-        div
-            [ class "page-shadow"
-            , style [ ( "height", px height ) ]
+    div
+        [ class "page-shadow"
+        , style [ ( "height", px height ) ]
+        ]
+        [ div
+            [ class "page-shadow-content"
+            , style [ ( "top", topPx ) ]
             ]
-            [ div
-                [ class "page-shadow-content"
-                , style [ ( "top", topPx ) ]
-                ]
-                (List.map
-                    (\page ->
-                        div [ class "shadow-page" ]
-                            [ viewRowShadow page model.tab ]
-                    )
-                    model.pageRows
+            (List.map
+                (\page ->
+                    div [ class "shadow-page" ]
+                        [ viewRowShadow page model.tab ]
                 )
-            ]
+                model.pageRows
+            )
+        ]
 
 
 allRows : Model -> List Row.Model
@@ -312,7 +331,7 @@ countAllModifiedRows : Model -> Int
 countAllModifiedRows model =
     List.foldl
         (\page sum ->
-            sum + (countRowModifiedInPage page)
+            sum + countRowModifiedInPage page
         )
         0
         model.pageRows
@@ -348,27 +367,27 @@ viewFrozenHead model =
         itemsIndicator =
             toString loadedItems ++ "/" ++ toString totalItems
     in
-        div
-            [ class "frozen-head"
-            ]
-            [ div [ class "frozen-head-indicator" ]
-                [ div [] [ text itemsIndicator ]
-                , div [ class "sort-order-reset" ]
-                    [ i [ class "fa fa-circle-thin" ] []
-                    ]
-                ]
-            , div
-                [ class "frozen-head-controls" ]
-                [ input
-                    [ type_ "checkbox"
-                    , onCheck ToggleSelectAllRows
-                    , checked False
-                    ]
-                    []
-                , div [ class "filter-btn" ]
-                    [ i [ class "fa fa-filter" ] [] ]
+    div
+        [ class "frozen-head"
+        ]
+        [ div [ class "frozen-head-indicator" ]
+            [ div [] [ text itemsIndicator ]
+            , div [ class "sort-order-reset" ]
+                [ i [ class "fa fa-circle-thin" ] []
                 ]
             ]
+        , div
+            [ class "frozen-head-controls" ]
+            [ input
+                [ type_ "checkbox"
+                , onCheck ToggleSelectAllRows
+                , checked False
+                ]
+                []
+            , div [ class "filter-btn" ]
+                [ i [ class "fa fa-filter" ] [] ]
+            ]
+        ]
 
 
 adjustWidth : Float -> Model -> Float
@@ -380,7 +399,7 @@ adjustWidth width model =
         totalDeductions =
             rowShadowWidth
     in
-        width - totalDeductions
+    width - totalDeductions
 
 
 viewColumns : Model -> List Field -> Html Msg
@@ -390,7 +409,7 @@ viewColumns model fields =
             model.scroll.left
 
         leftPx =
-            px (-scrollLeft)
+            px -scrollLeft
 
         ( width, height ) =
             model.size
@@ -398,16 +417,16 @@ viewColumns model fields =
         adjustedWidth =
             adjustWidth width model
     in
-        div
-            [ class "tab-columns"
-            , style [ ( "width", px adjustedWidth ) ]
+    div
+        [ class "tab-columns"
+        , style [ ( "width", px adjustedWidth ) ]
+        ]
+        [ div
+            [ class "tab-columns-content"
+            , style [ ( "left", leftPx ) ]
             ]
-            [ div
-                [ class "tab-columns-content"
-                , style [ ( "left", leftPx ) ]
-                ]
-                (List.map (viewColumnWithSearchbox model) fields)
-            ]
+            (List.map (viewColumnWithSearchbox model) fields)
+        ]
 
 
 viewColumnWithSearchbox : Model -> Field -> Html Msg
@@ -424,32 +443,86 @@ viewColumnWithSearchbox model field =
 
         searchboxModel =
             Searchbox.init field searchValue
+
+        sort =
+            model.sort
     in
-        div [ class "tab-column-with-filter" ]
-            [ viewColumn field
-            , Searchbox.view searchboxModel
-                |> Html.map (SearchboxMsg searchboxModel)
-            ]
+    div [ class "tab-column-with-filter" ]
+        [ viewColumn field sort
+        , Searchbox.view searchboxModel
+            |> Html.map (SearchboxMsg searchboxModel)
+        ]
 
 
-viewColumn : Field -> Html Msg
-viewColumn field =
+viewColumn : Field -> Maybe (List Query.Order) -> Html Msg
+viewColumn field sort =
+    let
+        columnName =
+            Field.columnName field
+
+        findIndex list columnName =
+            List.indexedMap
+                (\index o ->
+                    if o.column == columnName then
+                        Just ( index, o.direction )
+                    else
+                        Nothing
+                )
+                list
+                |> List.filter
+                    (\a ->
+                        case a of
+                            Just _ ->
+                                True
+
+                            Nothing ->
+                                False
+                    )
+                |> List.head
+
+        sortOrder =
+            case sort of
+                Just list ->
+                    case findIndex list columnName of
+                        Just n ->
+                            n
+
+                        Nothing ->
+                            Nothing
+
+                Nothing ->
+                    Nothing
+    in
     div [ class "tab-column-with-sort" ]
         [ div [ class "tab-column" ]
-            [ div [ class "column-name" ]
-                [ text (Field.columnName field) ]
-            , div [ class "column-sort" ]
+            ([ div [ class "column-name" ]
+                [ text columnName ]
+             ]
+                ++ viewSortOrder sortOrder
+            )
+        ]
+
+
+viewSortOrder : Maybe ( Int, OrderDirection ) -> List (Html Msg)
+viewSortOrder sortOrder =
+    case sortOrder of
+        Just ( sortOrder, direction ) ->
+            [ div [ class "column-sort" ]
                 [ div [ class "sort-btn asc" ]
                     [ i [ class "fa fa-sort-asc" ] []
                     ]
+                    |> viewIf (direction == Query.ASC)
                 , div [ class "sort-btn desc" ]
                     [ i [ class "fa fa-sort-desc" ] []
                     ]
+                    |> viewIf (direction == Query.DESC)
                 ]
             , div [ class "sort-order-badge" ]
-                [ text "1" ]
+                [ text (toString (sortOrder + 1)) ]
             ]
-        ]
+
+        Nothing ->
+            []
 
 
 viewPage : Lookup -> List Row.Model -> Html Msg
@@ -470,19 +543,18 @@ listViewRows lookup model =
         tab =
             model.tab
     in
-        div [ class "tab-page" ]
-            (if List.length model.pageRows > 0 then
-                (List.map
-                    (\pageRow ->
-                        viewPage lookup pageRow
-                    )
-                    model.pageRows
+    div [ class "tab-page" ]
+        (if List.length model.pageRows > 0 then
+            List.map
+                (\pageRow ->
+                    viewPage lookup pageRow
                 )
-             else
-                [ div [ class "empty-list-view-rows" ]
-                    [ text "Empty list view rows" ]
-                ]
-            )
+                model.pageRows
+         else
+            [ div [ class "empty-list-view-rows" ]
+                [ text "Empty list view rows" ]
+            ]
+        )
 
 
 type Msg
@@ -528,7 +600,7 @@ update msg model =
                 _ =
                     Debug.log "Error receiving next page"
             in
-                model => Cmd.none
+            model => Cmd.none
 
         RefreshPageReceived rows ->
             { model
@@ -546,7 +618,7 @@ update msg model =
                 _ =
                     Debug.log "Error receiving refresh page"
             in
-                model => Cmd.none
+            model => Cmd.none
 
         RowMsg argRow rowMsg ->
             let
@@ -563,7 +635,7 @@ update msg model =
                                             else
                                                 ( row, Cmd.none )
                                     in
-                                        ( newRow, Cmd.map (RowMsg newRow) subCmd )
+                                    ( newRow, Cmd.map (RowMsg newRow) subCmd )
                                 )
                                 page
                         )
@@ -576,12 +648,12 @@ update msg model =
                                 ( page, cmd ) =
                                     List.unzip listList
                             in
-                                ( pageAcc ++ [ page ], cmdAcc ++ cmd )
+                            ( pageAcc ++ [ page ], cmdAcc ++ cmd )
                         )
                         ( [], [] )
                         updatedPage
             in
-                { model | pageRows = pageRows } => Cmd.batch subCmd
+            { model | pageRows = pageRows } => Cmd.batch subCmd
 
         SearchboxMsg searchbox msg ->
             let
@@ -609,19 +681,19 @@ update msg model =
                         Nothing ->
                             model.searchFilter
             in
-                { model
-                    | searchFilter = updatedSearchFilter
-                    , currentPage = 0
-                }
-                    => Cmd.none
+            { model
+                | searchFilter = updatedSearchFilter
+                , currentPage = 0
+            }
+                => Cmd.none
 
         ToggleSelectAllRows v ->
             let
                 ( pageRows, cmds ) =
                     toggleSelectAllRows v model.pageRows
             in
-                { model | pageRows = pageRows }
-                    => Cmd.batch cmds
+            { model | pageRows = pageRows }
+                => Cmd.batch cmds
 
         ToolbarMsg toolbarMsg ->
             model => Cmd.none
@@ -634,8 +706,8 @@ update msg model =
                 ( pageRows, cmds ) =
                     updateAllRowsSetFocusedRecord recordId newModel.pageRows
             in
-                { newModel | pageRows = pageRows }
-                    => Cmd.batch cmds
+            { newModel | pageRows = pageRows }
+                => Cmd.batch cmds
 
 
 toggleSelectAllRows : Bool -> List (List Row.Model) -> ( List (List Row.Model), List (Cmd Msg) )
@@ -650,7 +722,7 @@ toggleSelectAllRows value pageList =
                                 ( updatedRow, rowCmd ) =
                                     Row.update (Row.ToggleSelect value) row
                             in
-                                ( updatedRow, rowCmd |> Cmd.map (RowMsg updatedRow) )
+                            ( updatedRow, rowCmd |> Cmd.map (RowMsg updatedRow) )
                         )
                         page
                         |> List.unzip
@@ -658,7 +730,7 @@ toggleSelectAllRows value pageList =
                 pageList
                 |> List.unzip
     in
-        ( updatedRowModel, List.concat rowCmds )
+    ( updatedRowModel, List.concat rowCmds )
 
 
 updateAllRowsSetFocusedRecord : RecordId -> List (List Row.Model) -> ( List (List Row.Model), List (Cmd Msg) )
@@ -676,7 +748,7 @@ updateAllRowsSetFocusedRecord recordId pageList =
                                 ( updatedRow, rowCmd ) =
                                     Row.update (Row.SetFocused isFocused) row
                             in
-                                ( updatedRow, rowCmd |> Cmd.map (RowMsg updatedRow) )
+                            ( updatedRow, rowCmd |> Cmd.map (RowMsg updatedRow) )
                         )
                         page
                         |> List.unzip
@@ -684,7 +756,7 @@ updateAllRowsSetFocusedRecord recordId pageList =
                 pageList
                 |> List.unzip
     in
-        ( updatedRowModel, List.concat rowCmds )
+    ( updatedRowModel, List.concat rowCmds )
 
 
 subscriptions : Model -> Sub Msg

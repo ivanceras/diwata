@@ -1,22 +1,23 @@
 module Data.WindowArena
     exposing
-        ( initArg
+        ( ArenaArg
+        , Section(..)
+        , activeSection
+        , arenaArgParser
+        , argToString
+        , initArg
         , initArgWithRecordId
         , parseArenaArgs
-        , arenaArgParser
-        , ArenaArg
-        , argToString
-        , Section(..)
         , rerouteNeeded
         , updateFilter
         )
 
+import Data.Query as Query exposing (orderClauseParser, orderClauseToString)
+import Data.Window.Filter as Filter exposing (Condition)
+import Data.Window.Record as Record exposing (Record, RecordId)
 import Data.Window.TableName as TableName exposing (TableName, tableNameToString)
 import UrlParser
-import Data.Query as Query exposing (orderClauseParser, orderClauseToString)
 import Util exposing (trim)
-import Data.Window.Record as Record exposing (Record, RecordId)
-import Data.Window.Filter as Filter exposing (Condition)
 
 
 {-| WindowArena is the centerpiece of the app.
@@ -100,6 +101,16 @@ type alias ArenaArg =
     }
 
 
+activeSection : ArenaArg -> Maybe Section
+activeSection arenaArg =
+    case arenaArg.sectionTable of
+        Just ( section, _ ) ->
+            Just section
+
+        Nothing ->
+            Nothing
+
+
 {-| Reroute needed when
 tableName != tableName,
 -}
@@ -175,8 +186,8 @@ argToString arg =
                 Nothing ->
                     appendSectionViaLinker
     in
-        appendSectionFilter
-            |> String.join "/"
+    appendSectionFilter
+        |> String.join "/"
 
 
 initArg : TableName -> ArenaArg
@@ -201,7 +212,7 @@ initArgWithRecordId tableName recordId =
         arenaArg =
             initArg tableName
     in
-        { arenaArg | selected = Just recordId }
+    { arenaArg | selected = Just recordId }
 
 
 type Section
@@ -244,7 +255,7 @@ keyPairs url =
         pairs =
             List.map2 (\( i, key ) ( j, value ) -> ( key, value )) keys values
     in
-        pairs
+    pairs
 
 
 arenaArgParser : UrlParser.Parser (Maybe ArenaArg -> a) a
@@ -335,12 +346,12 @@ parseArenaArgs url =
                                 initialArgs
                                 tail
                     in
-                        Just detailed
+                    Just detailed
 
                 Nothing ->
                     initialArgs
     in
-        arenaArgs
+    arenaArgs
 
 
 updateFilter : Condition -> ArenaArg -> ArenaArg
