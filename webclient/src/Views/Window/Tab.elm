@@ -13,7 +13,8 @@ module Views.Window.Tab
         )
 
 import Constant
-import Data.Query as Query exposing (OrderDirection(..))
+import Data.Query.Order as Order
+import Data.Query.Sort as Sort exposing (Sort)
 import Data.Window.Field as Field exposing (Field)
 import Data.Window.Filter as Filter exposing (Condition)
 import Data.Window.Lookup as Lookup exposing (Lookup)
@@ -23,7 +24,7 @@ import Data.Window.TableName as TableName exposing (TableName)
 import Dict exposing (Dict)
 import Html exposing (..)
 import Html.Attributes exposing (attribute, checked, class, classList, href, id, placeholder, property, src, style, type_)
-import Html.Events exposing (onCheck)
+import Html.Events exposing (onCheck, onClick)
 import Json.Decode as Decode exposing (Decoder)
 import Json.Encode as Encode
 import Page.Errored as Errored exposing (PageLoadError, pageLoadError)
@@ -45,12 +46,13 @@ type alias Model =
     , reachedLastPage : Bool
     , totalRecords : Int
     , searchFilter : Condition
-    , sort : Maybe (List Query.Order)
+    , sort : Maybe Sort
+    , isMultiSort : Bool
     , selectedRecordId : Maybe RecordId
     }
 
 
-init : Maybe RecordId -> ( Float, Float ) -> Maybe Condition -> Maybe (List Query.Order) -> Tab -> TabType -> Rows -> Int -> Model
+init : Maybe RecordId -> ( Float, Float ) -> Maybe Condition -> Maybe Sort -> Tab -> TabType -> Rows -> Int -> Model
 init selectedRecordId size condition sort tab tabType rows totalRecords =
     { tab = tab
     , tabType = tabType
@@ -69,23 +71,9 @@ init selectedRecordId size condition sort tab tabType rows totalRecords =
             Nothing ->
                 Dict.empty
     , sort = sort
+    , isMultiSort = Sort.isMaybeMultiSort sort
     , selectedRecordId = selectedRecordId
     }
-
-
-multiColumnSort : Model -> Bool
-multiColumnSort model =
-    isMultiSort model.sort
-
-
-isMultiSort : Maybe (List Query.Order) -> Bool
-isMultiSort sort =
-    case sort of
-        Just sort ->
-            List.length sort > 1
-
-        Nothing ->
-            False
 
 
 createRowsModel : Maybe RecordId -> Tab -> Rows -> List Row.Model
@@ -219,7 +207,7 @@ listView lookup model =
             { selected = selectedRowCount model
             , modified = countAllModifiedRows model
             , showIconText = width > Constant.showIconTextMinWidth
-            , multiColumnSort = multiColumnSort model
+            , multiColumnSort = model.isMultiSort
             }
 
         viewToolbar =
@@ -454,7 +442,7 @@ viewColumnWithSearchbox model field =
         ]
 
 
-viewColumn : Field -> Maybe (List Query.Order) -> Html Msg
+viewColumn : Field -> Maybe Sort -> Html Msg
 viewColumn field sort =
     let
         columnName =
@@ -493,7 +481,10 @@ viewColumn field sort =
                 Nothing ->
                     Nothing
     in
-    div [ class "tab-column-with-sort" ]
+    div
+        [ class "tab-column-with-sort"
+        , onClick (ToggleSort columnName)
+        ]
         [ div [ class "tab-column" ]
             ([ div [ class "column-name" ]
                 [ text columnName ]
@@ -503,7 +494,7 @@ viewColumn field sort =
         ]
 
 
-viewSortOrder : Maybe ( Int, OrderDirection ) -> List (Html Msg)
+viewSortOrder : Maybe ( Int, Order.Direction ) -> List (Html Msg)
 viewSortOrder sortOrder =
     case sortOrder of
         Just ( sortOrder, direction ) ->
@@ -511,11 +502,11 @@ viewSortOrder sortOrder =
                 [ div [ class "sort-btn asc" ]
                     [ i [ class "fa fa-sort-asc" ] []
                     ]
-                    |> viewIf (direction == Query.ASC)
+                    |> viewIf (direction == Order.ASC)
                 , div [ class "sort-btn desc" ]
                     [ i [ class "fa fa-sort-desc" ] []
                     ]
-                    |> viewIf (direction == Query.DESC)
+                    |> viewIf (direction == Order.DESC)
                 ]
             , div [ class "sort-order-badge" ]
                 [ text (toString (sortOrder + 1)) ]
@@ -569,6 +560,7 @@ type Msg
     | ToggleSelectAllRows Bool
     | ToolbarMsg Toolbar.Msg
     | SetFocusedRecord RecordId
+    | ToggleSort String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -696,7 +688,17 @@ update msg model =
                 => Cmd.batch cmds
 
         ToolbarMsg toolbarMsg ->
-            model => Cmd.none
+            case toolbarMsg of
+                Toolbar.ToggleMultiSort ->
+                    { model | isMultiSort = not model.isMultiSort }
+                        => Cmd.none
+
+                Toolbar.ClickedResetMultiSort ->
+                    { model | sort = Nothing }
+                        => Cmd.none
+
+                _ ->
+                    model => Cmd.none
 
         SetFocusedRecord recordId ->
             let
@@ -708,6 +710,25 @@ update msg model =
             in
             { newModel | pageRows = pageRows }
                 => Cmd.batch cmds
+
+        ToggleSort columnName ->
+            let
+                _ =
+                    Debug.log "toggleSort: " columnName
+
+                updatedSort =
+                    case model.sort of
+                        Just sort ->
+                            if model.isMultiSort then
+                                Just (Sort.updateSort columnName sort)
+                            else
+                                Just (Sort.setColumnSort columnName sort)
+
+                        Nothing ->
+                            Just (Sort.newSort columnName)
+            in
+            { model | sort = updatedSort }
+                => Cmd.none
 
 
 toggleSelectAllRows : Bool -> List (List Row.Model) -> ( List (List Row.Model), List (Cmd Msg) )

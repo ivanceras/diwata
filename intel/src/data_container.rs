@@ -82,3 +82,67 @@ impl Filter{
         }
     }
 }
+
+pub struct Order{
+    pub column_name: ColumnName,
+    pub direction: Direction,
+}
+
+impl Order{
+    fn from_str(s: &str) -> Self {
+        let splinters:Vec<&str> = s.split(".").collect();
+        let len = splinters.len();
+        let mut cols = splinters.clone();
+        let dir = cols.split_off(len - 1);
+        let direction = if dir.len() == 1 {
+            let dir = dir[0];
+            match dir {
+                "asc" => Some(Direction::Asc),
+                "desc" => Some(Direction::Desc),
+                _ => None
+            }
+        }
+        else{
+            None
+        };
+        let column = cols.join(".");
+        let column_name = ColumnName::from(&column);
+        match direction{
+            Some(direction) => Order{
+                column_name: column_name,
+                direction: direction
+            },
+            None => Order{
+                column_name: ColumnName::from(&splinters.join(".")),
+                direction: Direction::Asc
+            }
+        }
+
+    }
+}
+
+#[derive(PartialEq)]
+pub enum Direction {
+    Asc,
+    Desc
+}
+
+
+pub struct Sort{
+    pub orders: Vec<Order>
+}
+
+impl Sort {
+
+    pub fn from_str(s: &str) -> Self {
+        let splinters: Vec<&str> = s.split(",").collect();
+        let mut orders = vec![];
+        for splinter in splinters.iter(){
+            let order = Order::from_str(splinter);
+            orders.push(order);
+        }
+        Sort{
+            orders
+        }
+    }
+}

@@ -15,6 +15,7 @@ module Page.Window
 -}
 
 import Data.Query as Query
+import Data.Query.Sort as Sort exposing (Sort)
 import Data.Session as Session exposing (Session)
 import Data.User as User exposing (User)
 import Data.UserPhoto as UserPhoto
@@ -135,11 +136,11 @@ init settings session tableName window arenaArg =
                 Nothing ->
                     Nothing
 
-        sort : Maybe (List Query.Order)
+        sort : Maybe Sort
         sort =
             case arenaArg of
                 Just arenaArg ->
-                    arenaArg.order
+                    arenaArg.sort
 
                 Nothing ->
                     Nothing
@@ -151,7 +152,7 @@ init settings session tableName window arenaArg =
             BrowserWindow.size
 
         loadRecords =
-            Request.Window.Records.listWithFilter settings maybeAuthToken tableName condition
+            Request.Window.Records.listPageWithFilter settings 1 maybeAuthToken tableName condition sort
                 |> Http.toTask
                 |> Task.mapError (handleLoadError " inLoadrecords")
 
@@ -334,6 +335,32 @@ update session msg model =
                     , Route.modifyUrl (Route.WindowArena newArenaArg)
                     ]
 
+        TabMsg (Tab.ToggleSort columnName) ->
+            let
+                ( updatedMainTab, subCmd ) =
+                    Tab.update (Tab.ToggleSort columnName) model.mainTab
+
+                updatedArenaArg =
+                    case model.arenaArg of
+                        Just arenaArg ->
+                            Just { arenaArg | sort = updatedMainTab.sort }
+
+                        Nothing ->
+                            Nothing
+
+                updatedModel =
+                    { model
+                        | arenaArg = updatedArenaArg
+                        , mainTab = updatedMainTab
+                    }
+            in
+            updatedModel
+                => Cmd.batch
+                    [ Cmd.map TabMsg subCmd
+                    , refreshPage updatedMainTab updatedModel
+                    , Route.modifyUrl (Route.WindowArena updatedModel.arenaArg)
+                    ]
+
         TabMsg tabMsg ->
             let
                 ( newMainTab, subCmd ) =
@@ -401,22 +428,16 @@ refreshPage tab model =
                 Nothing ->
                     Nothing
 
-        hasFilter =
-            case condition of
-                Just cond ->
-                    not (Dict.isEmpty cond)
+        sort =
+            case model.arenaArg of
+                Just arenaArg ->
+                    arenaArg.sort
 
                 Nothing ->
-                    False
-
-        tabPage =
-            tab.currentPage + 1
+                    Nothing
 
         request =
-            if hasFilter then
-                Request.Window.Records.listPageWithFilter model.settings tabPage Nothing tab.tab.tableName condition
-            else
-                Request.Window.Records.listPage model.settings tabPage Nothing tab.tab.tableName
+            Request.Window.Records.listPageWithFilter model.settings 1 Nothing tab.tab.tableName condition sort
     in
     request
         |> Http.toTask
@@ -457,10 +478,18 @@ requestNextPage tab model =
                 Nothing ->
                     Nothing
 
+        sort =
+            case model.arenaArg of
+                Just arenaArg ->
+                    arenaArg.sort
+
+                Nothing ->
+                    Nothing
+
         tabPage =
             tab.currentPage + 1
     in
-    Request.Window.Records.listPageWithFilter model.settings tabPage Nothing tab.tab.tableName condition
+    Request.Window.Records.listPageWithFilter model.settings tabPage Nothing tab.tab.tableName condition sort
         |> Http.toTask
         |> Task.attempt
             (\result ->

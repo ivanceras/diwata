@@ -1,37 +1,38 @@
 module Request.Window.Records
     exposing
         ( delete
-        , listWithFilter
-        , listPage
-        , listPageWithFilter
-        , fetchSelected
         , fetchHasManyRecords
         , fetchIndirectRecords
-        , lookups
+        , fetchSelected
+        , listPage
+        , listPageWithFilter
+        , listWithFilter
         , lookupPage
+        , lookups
         , totalRecords
         )
 
-import Data.Window as Window exposing (Window, Tag, slugToString)
-import Data.Window.Record as Record exposing (Rows, RecordId)
-import Data.Window.RecordDetail as RecordDetail exposing (RecordDetail)
 import Data.AuthToken as AuthToken exposing (AuthToken, withAuthorization)
+import Data.Query.Sort as Sort exposing (Sort)
+import Data.Window as Window exposing (Tag, Window, slugToString)
+import Data.Window.Filter as Filter exposing (Condition)
 import Data.Window.GroupedWindow as GroupedWindow exposing (WindowName)
+import Data.Window.Lookup as Lookup exposing (Lookup)
+import Data.Window.Record as Record exposing (RecordId, Rows)
+import Data.Window.RecordDetail as RecordDetail exposing (RecordDetail)
 import Data.Window.TableName as TableName
     exposing
         ( TableName
-        , tableNameToString
         , tableNameParser
+        , tableNameToString
         )
 import Http
 import HttpBuilder exposing (RequestBuilder, withExpect, withQueryParams)
 import Json.Decode as Decode
 import Json.Encode as Encode exposing (Value)
 import Request.Helpers exposing (apiUrl)
-import Util exposing ((=>))
-import Data.Window.Lookup as Lookup exposing (Lookup)
-import Data.Window.Filter as Filter exposing (Condition)
 import Settings exposing (Settings)
+import Util exposing ((=>))
 
 
 -- LIST --
@@ -44,7 +45,7 @@ list settings maybeToken tableName =
 
 listWithFilter : Settings -> Maybe AuthToken -> TableName -> Maybe Condition -> Http.Request Rows
 listWithFilter settings maybeToken tableName condition =
-    listPageWithFilter settings 1 maybeToken tableName condition
+    listPageWithFilter settings 1 maybeToken tableName condition Nothing
 
 
 listPage : Settings -> Int -> Maybe AuthToken -> TableName -> Http.Request Rows
@@ -56,8 +57,8 @@ listPage settings page maybeToken tableName =
         |> HttpBuilder.toRequest
 
 
-listPageWithFilter : Settings -> Int -> Maybe AuthToken -> TableName -> Maybe Condition -> Http.Request Rows
-listPageWithFilter settings page maybeToken tableName condition =
+listPageWithFilter : Settings -> Int -> Maybe AuthToken -> TableName -> Maybe Condition -> Maybe Sort -> Http.Request Rows
+listPageWithFilter settings page maybeToken tableName condition sort =
     let
         filterString =
             case condition of
@@ -66,12 +67,20 @@ listPageWithFilter settings page maybeToken tableName condition =
 
                 Nothing ->
                     ""
+
+        sortString =
+            case sort of
+                Just sort ->
+                    "/sort/" ++ Sort.toString sort
+
+                Nothing ->
+                    ""
     in
-        apiUrl settings ("/data/" ++ tableNameToString tableName ++ "/" ++ toString page ++ filterString)
-            |> HttpBuilder.get
-            |> HttpBuilder.withExpect (Http.expectJson Record.rowsDecoder)
-            |> withAuthorization maybeToken
-            |> HttpBuilder.toRequest
+    apiUrl settings ("/data/" ++ tableNameToString tableName ++ "/" ++ toString page ++ filterString ++ sortString)
+        |> HttpBuilder.get
+        |> HttpBuilder.withExpect (Http.expectJson Record.rowsDecoder)
+        |> withAuthorization maybeToken
+        |> HttpBuilder.toRequest
 
 
 totalRecords : Settings -> Maybe AuthToken -> TableName -> Http.Request Int

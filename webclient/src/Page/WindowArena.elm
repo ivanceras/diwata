@@ -3,44 +3,42 @@ module Page.WindowArena
         ( Model
         , Msg
         , init
+        , rerouteNeeded
+        , subscriptions
         , update
         , view
-        , subscriptions
-        , rerouteNeeded
         )
 
 {-| The homepage. You can get here via either the / or /#/ routes.
 -}
 
-import Data.Window as Window exposing (Tag)
+import Constant
 import Data.Session as Session exposing (Session)
+import Data.Window as Window exposing (Tag)
+import Data.Window.Lookup as Lookup
+import Data.Window.Record as Record exposing (RecordId)
+import Data.Window.TableName as TableName exposing (TableName)
+import Data.WindowArena as WindowArena exposing (ArenaArg)
 import Html exposing (..)
 import Html.Attributes exposing (class, classList, id, style)
 import Http
 import Page.Errored as Errored exposing (PageLoadError, pageLoadError)
-import Request.Window
-import SelectList exposing (SelectList)
-import Task exposing (Task)
-import Util exposing ((=>))
-import Views.Window.GroupedWindow as GroupedWindow
-import Views.Page as Page
 import Page.Window as Window
-import Data.Window.TableName as TableName exposing (TableName)
-import Data.WindowArena as WindowArena exposing (ArenaArg)
-import Views.Window.DetailedRecord as DetailedRecord
-import Window as BrowserWindow
-import Route
+import Request.Window
 import Request.Window.Records
-import Data.Window.Record as Record exposing (RecordId)
-import Data.Window.Lookup as Lookup
-import Data.WindowArena as WindowArena
+import Route
+import SelectList exposing (SelectList)
 import Settings exposing (Settings)
+import Task exposing (Task)
+import Util exposing ((=>), styleIf, viewIf)
+import Views.Page as Page
+import Views.Window.DetailedRecord as DetailedRecord
 import Views.Window.Field as Field
+import Views.Window.GroupedWindow as GroupedWindow
 import Views.Window.Row as Row
 import Views.Window.Tab as Tab
 import Views.Window.Toolbar as Toolbar
-import Constant
-import Util exposing (viewIf, styleIf)
+import Window as BrowserWindow
 
 
 -- MODEL --
@@ -70,7 +68,7 @@ rerouteNeeded model arenaArg =
 
 
 handleLoadError e =
-    pageLoadError Page.WindowArena ("WindowArena is currently unavailable. Error: " ++ (toString e))
+    pageLoadError Page.WindowArena ("WindowArena is currently unavailable. Error: " ++ toString e)
 
 
 init : Settings -> Session -> Maybe ArenaArg -> Task PageLoadError Model
@@ -146,22 +144,22 @@ init settings session arenaArg =
                 Nothing ->
                     Task.succeed Nothing
     in
-        Task.map3
-            (\activeWindow groupedWindow selectedRow ->
-                { openedWindow = []
-                , activeWindow = activeWindow
-                , groupedWindow = groupedWindow
-                , selectedRow = selectedRow
-                , arenaArg = arenaArg
-                , settings = settings
-                , errors = []
-                , loadingSelectedRecord = False
-                , isDetailedRecordMaximized = isDetailedRecordMaximized
-                }
-            )
-            loadActiveWindow
-            loadWindowList
-            loadSelectedRecord
+    Task.map3
+        (\activeWindow groupedWindow selectedRow ->
+            { openedWindow = []
+            , activeWindow = activeWindow
+            , groupedWindow = groupedWindow
+            , selectedRow = selectedRow
+            , arenaArg = arenaArg
+            , settings = settings
+            , errors = []
+            , loadingSelectedRecord = False
+            , isDetailedRecordMaximized = isDetailedRecordMaximized
+            }
+        )
+        loadActiveWindow
+        loadWindowList
+        loadSelectedRecord
 
 
 
@@ -244,17 +242,17 @@ viewTabNames model =
         inDetail =
             Util.isJust model.selectedRow
     in
-        case model.activeWindow of
-            Just activeWindow ->
-                a
-                    [ class "tab-name active-main-tab"
-                    , classList [ ( "in-selected-record", inDetail ) ]
-                    , Route.href (Route.WindowArena model.arenaArg)
-                    ]
-                    [ text activeWindow.mainTab.tab.name ]
+    case model.activeWindow of
+        Just activeWindow ->
+            a
+                [ class "tab-name active-main-tab"
+                , classList [ ( "in-selected-record", inDetail ) ]
+                , Route.href (Route.WindowArena model.arenaArg)
+                ]
+                [ text activeWindow.mainTab.tab.name ]
 
-            Nothing ->
-                text "no tab"
+        Nothing ->
+            text "no tab"
 
 
 viewBanner : Model -> Html Msg
@@ -305,208 +303,208 @@ update session msg model =
         isDetailedRecordMaximized =
             model.isDetailedRecordMaximized
     in
-        case msg of
-            GroupedWindowMsg subMsg ->
-                let
-                    ( newFeed, subCmd ) =
-                        GroupedWindow.update session subMsg model.groupedWindow
-                in
-                    { model | groupedWindow = newFeed } => Cmd.map GroupedWindowMsg subCmd
+    case msg of
+        GroupedWindowMsg subMsg ->
+            let
+                ( newFeed, subCmd ) =
+                    GroupedWindow.update session subMsg model.groupedWindow
+            in
+            { model | groupedWindow = newFeed } => Cmd.map GroupedWindowMsg subCmd
 
-            WindowMsg (Window.TabMsg (Tab.RowMsg rowModel Row.ClickDetailedLink)) ->
-                let
-                    recordIdString =
-                        Record.idToString rowModel.recordId
+        WindowMsg (Window.TabMsg (Tab.RowMsg rowModel Row.ClickDetailedLink)) ->
+            let
+                recordIdString =
+                    Record.idToString rowModel.recordId
 
-                    tableName =
-                        rowModel.tab.tableName
+                tableName =
+                    rowModel.tab.tableName
 
-                    arenaArg =
-                        case model.arenaArg of
-                            Just arenaArg ->
-                                arenaArg
+                arenaArg =
+                    case model.arenaArg of
+                        Just arenaArg ->
+                            arenaArg
 
-                            Nothing ->
-                                Debug.crash "There should be an arena arg"
+                        Nothing ->
+                            Debug.crash "There should be an arena arg"
 
-                    activeWindow =
-                        case model.activeWindow of
-                            Just activeWindow ->
-                                activeWindow.window
+                activeWindow =
+                    case model.activeWindow of
+                        Just activeWindow ->
+                            activeWindow.window
 
-                            Nothing ->
-                                Debug.crash "There should be an activeWindow"
+                        Nothing ->
+                            Debug.crash "There should be an activeWindow"
 
-                    initSelectedRow =
-                        DetailedRecord.init isDetailedRecordMaximized model.settings tableName recordIdString arenaArg activeWindow
-                in
-                    { model | loadingSelectedRecord = True }
-                        => Task.attempt
-                            (\result ->
-                                case result of
-                                    Ok result ->
-                                        InitializedSelectedRow ( result, rowModel.recordId )
+                initSelectedRow =
+                    DetailedRecord.init isDetailedRecordMaximized model.settings tableName recordIdString arenaArg activeWindow
+            in
+            { model | loadingSelectedRecord = True }
+                => Task.attempt
+                    (\result ->
+                        case result of
+                            Ok result ->
+                                InitializedSelectedRow ( result, rowModel.recordId )
 
-                                    Err e ->
-                                        FailedToInitializeSelectedRow
-                            )
-                            initSelectedRow
+                            Err e ->
+                                FailedToInitializeSelectedRow
+                    )
+                    initSelectedRow
 
-            WindowMsg (Window.TabMsg (Tab.RowMsg rowModel (Row.FieldMsg fieldModel (Field.PrimaryLinkClicked tableName recordIdString)))) ->
-                let
-                    arenaArg =
-                        case model.arenaArg of
-                            Just arenaArg ->
-                                arenaArg
+        WindowMsg (Window.TabMsg (Tab.RowMsg rowModel (Row.FieldMsg fieldModel (Field.PrimaryLinkClicked tableName recordIdString)))) ->
+            let
+                arenaArg =
+                    case model.arenaArg of
+                        Just arenaArg ->
+                            arenaArg
 
-                            Nothing ->
-                                Debug.crash "There should be an arena arg"
+                        Nothing ->
+                            Debug.crash "There should be an arena arg"
 
-                    activeWindow =
-                        case model.activeWindow of
-                            Just activeWindow ->
-                                activeWindow.window
+                activeWindow =
+                    case model.activeWindow of
+                        Just activeWindow ->
+                            activeWindow.window
 
-                            Nothing ->
-                                Debug.crash "There should be an activeWindow"
+                        Nothing ->
+                            Debug.crash "There should be an activeWindow"
 
-                    initSelectedRow =
-                        DetailedRecord.init isDetailedRecordMaximized model.settings tableName recordIdString arenaArg activeWindow
-                in
-                    { model | loadingSelectedRecord = True }
-                        => Task.attempt
-                            (\result ->
-                                case result of
-                                    Ok result ->
-                                        InitializedSelectedRow ( result, rowModel.recordId )
+                initSelectedRow =
+                    DetailedRecord.init isDetailedRecordMaximized model.settings tableName recordIdString arenaArg activeWindow
+            in
+            { model | loadingSelectedRecord = True }
+                => Task.attempt
+                    (\result ->
+                        case result of
+                            Ok result ->
+                                InitializedSelectedRow ( result, rowModel.recordId )
 
-                                    Err e ->
-                                        FailedToInitializeSelectedRow
-                            )
-                            initSelectedRow
+                            Err e ->
+                                FailedToInitializeSelectedRow
+                    )
+                    initSelectedRow
 
-            InitializedSelectedRow ( selectedRow, recordId ) ->
-                let
-                    ( updatedActiveWindow, windowCmd ) =
-                        case model.activeWindow of
-                            Just activeWindow ->
-                                let
-                                    ( updatedWindow, windowCmd ) =
-                                        Window.update session (Window.TabMsg (Tab.SetFocusedRecord recordId)) activeWindow
-                                in
-                                    ( Just updatedWindow, Cmd.map WindowMsg windowCmd )
+        InitializedSelectedRow ( selectedRow, recordId ) ->
+            let
+                ( updatedActiveWindow, windowCmd ) =
+                    case model.activeWindow of
+                        Just activeWindow ->
+                            let
+                                ( updatedWindow, windowCmd ) =
+                                    Window.update session (Window.TabMsg (Tab.SetFocusedRecord recordId)) activeWindow
+                            in
+                            ( Just updatedWindow, Cmd.map WindowMsg windowCmd )
 
-                            Nothing ->
-                                ( Nothing, Cmd.none )
-                in
-                    { model
-                        | selectedRow = Just selectedRow
-                        , loadingSelectedRecord = False
-                        , activeWindow = updatedActiveWindow
-                    }
-                        => windowCmd
+                        Nothing ->
+                            ( Nothing, Cmd.none )
+            in
+            { model
+                | selectedRow = Just selectedRow
+                , loadingSelectedRecord = False
+                , activeWindow = updatedActiveWindow
+            }
+                => windowCmd
 
-            FailedToInitializeSelectedRow ->
-                { model
-                    | errors = "Failed to initialize selected row" :: model.errors
-                    , loadingSelectedRecord = False
-                }
-                    => Cmd.none
+        FailedToInitializeSelectedRow ->
+            { model
+                | errors = "Failed to initialize selected row" :: model.errors
+                , loadingSelectedRecord = False
+            }
+                => Cmd.none
 
-            WindowMsg subMsg ->
-                case model.activeWindow of
-                    Just activeWindow ->
-                        let
-                            lookup =
-                                activeWindow.lookup
+        WindowMsg subMsg ->
+            case model.activeWindow of
+                Just activeWindow ->
+                    let
+                        lookup =
+                            activeWindow.lookup
 
-                            ( newWindow, subCmd ) =
-                                Window.update session subMsg activeWindow
+                        ( newWindow, subCmd ) =
+                            Window.update session subMsg activeWindow
 
-                            ( updatedWindow, windowCmd ) =
-                                case Window.dropdownPageRequestNeeded lookup activeWindow of
-                                    Just sourceTable ->
-                                        let
-                                            ( currentPage, listRecord ) =
-                                                Lookup.tableLookup sourceTable lookup
-                                        in
-                                            { newWindow | dropdownPageRequestInFlight = True }
-                                                => requestNextDropdownPageForWindow model.settings currentPage sourceTable
+                        ( updatedWindow, windowCmd ) =
+                            case Window.dropdownPageRequestNeeded lookup activeWindow of
+                                Just sourceTable ->
+                                    let
+                                        ( currentPage, listRecord ) =
+                                            Lookup.tableLookup sourceTable lookup
+                                    in
+                                    { newWindow | dropdownPageRequestInFlight = True }
+                                        => requestNextDropdownPageForWindow model.settings currentPage sourceTable
 
-                                    Nothing ->
-                                        newWindow => Cmd.none
-                        in
-                            { model | activeWindow = Just updatedWindow }
-                                => Cmd.batch
-                                    [ Cmd.map WindowMsg subCmd
-                                    , windowCmd
-                                    ]
+                                Nothing ->
+                                    newWindow => Cmd.none
+                    in
+                    { model | activeWindow = Just updatedWindow }
+                        => Cmd.batch
+                            [ Cmd.map WindowMsg subCmd
+                            , windowCmd
+                            ]
 
-                    Nothing ->
-                        model => Cmd.none
+                Nothing ->
+                    model => Cmd.none
 
-            DetailedRecordMsg (DetailedRecord.ToolbarMsg Toolbar.ClickedClose) ->
-                { model | selectedRow = Nothing }
-                    => Route.modifyUrl (Route.WindowArena model.arenaArg)
+        DetailedRecordMsg (DetailedRecord.ToolbarMsg Toolbar.ClickedClose) ->
+            { model | selectedRow = Nothing }
+                => Route.modifyUrl (Route.WindowArena model.arenaArg)
 
-            DetailedRecordMsg DetailedRecord.ClickedCloseButton ->
-                { model | selectedRow = Nothing }
-                    => Route.modifyUrl (Route.WindowArena model.arenaArg)
+        DetailedRecordMsg DetailedRecord.ClickedCloseButton ->
+            { model | selectedRow = Nothing }
+                => Route.modifyUrl (Route.WindowArena model.arenaArg)
 
-            DetailedRecordMsg (DetailedRecord.ToolbarMsg (Toolbar.ClickedMaximize v)) ->
-                let
-                    ( updatedSelectedRow, cmd ) =
-                        case model.selectedRow of
-                            Just selectedRow ->
-                                let
-                                    ( detailedRecord, subCmd ) =
-                                        DetailedRecord.update session (DetailedRecord.Maximize v) selectedRow
-                                in
-                                    ( Just detailedRecord, Cmd.map DetailedRecordMsg subCmd )
+        DetailedRecordMsg (DetailedRecord.ToolbarMsg (Toolbar.ClickedMaximize v)) ->
+            let
+                ( updatedSelectedRow, cmd ) =
+                    case model.selectedRow of
+                        Just selectedRow ->
+                            let
+                                ( detailedRecord, subCmd ) =
+                                    DetailedRecord.update session (DetailedRecord.Maximize v) selectedRow
+                            in
+                            ( Just detailedRecord, Cmd.map DetailedRecordMsg subCmd )
 
-                            Nothing ->
-                                ( Nothing, Cmd.none )
-                in
-                    { model
-                        | isDetailedRecordMaximized = v
-                        , selectedRow = updatedSelectedRow
-                    }
-                        => cmd
+                        Nothing ->
+                            ( Nothing, Cmd.none )
+            in
+            { model
+                | isDetailedRecordMaximized = v
+                , selectedRow = updatedSelectedRow
+            }
+                => cmd
 
-            DetailedRecordMsg subMsg ->
-                case model.selectedRow of
-                    Just selectedRow ->
-                        let
-                            lookup =
-                                selectedRow.lookup
+        DetailedRecordMsg subMsg ->
+            case model.selectedRow of
+                Just selectedRow ->
+                    let
+                        lookup =
+                            selectedRow.lookup
 
-                            ( newDetailedRecord, subCmd ) =
-                                DetailedRecord.update session subMsg selectedRow
+                        ( newDetailedRecord, subCmd ) =
+                            DetailedRecord.update session subMsg selectedRow
 
-                            ( updatedDetailedRecord, detailCmd ) =
-                                case DetailedRecord.dropdownPageRequestNeeded lookup selectedRow of
-                                    Just sourceTable ->
-                                        let
-                                            ( currentPage, listRecord ) =
-                                                Lookup.tableLookup sourceTable lookup
-                                        in
-                                            { newDetailedRecord | dropdownPageRequestInFlight = True }
-                                                => requestNextDropdownPageForDetailedRecord model.settings currentPage sourceTable
+                        ( updatedDetailedRecord, detailCmd ) =
+                            case DetailedRecord.dropdownPageRequestNeeded lookup selectedRow of
+                                Just sourceTable ->
+                                    let
+                                        ( currentPage, listRecord ) =
+                                            Lookup.tableLookup sourceTable lookup
+                                    in
+                                    { newDetailedRecord | dropdownPageRequestInFlight = True }
+                                        => requestNextDropdownPageForDetailedRecord model.settings currentPage sourceTable
 
-                                    Nothing ->
-                                        newDetailedRecord => Cmd.none
-                        in
-                            { model | selectedRow = Just updatedDetailedRecord }
-                                => Cmd.batch
-                                    [ Cmd.map DetailedRecordMsg subCmd
-                                    , detailCmd
-                                    ]
+                                Nothing ->
+                                    newDetailedRecord => Cmd.none
+                    in
+                    { model | selectedRow = Just updatedDetailedRecord }
+                        => Cmd.batch
+                            [ Cmd.map DetailedRecordMsg subCmd
+                            , detailCmd
+                            ]
 
-                    Nothing ->
-                        model => Cmd.none
+                Nothing ->
+                    model => Cmd.none
 
-            WindowResized size ->
-                model => Cmd.none
+        WindowResized size ->
+            model => Cmd.none
 
 
 requestNextDropdownPageForWindow : Settings -> Int -> TableName -> Cmd Msg
@@ -521,7 +519,7 @@ requestNextDropdownPageForWindow settings currentPage sourceTable =
                             recordList =
                                 Record.rowsToRecordList rows
                         in
-                            WindowMsg (Window.LookupNextPageReceived ( sourceTable, recordList ))
+                        WindowMsg (Window.LookupNextPageReceived ( sourceTable, recordList ))
 
                     Err e ->
                         WindowMsg (Window.LookupNextPageErrored (toString e))
@@ -540,7 +538,7 @@ requestNextDropdownPageForDetailedRecord settings currentPage sourceTable =
                             recordList =
                                 Record.rowsToRecordList rows
                         in
-                            DetailedRecordMsg (DetailedRecord.LookupNextPageReceived ( sourceTable, recordList ))
+                        DetailedRecordMsg (DetailedRecord.LookupNextPageReceived ( sourceTable, recordList ))
 
                     Err e ->
                         DetailedRecordMsg (DetailedRecord.LookupNextPageErrored (toString e))

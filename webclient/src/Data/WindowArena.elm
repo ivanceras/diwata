@@ -10,9 +10,11 @@ module Data.WindowArena
         , parseArenaArgs
         , rerouteNeeded
         , updateFilter
+        , updateSort
         )
 
 import Data.Query as Query exposing (orderClauseParser, orderClauseToString)
+import Data.Query.Sort as Sort exposing (Sort)
 import Data.Window.Filter as Filter exposing (Condition)
 import Data.Window.Record as Record exposing (Record, RecordId)
 import Data.Window.TableName as TableName exposing (TableName, tableNameToString)
@@ -90,13 +92,13 @@ type alias ArenaArg =
     { tableName : TableName
     , filter : Maybe Condition
     , page : Maybe Int
-    , order : Maybe (List Query.Order)
+    , sort : Maybe Sort
     , selected : Maybe String
     , sectionTable : Maybe ( Section, TableName )
     , sectionViaLinker : Maybe TableName
     , sectionFilter : Maybe Condition
     , sectionPage : Maybe Int
-    , sectionOrder : Maybe (List Query.Order)
+    , sectionOrder : Maybe Sort
     , sectionSelected : Maybe String
     }
 
@@ -147,9 +149,9 @@ argToString arg =
                     appendFilter
 
         appendOrder =
-            case arg.order of
-                Just order ->
-                    appendPage ++ [ "order", orderClauseToString order ]
+            case arg.sort of
+                Just sort ->
+                    appendPage ++ [ "order", orderClauseToString sort ]
 
                 Nothing ->
                     appendPage
@@ -195,7 +197,7 @@ initArg tableName =
     { tableName = tableName
     , filter = Nothing
     , page = Nothing
-    , order = Nothing
+    , sort = Nothing
     , selected = Nothing
     , sectionTable = Nothing
     , sectionViaLinker = Nothing
@@ -310,7 +312,7 @@ parseArenaArgs url =
                                             }
 
                                         "order" ->
-                                            { arg | order = orderClauseParser value }
+                                            { arg | sort = orderClauseParser value }
 
                                         "select" ->
                                             { arg | selected = Just value }
@@ -357,3 +359,17 @@ parseArenaArgs url =
 updateFilter : Condition -> ArenaArg -> ArenaArg
 updateFilter condition oldArenaArg =
     { oldArenaArg | filter = Just condition }
+
+
+updateSort : String -> ArenaArg -> ArenaArg
+updateSort columnName oldArenaArg =
+    let
+        updatedSort =
+            case oldArenaArg.sort of
+                Just sort ->
+                    Just (Sort.updateSort columnName sort)
+
+                Nothing ->
+                    Nothing
+    in
+    { oldArenaArg | sort = updatedSort }

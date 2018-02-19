@@ -35,7 +35,6 @@ pub fn cast_rows(rows: Rows, column_datatypes: &BTreeMap<String, SqlType>) -> Ro
             let value = value.unwrap();
             if let Some(sql_type) = sql_type{
                 let casted = common::cast_type(value, sql_type);
-                println!("casted: {:?}", casted);
                 new_row.push(casted);
             }
             else{

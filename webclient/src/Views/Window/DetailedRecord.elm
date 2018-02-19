@@ -11,6 +11,7 @@ module Views.Window.DetailedRecord
 
 import Constant
 import Data.Query as Query
+import Data.Query.Sort as Sort exposing (Sort)
 import Data.Session as Session exposing (Session)
 import Data.Window as Window exposing (Window)
 import Data.Window.Field as Field exposing (Field)
@@ -126,7 +127,7 @@ init isMaximized settings tableName selectedRow arenaArg window =
                 window.hasManyTabs
                 |> Task.sequence
 
-        sectionSort : Maybe (List Query.Order)
+        sectionSort : Maybe Sort
         sectionSort =
             arenaArg.sectionOrder
 

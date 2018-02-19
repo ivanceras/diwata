@@ -27,6 +27,8 @@ type Msg
     | ClickedMaximize Bool
     | ClickedNewButton
     | ClickedMainDelete
+    | ToggleMultiSort
+    | ClickedResetMultiSort
 
 
 viewForMain : Model -> Html Msg
@@ -143,7 +145,9 @@ viewForMain model =
             , span [ class "tooltip-text" ] [ text "Open modal filter with advance functionality" ]
             ]
         , div
-            [ class "multi-column-sort btn btn-large btn-default tooltip" ]
+            [ class "multi-column-sort btn btn-large btn-default tooltip"
+            , onClick ToggleMultiSort
+            ]
             [ input
                 [ type_ "checkbox"
                 , checked model.multiColumnSort
@@ -155,7 +159,9 @@ viewForMain model =
             , span [ class "tooltip-text" ] [ text "Do multi-column sort" ]
             ]
         , button
-            [ class "btn btn-large btn-default tooltip" ]
+            [ class "btn btn-large btn-default tooltip"
+            , onClick ClickedResetMultiSort
+            ]
             [ i [ class "toolbar-fa fa fa-sort-numeric-asc" ] []
             , text "Reset sorting"
                 |> viewIf showText

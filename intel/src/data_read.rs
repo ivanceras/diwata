@@ -17,6 +17,7 @@ use data_container::Lookup;
 use rustorm::FromDao;
 use dao;
 use data_container::Filter;
+use data_container::{Sort,Direction};
 use std::collections::BTreeMap;
 use common;
 use query_builder::Query;
@@ -56,6 +57,7 @@ pub fn get_maintable_data(
     tables: &Vec<Table>,
     window: &Window,
     filter: Option<Filter>,
+    sort: Option<Sort>,
     page: u32,
     page_size: u32,
 ) -> Result<Rows, DbError> {
@@ -89,6 +91,23 @@ pub fn get_maintable_data(
 
         },
         None => (),
+    }
+    if let Some(sort) = sort {
+        if sort.orders.len() > 0 {
+            query.append("ORDER BY ");
+            for (i,order) in sort.orders.iter().enumerate() {
+                if i > 0 {
+                    query.append(", ");
+                }
+                query.append(&format!("{} ", order.column_name.complete_name()));
+                if order.direction == Direction::Asc {
+                    query.append("ASC ");
+                }
+                if order.direction == Direction::Desc {
+                    query.append("DESC ");
+                }
+            }
+        }
     }
     query.set_page(page, page_size);
     query.collect_rows(dm)
