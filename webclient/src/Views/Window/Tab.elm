@@ -436,14 +436,14 @@ viewColumnWithSearchbox model field =
             model.sort
     in
     div [ class "tab-column-with-filter" ]
-        [ viewColumn field sort
+        [ viewColumn model.isMultiSort field sort
         , Searchbox.view searchboxModel
             |> Html.map (SearchboxMsg searchboxModel)
         ]
 
 
-viewColumn : Field -> Maybe Sort -> Html Msg
-viewColumn field sort =
+viewColumn : Bool -> Field -> Maybe Sort -> Html Msg
+viewColumn isMultiSort field sort =
     let
         columnName =
             Field.columnName field
@@ -489,13 +489,13 @@ viewColumn field sort =
             ([ div [ class "column-name" ]
                 [ text columnName ]
              ]
-                ++ viewSortOrder sortOrder
+                ++ viewSortOrder isMultiSort sortOrder
             )
         ]
 
 
-viewSortOrder : Maybe ( Int, Order.Direction ) -> List (Html Msg)
-viewSortOrder sortOrder =
+viewSortOrder : Bool -> Maybe ( Int, Order.Direction ) -> List (Html Msg)
+viewSortOrder isMultiSort sortOrder =
     case sortOrder of
         Just ( sortOrder, direction ) ->
             [ div [ class "column-sort" ]
@@ -510,6 +510,7 @@ viewSortOrder sortOrder =
                 ]
             , div [ class "sort-order-badge" ]
                 [ text (toString (sortOrder + 1)) ]
+                |> viewIf isMultiSort
             ]
 
         Nothing ->

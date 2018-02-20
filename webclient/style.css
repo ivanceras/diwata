@@ -353,21 +353,13 @@ a.primary-link {
 }
 .tab-column .column-sort{
     display: flex;
+    width: 10px;
 }
 
 .column-sort .sort-btn{
-    color: #ccc;
-}
-.column-sort .sort-btn.active{
-    color: #555;
+    color: #888;
 }
 
-.column-sort .sort-btn.asc  {
-}
-
-.column-sort .sort-btn.desc {
-    margin-left: -8px;
-}
 
 .tab-column-with-filter {
     border-right: 1px solid #ccc;
