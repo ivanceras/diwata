@@ -9,6 +9,7 @@ variables:
 before_script:
   - apt update
   - apt install -y postgresql-client
+  - find . -name '*.sh' -type f -exec sed -i 's/localhost/postgres/g' {} +
   - sh ./dbscripts/setup.sh
   - cd .. 
   - git clone https://github.com/ivanceras/sqlite
