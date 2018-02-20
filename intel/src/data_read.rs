@@ -573,7 +573,7 @@ mod tests {
         let window = window::get_window(&table_name, &windows);
         assert!(window.is_some());
         let window = window.unwrap();
-        let data = get_maintable_data(&dm, &tables, &window, None, 200, 1);
+        let data = get_maintable_data(&dm, &tables, &window, None, None, 200, 1);
         println!("data: {:#?}", data);
         assert!(data.is_ok());
     }
