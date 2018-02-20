@@ -9,19 +9,17 @@ variables:
 before_script:
   - apt update
   - apt install -y postgresql-client
-  - find . -name '*.sh' -type f -exec sed -i 's/localhost/postgres/g' {} +
   - sh ./dbscripts/setup.sh
-  - pwd && ls -la
   - cd .. 
   - git clone https://github.com/ivanceras/sqlite
   - git clone https://github.com/ivanceras/r2d2-sqlite3
   - git clone https://github.com/ivanceras/bazaar
-  - find . -name '*.sh' -type f -exec sed -i 's/localhost/postgres/g' {} +
-  - cd  bazaar/scripts && sh setup.sh
-  - pwd && ls -la
-  - cd .. && cd ..
-  - cd diwata
+  - git clone https://github.com/ivanceras/dota-sql
+  - cd bazaar/scripts && sh setup.sh && cd .. && cd ..
+  - cd dota-sql/data && sh reimport.sh && cd .. && cd ..
   - find . -name '*.rs' -type f -exec sed -i 's/localhost/postgres/g' {} +
+  - find . -name '*.sh' -type f -exec sed -i 's/localhost/postgres/g' {} +
+  - cd diwata
   - rustup override set nightly
 
 stages:
