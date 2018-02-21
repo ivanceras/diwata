@@ -433,26 +433,30 @@ update session msg model =
                     model => Cmd.none
 
         DetailedRecordMsg (DetailedRecord.ToolbarMsg Toolbar.ClickedClose) ->
-            let
-                updatedArenaArg =
-                    case model.arenaArg of
-                        Just arenaArg ->
-                            Just (WindowArena.removeSelected arenaArg)
-
-                        Nothing ->
-                            Nothing
-            in
-            { model
-                | selectedRow = Nothing
-                , arenaArg = updatedArenaArg
-            }
-                => Route.modifyUrl (Route.WindowArena updatedArenaArg)
+            closeRecord model
 
         DetailedRecordMsg DetailedRecord.ClickedCloseButton ->
             closeRecord model
 
         DetailedRecordMsg (DetailedRecord.ToolbarMsg (Toolbar.ClickedMaximize v)) ->
-            closeRecord model
+            let
+                ( updatedSelectedRow, cmd ) =
+                    case model.selectedRow of
+                        Just selectedRow ->
+                            let
+                                ( detailedRecord, subCmd ) =
+                                    DetailedRecord.update session (DetailedRecord.Maximize v) selectedRow
+                            in
+                            ( Just detailedRecord, Cmd.map DetailedRecordMsg subCmd )
+
+                        Nothing ->
+                            ( Nothing, Cmd.none )
+            in
+            { model
+                | isDetailedRecordMaximized = v
+                , selectedRow = updatedSelectedRow
+            }
+                => cmd
 
         DetailedRecordMsg subMsg ->
             case model.selectedRow of
