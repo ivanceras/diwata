@@ -96,6 +96,7 @@ type alias ArenaArg =
     , selected : Maybe String
     , sectionTable : Maybe ( Section, TableName )
     , sectionViaLinker : Maybe TableName
+    , sectionSplit : Maybe Float
     , sectionFilter : Maybe Condition
     , sectionPage : Maybe Int
     , sectionOrder : Maybe Sort
@@ -164,13 +165,21 @@ argToString arg =
                 Nothing ->
                     appendOrder
 
-        appendSectionTable =
-            case arg.sectionTable of
-                Just ( section, tableName ) ->
-                    appendSelected ++ [ sectionToString section, tableNameToString tableName ]
+        appendSplit =
+            case arg.sectionSplit of
+                Just split ->
+                    appendSelected ++ [ "split", toString split ]
 
                 Nothing ->
                     appendSelected
+
+        appendSectionTable =
+            case arg.sectionTable of
+                Just ( section, tableName ) ->
+                    appendSplit ++ [ sectionToString section, tableNameToString tableName ]
+
+                Nothing ->
+                    appendSplit
 
         appendSectionViaLinker =
             case arg.sectionViaLinker of
@@ -200,6 +209,7 @@ initArg tableName =
     , sort = Nothing
     , selected = Nothing
     , sectionTable = Nothing
+    , sectionSplit = Nothing
     , sectionViaLinker = Nothing
     , sectionFilter = Nothing
     , sectionPage = Nothing
@@ -316,6 +326,13 @@ parseArenaArgs url =
 
                                         "select" ->
                                             { arg | selected = Just value }
+
+                                        "split" ->
+                                            { arg
+                                                | sectionSplit =
+                                                    String.toFloat value
+                                                        |> Result.toMaybe
+                                            }
 
                                         "has_many" ->
                                             { arg | sectionTable = Just ( HasMany, TableName.fromStringOrBlank value ) }

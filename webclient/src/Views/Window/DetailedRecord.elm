@@ -83,18 +83,30 @@ type FieldContainer
     | OneOne
 
 
-initialPosition : Bool -> BrowserWindow.Size -> Position
-initialPosition isMaximized browserSize =
+initialPosition : Float -> Bool -> BrowserWindow.Size -> Position
+initialPosition split isMaximized browserSize =
     let
         ( allotedWidth, allotedHeight ) =
             allotedSize isMaximized browserSize
 
         allotedMainHeight =
-            round (allotedHeight * 0.6)
+            round (allotedHeight * split)
 
         -- 60% main tab, 40% detail tabs
     in
     Position 0 allotedMainHeight
+
+
+splitPercentage : Model -> Float
+splitPercentage model =
+    let
+        ( allotedWidth, allotedHeight ) =
+            detailAllotedSize model
+
+        dragPosition =
+            toFloat model.position.y
+    in
+    dragPosition / allotedHeight
 
 
 {-|
@@ -175,12 +187,20 @@ init isMaximized settings tableName selectedRow arenaArg window =
                 _ ->
                     Nothing
 
+        splitPercentage =
+            case arenaArg.sectionSplit of
+                Just split ->
+                    split
+
+                Nothing ->
+                    0.6
+
         initHasManyTabs =
             Task.map4
                 (\browserSize detailRows lookup recordCounts ->
                     let
                         ( mainRecordHeight, detailTabHeight ) =
-                            splitTabHeights window (initialPosition isMaximized browserSize) isMaximized browserSize
+                            splitTabHeights window (initialPosition splitPercentage isMaximized browserSize) isMaximized browserSize
 
                         ( allotedWidth, allotedHeight ) =
                             allotedSize isMaximized browserSize
@@ -222,7 +242,7 @@ init isMaximized settings tableName selectedRow arenaArg window =
                 (\browserSize detailRows lookup recordCounts ->
                     let
                         ( mainRecordHeight, detailTabHeight ) =
-                            splitTabHeights window (initialPosition isMaximized browserSize) isMaximized browserSize
+                            splitTabHeights window (initialPosition splitPercentage isMaximized browserSize) isMaximized browserSize
 
                         ( allotedWidth, allotedHeight ) =
                             allotedSize isMaximized browserSize
@@ -257,7 +277,7 @@ init isMaximized settings tableName selectedRow arenaArg window =
             , window = window
             , hasManyTabs = hasManyTabs
             , indirectTabs = indirectTabs
-            , position = initialPosition isMaximized browserSize
+            , position = initialPosition splitPercentage isMaximized browserSize
             , drag = Nothing
             , browserSize = browserSize
             , arenaArg = arenaArg
@@ -349,6 +369,11 @@ createFields tab record =
         tab.fields
 
 
+detailAllotedSize : Model -> ( Float, Float )
+detailAllotedSize model =
+    allotedSize model.isMaximized model.browserSize
+
+
 allotedSize : Bool -> BrowserWindow.Size -> ( Float, Float )
 allotedSize isMaximized browserSize =
     let
@@ -397,37 +422,46 @@ splitTabHeights window position isMaximized browserSize =
             10
 
         margins =
-            20
+            0
 
         cardTotalDeductions =
             cardToolbar + margins
 
         detailTotalDeductions =
-            cardToolbar + margins + detailToolbar + detailTabNamesHeight + separatorHeight + detailColumnHeights
+            detailToolbar + detailTabNamesHeight + separatorHeight + detailColumnHeights
 
         ( width, height ) =
             allotedSize isMaximized browserSize
 
         allotedHeight =
-            if Window.hasDetails window then
-                height - detailTotalDeductions
-            else
-                height - cardTotalDeductions
-
-        detailRecordHeight =
-            allotedHeight - toFloat position.y
-
-        clampDetailRecordHeight =
-            clamp 0 allotedHeight detailRecordHeight
+            height - cardTotalDeductions
 
         mainRecordHeight =
-            if Window.hasDetails window then
-                allotedHeight - clampDetailRecordHeight
-            else
-                allotedHeight
+            toFloat position.y
 
         clampMainRecordHeight =
-            clamp 0 allotedHeight mainRecordHeight
+            clamp 0 (allotedHeight - detailTotalDeductions) mainRecordHeight
+
+        detailRecordHeight =
+            allotedHeight - clampMainRecordHeight - detailTotalDeductions
+
+        clampDetailRecordHeight =
+            clamp 0 (allotedHeight - detailTotalDeductions) detailRecordHeight
+
+        _ =
+            Debug.log "allotedHeight: " allotedHeight
+
+        _ =
+            Debug.log "cardTotalDeductions: " cardTotalDeductions
+
+        _ =
+            Debug.log "detailTotalDeductions: " detailTotalDeductions
+
+        _ =
+            Debug.log "mainRecordheight: " clampMainRecordHeight
+
+        _ =
+            Debug.log "detailRecordHeight: " clampDetailRecordHeight
     in
     ( clampMainRecordHeight, clampDetailRecordHeight )
 
@@ -854,6 +888,9 @@ updateDrag session drag model =
                         | position = getPosition model
                         , drag = Nothing
                     }
+
+                _ =
+                    Debug.log "split percentage" (splitPercentage newModel)
             in
             updateSizes session newModel
 

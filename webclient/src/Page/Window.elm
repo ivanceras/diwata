@@ -93,6 +93,12 @@ calcMainWindowSize browserSize =
     )
 
 
+{-|
+
+    Calculate the size of the main tab based on the browser window size
+    The mainTab contains the list of records in the main window
+
+-}
 calcMainTabSize : BrowserWindow.Size -> ( Float, Float )
 calcMainTabSize browserSize =
     let
