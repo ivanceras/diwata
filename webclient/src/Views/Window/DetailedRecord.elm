@@ -234,7 +234,7 @@ init isMaximized settings tableName selectedRow arenaArg window =
             , browserSize = browserSize
             , arenaArg = arenaArg
             , lookup = lookup
-            , values = createFields window.mainTab detail
+            , values = createFields window.mainTab detail.record
             , dropdownPageRequestInFlight = False
             , settings = settings
             , isMaximized = isMaximized
@@ -285,11 +285,11 @@ dropdownPageRequestNeeded lookup model =
         Nothing
 
 
-createFields : Tab -> RecordDetail -> List Field.Model
-createFields tab detail =
+createFields : Tab -> Record -> List Field.Model
+createFields tab record =
     List.map
         (\field ->
-            Field.init InCard detail.record tab field
+            Field.init InCard record tab field
         )
         tab.fields
 
@@ -413,11 +413,9 @@ view model =
     in
     div []
         [ div
-            [ class "toolbar-area"
-            ]
+            [ class "toolbar-area" ]
             [ div
-                [ class "detail-record-window-cmd-buttons"
-                ]
+                [ class "detail-record-window-cmd-buttons" ]
                 [ div
                     [ class "window-cmd-close"
                     , onClick ClickedCloseButton
@@ -431,7 +429,7 @@ view model =
             [ class "main-tab-selected"
             , style [ ( "height", px mainRecordHeight ) ]
             ]
-            [ cardViewRecord model (Just mainSelectedRecord) mainTab
+            [ cardViewRecord model model.values mainTab
             , viewOneOneTabs model
             ]
         , viewIf (Window.hasDetails model.window)
@@ -464,28 +462,42 @@ viewOneOneTabs model =
 
 
 oneOneCardView : Model -> RecordDetail -> Tab -> Html Msg
-oneOneCardView model detail tab =
+oneOneCardView model detail oneOneTab =
     let
-        record =
-            RecordDetail.oneOneRecordOfTable detail tab.tableName
+        oneOneRecord =
+            RecordDetail.oneOneRecordOfTable detail oneOneTab.tableName
+
+        window =
+            model.window
+
+        _ =
+            Debug.log "one one record" oneOneRecord
 
         ( allotedWidth, allotedHeight ) =
             allotedSize model.isMaximized model.browserSize
 
         cardWidth =
             allotedWidth
+
+        oneOneValues =
+            case oneOneRecord of
+                Just oneOneRecord ->
+                    createFields oneOneTab oneOneRecord
+
+                Nothing ->
+                    []
     in
     div
         [ class "one-one-tab"
         , style [ ( "width", px cardWidth ) ]
         ]
-        [ div [ class "one-one-tab-separator" ] [ text tab.name ]
-        , cardViewRecord model record tab
+        [ div [ class "one-one-tab-separator" ] [ text oneOneTab.name ]
+        , cardViewRecord model oneOneValues oneOneTab
         ]
 
 
-cardViewRecord : Model -> Maybe Record -> Tab -> Html Msg
-cardViewRecord model record tab =
+cardViewRecord : Model -> List Field.Model -> Tab -> Html Msg
+cardViewRecord model values tab =
     let
         lookup =
             model.lookup
@@ -526,7 +538,7 @@ cardViewRecord model record tab =
                 (\value ->
                     viewFieldInCard fieldLabelWidth lookup value
                 )
-                model.values
+                values
             )
         ]
 

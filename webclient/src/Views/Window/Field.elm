@@ -1,35 +1,35 @@
 module Views.Window.Field
     exposing
-        ( init
-        , Model
-        , view
+        ( Model
         , Msg(..)
-        , update
         , dropdownPageRequestNeeded
+        , init
         , isModified
+        , update
+        , view
         )
 
-import Data.Window.Value as Value exposing (Value(..), ArrayValue(..))
-import Html exposing (..)
-import Data.Window.Widget as Widget exposing (ControlWidget, Widget(..), DropdownInfo)
+import Data.Window.DataType as DataType exposing (DataType)
+import Data.Window.Field as Field exposing (Field)
+import Data.Window.Lookup as Lookup exposing (Lookup)
+import Data.Window.Record as Record exposing (Record)
+import Data.Window.Tab as Tab exposing (Tab)
+import Data.Window.TableName as TableName exposing (TableName)
+import Data.Window.Value as Value exposing (ArrayValue(..), Value(..))
+import Data.Window.Widget as Widget exposing (ControlWidget, DropdownInfo, Widget(..))
+import Data.WindowArena as WindowArena
 import Date
 import Date.Format
-import Widgets.Tagger as Tagger
-import Data.Window.Field as Field exposing (Field)
-import Data.Window.DataType as DataType exposing (DataType)
-import Data.Window.Tab as Tab exposing (Tab)
-import Data.Window.Record as Record exposing (Record)
 import Dict
+import Html exposing (..)
+import Html.Attributes exposing (checked, class, classList, for, id, name, selected, src, style, type_, value)
+import Html.Events exposing (onCheck, onClick, onInput)
 import Route exposing (Route)
-import Data.WindowArena as WindowArena
-import Data.Window.Lookup as Lookup exposing (Lookup)
 import Util exposing ((=>), Scroll, px)
+import Views.Window.Presentation as Presentation exposing (Presentation(..))
 import Widgets.DropdownDisplay as DropdownDisplay
 import Widgets.FixDropdown as FixDropdown
-import Views.Window.Presentation as Presentation exposing (Presentation(..))
-import Data.Window.TableName as TableName exposing (TableName)
-import Html.Attributes exposing (id, src, for, name, selected, checked, style, class, classList, type_, value)
-import Html.Events exposing (onInput, onCheck, onClick)
+import Widgets.Tagger as Tagger
 
 
 type alias Model =
@@ -72,15 +72,15 @@ init presentation record tab field =
         widget =
             createWidget presentation record tab field maybeValue
     in
-        { tab = tab
-        , field = field
-        , presentation = presentation
-        , record = record
-        , widget = widget
-        , value = maybeValue
-        , editValue = maybeValue
-        , dropdownInfo = dropdownInfo
-        }
+    { tab = tab
+    , field = field
+    , presentation = presentation
+    , record = record
+    , widget = widget
+    , value = maybeValue
+    , editValue = maybeValue
+    , dropdownInfo = dropdownInfo
+    }
 
 
 view : Lookup -> Model -> Html Msg
@@ -154,8 +154,8 @@ viewWidget lookup model =
                         Nothing ->
                             list
             in
-                DropdownDisplay.view listWithSelected dropdown
-                    |> Html.map (DropdownDisplayMsg dropdown)
+            DropdownDisplay.view listWithSelected dropdown
+                |> Html.map (DropdownDisplayMsg dropdown)
 
 
 createWidget : Presentation -> Record -> Tab -> Field -> Maybe Value -> Widget
@@ -195,19 +195,19 @@ createWidget presentation record tab field maybeValue =
                         ( fieldWidth, fieldHeight ) =
                             Field.shortOrLongWidth field
                     in
-                        case fieldWidth of
-                            Field.Short ->
-                                ( 200, fieldHeight )
+                    case fieldWidth of
+                        Field.Short ->
+                            ( 200, fieldHeight )
 
-                            Field.Long ->
-                                ( 1000, fieldHeight )
+                        Field.Long ->
+                            ( 1000, fieldHeight )
 
                 InList ->
                     let
                         width =
                             Field.widgetWidthListValue field
                     in
-                        ( width, 1 )
+                    ( width, 1 )
 
         styles =
             style
@@ -215,276 +215,276 @@ createWidget presentation record tab field maybeValue =
                 , ( "width", px widgetWidth )
                 ]
     in
-        case widget of
-            Textbox ->
-                HtmlWidget
-                    (input
-                        [ type_ "text"
-                        , styles
-                        , value valueString
-                        , onInput StringValueChanged
-                        ]
-                        []
-                    )
+    case widget of
+        Textbox ->
+            HtmlWidget
+                (input
+                    [ type_ "text"
+                    , styles
+                    , value valueString
+                    , onInput StringValueChanged
+                    ]
+                    []
+                )
 
-            PrimaryUrlLink ->
-                let
-                    tableName =
-                        tab.tableName
+        PrimaryUrlLink ->
+            let
+                tableName =
+                    tab.tableName
 
-                    recordId =
-                        Tab.recordId record tab
+                recordId =
+                    Tab.recordId record tab
 
-                    recordIdString =
-                        Record.idToString recordId
-                in
-                    case presentation of
-                        InList ->
-                            HtmlWidget
-                                (div
-                                    [ class "primary-link-wrapper"
-                                    , styles
-                                    ]
-                                    [ a
-                                        [ class "primary-link"
-                                        , onClick (PrimaryLinkClicked tableName recordIdString)
-                                        , Route.href (Route.WindowArena (Just (WindowArena.initArgWithRecordId tableName recordIdString)))
-                                        ]
-                                        [ text valueString ]
-                                    ]
-                                )
-
-                        InCard ->
-                            HtmlWidget
-                                (input
-                                    [ type_ "text"
-                                    , styles
-                                    , value valueString
-                                    , onInput StringValueChanged
-                                    ]
-                                    []
-                                )
-
-            MultilineText ->
-                case presentation of
-                    InCard ->
-                        HtmlWidget
-                            (textarea
-                                [ styles
-                                , value valueString
-                                , style [ ( "height", px widgetHeight ) ]
-                                , style [ ( "min-height", px 24 ) ]
-                                , style [ ( "min-width", px 100 ) ]
-                                , onInput StringValueChanged
-                                ]
-                                []
-                            )
-
-                    InList ->
-                        HtmlWidget
-                            (input
-                                [ type_ "text"
-                                , styles
-                                , value valueString
-                                , onInput StringValueChanged
-                                ]
-                                []
-                            )
-
-            UuidTextbox ->
-                HtmlWidget
-                    (input
-                        [ type_ "text"
-                        , styles
-                        , value valueString
-                        , class "uuid-textbox"
-                        , onInput StringValueChanged
-                        ]
-                        []
-                    )
-
-            Password ->
-                HtmlWidget
-                    (input
-                        [ type_ "password"
-                        , styles
-                        , value valueString
-                        , onInput StringValueChanged
-                        ]
-                        []
-                    )
-
-            Checkbox ->
-                let
-                    viewCheckbox =
-                        case maybeValue of
-                            Just argValue ->
-                                let
-                                    checkedValue =
-                                        case argValue of
-                                            Value.Bool v ->
-                                                checked v
-
-                                            _ ->
-                                                checked False
-                                in
-                                    input
-                                        [ type_ "checkbox"
-                                        , checkedValue
-                                        , onCheck BoolValueChanged
-                                        ]
-                                        []
-
-                            Nothing ->
-                                input
-                                    [ type_ "checkbox"
-                                    , onCheck BoolValueChanged
-                                    ]
-                                    []
-                in
+                recordIdString =
+                    Record.idToString recordId
+            in
+            case presentation of
+                InList ->
                     HtmlWidget
                         (div
-                            [ class "checkbox-value"
+                            [ class "primary-link-wrapper"
                             , styles
                             ]
-                            [ viewCheckbox ]
+                            [ a
+                                [ class "primary-link"
+                                , onClick (PrimaryLinkClicked tableName recordIdString)
+                                , Route.href (Route.WindowArena (Just (WindowArena.initArgWithRecordId tableName recordIdString)))
+                                ]
+                                [ text valueString ]
+                            ]
                         )
 
-            DateTimePicker ->
-                HtmlWidget
-                    (viewDatePicker styles maybeValue)
-
-            DatePicker ->
-                HtmlWidget
-                    (viewDatePicker styles maybeValue)
-
-            Widget.FixDropdown list ->
-                let
-                    fixDropdownModel =
-                        FixDropdown.init alignment widgetWidth maybeValueString list
-                in
-                    FixDropdown fixDropdownModel
-
-            TagSelection ->
-                let
-                    tags =
-                        case maybeValue of
-                            Just value ->
-                                case value of
-                                    Array arrayValue ->
-                                        case arrayValue of
-                                            TextArray list ->
-                                                list
-
-                                            IntArray list ->
-                                                List.map toString list
-
-                                            FloatArray list ->
-                                                List.map toString list
-
-                                    _ ->
-                                        []
-
-                            Nothing ->
-                                []
-                in
+                InCard ->
                     HtmlWidget
-                        (Tagger.view styles tags)
+                        (input
+                            [ type_ "text"
+                            , styles
+                            , value valueString
+                            , onInput StringValueChanged
+                            ]
+                            []
+                        )
 
-            FileUpload ->
-                let
-                    _ =
-                        Debug.log "fileupload for" valueString
-                in
-                    case presentation of
-                        InList ->
-                            HtmlWidget
-                                (div
-                                    [ class "row-value-image"
-                                    , styles
-                                    ]
-                                    [ img [ src valueString ] []
-                                    ]
-                                )
+        MultilineText ->
+            case presentation of
+                InCard ->
+                    HtmlWidget
+                        (textarea
+                            [ styles
+                            , value valueString
+                            , style [ ( "height", px widgetHeight ) ]
+                            , style [ ( "min-height", px 24 ) ]
+                            , style [ ( "min-width", px 100 ) ]
+                            , onInput StringValueChanged
+                            ]
+                            []
+                        )
 
-                        InCard ->
-                            HtmlWidget
-                                (div
-                                    [ class "card-value-image"
-                                    , styles
-                                    ]
-                                    [ img [ src valueString ] []
-                                    ]
-                                )
+                InList ->
+                    HtmlWidget
+                        (input
+                            [ type_ "text"
+                            , styles
+                            , value valueString
+                            , onInput StringValueChanged
+                            ]
+                            []
+                        )
 
-            Radiogroup list ->
-                case presentation of
-                    InCard ->
-                        HtmlWidget
-                            (div []
-                                (List.map
-                                    (\choice ->
-                                        div []
-                                            [ input
-                                                [ type_ "radio"
-                                                , name field.name
-                                                , value choice
-                                                , checked (choice == valueString)
-                                                , id choice
-                                                ]
-                                                []
-                                            , label [ for choice ]
-                                                [ text choice ]
+        UuidTextbox ->
+            HtmlWidget
+                (input
+                    [ type_ "text"
+                    , styles
+                    , value valueString
+                    , class "uuid-textbox"
+                    , onInput StringValueChanged
+                    ]
+                    []
+                )
+
+        Password ->
+            HtmlWidget
+                (input
+                    [ type_ "password"
+                    , styles
+                    , value valueString
+                    , onInput StringValueChanged
+                    ]
+                    []
+                )
+
+        Checkbox ->
+            let
+                viewCheckbox =
+                    case maybeValue of
+                        Just argValue ->
+                            let
+                                checkedValue =
+                                    case argValue of
+                                        Value.Bool v ->
+                                            checked v
+
+                                        _ ->
+                                            checked False
+                            in
+                            input
+                                [ type_ "checkbox"
+                                , checkedValue
+                                , onCheck BoolValueChanged
+                                ]
+                                []
+
+                        Nothing ->
+                            input
+                                [ type_ "checkbox"
+                                , onCheck BoolValueChanged
+                                ]
+                                []
+            in
+            HtmlWidget
+                (div
+                    [ class "checkbox-value"
+                    , styles
+                    ]
+                    [ viewCheckbox ]
+                )
+
+        DateTimePicker ->
+            HtmlWidget
+                (viewDatePicker styles maybeValue)
+
+        DatePicker ->
+            HtmlWidget
+                (viewDatePicker styles maybeValue)
+
+        Widget.FixDropdown list ->
+            let
+                fixDropdownModel =
+                    FixDropdown.init alignment widgetWidth maybeValueString list
+            in
+            FixDropdown fixDropdownModel
+
+        TagSelection ->
+            let
+                tags =
+                    case maybeValue of
+                        Just value ->
+                            case value of
+                                Array arrayValue ->
+                                    case arrayValue of
+                                        TextArray list ->
+                                            list
+
+                                        IntArray list ->
+                                            List.map toString list
+
+                                        FloatArray list ->
+                                            List.map toString list
+
+                                _ ->
+                                    []
+
+                        Nothing ->
+                            []
+            in
+            HtmlWidget
+                (Tagger.view styles tags)
+
+        FileUpload ->
+            let
+                _ =
+                    Debug.log "fileupload for" valueString
+            in
+            case presentation of
+                InList ->
+                    HtmlWidget
+                        (div
+                            [ class "row-value-image"
+                            , styles
+                            ]
+                            [ img [ src valueString ] []
+                            ]
+                        )
+
+                InCard ->
+                    HtmlWidget
+                        (div
+                            [ class "card-value-image"
+                            , styles
+                            ]
+                            [ img [ src valueString ] []
+                            ]
+                        )
+
+        Radiogroup list ->
+            case presentation of
+                InCard ->
+                    HtmlWidget
+                        (div []
+                            (List.map
+                                (\choice ->
+                                    div []
+                                        [ input
+                                            [ type_ "radio"
+                                            , name field.name
+                                            , value choice
+                                            , checked (choice == valueString)
+                                            , id choice
                                             ]
-                                    )
-                                    list
+                                            []
+                                        , label [ for choice ]
+                                            [ text choice ]
+                                        ]
                                 )
+                                list
                             )
+                        )
 
-                    InList ->
-                        let
-                            listWithBlank =
-                                "" :: list
-                        in
-                            HtmlWidget
-                                (select [ styles ]
-                                    (List.map
-                                        (\v ->
-                                            let
-                                                isSelected =
-                                                    case maybeValue of
-                                                        Just fieldValue ->
-                                                            v == (Value.valueToString fieldValue)
+                InList ->
+                    let
+                        listWithBlank =
+                            "" :: list
+                    in
+                    HtmlWidget
+                        (select [ styles ]
+                            (List.map
+                                (\v ->
+                                    let
+                                        isSelected =
+                                            case maybeValue of
+                                                Just fieldValue ->
+                                                    v == Value.valueToString fieldValue
 
-                                                        Nothing ->
-                                                            False
-                                            in
-                                                option
-                                                    [ value v
-                                                    , selected isSelected
-                                                    ]
-                                                    [ text v ]
-                                        )
-                                        listWithBlank
-                                    )
+                                                Nothing ->
+                                                    False
+                                    in
+                                    option
+                                        [ value v
+                                        , selected isSelected
+                                        ]
+                                        [ text v ]
                                 )
+                                listWithBlank
+                            )
+                        )
 
-            TableLookupDropdown ->
-                let
-                    dropdownModel =
-                        DropdownDisplay.init alignment widgetWidth maybeValueString
-                in
-                    TableDropdown dropdownModel
+        TableLookupDropdown ->
+            let
+                dropdownModel =
+                    DropdownDisplay.init alignment widgetWidth maybeValueString
+            in
+            TableDropdown dropdownModel
 
-            AutocompleteDropdown ->
-                let
-                    dropdownModel =
-                        DropdownDisplay.init alignment widgetWidth maybeValueString
-                in
-                    TableDropdown dropdownModel
+        AutocompleteDropdown ->
+            let
+                dropdownModel =
+                    DropdownDisplay.init alignment widgetWidth maybeValueString
+            in
+            TableDropdown dropdownModel
 
-            _ ->
-                Debug.crash ("unable to handle widget:" ++ toString controlWidget)
+        _ ->
+            Debug.crash ("unable to handle widget:" ++ toString controlWidget)
 
 
 valueToString : Maybe Value -> String
@@ -514,47 +514,47 @@ listRecordToListString dropdownInfo lookupRecords =
         pk =
             dropdownInfo.display.pk
     in
-        List.map
-            (\record ->
-                let
-                    displayValues : List Value
-                    displayValues =
-                        List.filterMap
-                            (\displayColumn ->
-                                Dict.get displayColumn.name record
-                            )
-                            displayColumns
+    List.map
+        (\record ->
+            let
+                displayValues : List Value
+                displayValues =
+                    List.filterMap
+                        (\displayColumn ->
+                            Dict.get displayColumn.name record
+                        )
+                        displayColumns
 
-                    displayString =
-                        if List.isEmpty displayValues then
-                            ""
-                        else
-                            List.map
-                                (\value ->
-                                    Value.valueToString value
-                                )
-                                displayValues
-                                |> String.join separator
-
-                    displayPk : List Value
-                    displayPk =
-                        List.filterMap
-                            (\pk ->
-                                Dict.get pk.name record
-                            )
-                            pk
-
-                    displayPkString =
+                displayString =
+                    if List.isEmpty displayValues then
+                        ""
+                    else
                         List.map
                             (\value ->
                                 Value.valueToString value
                             )
-                            displayPk
-                            |> String.join " "
-                in
-                    ( displayPkString, displayString )
-            )
-            lookupRecords
+                            displayValues
+                            |> String.join separator
+
+                displayPk : List Value
+                displayPk =
+                    List.filterMap
+                        (\pk ->
+                            Dict.get pk.name record
+                        )
+                        pk
+
+                displayPkString =
+                    List.map
+                        (\value ->
+                            Value.valueToString value
+                        )
+                        displayPk
+                        |> String.join " "
+            in
+            ( displayPkString, displayString )
+        )
+        lookupRecords
 
 
 dropdownModel : Model -> Maybe DropdownDisplay.Model
@@ -583,13 +583,13 @@ dropdownPageRequestNeeded lookup model =
                         list =
                             listRecordToListString dropdownInfo recordList
                     in
-                        if
-                            DropdownDisplay.pageRequestNeeded list dropdown
-                                && not (Lookup.hasReachedLastPage sourceTable lookup)
-                        then
-                            Just sourceTable
-                        else
-                            Nothing
+                    if
+                        DropdownDisplay.pageRequestNeeded list dropdown
+                            && not (Lookup.hasReachedLastPage sourceTable lookup)
+                    then
+                        Just sourceTable
+                    else
+                        Nothing
 
                 Nothing ->
                     Nothing
@@ -605,6 +605,9 @@ viewDatePicker styles maybeValue =
             case maybeValue of
                 Just value ->
                     case value of
+                        Nil ->
+                            ""
+
                         Value.Timestamp v ->
                             Date.Format.format "%Y-%m-%d" v
 
@@ -620,12 +623,12 @@ viewDatePicker styles maybeValue =
                 Nothing ->
                     ""
     in
-        input
-            [ type_ "date"
-            , styles
-            , value dateString
-            ]
-            []
+    input
+        [ type_ "date"
+        , styles
+        , value dateString
+        ]
+        []
 
 
 type Msg
@@ -669,11 +672,11 @@ update msg model =
                         _ =
                             Debug.log "dropdownValue" dropdownValue
                     in
-                        { model
-                            | widget = TableDropdown newDropdown
-                            , editValue = dropdownValue
-                        }
-                            => Cmd.map (DropdownDisplayMsg newDropdown) subCmd
+                    { model
+                        | widget = TableDropdown newDropdown
+                        , editValue = dropdownValue
+                    }
+                        => Cmd.map (DropdownDisplayMsg newDropdown) subCmd
 
                 _ ->
                     model => Cmd.none
@@ -685,8 +688,8 @@ update msg model =
                         ( newFix, subCmd ) =
                             FixDropdown.update msg fixDropdown
                     in
-                        { model | widget = FixDropdown newFix }
-                            => Cmd.map (FixDropdownMsg newFix) subCmd
+                    { model | widget = FixDropdown newFix }
+                        => Cmd.map (FixDropdownMsg newFix) subCmd
 
                 _ ->
                     model => Cmd.none
@@ -696,38 +699,38 @@ update msg model =
                 value =
                     Value.Text v
             in
-                { model | editValue = Just value }
-                    => Cmd.none
+            { model | editValue = Just value }
+                => Cmd.none
 
         BoolValueChanged v ->
             let
                 value =
                     Value.Bool v
             in
-                { model | editValue = Just value }
-                    => Cmd.none
+            { model | editValue = Just value }
+                => Cmd.none
 
         ResetChanges ->
             let
                 updatedWidget =
                     updateWidgetValue model model.value
             in
-                { model
-                    | editValue = model.value
-                    , widget = updatedWidget
-                }
-                    => Cmd.none
+            { model
+                | editValue = model.value
+                , widget = updatedWidget
+            }
+                => Cmd.none
 
         SetValue value ->
             let
                 updatedWidget =
                     updateWidgetValue model (Just value)
             in
-                { model
-                    | editValue = Just value
-                    , widget = updatedWidget
-                }
-                    => Cmd.none
+            { model
+                | editValue = Just value
+                , widget = updatedWidget
+            }
+                => Cmd.none
 
         -- this should be listened in the windowArena
         PrimaryLinkClicked tableName recordIdString ->
@@ -752,4 +755,4 @@ updateWidgetValue model value =
         field =
             model.field
     in
-        createWidget presentation record tab field value
+    createWidget presentation record tab field value
