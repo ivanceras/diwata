@@ -1,21 +1,21 @@
 module Route exposing (Route(..), fromLocation, href, modifyUrl)
 
-import Data.Window as Window
 import Data.User as User exposing (Username)
-import Html exposing (Attribute)
-import Html.Attributes as Attr
-import Navigation exposing (Location)
-import UrlParser as Url exposing ((</>), Parser, oneOf, parseHash, s, string)
+import Data.Window as Window
 import Data.Window.GroupedWindow as GroupedWindow exposing (WindowName)
 import Data.Window.TableName as TableName
     exposing
         ( TableName
-        , tableNameToString
-        , tableNameParser
         , maybeTableNameParser
         , maybeTableNameToString
+        , tableNameParser
+        , tableNameToString
         )
-import Data.WindowArena as WindowArena exposing (parseArenaArgs, ArenaArg, argToString)
+import Data.WindowArena as WindowArena exposing (ArenaArg, argToString, parseArenaArgs)
+import Html exposing (Attribute)
+import Html.Attributes as Attr
+import Navigation exposing (Location)
+import UrlParser as Url exposing ((</>), Parser, oneOf, parseHash, s, string)
 
 
 -- ROUTING --
@@ -69,7 +69,7 @@ routeToString page =
                 Settings ->
                     [ "settings" ]
     in
-        "#/" ++ String.join "/" pieces
+    "#/" ++ String.join "/" pieces
 
 
 
@@ -95,9 +95,9 @@ fromLocation location =
             arenaArgs =
                 parseArenaArgs location.hash
         in
-            case arenaArgs of
-                Just arenaArgs ->
-                    Just (WindowArena (Just arenaArgs))
+        case arenaArgs of
+            Just arenaArgs ->
+                Just (WindowArena (Just arenaArgs))
 
-                Nothing ->
-                    parseHash route location
+            Nothing ->
+                parseHash route location

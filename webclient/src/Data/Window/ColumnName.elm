@@ -1,4 +1,4 @@
-module Data.Window.ColumnName exposing (ColumnName, decoder, completeName)
+module Data.Window.ColumnName exposing (ColumnName, completeName, decoder)
 
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Extra

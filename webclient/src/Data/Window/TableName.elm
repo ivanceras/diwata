@@ -1,13 +1,13 @@
 module Data.Window.TableName
     exposing
         ( TableName
-        , tableNameToString
-        , tableNameParser
         , decoder
-        , maybeTableNameParser
-        , maybeTableNameToString
         , fromString
         , fromStringOrBlank
+        , maybeTableNameParser
+        , maybeTableNameToString
+        , tableNameParser
+        , tableNameToString
         )
 
 import Json.Decode as Decode exposing (Decoder)
@@ -62,11 +62,11 @@ fromString arg =
             name =
                 String.join "." <| Maybe.withDefault [] <| List.tail splinters
         in
-            Just
-                { name = name
-                , schema = schema
-                , alias = Nothing
-                }
+        Just
+            { name = name
+            , schema = schema
+            , alias = Nothing
+            }
     else
         Just
             { name = arg
@@ -110,11 +110,11 @@ tableNameParser : UrlParser.Parser (TableName -> a) a
 tableNameParser =
     UrlParser.custom "TABLENAME" <|
         \segment ->
-            (parseTableName segment)
+            parseTableName segment
 
 
 maybeTableNameParser : UrlParser.Parser (Maybe TableName -> a) a
 maybeTableNameParser =
     UrlParser.custom "MAYBE_TABLENAME" <|
         \segment ->
-            (maybeParseTableName segment)
+            maybeParseTableName segment

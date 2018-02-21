@@ -1,17 +1,17 @@
 module Data.Window.RecordDetail
     exposing
         ( RecordDetail
+        , contentInIndirectTable
+        , contentInTable
         , decoder
         , oneOneRecordOfTable
-        , contentInTable
-        , contentInIndirectTable
         )
 
+import Data.Window.Record as Record exposing (Record, Rows)
+import Data.Window.TableName as TableName exposing (TableName)
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Extra
 import Json.Decode.Pipeline as Pipeline exposing (decode, required)
-import Data.Window.Record as Record exposing (Record, Rows)
-import Data.Window.TableName as TableName exposing (TableName)
 
 
 type alias RecordDetail =

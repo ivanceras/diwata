@@ -1,18 +1,18 @@
 module Data.Window.Lookup
     exposing
         ( Lookup(..)
-        , decoder
-        , tableLookup
         , addPage
+        , decoder
         , hasReachedLastPage
         , lookupStatus
+        , tableLookup
         )
 
+import Data.Window.Record as Record exposing (Record, Rows)
+import Data.Window.TableName as TableName exposing (TableName)
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Extra
 import Json.Decode.Pipeline as Pipeline exposing (decode)
-import Data.Window.TableName as TableName exposing (TableName)
-import Data.Window.Record as Record exposing (Record, Rows)
 
 
 type Lookup
@@ -31,7 +31,7 @@ decoder : Decoder Lookup
 decoder =
     Decode.map4 TableLookup
         (Decode.index 0 TableName.decoder)
-        (Decode.index 1 (Record.rowsDecoder)
+        (Decode.index 1 Record.rowsDecoder
             |> Decode.andThen (\rows -> decode (Record.rowsToRecordList rows))
         )
         (decode 1)
@@ -62,7 +62,7 @@ addPage tableName pageRecords lookup =
                 )
                 lookupList
     in
-        Lookup updatedLookupList
+    Lookup updatedLookupList
 
 
 hasReachedLastPage : TableName -> Lookup -> Bool
@@ -76,12 +76,12 @@ hasReachedLastPage tableName (Lookup lookup) =
                 lookup
                 |> List.head
     in
-        case tableLookup of
-            Just tableLookup ->
-                tableLookup.reachedLastPage
+    case tableLookup of
+        Just tableLookup ->
+            tableLookup.reachedLastPage
 
-            Nothing ->
-                False
+        Nothing ->
+            False
 
 
 lookupStatus : Lookup -> List ( TableName, Bool )
@@ -106,9 +106,9 @@ tableLookup tableName (Lookup lookup) =
                 )
                 lookup
     in
-        case List.head records of
-            Just records ->
-                records
+    case List.head records of
+        Just records ->
+            records
 
-            Nothing ->
-                ( 1, [] )
+        Nothing ->
+            ( 1, [] )

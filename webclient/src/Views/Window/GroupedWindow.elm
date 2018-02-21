@@ -21,26 +21,26 @@ overkill, so we use simpler APIs instead.
 
 -}
 
-import Data.Window as Window exposing (Window, Tag)
-import Data.Window.GroupedWindow as GroupedWindow exposing (GroupedWindow, WindowName)
-import Data.Window.TableName as TableName exposing (TableName, tableNameToString)
 import Data.AuthToken as AuthToken exposing (AuthToken)
 import Data.Session as Session exposing (Session)
 import Data.User as User exposing (Username)
+import Data.Window as Window exposing (Tag, Window)
+import Data.Window.GroupedWindow as GroupedWindow exposing (GroupedWindow, WindowName)
+import Data.Window.TableName as TableName exposing (TableName, tableNameToString)
+import Data.WindowArena as WindowArena
 import Dom.Scroll
 import Html exposing (..)
 import Html.Attributes exposing (attribute, class, classList, href, id, placeholder, src)
 import Html.Events exposing (onClick)
 import Http
 import Request.Window
+import Route exposing (Route)
 import SelectList exposing (Position(..), SelectList)
+import Settings exposing (Settings)
 import Task exposing (Task)
 import Util exposing ((=>), onClickStopPropagation, pair, viewIf)
 import Views.Errors as Errors
 import Views.Page exposing (bodyId)
-import Route exposing (Route)
-import Data.WindowArena as WindowArena
-import Settings exposing (Settings)
 
 
 -- MODEL --
@@ -73,8 +73,8 @@ init session activeWindow =
                 , isLoading = False
                 }
     in
-        fetch (Maybe.map .token session.user) activeWindow
-            |> Task.map toModel
+    fetch (Maybe.map .token session.user) activeWindow
+        |> Task.map toModel
 
 
 
@@ -101,18 +101,18 @@ viewWindowName activeWindow windowName =
         isView =
             windowName.isView
     in
-        a
-            [ class "nav-group-item"
-            , classList [ ( "active", isActive ), ( "is-view-active", isView && isActive ) ]
-            , Route.href (Route.WindowArena (Just (WindowArena.initArg windowName.tableName)))
+    a
+        [ class "nav-group-item"
+        , classList [ ( "active", isActive ), ( "is-view-active", isView && isActive ) ]
+        , Route.href (Route.WindowArena (Just (WindowArena.initArg windowName.tableName)))
+        ]
+        [ span
+            [ class "icon icon-list"
+            , classList [ ( "is-view-icon", isView ) ]
             ]
-            [ span
-                [ class "icon icon-list"
-                , classList [ ( "is-view-icon", isView ) ]
-                ]
-                []
-            , text windowName.name
-            ]
+            []
+        , text windowName.name
+        ]
 
 
 viewWindowGroup : Maybe TableName -> GroupedWindow -> Html msg

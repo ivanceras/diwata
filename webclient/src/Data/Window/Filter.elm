@@ -1,20 +1,20 @@
 module Data.Window.Filter
     exposing
         ( Condition
-        , parse
-        , toString
         , get
-        , split
+        , parse
         , put
         , remove
+        , split
+        , toString
         )
 
-import Dict exposing (Dict)
+import Array
 import Data.Window.ColumnName as ColumnName exposing (ColumnName)
 import Data.Window.Value as Value exposing (Value)
-import Array
-import Json.Decode as Decode exposing (Decoder)
+import Dict exposing (Dict)
 import Http
+import Json.Decode as Decode exposing (Decoder)
 
 
 type alias Condition =
@@ -27,7 +27,7 @@ get columnName condition =
         columnString =
             ColumnName.completeName columnName
     in
-        Dict.get columnString condition
+    Dict.get columnString condition
 
 
 split : Maybe String -> ( Maybe String, Maybe String )
@@ -47,7 +47,7 @@ split arg =
                 value2 =
                     Array.get 1 arr
             in
-                ( value1, value2 )
+            ( value1, value2 )
 
         Nothing ->
             ( Nothing, Nothing )
@@ -91,15 +91,15 @@ parse arg =
                                 Nothing ->
                                     Nothing
                     in
-                        Maybe.map
-                            (\value ->
-                                ( column, value )
-                            )
-                            value
+                    Maybe.map
+                        (\value ->
+                            ( column, value )
+                        )
+                        value
                 )
                 splinters
     in
-        Dict.fromList condition
+    Dict.fromList condition
 
 
 toString : Condition -> String
@@ -108,17 +108,17 @@ toString condition =
         kv =
             Dict.toList condition
     in
-        List.filterMap
-            (\( k, v ) ->
-                case v of
-                    "" ->
-                        Nothing
+    List.filterMap
+        (\( k, v ) ->
+            case v of
+                "" ->
+                    Nothing
 
-                    v ->
-                        Just (k ++ "=" ++ v)
-            )
-            kv
-            |> String.join "&"
+                v ->
+                    Just (k ++ "=" ++ v)
+        )
+        kv
+        |> String.join "&"
 
 
 put : ColumnName -> String -> Condition -> Condition
@@ -127,7 +127,7 @@ put columnName searchValue oldCondition =
         columnString =
             ColumnName.completeName columnName
     in
-        Dict.insert columnString searchValue oldCondition
+    Dict.insert columnString searchValue oldCondition
 
 
 remove : ColumnName -> Condition -> Condition
@@ -136,4 +136,4 @@ remove columnName oldCondition =
         columnString =
             ColumnName.completeName columnName
     in
-        Dict.remove columnString oldCondition
+    Dict.remove columnString oldCondition

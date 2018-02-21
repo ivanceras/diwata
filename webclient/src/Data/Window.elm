@@ -1,19 +1,19 @@
 module Data.Window
     exposing
-        ( Window
-        , Slug
+        ( Slug
         , Tag
+        , Window
+        , baseWindowDecoder
+        , hasDetails
         , slugParser
         , slugToString
         , tagDecoder
         , tagToString
-        , baseWindowDecoder
-        , hasDetails
         )
 
 import Data.Window.Author as Author exposing (Author)
-import Data.Window.TableName as TableName exposing (TableName)
 import Data.Window.Tab as Tab exposing (Tab)
+import Data.Window.TableName as TableName exposing (TableName)
 import Date exposing (Date)
 import Html exposing (Attribute, Html)
 import Json.Decode as Decode exposing (Decoder)
@@ -35,7 +35,7 @@ This definition for `Window` means we can write:
 viewWindow : Window Body -> Html msg
 viewFeed : List (Window ()) -> Html msg
 
-This indicates that `viewWindow` requires an window *with a `body` present*,
+This indicates that `viewWindow` requires an window _with a `body` present_,
 wereas `viewFeed` accepts windows with no bodies. (We could also have written
 it as `List (Window a)` to specify that feeds can accept either windows that
 have `body` present or not. Either work, given that feeds do not attempt to

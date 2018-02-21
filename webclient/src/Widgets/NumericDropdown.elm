@@ -1,11 +1,11 @@
-module Widgets.NumericDropdown exposing (view, init, Msg(..), Model, update, pageRequestNeeded)
+module Widgets.NumericDropdown exposing (Model, Msg(..), init, pageRequestNeeded, update, view)
 
+import Data.Window.Field as Field
+import Data.Window.Widget as Widget exposing (Alignment)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
-import Util exposing ((=>), px, onScroll, Scroll, viewIf)
-import Data.Window.Field as Field
-import Data.Window.Widget as Widget exposing (Alignment)
+import Util exposing ((=>), Scroll, onScroll, px, viewIf)
 
 
 type alias Model =
@@ -36,7 +36,7 @@ estimatedListHeight list =
         optionLen =
             List.length list
     in
-        optionHeight * toFloat optionLen
+    optionHeight * toFloat optionLen
 
 
 isScrolledBottom : List Int -> Model -> Bool
@@ -54,8 +54,8 @@ isScrolledBottom list model =
         bottomAllowance =
             100.0
     in
-        --Debug.log ("scrollTop(" ++ toString scrollTop ++ ") + model.height(" ++ toString dropdownHeight ++ ") > contentHeight(" ++ toString contentHeight ++ ") - bottomAllowance(" ++ toString bottomAllowance ++ ")")
-        (scrollTop + dropdownHeight > contentHeight - bottomAllowance)
+    --Debug.log ("scrollTop(" ++ toString scrollTop ++ ") + model.height(" ++ toString dropdownHeight ++ ") > contentHeight(" ++ toString contentHeight ++ ") - bottomAllowance(" ++ toString bottomAllowance ++ ")")
+    scrollTop + dropdownHeight > contentHeight - bottomAllowance
 
 
 pageRequestNeeded : List Int -> Model -> Bool
@@ -81,10 +81,10 @@ view list model =
                 , ( "width", px widgetWidth )
                 ]
     in
-        div []
-            [ viewInputButton styles list model
-            , viewIf model.opened (viewDropdown styles list model)
-            ]
+    div []
+        [ viewInputButton styles list model
+        , viewIf model.opened (viewDropdown styles list model)
+        ]
 
 
 viewInputButton : Attribute Msg -> List Int -> Model -> Html Msg
@@ -98,21 +98,21 @@ viewInputButton styles list model =
                 Nothing ->
                     ""
     in
-        div [ class "dropdown-input" ]
-            [ input
-                [ onClick ToggleDropdown
-                , onBlur CloseDropdown
-                , value selectedDisplay
-                , styles
-                ]
-                []
-            , button
-                [ onClick ToggleDropdown
-                , onBlur CloseDropdown
-                ]
-                [ i [ class "fa fa-caret-down" ] []
-                ]
+    div [ class "dropdown-input" ]
+        [ input
+            [ onClick ToggleDropdown
+            , onBlur CloseDropdown
+            , value selectedDisplay
+            , styles
             ]
+            []
+        , button
+            [ onClick ToggleDropdown
+            , onBlur CloseDropdown
+            ]
+            [ i [ class "fa fa-caret-down" ] []
+            ]
+        ]
 
 
 viewDropdown : Attribute Msg -> List Int -> Model -> Html Msg
@@ -121,14 +121,14 @@ viewDropdown styles list model =
         sorted =
             List.sort list
     in
-        div
-            [ class "dropdown-select"
-            , onScroll DropdownScrolled
-            , styles
-            ]
-            [ div [ class "dropdown-options" ]
-                (List.map (viewOption model.width) sorted)
-            ]
+    div
+        [ class "dropdown-select"
+        , onScroll DropdownScrolled
+        , styles
+        ]
+        [ div [ class "dropdown-options" ]
+            (List.map (viewOption model.width) sorted)
+        ]
 
 
 viewOption : Int -> Int -> Html Msg
@@ -170,7 +170,7 @@ update msg model =
                 newModel =
                     { model | selected = Just selected }
             in
-                update CloseDropdown newModel
+            update CloseDropdown newModel
 
         DropdownScrolled scroll ->
             { model | scroll = scroll }

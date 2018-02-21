@@ -1,34 +1,34 @@
 module Data.Window.Field
     exposing
         ( Field
-        , decoder
+        , FieldWidth(..)
+        , cast
         , columnName
-        , fieldDataTypes
-        , widgetWidthListColumn
-        , widgetWidthListValue
-        , shortOrLongWidth
-        , simpleDataType
+        , decoder
+        , displayColumns
+        , displayValues
         , dropdown
         , dropdownInfo
+        , fieldDataTypes
         , firstColumnName
-        , displayColumns
-        , sourceTable
-        , displayValues
         , fontSize
-        , cast
-        , FieldWidth(..)
+        , shortOrLongWidth
+        , simpleDataType
+        , sourceTable
+        , widgetWidthListColumn
+        , widgetWidthListValue
         )
 
+import Data.Window.ColumnName as ColumnName exposing (ColumnName)
+import Data.Window.DataType as DataType exposing (DataType)
+import Data.Window.Record as Record exposing (Record, RecordId)
+import Data.Window.TableName as TableName exposing (TableName)
+import Data.Window.Value as Value exposing (Value)
+import Data.Window.Widget as Widget exposing (ControlWidget, Dropdown, DropdownInfo)
+import Dict
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Extra
 import Json.Decode.Pipeline as Pipeline exposing (custom, decode, hardcoded, required)
-import Data.Window.ColumnName as ColumnName exposing (ColumnName)
-import Data.Window.TableName as TableName exposing (TableName)
-import Data.Window.DataType as DataType exposing (DataType)
-import Data.Window.Widget as Widget exposing (ControlWidget, Dropdown, DropdownInfo)
-import Data.Window.Record as Record exposing (Record, RecordId)
-import Dict
-import Data.Window.Value as Value exposing (Value)
 
 
 type alias Field =
@@ -74,7 +74,7 @@ tableColumn field tableName columnName =
         columnName1 =
             firstColumnName field
     in
-        columnName1.name ++ "." ++ tableName.name ++ "." ++ columnName.name
+    columnName1.name ++ "." ++ tableName.name ++ "." ++ columnName.name
 
 
 {-| Get a the dropdown record value
@@ -85,7 +85,7 @@ displayValue field sourceTable displayColumn record =
         columnName =
             tableColumn field sourceTable displayColumn
     in
-        Dict.get columnName record
+    Dict.get columnName record
 
 
 displayValues : Field -> Record -> Maybe String
@@ -109,12 +109,12 @@ displayValues field record =
                         )
                         displayColumns
             in
-                if List.isEmpty valueList then
-                    Nothing
-                else
-                    List.map Value.valueToString valueList
-                        |> String.join separator
-                        |> Just
+            if List.isEmpty valueList then
+                Nothing
+            else
+                List.map Value.valueToString valueList
+                    |> String.join separator
+                    |> Just
 
         Nothing ->
             Nothing
@@ -161,24 +161,24 @@ cast value field =
                 Nothing ->
                     Debug.crash "There should be data type"
     in
-        case dataType of
-            DataType.Text ->
-                Value.Text value
+    case dataType of
+        DataType.Text ->
+            Value.Text value
 
-            DataType.Int ->
-                Value.Int (forceInt value)
+        DataType.Int ->
+            Value.Int (forceInt value)
 
-            DataType.Smallint ->
-                Value.Smallint (forceInt value)
+        DataType.Smallint ->
+            Value.Smallint (forceInt value)
 
-            DataType.Tinyint ->
-                Value.Tinyint (forceInt value)
+        DataType.Tinyint ->
+            Value.Tinyint (forceInt value)
 
-            DataType.Uuid ->
-                Value.Uuid value
+        DataType.Uuid ->
+            Value.Uuid value
 
-            _ ->
-                Debug.crash ("unhandled casting of dataType " ++ toString dataType)
+        _ ->
+            Debug.crash ("unhandled casting of dataType " ++ toString dataType)
 
 
 forceInt : String -> Int
@@ -221,12 +221,12 @@ firstColumnName field =
                         detailList
                         |> List.head
             in
-                case columnName of
-                    Just columnName ->
-                        columnName
+            case columnName of
+                Just columnName ->
+                    columnName
 
-                    Nothing ->
-                        Debug.crash "This is unreachable!"
+                Nothing ->
+                    Debug.crash "This is unreachable!"
 
 
 columnName : Field -> String
@@ -297,7 +297,7 @@ widgetCharacterWidth field =
             16
 
         columnLen =
-            (String.length (columnName field)) + 5
+            String.length (columnName field) + 5
 
         charWidth =
             case dataType of
@@ -313,7 +313,7 @@ widgetCharacterWidth field =
                 _ ->
                     max columnLen field.controlWidget.width
     in
-        charWidth
+    charWidth
 
 
 fontSize : ( Int, Int )
@@ -330,9 +330,9 @@ widgetWidthListColumn field =
             fontSize
 
         calcWidth =
-            (widgetCharacterWidth field) * fontWidth
+            widgetCharacterWidth field * fontWidth
     in
-        clamp 100 800 calcWidth
+    clamp 100 800 calcWidth
 
 
 widgetWidthListValue : Field -> Int
@@ -349,6 +349,7 @@ type FieldWidth
 
     0 to 40 - 200px (Short)
     41 to ~ - 800px (Long)
+
 -}
 shortOrLongWidth : Field -> ( FieldWidth, Int )
 shortOrLongWidth field =
@@ -362,7 +363,7 @@ shortOrLongWidth field =
         lines =
             round (toFloat width / 100) + 1
     in
-        if width < 40 then
-            ( Short, fontHeight )
-        else
-            ( Long, lines * fontHeight )
+    if width < 40 then
+        ( Short, fontHeight )
+    else
+        ( Long, lines * fontHeight )

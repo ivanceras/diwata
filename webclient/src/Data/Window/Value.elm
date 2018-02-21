@@ -1,12 +1,12 @@
-module Data.Window.Value exposing (Value(..), ArrayValue(..), decoder, valueToString)
+module Data.Window.Value exposing (ArrayValue(..), Value(..), decoder, valueToString)
 
+import Date exposing (Date)
+import Date.Extra.Config.Config_en_us
+import Date.Format
+import DateParser
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Extra
 import Json.Decode.Pipeline as Pipeline exposing (decode, required)
-import Date exposing (Date)
-import Date.Format
-import DateParser
-import Date.Extra.Config.Config_en_us
 
 
 type Value
@@ -258,7 +258,7 @@ dateTimeValueDecoder =
                             _ =
                                 Debug.log ("fail to decode date: " ++ toString v ++ "due to: ") e
                         in
-                            Decode.fail ("Invalid date:" ++ toString e)
+                        Decode.fail ("Invalid date:" ++ toString e)
             )
 
 
@@ -292,6 +292,7 @@ dateValueDecoder =
 
     make a string representation for the purpose of selected record.
     Support the most common primary key data_types for now
+
 -}
 valueToString : Value -> String
 valueToString value =

@@ -1,20 +1,20 @@
 module Data.Window.Widget
     exposing
-        ( Widget(..)
-        , decoder
+        ( Alignment
         , ControlWidget
-        , controlWidgetDecoder
-        , alignmentToString
         , Dropdown(..)
         , DropdownInfo
-        , Alignment
+        , Widget(..)
+        , alignmentToString
+        , controlWidgetDecoder
+        , decoder
         )
 
+import Data.Window.Display as Display exposing (IdentifierDisplay)
+import Data.Window.TableName as TableName exposing (TableName)
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Extra
 import Json.Decode.Pipeline as Pipeline exposing (decode, required)
-import Data.Window.TableName as TableName exposing (TableName)
-import Data.Window.Display as Display exposing (IdentifierDisplay)
 
 
 type alias ControlWidget =

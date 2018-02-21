@@ -1,34 +1,32 @@
 module Views.Window.Row
     exposing
-        ( view
-        , viewRowControls
+        ( Model
         , Msg(..)
-        , Model
-        , update
-        , init
         , dropdownPageRequestNeeded
+        , init
         , isModified
+        , update
+        , view
+        , viewRowControls
         )
 
-import Html exposing (..)
-import Html.Attributes exposing (style, type_, attribute, class, classList, href, id, placeholder, src, checked)
-import Html.Events exposing (onClick, onCheck)
+import Constant
+import Data.Window.Field as Field exposing (Field)
+import Data.Window.Lookup as Lookup exposing (Lookup)
 import Data.Window.Record as Record exposing (Record, RecordId)
-import Data.Window.Value as Value exposing (Value)
-import Route exposing (Route)
 import Data.Window.Tab as Tab exposing (Tab)
+import Data.Window.TableName exposing (TableName)
+import Data.Window.Value as Value exposing (Value)
+import Data.Window.Widget as Widget exposing (ControlWidget)
 import Data.WindowArena as WindowArena
 import Dict
-import Data.Window.Widget exposing (ControlWidget)
-import Data.Window.Field as Field exposing (Field)
-import Data.Window.TableName exposing (TableName)
-import Data.Window.Widget as Widget
-import Util exposing (px)
-import Data.Window.Lookup as Lookup exposing (Lookup)
+import Html exposing (..)
+import Html.Attributes exposing (attribute, checked, class, classList, href, id, placeholder, src, style, type_)
+import Html.Events exposing (onCheck, onClick)
+import Route exposing (Route)
+import Util exposing ((=>), pair, px, viewIf)
 import Views.Window.Field as Field
-import Util exposing ((=>), pair, viewIf)
 import Views.Window.Presentation as Presentation exposing (Presentation(..))
-import Constant
 
 
 type alias Model =
@@ -81,22 +79,22 @@ view lookup model =
 
         -- rearrange fields here if needed
     in
-        div
-            [ class "tab-row"
-            , classList [ ( "is-modified", isModified model ) ]
-            ]
-            (List.map
-                (\value ->
-                    div
-                        [ class "tab-row-value"
-                        , Constant.tabRowValueStyle
-                        ]
-                        [ Field.view lookup value
-                            |> Html.map (FieldMsg value)
-                        ]
-                )
-                model.fields
+    div
+        [ class "tab-row"
+        , classList [ ( "is-modified", isModified model ) ]
+        ]
+        (List.map
+            (\value ->
+                div
+                    [ class "tab-row-value"
+                    , Constant.tabRowValueStyle
+                    ]
+                    [ Field.view lookup value
+                        |> Html.map (FieldMsg value)
+                    ]
             )
+            model.fields
+        )
 
 
 viewRowControls : Model -> RecordId -> Tab -> Html Msg
@@ -164,14 +162,14 @@ viewRecordDetail recordId tab =
         recordIdString =
             Record.idToString recordId
     in
-        a
-            [ class "link-to-form"
-            , onClick ClickDetailedLink
-            , Route.href (Route.WindowArena (Just (WindowArena.initArgWithRecordId tab.tableName recordIdString)))
-            ]
-            [ div [ class "icon icon-pencil" ]
-                []
-            ]
+    a
+        [ class "link-to-form"
+        , onClick ClickDetailedLink
+        , Route.href (Route.WindowArena (Just (WindowArena.initArgWithRecordId tab.tableName recordIdString)))
+        ]
+        [ div [ class "icon icon-pencil" ]
+            []
+        ]
 
 
 dropdownPageRequestNeeded : Lookup -> Model -> Maybe TableName
@@ -205,7 +203,7 @@ update msg model =
                                     ( newValue, subCmd ) =
                                         Field.update msg value
                                 in
-                                    ( newValue, Cmd.map (FieldMsg newValue) subCmd )
+                                ( newValue, Cmd.map (FieldMsg newValue) subCmd )
                             else
                                 value => Cmd.none
                         )
@@ -214,8 +212,8 @@ update msg model =
                 ( updatedFields, subCmds ) =
                     List.unzip updated
             in
-                { model | fields = updatedFields }
-                    => Cmd.batch subCmds
+            { model | fields = updatedFields }
+                => Cmd.batch subCmds
 
         ResetChanges ->
             let
@@ -223,15 +221,15 @@ update msg model =
                     updateFields Field.ResetChanges model
                         |> List.unzip
             in
-                { model | fields = newFields }
-                    => Cmd.batch
-                        (List.map2
-                            (\field cmd ->
-                                Cmd.map (FieldMsg field) cmd
-                            )
-                            newFields
-                            subCmds
+            { model | fields = newFields }
+                => Cmd.batch
+                    (List.map2
+                        (\field cmd ->
+                            Cmd.map (FieldMsg field) cmd
                         )
+                        newFields
+                        subCmds
+                    )
 
         ToggleSelect v ->
             { model | selected = v }

@@ -1,23 +1,22 @@
 module Views.Window.Searchbox
     exposing
         ( Model
-        , init
         , Msg
-        , view
-        , update
         , getSearchText
+        , init
+        , update
+        , view
         )
 
+import Data.Window.DataType as DataType exposing (DataType)
+import Data.Window.Field as Field exposing (Field)
+import Data.Window.Filter as Filter
+import Data.Window.Value as Value exposing (Value(..))
+import Data.Window.Widget as Widget exposing (Widget(..))
 import Html exposing (..)
 import Html.Attributes exposing (class, style, type_, value)
-import Data.Window.Field as Field exposing (Field)
-import Util exposing (px)
-import Data.Window.Widget as Widget exposing (Widget(..))
-import Data.Window.DataType as DataType exposing (DataType)
-import Data.Window.Value as Value exposing (Value(..))
-import Util exposing ((=>))
-import Html.Events exposing (onInput, onCheck)
-import Data.Window.Filter as Filter
+import Html.Events exposing (onCheck, onInput)
+import Util exposing ((=>), px)
 
 
 type alias Model =
@@ -33,10 +32,10 @@ init field searchValue =
         ( value1, value2 ) =
             Filter.split searchValue
     in
-        { field = field
-        , value1 = value1
-        , value2 = value2
-        }
+    { field = field
+    , value1 = value1
+    , value2 = value2
+    }
 
 
 getSearchText : Model -> Maybe String
@@ -138,27 +137,27 @@ dateRangeFilter styles =
 
         -- 3 is the border pixel on left center and right
         halfWidth =
-            (dateWidth * (toFloat fontWidth) + 3) / 2
+            (dateWidth * toFloat fontWidth + 3) / 2
     in
-        div
-            [ style [ ( "text-align", "left" ) ]
-            , class "date-range-filter column-filter"
+    div
+        [ style [ ( "text-align", "left" ) ]
+        , class "date-range-filter column-filter"
+        ]
+        [ input
+            [ type_ "date"
+            , class "start-date"
+            , style [ ( "width", px halfWidth ) ]
+            , onInput DateValue1Changed
             ]
-            [ input
-                [ type_ "date"
-                , class "start-date"
-                , style [ ( "width", px halfWidth ) ]
-                , onInput DateValue1Changed
-                ]
-                []
-            , input
-                [ type_ "date"
-                , class "end-date"
-                , style [ ( "width", px halfWidth ) ]
-                , onInput DateValue2Changed
-                ]
-                []
+            []
+        , input
+            [ type_ "date"
+            , class "end-date"
+            , style [ ( "width", px halfWidth ) ]
+            , onInput DateValue2Changed
             ]
+            []
+        ]
 
 
 view : Model -> Html Msg
@@ -234,62 +233,62 @@ createSearchbox model =
         value2String =
             Maybe.withDefault "" model.value2
     in
-        case widget of
-            Textbox ->
-                textSearch styles value1String
+    case widget of
+        Textbox ->
+            textSearch styles value1String
 
-            UuidTextbox ->
-                textSearch styles value1String
+        UuidTextbox ->
+            textSearch styles value1String
 
-            MultilineText ->
-                textSearch styles value1String
+        MultilineText ->
+            textSearch styles value1String
 
-            Password ->
-                noSearch noSearchStyles
+        Password ->
+            noSearch noSearchStyles
 
-            Checkbox ->
-                booleanFilter styles
+        Checkbox ->
+            booleanFilter styles
 
-            DatePicker ->
-                dateRangeFilter noSearchStyles
+        DatePicker ->
+            dateRangeFilter noSearchStyles
 
-            DateTimePicker ->
-                dateRangeFilter noSearchStyles
+        DateTimePicker ->
+            dateRangeFilter noSearchStyles
 
-            PrimaryUrlLink ->
-                case dataType of
-                    DataType.Tinyint ->
-                        numberSearch styles value1String
+        PrimaryUrlLink ->
+            case dataType of
+                DataType.Tinyint ->
+                    numberSearch styles value1String
 
-                    DataType.Smallint ->
-                        numberSearch styles value1String
+                DataType.Smallint ->
+                    numberSearch styles value1String
 
-                    DataType.Int ->
-                        numberSearch styles value1String
+                DataType.Int ->
+                    numberSearch styles value1String
 
-                    DataType.Text ->
-                        textSearch styles value1String
+                DataType.Text ->
+                    textSearch styles value1String
 
-                    DataType.Uuid ->
-                        textSearch styles value1String
+                DataType.Uuid ->
+                    textSearch styles value1String
 
-                    DataType.Numeric ->
-                        textSearch styles value1String
+                DataType.Numeric ->
+                    textSearch styles value1String
 
-                    _ ->
-                        Debug.crash ("Primary url search data type, not yet handled for " ++ toString dataType)
+                _ ->
+                    Debug.crash ("Primary url search data type, not yet handled for " ++ toString dataType)
 
-            TableLookupDropdown ->
-                textSearch styles value1String
+        TableLookupDropdown ->
+            textSearch styles value1String
 
-            FixDropdown list ->
-                dropdownFilter list styles
+        FixDropdown list ->
+            dropdownFilter list styles
 
-            TagSelection ->
-                textSearch styles value1String
+        TagSelection ->
+            textSearch styles value1String
 
-            _ ->
-                noSearch noSearchStyles
+        _ ->
+            noSearch noSearchStyles
 
 
 type Msg
@@ -306,23 +305,23 @@ update model msg =
         _ =
             Debug.log "msg" msg
     in
-        case msg of
-            StringValue1Changed v ->
-                { model | value1 = Just v }
-                    => Cmd.none
+    case msg of
+        StringValue1Changed v ->
+            { model | value1 = Just v }
+                => Cmd.none
 
-            NumberValue1Changed v ->
-                { model | value1 = Just v }
-                    => Cmd.none
+        NumberValue1Changed v ->
+            { model | value1 = Just v }
+                => Cmd.none
 
-            BooleanValue1Changed v ->
-                { model | value1 = Just (toString v) }
-                    => Cmd.none
+        BooleanValue1Changed v ->
+            { model | value1 = Just (toString v) }
+                => Cmd.none
 
-            DateValue1Changed v ->
-                { model | value1 = Just v }
-                    => Cmd.none
+        DateValue1Changed v ->
+            { model | value1 = Just v }
+                => Cmd.none
 
-            DateValue2Changed v ->
-                { model | value2 = Just v }
-                    => Cmd.none
+        DateValue2Changed v ->
+            { model | value2 = Just v }
+                => Cmd.none

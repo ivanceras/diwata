@@ -1,23 +1,23 @@
 module Data.Window.Record
     exposing
-        ( Rows
+        ( Record
         , RecordId(..)
-        , rowsDecoder
-        , idToString
-        , Record
+        , Rows
         , decoder
+        , idToString
+        , rowsDecoder
         , rowsToRecordList
         )
 
 import Data.Window.Author as Author exposing (Author)
+import Data.Window.DataType as DataType exposing (DataType)
+import Data.Window.TableName as TableName exposing (TableName)
+import Data.Window.Value as Value exposing (Value(..))
 import Date exposing (Date)
+import Dict exposing (Dict)
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Extra
 import Json.Decode.Pipeline as Pipeline exposing (decode, required)
-import Data.Window.TableName as TableName exposing (TableName)
-import Dict exposing (Dict)
-import Data.Window.DataType as DataType exposing (DataType)
-import Data.Window.Value as Value exposing (Value(..))
 
 
 type alias Rows =

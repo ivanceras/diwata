@@ -1,8 +1,8 @@
 module Data.Window.GroupedWindow
     exposing
         ( GroupedWindow
-        , decoder
         , WindowName
+        , decoder
         , windowNameDecoder
         )
 

@@ -1,11 +1,11 @@
-module Widgets.FixDropdown exposing (view, init, Msg(..), Model, update)
+module Widgets.FixDropdown exposing (Model, Msg(..), init, update, view)
 
+import Data.Window.Field as Field
+import Data.Window.Widget as Widget exposing (Alignment)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
-import Util exposing ((=>), px, onScroll, Scroll, viewIf)
-import Data.Window.Field as Field
-import Data.Window.Widget as Widget exposing (Alignment)
+import Util exposing ((=>), Scroll, onScroll, px, viewIf)
 
 
 type alias Model =
@@ -45,10 +45,10 @@ view model =
                 , ( "width", px widgetWidth )
                 ]
     in
-        div []
-            [ viewInputButton styles model
-            , viewIf model.opened (viewDropdown styles model)
-            ]
+    div []
+        [ viewInputButton styles model
+        , viewIf model.opened (viewDropdown styles model)
+        ]
 
 
 viewInputButton : Attribute Msg -> Model -> Html Msg
@@ -75,21 +75,21 @@ viewInputButton styles model =
                 Nothing ->
                     ""
     in
-        div [ class "dropdown-input" ]
-            [ input
-                [ onClick ToggleDropdown
-                , onBlur CloseDropdown
-                , value selectedDisplay
-                , styles
-                ]
-                []
-            , button
-                [ onClick ToggleDropdown
-                , onBlur CloseDropdown
-                ]
-                [ i [ class "fa fa-caret-down" ] []
-                ]
+    div [ class "dropdown-input" ]
+        [ input
+            [ onClick ToggleDropdown
+            , onBlur CloseDropdown
+            , value selectedDisplay
+            , styles
             ]
+            []
+        , button
+            [ onClick ToggleDropdown
+            , onBlur CloseDropdown
+            ]
+            [ i [ class "fa fa-caret-down" ] []
+            ]
+        ]
 
 
 viewDropdown : Attribute Msg -> Model -> Html Msg
@@ -98,13 +98,13 @@ viewDropdown styles model =
         sorted =
             List.sortBy String.toLower model.list
     in
-        div
-            [ class "dropdown-select"
-            , styles
-            ]
-            [ div [ class "dropdown-options" ]
-                (List.map viewOption sorted)
-            ]
+    div
+        [ class "dropdown-select"
+        , styles
+        ]
+        [ div [ class "dropdown-options" ]
+            (List.map viewOption sorted)
+        ]
 
 
 viewOption : String -> Html Msg
@@ -140,4 +140,4 @@ update msg model =
                 newModel =
                     { model | selected = Just selected }
             in
-                update CloseDropdown newModel
+            update CloseDropdown newModel

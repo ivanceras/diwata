@@ -1,9 +1,8 @@
-module Settings exposing (Settings, decoder, fromJson, empty)
+module Settings exposing (Settings, decoder, empty, fromJson)
 
-import Json.Decode as Decode exposing (Decoder)
+import Json.Decode as Decode exposing (Decoder, Value)
 import Json.Decode.Extra
 import Json.Decode.Pipeline as Pipeline exposing (custom, decode, required)
-import Json.Decode as Decode exposing (Value)
 
 
 type alias Settings =
@@ -39,9 +38,9 @@ fromJson json =
         settings =
             Decode.decodeValue decoder json
     in
-        case settings of
-            Ok settings ->
-                settings
+    case settings of
+        Ok settings ->
+            settings
 
-            Err e ->
-                Debug.crash "Decoding settings should not be error" e
+        Err e ->
+            Debug.crash "Decoding settings should not be error" e

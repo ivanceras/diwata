@@ -1,25 +1,25 @@
 module Data.Window.Tab
     exposing
         ( Tab
-        , decoder
+        , TabType(..)
         , columnNames
+        , decoder
         , primaryFields
         , recordId
-        , TabType(..)
         )
 
+import Data.Window.ColumnName as ColumnName exposing (ColumnName)
+import Data.Window.DataType as DataType exposing (DataType)
+import Data.Window.Display as Display exposing (IdentifierDisplay)
+import Data.Window.Field as Field exposing (Field)
+import Data.Window.Record as Record exposing (Record, RecordId)
+import Data.Window.TableName as TableName exposing (TableName)
+import Data.Window.Value as Value exposing (Value)
+import Data.Window.Widget as Widget exposing (Dropdown(..))
+import Dict
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Extra
 import Json.Decode.Pipeline as Pipeline exposing (decode, required)
-import Data.Window.TableName as TableName exposing (TableName)
-import Data.Window.Field as Field exposing (Field)
-import Data.Window.DataType as DataType exposing (DataType)
-import Dict
-import Data.Window.Record as Record exposing (Record, RecordId)
-import Data.Window.ColumnName as ColumnName exposing (ColumnName)
-import Data.Window.Widget as Widget exposing (Dropdown(..))
-import Data.Window.Display as Display exposing (IdentifierDisplay)
-import Data.Window.Value as Value exposing (Value)
 
 
 type alias Tab =
@@ -38,6 +38,7 @@ type alias Tab =
     InMainTab can have all fields of all rows editable
     InHasMany adding record will have to search for the distinguisable row of the tab table
     InIndirect adding record will have to search for the lookup row in a distinguisable lookup/search
+
 -}
 type TabType
     = InMain
@@ -91,8 +92,8 @@ recordId record tab =
                         columnName =
                             Field.columnName field
                     in
-                        Dict.get columnName record
+                    Dict.get columnName record
                 )
                 pkFields
     in
-        Record.RecordId (primaryValues)
+    Record.RecordId primaryValues

@@ -17,9 +17,9 @@ apiUrl settings str =
         apiEndPoint =
             settings.apiEndPoint
     in
-        case apiEndPoint of
-            Just apiEndPoint ->
-                apiEndPoint ++ str
+    case apiEndPoint of
+        Just apiEndPoint ->
+            apiEndPoint ++ str
 
-            Nothing ->
-                str
+        Nothing ->
+            str
