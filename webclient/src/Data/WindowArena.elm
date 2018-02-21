@@ -8,9 +8,10 @@ module Data.WindowArena
         , initArg
         , initArgWithRecordId
         , parseArenaArgs
-        , rerouteNeeded
+        , removeSelected
         , updateFilter
         , updateSort
+        , updateSplit
         )
 
 import Data.Query as Query exposing (orderClauseParser, orderClauseToString)
@@ -112,14 +113,6 @@ activeSection arenaArg =
 
         Nothing ->
             Nothing
-
-
-{-| Reroute needed when
-tableName != tableName,
--}
-rerouteNeeded : ArenaArg -> ArenaArg -> Bool
-rerouteNeeded oldArg newArg =
-    oldArg.tableName /= newArg.tableName
 
 
 argToString : ArenaArg -> String
@@ -390,3 +383,22 @@ updateSort columnName oldArenaArg =
                     Nothing
     in
     { oldArenaArg | sort = updatedSort }
+
+
+updateSplit : Float -> ArenaArg -> ArenaArg
+updateSplit split oldArenaArg =
+    { oldArenaArg | sectionSplit = Just split }
+
+
+removeSelected : ArenaArg -> ArenaArg
+removeSelected arenaArg =
+    { arenaArg
+        | selected = Nothing
+        , sectionTable = Nothing
+        , sectionSplit = Nothing
+        , sectionViaLinker = Nothing
+        , sectionFilter = Nothing
+        , sectionPage = Nothing
+        , sectionOrder = Nothing
+        , sectionSelected = Nothing
+    }

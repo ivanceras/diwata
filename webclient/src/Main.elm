@@ -1,25 +1,25 @@
 module Main exposing (main)
 
-import Data.Window exposing (Slug)
 import Data.Session as Session exposing (Session)
 import Data.User as User exposing (User, Username)
+import Data.Window exposing (Slug)
+import Data.Window.TableName as TableName exposing (TableName)
 import Html exposing (..)
 import Json.Decode as Decode exposing (Value)
 import Navigation exposing (Location)
-import Page.Window as Window
 import Page.Errored as Errored exposing (PageLoadError)
-import Page.WindowArena as WindowArena
 import Page.Login as Login
 import Page.NotFound as NotFound
 import Page.Register as Register
 import Page.Settings as Settings
+import Page.Window as Window
+import Page.WindowArena as WindowArena
 import Ports
 import Route exposing (Route)
+import Settings exposing (Settings)
 import Task
 import Util exposing ((=>))
 import Views.Page as Page exposing (ActivePage)
-import Data.Window.TableName as TableName exposing (TableName)
-import Settings exposing (Settings)
 
 
 -- WARNING: Based on discussions around how asset management features
@@ -73,11 +73,11 @@ init val location =
         _ =
             Debug.log "corrected settings: " correctedSettings
     in
-        setRoute (Route.fromLocation location)
-            { pageState = Loaded initialPage
-            , session = { user = decodeUserFromJson val }
-            , settings = Settings.fromJson val
-            }
+    setRoute (Route.fromLocation location)
+        { pageState = Loaded initialPage
+        , session = { user = decodeUserFromJson val }
+        , settings = Settings.fromJson val
+        }
 
 
 decodeUserFromJson : Value -> Maybe User
@@ -113,45 +113,45 @@ viewPage session isLoading page =
         frame =
             Page.frame isLoading session.user
     in
-        case page of
-            NotFound ->
-                NotFound.view session
-                    |> frame Page.Other
+    case page of
+        NotFound ->
+            NotFound.view session
+                |> frame Page.Other
 
-            Blank ->
-                -- This is for the very initial page load, while we are loading
-                -- data via HTTP. We could also render a spinner here.
-                Html.text ""
-                    |> frame Page.Other
+        Blank ->
+            -- This is for the very initial page load, while we are loading
+            -- data via HTTP. We could also render a spinner here.
+            Html.text ""
+                |> frame Page.Other
 
-            Errored subModel ->
-                Errored.view session subModel
-                    |> frame Page.Other
+        Errored subModel ->
+            Errored.view session subModel
+                |> frame Page.Other
 
-            Settings subModel ->
-                Settings.view session subModel
-                    |> frame Page.Other
-                    |> Html.map SettingsMsg
+        Settings subModel ->
+            Settings.view session subModel
+                |> frame Page.Other
+                |> Html.map SettingsMsg
 
-            WindowArena subModel ->
-                WindowArena.view session subModel
-                    |> frame Page.WindowArena
-                    |> Html.map WindowArenaMsg
+        WindowArena subModel ->
+            WindowArena.view session subModel
+                |> frame Page.WindowArena
+                |> Html.map WindowArenaMsg
 
-            Login subModel ->
-                Login.view session subModel
-                    |> frame Page.Other
-                    |> Html.map LoginMsg
+        Login subModel ->
+            Login.view session subModel
+                |> frame Page.Other
+                |> Html.map LoginMsg
 
-            Register subModel ->
-                Register.view session subModel
-                    |> frame Page.Other
-                    |> Html.map RegisterMsg
+        Register subModel ->
+            Register.view session subModel
+                |> frame Page.Other
+                |> Html.map RegisterMsg
 
-            Window subModel ->
-                Window.view session subModel
-                    |> frame Page.Other
-                    |> Html.map WindowMsg
+        Window subModel ->
+            Window.view session subModel
+                |> frame Page.Other
+                |> Html.map WindowMsg
 
 
 
@@ -252,37 +252,37 @@ setRoute maybeRoute model =
         errored =
             pageErrored model
     in
-        case maybeRoute of
-            Nothing ->
-                { model | pageState = Loaded NotFound } => Cmd.none
+    case maybeRoute of
+        Nothing ->
+            { model | pageState = Loaded NotFound } => Cmd.none
 
-            Just Route.Settings ->
-                case model.session.user of
-                    Just user ->
-                        { model | pageState = Loaded (Settings (Settings.init user)) } => Cmd.none
+        Just Route.Settings ->
+            case model.session.user of
+                Just user ->
+                    { model | pageState = Loaded (Settings (Settings.init user)) } => Cmd.none
 
-                    Nothing ->
-                        errored Page.Settings "You must be signed in to access your settings."
+                Nothing ->
+                    errored Page.Settings "You must be signed in to access your settings."
 
-            Just (Route.WindowArena arenaArg) ->
-                transition HomeLoaded (WindowArena.init model.settings model.session arenaArg)
+        Just (Route.WindowArena arenaArg) ->
+            transition HomeLoaded (WindowArena.init model.settings model.session arenaArg)
 
-            Just Route.Login ->
-                { model | pageState = Loaded (Login Login.initialModel) } => Cmd.none
+        Just Route.Login ->
+            { model | pageState = Loaded (Login Login.initialModel) } => Cmd.none
 
-            Just Route.Logout ->
-                let
-                    session =
-                        model.session
-                in
-                    { model | session = { session | user = Nothing } }
-                        => Cmd.batch
-                            [ Ports.storeSession Nothing
-                            , Route.modifyUrl (Route.WindowArena Nothing)
-                            ]
+        Just Route.Logout ->
+            let
+                session =
+                    model.session
+            in
+            { model | session = { session | user = Nothing } }
+                => Cmd.batch
+                    [ Ports.storeSession Nothing
+                    , Route.modifyUrl (Route.WindowArena Nothing)
+                    ]
 
-            Just Route.Register ->
-                { model | pageState = Loaded (Register Register.initialModel) } => Cmd.none
+        Just Route.Register ->
+            { model | pageState = Loaded (Register Register.initialModel) } => Cmd.none
 
 
 pageErrored : Model -> ActivePage -> String -> ( Model, Cmd msg )
@@ -291,7 +291,7 @@ pageErrored model activePage errorMessage =
         error =
             Errored.pageLoadError activePage errorMessage
     in
-        { model | pageState = Loaded (Errored error) } => Cmd.none
+    { model | pageState = Loaded (Errored error) } => Cmd.none
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -310,141 +310,123 @@ updatePage page msg model =
                 ( newModel, newCmd ) =
                     subUpdate subMsg subModel
             in
-                ( { model | pageState = Loaded (toModel newModel) }, Cmd.map toMsg newCmd )
+            ( { model | pageState = Loaded (toModel newModel) }, Cmd.map toMsg newCmd )
 
         errored =
             pageErrored model
     in
-        case ( msg, page ) of
-            ( SetRoute route, WindowArena arenaModel ) ->
-                let
-                    rerouteNeeded =
-                        case route of
-                            Just (Route.WindowArena (Just newArenaArg)) ->
-                                WindowArena.rerouteNeeded arenaModel newArenaArg
+    case ( msg, page ) of
+        ( SetRoute route, WindowArena arenaModel ) ->
+            setRoute route model
 
-                            _ ->
-                                False
+        ( SetRoute route, _ ) ->
+            setRoute route model
 
-                    _ =
-                        Debug.log "RerouteNeeded: " rerouteNeeded
+        ( HomeLoaded (Ok subModel), _ ) ->
+            let
+                _ =
+                    Debug.log "WindowArena is now loaded" ""
+            in
+            { model | pageState = Loaded (WindowArena subModel) } => Cmd.none
 
-                    _ =
-                        Debug.log "Starting to load windowArena" ""
-                in
-                    if rerouteNeeded then
-                        setRoute route model
+        ( HomeLoaded (Err error), _ ) ->
+            { model | pageState = Loaded (Errored error) } => Cmd.none
+
+        ( WindowLoaded (Ok subModel), _ ) ->
+            { model | pageState = Loaded (Window subModel) } => Cmd.none
+
+        ( WindowLoaded (Err error), _ ) ->
+            { model | pageState = Loaded (Errored error) } => Cmd.none
+
+        ( SetUser user, _ ) ->
+            let
+                session =
+                    model.session
+
+                cmd =
+                    -- If we just signed out, then redirect to WindowArena.
+                    if session.user /= Nothing && user == Nothing then
+                        Route.modifyUrl (Route.WindowArena Nothing)
                     else
-                        model => Cmd.none
+                        Cmd.none
+            in
+            { model | session = { session | user = user } }
+                => cmd
 
-            ( SetRoute route, _ ) ->
-                setRoute route model
+        ( SettingsMsg subMsg, Settings subModel ) ->
+            let
+                ( ( pageModel, cmd ), msgFromPage ) =
+                    Settings.update model.session subMsg subModel
 
-            ( HomeLoaded (Ok subModel), _ ) ->
-                let
-                    _ =
-                        Debug.log "WindowArena is now loaded" ""
-                in
-                    { model | pageState = Loaded (WindowArena subModel) } => Cmd.none
+                newModel =
+                    case msgFromPage of
+                        Settings.NoOp ->
+                            model
 
-            ( HomeLoaded (Err error), _ ) ->
-                { model | pageState = Loaded (Errored error) } => Cmd.none
+                        Settings.SetUser user ->
+                            let
+                                session =
+                                    model.session
+                            in
+                            { model | session = { user = Just user } }
+            in
+            { newModel | pageState = Loaded (Settings pageModel) }
+                => Cmd.map SettingsMsg cmd
 
-            ( WindowLoaded (Ok subModel), _ ) ->
-                { model | pageState = Loaded (Window subModel) } => Cmd.none
+        ( LoginMsg subMsg, Login subModel ) ->
+            let
+                ( ( pageModel, cmd ), msgFromPage ) =
+                    Login.update subMsg subModel
 
-            ( WindowLoaded (Err error), _ ) ->
-                { model | pageState = Loaded (Errored error) } => Cmd.none
+                newModel =
+                    case msgFromPage of
+                        Login.NoOp ->
+                            model
 
-            ( SetUser user, _ ) ->
-                let
-                    session =
-                        model.session
+                        Login.SetUser user ->
+                            let
+                                session =
+                                    model.session
+                            in
+                            { model | session = { user = Just user } }
+            in
+            { newModel | pageState = Loaded (Login pageModel) }
+                => Cmd.map LoginMsg cmd
 
-                    cmd =
-                        -- If we just signed out, then redirect to WindowArena.
-                        if session.user /= Nothing && user == Nothing then
-                            Route.modifyUrl (Route.WindowArena Nothing)
-                        else
-                            Cmd.none
-                in
-                    { model | session = { session | user = user } }
-                        => cmd
+        ( RegisterMsg subMsg, Register subModel ) ->
+            let
+                ( ( pageModel, cmd ), msgFromPage ) =
+                    Register.update subMsg subModel
 
-            ( SettingsMsg subMsg, Settings subModel ) ->
-                let
-                    ( ( pageModel, cmd ), msgFromPage ) =
-                        Settings.update model.session subMsg subModel
+                newModel =
+                    case msgFromPage of
+                        Register.NoOp ->
+                            model
 
-                    newModel =
-                        case msgFromPage of
-                            Settings.NoOp ->
-                                model
+                        Register.SetUser user ->
+                            let
+                                session =
+                                    model.session
+                            in
+                            { model | session = { user = Just user } }
+            in
+            { newModel | pageState = Loaded (Register pageModel) }
+                => Cmd.map RegisterMsg cmd
 
-                            Settings.SetUser user ->
-                                let
-                                    session =
-                                        model.session
-                                in
-                                    { model | session = { user = Just user } }
-                in
-                    { newModel | pageState = Loaded (Settings pageModel) }
-                        => Cmd.map SettingsMsg cmd
+        ( WindowArenaMsg subMsg, WindowArena subModel ) ->
+            toPage WindowArena WindowArenaMsg (WindowArena.update session) subMsg subModel
 
-            ( LoginMsg subMsg, Login subModel ) ->
-                let
-                    ( ( pageModel, cmd ), msgFromPage ) =
-                        Login.update subMsg subModel
+        ( WindowMsg subMsg, Window subModel ) ->
+            toPage Window WindowMsg (Window.update model.session) subMsg subModel
 
-                    newModel =
-                        case msgFromPage of
-                            Login.NoOp ->
-                                model
+        ( _, NotFound ) ->
+            -- Disregard incoming messages when we're on the
+            -- NotFound page.
+            model => Cmd.none
 
-                            Login.SetUser user ->
-                                let
-                                    session =
-                                        model.session
-                                in
-                                    { model | session = { user = Just user } }
-                in
-                    { newModel | pageState = Loaded (Login pageModel) }
-                        => Cmd.map LoginMsg cmd
-
-            ( RegisterMsg subMsg, Register subModel ) ->
-                let
-                    ( ( pageModel, cmd ), msgFromPage ) =
-                        Register.update subMsg subModel
-
-                    newModel =
-                        case msgFromPage of
-                            Register.NoOp ->
-                                model
-
-                            Register.SetUser user ->
-                                let
-                                    session =
-                                        model.session
-                                in
-                                    { model | session = { user = Just user } }
-                in
-                    { newModel | pageState = Loaded (Register pageModel) }
-                        => Cmd.map RegisterMsg cmd
-
-            ( WindowArenaMsg subMsg, WindowArena subModel ) ->
-                toPage WindowArena WindowArenaMsg (WindowArena.update session) subMsg subModel
-
-            ( WindowMsg subMsg, Window subModel ) ->
-                toPage Window WindowMsg (Window.update model.session) subMsg subModel
-
-            ( _, NotFound ) ->
-                -- Disregard incoming messages when we're on the
-                -- NotFound page.
-                model => Cmd.none
-
-            ( _, _ ) ->
-                -- Disregard incoming messages that arrived for the wrong page
-                model => Cmd.none
+        ( _, _ ) ->
+            -- Disregard incoming messages that arrived for the wrong page
+            model => Cmd.none
 
 
 

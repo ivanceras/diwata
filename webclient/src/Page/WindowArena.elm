@@ -3,7 +3,6 @@ module Page.WindowArena
         ( Model
         , Msg
         , init
-        , rerouteNeeded
         , subscriptions
         , update
         , view
@@ -55,16 +54,6 @@ type alias Model =
     , loadingSelectedRecord : Bool
     , isDetailedRecordMaximized : Bool
     }
-
-
-rerouteNeeded : Model -> ArenaArg -> Bool
-rerouteNeeded model arenaArg =
-    case model.arenaArg of
-        Just oldArg ->
-            WindowArena.rerouteNeeded oldArg arenaArg
-
-        Nothing ->
-            True
 
 
 handleLoadError e =
@@ -272,7 +261,7 @@ viewBanner model =
 viewLoadingIndicator : Model -> Html Msg
 viewLoadingIndicator model =
     div
-        [ class "selected-record-loading-indicator"
+        [ class "selected-record-loading-indicator animated fadeIn"
 
         -- display none to be able to preload it
         , if model.loadingSelectedRecord then
@@ -444,32 +433,26 @@ update session msg model =
                     model => Cmd.none
 
         DetailedRecordMsg (DetailedRecord.ToolbarMsg Toolbar.ClickedClose) ->
-            { model | selectedRow = Nothing }
-                => Route.modifyUrl (Route.WindowArena model.arenaArg)
-
-        DetailedRecordMsg DetailedRecord.ClickedCloseButton ->
-            { model | selectedRow = Nothing }
-                => Route.modifyUrl (Route.WindowArena model.arenaArg)
-
-        DetailedRecordMsg (DetailedRecord.ToolbarMsg (Toolbar.ClickedMaximize v)) ->
             let
-                ( updatedSelectedRow, cmd ) =
-                    case model.selectedRow of
-                        Just selectedRow ->
-                            let
-                                ( detailedRecord, subCmd ) =
-                                    DetailedRecord.update session (DetailedRecord.Maximize v) selectedRow
-                            in
-                            ( Just detailedRecord, Cmd.map DetailedRecordMsg subCmd )
+                updatedArenaArg =
+                    case model.arenaArg of
+                        Just arenaArg ->
+                            Just (WindowArena.removeSelected arenaArg)
 
                         Nothing ->
-                            ( Nothing, Cmd.none )
+                            Nothing
             in
             { model
-                | isDetailedRecordMaximized = v
-                , selectedRow = updatedSelectedRow
+                | selectedRow = Nothing
+                , arenaArg = updatedArenaArg
             }
-                => cmd
+                => Route.modifyUrl (Route.WindowArena updatedArenaArg)
+
+        DetailedRecordMsg DetailedRecord.ClickedCloseButton ->
+            closeRecord model
+
+        DetailedRecordMsg (DetailedRecord.ToolbarMsg (Toolbar.ClickedMaximize v)) ->
+            closeRecord model
 
         DetailedRecordMsg subMsg ->
             case model.selectedRow of
@@ -505,6 +488,24 @@ update session msg model =
 
         WindowResized size ->
             model => Cmd.none
+
+
+closeRecord : Model -> ( Model, Cmd Msg )
+closeRecord model =
+    let
+        updatedArenaArg =
+            case model.arenaArg of
+                Just arenaArg ->
+                    Just (WindowArena.removeSelected arenaArg)
+
+                Nothing ->
+                    Nothing
+    in
+    { model
+        | selectedRow = Nothing
+        , arenaArg = updatedArenaArg
+    }
+        => Route.modifyUrl (Route.WindowArena updatedArenaArg)
 
 
 requestNextDropdownPageForWindow : Settings -> Int -> TableName -> Cmd Msg

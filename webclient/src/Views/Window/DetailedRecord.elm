@@ -104,7 +104,7 @@ splitPercentage model =
             detailAllotedSize model
 
         dragPosition =
-            toFloat model.position.y
+            clamp 0 allotedHeight (toFloat model.position.y)
     in
     dragPosition / allotedHeight
 
@@ -447,21 +447,6 @@ splitTabHeights window position isMaximized browserSize =
 
         clampDetailRecordHeight =
             clamp 0 (allotedHeight - detailTotalDeductions) detailRecordHeight
-
-        _ =
-            Debug.log "allotedHeight: " allotedHeight
-
-        _ =
-            Debug.log "cardTotalDeductions: " cardTotalDeductions
-
-        _ =
-            Debug.log "detailTotalDeductions: " detailTotalDeductions
-
-        _ =
-            Debug.log "mainRecordheight: " clampMainRecordHeight
-
-        _ =
-            Debug.log "detailRecordHeight: " clampDetailRecordHeight
     in
     ( clampMainRecordHeight, clampDetailRecordHeight )
 
@@ -491,7 +476,7 @@ view model =
             splitTabHeights window realPosition isMaximized browserSize
 
         ( allotedWidth, allotedHeight ) =
-            allotedSize model.isMaximized model.browserSize
+            detailAllotedSize model
 
         -- TODO: this is HACKY, maybe refactor the toolbar for each specific use case such as the detail record
         -- away from the main tab use case
@@ -568,7 +553,7 @@ oneOneCardView : List Field.Model -> Tab -> Model -> Html Msg
 oneOneCardView oneOneValues oneOneTab model =
     let
         ( allotedWidth, allotedHeight ) =
-            allotedSize model.isMaximized model.browserSize
+            detailAllotedSize model
 
         cardWidth =
             allotedWidth
@@ -610,7 +595,7 @@ cardViewRecord container values tab model =
             model.browserSize
 
         ( allotedWidth, allotedHeight ) =
-            allotedSize isMaximized browserSize
+            detailAllotedSize model
 
         cardWidth =
             allotedWidth
@@ -883,16 +868,29 @@ updateDrag session drag model =
 
         End _ ->
             let
-                newModel =
+                updatedModel0 =
                     { model
                         | position = getPosition model
                         , drag = Nothing
                     }
 
-                _ =
-                    Debug.log "split percentage" (splitPercentage newModel)
+                split =
+                    Util.roundDecimal 4 (splitPercentage updatedModel0)
+
+                updatedArenaArg =
+                    WindowArena.updateSplit split updatedModel0.arenaArg
+
+                updatedModel1 =
+                    { updatedModel0 | arenaArg = updatedArenaArg }
+
+                ( updatedModel2, subCmd ) =
+                    updateSizes session updatedModel1
             in
-            updateSizes session newModel
+            updatedModel2
+                => Cmd.batch
+                    [ subCmd
+                    , Route.modifyUrl (Route.WindowArena (Just updatedModel2.arenaArg))
+                    ]
 
 
 update : Session -> Msg -> Model -> ( Model, Cmd Msg )
@@ -1205,14 +1203,8 @@ updateSizes session model =
         ( mainRecordHeight, detailTabHeight ) =
             splitTabHeights window realPosition model.isMaximized model.browserSize
 
-        isMaximized =
-            model.isMaximized
-
-        browserSize =
-            model.browserSize
-
         ( allotedWidth, allotedHeight ) =
-            allotedSize isMaximized browserSize
+            detailAllotedSize model
 
         tabSize =
             ( allotedWidth, detailTabHeight )

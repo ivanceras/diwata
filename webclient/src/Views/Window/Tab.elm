@@ -257,7 +257,7 @@ viewLoadingIndicator : Model -> Html Msg
 viewLoadingIndicator model =
     if model.pageRequestInFlight then
         div
-            [ class "loading-indicator animated slideInUp"
+            [ class "loading-indicator animated fadeInUp"
             ]
             [ i [ class "fa fa-spinner fa-pulse fa-2x fa-fw" ] []
             ]

@@ -1,27 +1,26 @@
 module Util
     exposing
         ( (=>)
-        , px
+        , Scroll
         , appendErrors
-        , onClickStopPropagation
+        , isJust
         , onClickPreventDefault
+        , onClickStopPropagation
+        , onScroll
+        , onWheel
         , pair
-        , viewIf
+        , px
+        , roundDecimal
         , styleIf
         , trim
-        , isJust
-        , onScroll
-        , Scroll
-        , onWheel
+        , viewIf
         )
 
 import Html exposing (Attribute, Html)
-import Html.Events exposing (defaultOptions, onWithOptions)
-import Json.Decode as Decode
-import Task exposing (Task)
-import Html.Events exposing (on)
 import Html.Attributes exposing (style)
+import Html.Events exposing (defaultOptions, on, onWithOptions)
 import Json.Decode as Decode exposing (Decoder)
+import Task exposing (Task)
 
 
 type alias Scroll =
@@ -109,12 +108,13 @@ trimLast list =
         trimmed =
             trimFirst rev
     in
-        List.reverse trimmed
+    List.reverse trimmed
 
 
 {-|
 
     Trim both first and last element if they are empty
+
 -}
 trim : List String -> List String
 trim list =
@@ -124,7 +124,7 @@ trim list =
 
 px : number -> String
 px n =
-    (toString n) ++ "px"
+    toString n ++ "px"
 
 
 isJust : Maybe a -> Bool
@@ -154,3 +154,31 @@ scrollDecoder =
     Decode.map2 Scroll
         (Decode.at [ "target", "scrollTop" ] Decode.float)
         (Decode.at [ "target", "scrollLeft" ] Decode.float)
+
+
+{-|
+
+    round the decimal values to a decimal number of places
+
+-}
+roundDecimal : Int -> Float -> Float
+roundDecimal decimal value =
+    let
+        multiplier =
+            List.range 1 decimal
+                |> List.foldl
+                    (\x acc ->
+                        acc * 10
+                    )
+                    1
+
+        step1 =
+            value
+                * multiplier
+                |> round
+                |> toFloat
+
+        step2 =
+            step1 / multiplier
+    in
+    step2
