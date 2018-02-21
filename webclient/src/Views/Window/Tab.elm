@@ -734,7 +734,10 @@ update msg model =
                         Nothing ->
                             Just (Sort.newSort columnName)
             in
-            { model | sort = updatedSort }
+            { model
+                | sort = updatedSort
+                , pageRequestInFlight = True -- since this will trigger refreshPage in Window.elm
+            }
                 => Cmd.none
 
 
