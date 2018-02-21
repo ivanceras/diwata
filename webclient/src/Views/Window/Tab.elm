@@ -688,18 +688,24 @@ update msg model =
             { model | pageRows = pageRows }
                 => Cmd.batch cmds
 
+        ToolbarMsg Toolbar.ToggleMultiSort ->
+            { model | isMultiSort = not model.isMultiSort }
+                => Cmd.none
+
+        ToolbarMsg Toolbar.ClickedResetMultiSort ->
+            { model | sort = Nothing }
+                => Cmd.none
+
+        ToolbarMsg Toolbar.ClickedCancelOnMain ->
+            let
+                ( updatedPageRows, subCmd ) =
+                    resetPageRows model
+            in
+            { model | pageRows = updatedPageRows }
+                => Cmd.batch subCmd
+
         ToolbarMsg toolbarMsg ->
-            case toolbarMsg of
-                Toolbar.ToggleMultiSort ->
-                    { model | isMultiSort = not model.isMultiSort }
-                        => Cmd.none
-
-                Toolbar.ClickedResetMultiSort ->
-                    { model | sort = Nothing }
-                        => Cmd.none
-
-                _ ->
-                    model => Cmd.none
+            model => Cmd.none
 
         SetFocusedRecord recordId ->
             let
@@ -730,6 +736,29 @@ update msg model =
             in
             { model | sort = updatedSort }
                 => Cmd.none
+
+
+resetPageRows : Model -> ( List (List Row.Model), List (Cmd Msg) )
+resetPageRows model =
+    let
+        ( updatedPageRow, subCmd ) =
+            List.map
+                (\page ->
+                    List.map
+                        (\row ->
+                            let
+                                ( updatedRow, rowCmd ) =
+                                    Row.update Row.ResetChanges row
+                            in
+                            ( updatedRow, Cmd.map (RowMsg updatedRow) rowCmd )
+                        )
+                        page
+                        |> List.unzip
+                )
+                model.pageRows
+                |> List.unzip
+    in
+    ( updatedPageRow, List.concat subCmd )
 
 
 toggleSelectAllRows : Bool -> List (List Row.Model) -> ( List (List Row.Model), List (Cmd Msg) )

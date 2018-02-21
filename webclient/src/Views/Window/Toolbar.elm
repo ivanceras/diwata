@@ -30,6 +30,7 @@ type Msg
     | ToggleMultiSort
     | ClickedResetMultiSort
     | ClickedCancelOnDetail
+    | ClickedCancelOnMain
 
 
 viewForMain : Model -> Html Msg
@@ -108,7 +109,9 @@ viewForMain model =
             , span [ class "tooltip-text" ] [ text saveTooltip ]
             ]
         , button
-            [ class "btn btn-large btn-default tooltip" ]
+            [ class "btn btn-large btn-default tooltip"
+            , onClick ClickedCancelOnMain
+            ]
             [ span [ class "icon icon-block icon-text" ] []
             , text "Cancel"
                 |> viewIf showText
