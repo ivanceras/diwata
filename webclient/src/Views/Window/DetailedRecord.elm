@@ -65,6 +65,7 @@ type alias Model =
     , arenaArg : ArenaArg
     , lookup : Lookup
     , values : List Field.Model
+    , oneOneValues : List ( Tab, List Field.Model )
     , dropdownPageRequestInFlight : Bool
     , settings : Settings
     , isMaximized : Bool
@@ -75,6 +76,11 @@ type alias DragPosition =
     { start : Position
     , current : Position
     }
+
+
+type FieldContainer
+    = Detail
+    | OneOne
 
 
 initialPosition : Bool -> BrowserWindow.Size -> Position
@@ -89,6 +95,28 @@ initialPosition isMaximized browserSize =
         -- 60% main tab, 40% detail tabs
     in
     Position 0 allotedMainHeight
+
+
+{-|
+
+    Check if the any of values of the detail records is modified.
+    This includes the records on the detail and the one one record linked
+
+-}
+isModified : Model -> Bool
+isModified model =
+    let
+        detailModified =
+            List.any Field.isModified model.values
+
+        oneOneModified =
+            List.any
+                (\( tab, fields ) ->
+                    List.any Field.isModified fields
+                )
+                model.oneOneValues
+    in
+    detailModified || oneOneModified
 
 
 getTotalRecords : Settings -> TableName -> Task PageLoadError Int
@@ -235,6 +263,7 @@ init isMaximized settings tableName selectedRow arenaArg window =
             , arenaArg = arenaArg
             , lookup = lookup
             , values = createFields window.mainTab detail.record
+            , oneOneValues = createOneOneFields window.oneOneTabs detail.oneOnes
             , dropdownPageRequestInFlight = False
             , settings = settings
             , isMaximized = isMaximized
@@ -245,6 +274,34 @@ init isMaximized settings tableName selectedRow arenaArg window =
         initIndirectTabs
         browserSize
         loadWindowLookups
+
+
+createOneOneFields : List Tab -> List ( TableName, Maybe Record ) -> List ( Tab, List Field.Model )
+createOneOneFields oneOneTabs oneOneRecords =
+    List.map
+        (\( tableName, record ) ->
+            let
+                oneTab =
+                    List.filter
+                        (\tab ->
+                            tab.tableName == tableName
+                        )
+                        oneOneTabs
+                        |> List.head
+            in
+            case oneTab of
+                Just oneTab ->
+                    case record of
+                        Just record ->
+                            ( oneTab, createFields oneTab record )
+
+                        Nothing ->
+                            ( oneTab, [] )
+
+                Nothing ->
+                    Debug.crash "There should be a oneTab"
+        )
+        oneOneRecords
 
 
 dropdownPageRequestNeeded : Lookup -> Model -> Maybe TableName
@@ -271,8 +328,6 @@ dropdownPageRequestNeeded lookup model =
                 )
                 model.indirectTabs
 
-        -- HACKY: whichever has the source table
-        -- it's not possible for dropdown to open for more than 1 at a time
         sourceTable =
             mainFields
                 ++ hasManyTabFields
@@ -404,9 +459,15 @@ view model =
         ( allotedWidth, allotedHeight ) =
             allotedSize model.isMaximized model.browserSize
 
+        -- TODO: this is HACKY, maybe refactor the toolbar for each specific use case such as the detail record
+        -- away from the main tab use case
         toolbarModel =
             { selected = 0
-            , modified = 0
+            , modified =
+                if isModified model then
+                    1
+                else
+                    0
             , showIconText = allotedWidth > Constant.showIconTextMinWidth
             , multiColumnSort = False
             }
@@ -429,7 +490,7 @@ view model =
             [ class "main-tab-selected"
             , style [ ( "height", px mainRecordHeight ) ]
             ]
-            [ cardViewRecord model model.values mainTab
+            [ cardViewRecord Detail model.values mainTab model
             , viewOneOneTabs model
             ]
         , viewIf (Window.hasDetails model.window)
@@ -456,48 +517,39 @@ viewOneOneTabs model =
 
         selectedRow =
             model.selectedRow
+
+        oneOneValues =
+            model.oneOneValues
     in
     div []
-        (List.map (oneOneCardView model selectedRow) window.oneOneTabs)
+        (List.map
+            (\( oneOneTab, values ) ->
+                oneOneCardView values oneOneTab model
+            )
+            oneOneValues
+        )
 
 
-oneOneCardView : Model -> RecordDetail -> Tab -> Html Msg
-oneOneCardView model detail oneOneTab =
+oneOneCardView : List Field.Model -> Tab -> Model -> Html Msg
+oneOneCardView oneOneValues oneOneTab model =
     let
-        oneOneRecord =
-            RecordDetail.oneOneRecordOfTable detail oneOneTab.tableName
-
-        window =
-            model.window
-
-        _ =
-            Debug.log "one one record" oneOneRecord
-
         ( allotedWidth, allotedHeight ) =
             allotedSize model.isMaximized model.browserSize
 
         cardWidth =
             allotedWidth
-
-        oneOneValues =
-            case oneOneRecord of
-                Just oneOneRecord ->
-                    createFields oneOneTab oneOneRecord
-
-                Nothing ->
-                    []
     in
     div
         [ class "one-one-tab"
         , style [ ( "width", px cardWidth ) ]
         ]
         [ div [ class "one-one-tab-separator" ] [ text oneOneTab.name ]
-        , cardViewRecord model oneOneValues oneOneTab
+        , cardViewRecord OneOne oneOneValues oneOneTab model
         ]
 
 
-cardViewRecord : Model -> List Field.Model -> Tab -> Html Msg
-cardViewRecord model values tab =
+cardViewRecord : FieldContainer -> List Field.Model -> Tab -> Model -> Html Msg
+cardViewRecord container values tab model =
     let
         lookup =
             model.lookup
@@ -536,15 +588,15 @@ cardViewRecord model values tab =
             ]
             (List.map
                 (\value ->
-                    viewFieldInCard fieldLabelWidth lookup value
+                    viewFieldInCard container fieldLabelWidth lookup value
                 )
                 values
             )
         ]
 
 
-viewFieldInCard : Int -> Lookup -> Field.Model -> Html Msg
-viewFieldInCard labelWidth lookup value =
+viewFieldInCard : FieldContainer -> Int -> Lookup -> Field.Model -> Html Msg
+viewFieldInCard container labelWidth lookup value =
     let
         field =
             value.field
@@ -559,7 +611,7 @@ viewFieldInCard labelWidth lookup value =
             ]
         , div [ class "card-field-value" ]
             [ Field.view lookup value
-                |> Html.map (FieldMsg value)
+                |> Html.map (FieldMsg container value)
             ]
         ]
 
@@ -767,7 +819,7 @@ type Msg
     | WindowResized BrowserWindow.Size
     | TabMsg ( Section, Tab.Model, Tab.Msg )
     | TabMsgAll Tab.Msg
-    | FieldMsg Field.Model Field.Msg
+    | FieldMsg FieldContainer Field.Model Field.Msg
     | LookupNextPageReceived ( TableName, List Record )
     | LookupNextPageErrored String
     | ChangeActiveTab Section TableName (Maybe TableName)
@@ -906,27 +958,47 @@ update session msg model =
                            )
                     )
 
-        FieldMsg argField valueMsg ->
+        FieldMsg Detail argField fieldMsg ->
             let
-                valueUpdate : List ( Field.Model, Cmd Msg )
                 valueUpdate =
-                    List.map
-                        (\value ->
-                            if argField == value then
-                                let
-                                    ( newField, cmd ) =
-                                        Field.update valueMsg value
-                                in
-                                ( newField, Cmd.map (FieldMsg newField) cmd )
-                            else
-                                value => Cmd.none
-                        )
-                        model.values
+                    updateFields fieldMsg argField model.values
 
                 ( updatedFields, subCmd ) =
                     List.unzip valueUpdate
             in
             { model | values = updatedFields }
+                => Cmd.batch subCmd
+
+        FieldMsg OneOne argField fieldMsg ->
+            let
+                _ =
+                    Debug.log "Field changed in OneOne in Tab: " argField.tab.name
+
+                oneOneValueUpdate : List ( ( Tab, List Field.Model ), List (Cmd Msg) )
+                oneOneValueUpdate =
+                    List.map
+                        (\( oneOneTab, oneOneValues ) ->
+                            if oneOneTab == argField.tab then
+                                let
+                                    valueUpdate =
+                                        updateFields fieldMsg argField oneOneValues
+
+                                    ( updatedValues, subCmd ) =
+                                        List.unzip valueUpdate
+                                in
+                                ( ( oneOneTab, updatedValues ), subCmd )
+                            else
+                                ( ( oneOneTab, [] ), [] )
+                        )
+                        model.oneOneValues
+
+                ( updatedOneOneValues, subCmds ) =
+                    List.unzip oneOneValueUpdate
+
+                subCmd =
+                    List.concat subCmds
+            in
+            { model | oneOneValues = updatedOneOneValues }
                 => Cmd.batch subCmd
 
         LookupNextPageReceived ( sourceTable, recordList ) ->
@@ -957,6 +1029,23 @@ update session msg model =
             { model | arenaArg = newArenaArg }
                 => Route.modifyUrl (Route.WindowArena (Just newArenaArg))
 
+        ToolbarMsg Toolbar.ClickedCancelOnDetail ->
+            let
+                _ =
+                    Debug.log "Cancel changes on this record" ""
+
+                ( updatedValues, subCmd ) =
+                    cancelChangesOnValues model
+
+                ( updatedOneOneValues, oneOneCmd ) =
+                    cancelChangesOnOneOneValues model
+            in
+            { model
+                | values = updatedValues
+                , oneOneValues = updatedOneOneValues
+            }
+                => Cmd.batch (subCmd ++ oneOneCmd)
+
         -- handle this in WindowArena
         ToolbarMsg toolbarMsg ->
             model => Cmd.none
@@ -974,6 +1063,61 @@ update session msg model =
         -- handled in WindowArena
         ClickedCloseButton ->
             model => Cmd.none
+
+
+updateFields : Field.Msg -> Field.Model -> List Field.Model -> List ( Field.Model, Cmd Msg )
+updateFields fieldMsg argValue fields =
+    List.map
+        (\value ->
+            if argValue == value then
+                let
+                    ( newField, cmd ) =
+                        Field.update fieldMsg value
+                in
+                ( newField, Cmd.map (FieldMsg OneOne newField) cmd )
+            else
+                value => Cmd.none
+        )
+        fields
+
+
+resetFields : FieldContainer -> List Field.Model -> ( List Field.Model, List (Cmd Msg) )
+resetFields container fields =
+    List.map
+        (\field ->
+            let
+                ( updatedField, subCmd ) =
+                    Field.update Field.ResetChanges field
+            in
+            ( updatedField, Cmd.map (FieldMsg container updatedField) subCmd )
+        )
+        fields
+        |> List.unzip
+
+
+cancelChangesOnValues : Model -> ( List Field.Model, List (Cmd Msg) )
+cancelChangesOnValues model =
+    resetFields Detail model.values
+
+
+cancelChangesOnOneOneValues : Model -> ( List ( Tab, List Field.Model ), List (Cmd Msg) )
+cancelChangesOnOneOneValues model =
+    let
+        updatedFields =
+            List.map
+                (\( tab, values ) ->
+                    let
+                        ( updatedFields, subCmd ) =
+                            resetFields OneOne values
+                    in
+                    ( ( tab, updatedFields ), subCmd )
+                )
+                model.oneOneValues
+
+        ( oneOneValues, subCmds ) =
+            List.unzip updatedFields
+    in
+    ( oneOneValues, List.concat subCmds )
 
 
 requestNextPage : Section -> Tab.Model -> Model -> Cmd Msg

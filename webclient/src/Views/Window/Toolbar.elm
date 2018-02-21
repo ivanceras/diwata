@@ -29,6 +29,7 @@ type Msg
     | ClickedMainDelete
     | ToggleMultiSort
     | ClickedResetMultiSort
+    | ClickedCancelOnDetail
 
 
 viewForMain : Model -> Html Msg
@@ -197,6 +198,16 @@ viewForDetailRecord model =
     let
         showText =
             model.showIconText
+
+        modified =
+            model.modified
+
+        modifiedBadge =
+            if modified > 0 then
+                span [ class "badge badge-modified animated fadeIn" ]
+                    [ text (toString modified) ]
+            else
+                text ""
     in
     div [ class "toolbar btn-group" ]
         [ button
@@ -204,10 +215,13 @@ viewForDetailRecord model =
             [ span [ class "icon icon-floppy icon-text" ] []
             , text "Save"
                 |> viewIf showText
+            , modifiedBadge
             , span [ class "tooltip-text" ] [ text "Save changes to this record" ]
             ]
         , button
-            [ class "btn btn-large btn-default tooltip" ]
+            [ class "btn btn-large btn-default tooltip"
+            , onClick ClickedCancelOnDetail
+            ]
             [ span [ class "icon icon-block icon-text" ] []
             , text "Cancel"
                 |> viewIf showText
