@@ -165,7 +165,7 @@ viewRecordDetail recordId tab =
     a
         [ class "link-to-form"
         , onClick ClickDetailedLink
-        , Route.href (Route.WindowArena (Just (WindowArena.initArgWithRecordId tab.tableName recordIdString)))
+        , Route.href (Route.WindowArena (WindowArena.initArgWithRecordId tab.tableName recordIdString))
         ]
         [ div [ class "icon icon-pencil" ]
             []

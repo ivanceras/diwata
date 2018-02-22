@@ -556,7 +556,7 @@ oneOneCardView oneOneValues oneOneTab model =
             detailAllotedSize model
 
         cardWidth =
-            allotedWidth
+            allotedWidth - 100
     in
     div
         [ class "one-one-tab"
@@ -598,7 +598,12 @@ cardViewRecord container values tab model =
             detailAllotedSize model
 
         cardWidth =
-            allotedWidth
+            case container of
+                OneOne ->
+                    allotedWidth - 100
+
+                Detail ->
+                    allotedWidth
     in
     div []
         [ div
@@ -751,7 +756,7 @@ viewDetailTabs model =
                             -- Clicking will open the tab,
                             -- opening the tab in a new tab will open it in it's own window
                             tabLinkArenaArg =
-                                WindowArena.initArg tab.tableName
+                                WindowArena.initArg (Just tab.tableName)
                         in
                         a
                             [ class "detail-tab-name"
@@ -760,7 +765,7 @@ viewDetailTabs model =
                                 , ( "indirect-tab", section == Indirect )
                                 , ( "active-detail-tab", isActiveTab )
                                 ]
-                            , Route.href (Route.WindowArena (Just tabLinkArenaArg))
+                            , Route.href (Route.WindowArena tabLinkArenaArg)
                             , onClickPreventDefault (ChangeActiveTab section tab.tableName linker)
                             ]
                             [ text tab.name ]
@@ -889,7 +894,7 @@ updateDrag session drag model =
             updatedModel2
                 => Cmd.batch
                     [ subCmd
-                    , Route.modifyUrl (Route.WindowArena (Just updatedModel2.arenaArg))
+                    , Route.modifyUrl (Route.WindowArena updatedModel2.arenaArg)
                     ]
 
 
@@ -1062,7 +1067,7 @@ update session msg model =
                     }
             in
             { model | arenaArg = newArenaArg }
-                => Route.modifyUrl (Route.WindowArena (Just newArenaArg))
+                => Route.modifyUrl (Route.WindowArena newArenaArg)
 
         ToolbarMsg Toolbar.ClickedCancelOnDetail ->
             let

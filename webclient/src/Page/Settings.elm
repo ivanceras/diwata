@@ -3,6 +3,7 @@ module Page.Settings exposing (ExternalMsg(..), Model, Msg, init, update, view)
 import Data.Session as Session exposing (Session)
 import Data.User as User exposing (User)
 import Data.UserPhoto as UserPhoto
+import Data.WindowArena as WindowArena
 import Html exposing (Html, button, div, fieldset, h1, text)
 import Html.Attributes exposing (attribute, class, defaultValue, placeholder)
 import Html.Events exposing (onInput, onSubmit)
@@ -203,7 +204,7 @@ update session msg model =
 
         SaveCompleted (Ok user) ->
             model
-                => Cmd.batch [ storeSession user, Route.modifyUrl (Route.WindowArena Nothing) ]
+                => Cmd.batch [ storeSession user, Route.modifyUrl (Route.WindowArena WindowArena.default) ]
                 => SetUser user
 
 

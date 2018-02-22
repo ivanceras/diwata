@@ -48,7 +48,7 @@ type alias Model =
     , activeWindow : Maybe Window.Model
     , groupedWindow : GroupedWindow.Model
     , selectedRow : Maybe DetailedRecord.Model
-    , arenaArg : Maybe ArenaArg
+    , arenaArg : ArenaArg
     , settings : Settings
     , errors : List String
     , loadingSelectedRecord : Bool
@@ -60,7 +60,7 @@ handleLoadError e =
     pageLoadError Page.WindowArena ("WindowArena is currently unavailable. Error: " ++ toString e)
 
 
-init : Settings -> Session -> Maybe ArenaArg -> Task PageLoadError Model
+init : Settings -> Session -> ArenaArg -> Task PageLoadError Model
 init settings session arenaArg =
     let
         _ =
@@ -73,7 +73,7 @@ init settings session arenaArg =
             Maybe.map .token session.user
 
         tableName =
-            Maybe.map .tableName arenaArg
+            arenaArg.tableName
 
         loadWindow =
             case tableName of
@@ -110,15 +110,15 @@ init settings session arenaArg =
                 |> Task.mapError handleLoadError
 
         loadSelectedRecord =
-            case arenaArg of
-                Just arenaArg ->
+            case tableName of
+                Just tableName ->
                     case arenaArg.selected of
                         Just selectedRecord ->
                             Task.andThen
                                 (\window ->
                                     case window of
                                         Just window ->
-                                            DetailedRecord.init isDetailedRecordMaximized settings arenaArg.tableName selectedRecord arenaArg window
+                                            DetailedRecord.init isDetailedRecordMaximized settings tableName selectedRecord arenaArg window
                                                 |> Task.map Just
                                                 |> Task.mapError handleLoadError
 
@@ -291,6 +291,9 @@ update session msg model =
     let
         isDetailedRecordMaximized =
             model.isDetailedRecordMaximized
+
+        arenaArg =
+            model.arenaArg
     in
     case msg of
         GroupedWindowMsg subMsg ->
@@ -307,14 +310,6 @@ update session msg model =
 
                 tableName =
                     rowModel.tab.tableName
-
-                arenaArg =
-                    case model.arenaArg of
-                        Just arenaArg ->
-                            arenaArg
-
-                        Nothing ->
-                            Debug.crash "There should be an arena arg"
 
                 activeWindow =
                     case model.activeWindow of
@@ -341,14 +336,6 @@ update session msg model =
 
         WindowMsg (Window.TabMsg (Tab.RowMsg rowModel (Row.FieldMsg fieldModel (Field.PrimaryLinkClicked tableName recordIdString)))) ->
             let
-                arenaArg =
-                    case model.arenaArg of
-                        Just arenaArg ->
-                            arenaArg
-
-                        Nothing ->
-                            Debug.crash "There should be an arena arg"
-
                 activeWindow =
                     case model.activeWindow of
                         Just activeWindow ->
@@ -498,12 +485,7 @@ closeRecord : Model -> ( Model, Cmd Msg )
 closeRecord model =
     let
         updatedArenaArg =
-            case model.arenaArg of
-                Just arenaArg ->
-                    Just (WindowArena.removeSelected arenaArg)
-
-                Nothing ->
-                    Nothing
+            WindowArena.removeSelected model.arenaArg
     in
     { model
         | selectedRow = Nothing

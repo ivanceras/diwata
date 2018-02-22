@@ -4,6 +4,7 @@ import Data.Session as Session exposing (Session)
 import Data.User as User exposing (User, Username)
 import Data.Window exposing (Slug)
 import Data.Window.TableName as TableName exposing (TableName)
+import Data.WindowArena as WindowArena
 import Html exposing (..)
 import Json.Decode as Decode exposing (Value)
 import Navigation exposing (Location)
@@ -278,7 +279,7 @@ setRoute maybeRoute model =
             { model | session = { session | user = Nothing } }
                 => Cmd.batch
                     [ Ports.storeSession Nothing
-                    , Route.modifyUrl (Route.WindowArena Nothing)
+                    , Route.modifyUrl (Route.WindowArena WindowArena.default)
                     ]
 
         Just Route.Register ->
@@ -346,7 +347,7 @@ updatePage page msg model =
                 cmd =
                     -- If we just signed out, then redirect to WindowArena.
                     if session.user /= Nothing && user == Nothing then
-                        Route.modifyUrl (Route.WindowArena Nothing)
+                        Route.modifyUrl (Route.WindowArena WindowArena.default)
                     else
                         Cmd.none
             in

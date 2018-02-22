@@ -104,7 +104,7 @@ viewWindowName activeWindow windowName =
     a
         [ class "nav-group-item"
         , classList [ ( "active", isActive ), ( "is-view-active", isView && isActive ) ]
-        , Route.href (Route.WindowArena (Just (WindowArena.initArg windowName.tableName)))
+        , Route.href (Route.WindowArena (WindowArena.initArg (Just windowName.tableName)))
         ]
         [ span
             [ class "icon icon-list"

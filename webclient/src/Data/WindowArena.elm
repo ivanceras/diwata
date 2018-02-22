@@ -3,12 +3,13 @@ module Data.WindowArena
         ( ArenaArg
         , Section(..)
         , activeSection
-        , arenaArgParser
         , argToString
+        , default
         , initArg
         , initArgWithRecordId
         , parseArenaArgs
         , removeSelected
+        , setSelectedRecordId
         , updateFilter
         , updateSort
         , updateSplit
@@ -90,7 +91,9 @@ Example url:
 
 -}
 type alias ArenaArg =
-    { tableName : TableName
+    { tableName : Maybe TableName
+    , newRecord : Bool
+    , copyRecord : Maybe String
     , filter : Maybe Condition
     , page : Maybe Int
     , sort : Maybe Sort
@@ -119,7 +122,12 @@ argToString : ArenaArg -> String
 argToString arg =
     let
         appendTable =
-            [ "window", tableNameToString arg.tableName ]
+            case arg.tableName of
+                Just tableName ->
+                    [ "window", tableNameToString tableName ]
+
+                Nothing ->
+                    [ "window" ]
 
         appendFilter =
             case arg.filter of
@@ -194,9 +202,16 @@ argToString arg =
         |> String.join "/"
 
 
-initArg : TableName -> ArenaArg
+default : ArenaArg
+default =
+    initArg Nothing
+
+
+initArg : Maybe TableName -> ArenaArg
 initArg tableName =
     { tableName = tableName
+    , newRecord = False
+    , copyRecord = Nothing
     , filter = Nothing
     , page = Nothing
     , sort = Nothing
@@ -215,7 +230,7 @@ initArgWithRecordId : TableName -> String -> ArenaArg
 initArgWithRecordId tableName recordId =
     let
         arenaArg =
-            initArg tableName
+            initArg (Just tableName)
     in
     { arenaArg | selected = Just recordId }
 
@@ -263,107 +278,77 @@ keyPairs url =
     pairs
 
 
-arenaArgParser : UrlParser.Parser (Maybe ArenaArg -> a) a
-arenaArgParser =
-    UrlParser.custom "ARENA_ARG" <|
-        \segment ->
-            Ok (parseArenaArgs segment)
-
-
-parseArenaArgs : String -> Maybe ArenaArg
+parseArenaArgs : String -> ArenaArg
 parseArenaArgs url =
     let
         pairs =
             keyPairs url
-
-        head =
-            List.head pairs
-
-        tail =
-            Maybe.withDefault [] (List.tail pairs)
-
-        tableName =
-            case head of
-                Just ( key, value ) ->
-                    if key == "window" then
-                        TableName.fromString value
-                    else
-                        Nothing
-
-                Nothing ->
-                    Nothing
-
-        initialArgs =
-            Maybe.map (\tableName -> initArg tableName) tableName
-
-        arenaArgs =
-            case initialArgs of
-                Just initialArgs ->
-                    let
-                        detailed =
-                            List.foldl
-                                (\( key, value ) arg ->
-                                    case key of
-                                        "filter" ->
-                                            { arg | filter = Just (Filter.parse value) }
-
-                                        "page" ->
-                                            { arg
-                                                | page =
-                                                    String.toInt value
-                                                        |> Result.toMaybe
-                                            }
-
-                                        "order" ->
-                                            { arg | sort = orderClauseParser value }
-
-                                        "select" ->
-                                            { arg | selected = Just value }
-
-                                        "split" ->
-                                            { arg
-                                                | sectionSplit =
-                                                    String.toFloat value
-                                                        |> Result.toMaybe
-                                            }
-
-                                        "has_many" ->
-                                            { arg | sectionTable = Just ( HasMany, TableName.fromStringOrBlank value ) }
-
-                                        "indirect" ->
-                                            { arg | sectionTable = Just ( Indirect, TableName.fromStringOrBlank value ) }
-
-                                        "via" ->
-                                            { arg | sectionViaLinker = Just (TableName.fromStringOrBlank value) }
-
-                                        "section_filter" ->
-                                            { arg | sectionFilter = Just (Filter.parse value) }
-
-                                        "section_page" ->
-                                            { arg
-                                                | sectionPage =
-                                                    String.toInt value
-                                                        |> Result.toMaybe
-                                            }
-
-                                        "section_order" ->
-                                            { arg | sectionOrder = orderClauseParser value }
-
-                                        "section_select" ->
-                                            { arg | sectionSelected = Just value }
-
-                                        _ ->
-                                            arg
-                                )
-                                initialArgs
-                                tail
-                    in
-                    Just detailed
-
-                Nothing ->
-                    initialArgs
     in
-    arenaArgs
+    List.foldl
+        (\( key, value ) arg ->
+            case key of
+                "window" ->
+                    { arg | tableName = TableName.fromString value }
+
+                "new" ->
+                    { arg | newRecord = True }
+
+                "copy" ->
+                    { arg | copyRecord = Just value }
+
+                "filter" ->
+                    { arg | filter = Just (Filter.parse value) }
+
+                "page" ->
+                    { arg
+                        | page =
+                            String.toInt value
+                                |> Result.toMaybe
+                    }
+
+                "order" ->
+                    { arg | sort = orderClauseParser value }
+
+                "select" ->
+                    { arg | selected = Just value }
+
+                "split" ->
+                    { arg
+                        | sectionSplit =
+                            String.toFloat value
+                                |> Result.toMaybe
+                    }
+
+                "has_many" ->
+                    { arg | sectionTable = Just ( HasMany, TableName.fromStringOrBlank value ) }
+
+                "indirect" ->
+                    { arg | sectionTable = Just ( Indirect, TableName.fromStringOrBlank value ) }
+
+                "via" ->
+                    { arg | sectionViaLinker = Just (TableName.fromStringOrBlank value) }
+
+                "section_filter" ->
+                    { arg | sectionFilter = Just (Filter.parse value) }
+
+                "section_page" ->
+                    { arg
+                        | sectionPage =
+                            String.toInt value
+                                |> Result.toMaybe
+                    }
+
+                "section_order" ->
+                    { arg | sectionOrder = orderClauseParser value }
+
+                "section_select" ->
+                    { arg | sectionSelected = Just value }
+
+                _ ->
+                    arg
+        )
+        default
+        pairs
 
 
 updateFilter : Condition -> ArenaArg -> ArenaArg
@@ -402,3 +387,8 @@ removeSelected arenaArg =
         , sectionOrder = Nothing
         , sectionSelected = Nothing
     }
+
+
+setSelectedRecordId : RecordId -> ArenaArg -> ArenaArg
+setSelectedRecordId recordId arenaArg =
+    { arenaArg | selected = Just (Record.idToString recordId) }

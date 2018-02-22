@@ -58,7 +58,7 @@ type alias Model =
     , mainTab : Tab.Model
     , window : Window
     , lookup : Lookup
-    , arenaArg : Maybe ArenaArg
+    , arenaArg : ArenaArg
     , dropdownPageRequestInFlight : Bool
     , settings : Settings
     }
@@ -128,28 +128,17 @@ calcMainTabSize browserSize =
     )
 
 
-init : Settings -> Session -> TableName -> Window -> Maybe ArenaArg -> Task PageLoadError Model
+init : Settings -> Session -> TableName -> Window -> ArenaArg -> Task PageLoadError Model
 init settings session tableName window arenaArg =
     let
         maybeAuthToken =
             Maybe.map .token session.user
 
         condition =
-            case arenaArg of
-                Just arenaArg ->
-                    arenaArg.filter
+            arenaArg.filter
 
-                Nothing ->
-                    Nothing
-
-        sort : Maybe Sort
         sort =
-            case arenaArg of
-                Just arenaArg ->
-                    arenaArg.sort
-
-                Nothing ->
-                    Nothing
+            arenaArg.sort
 
         selectedRecordId =
             Nothing
@@ -271,6 +260,9 @@ update session msg model =
 
         mainTableName =
             mainTab.tab.tableName
+
+        arenaArg =
+            model.arenaArg
     in
     case msg of
         DismissErrors ->
@@ -320,13 +312,7 @@ update session msg model =
                     updatedMainTab.searchFilter
 
                 newArenaArg =
-                    case model.arenaArg of
-                        Just arenaArg ->
-                            WindowArena.updateFilter tabSearchFilter arenaArg
-                                |> Just
-
-                        Nothing ->
-                            Nothing
+                    WindowArena.updateFilter tabSearchFilter arenaArg
 
                 updatedModel =
                     { model
@@ -347,12 +333,7 @@ update session msg model =
                     Tab.update (Tab.ToggleSort columnName) model.mainTab
 
                 updatedArenaArg =
-                    case model.arenaArg of
-                        Just arenaArg ->
-                            Just { arenaArg | sort = updatedMainTab.sort }
-
-                        Nothing ->
-                            Nothing
+                    { arenaArg | sort = updatedMainTab.sort }
 
                 updatedModel =
                     { model
@@ -427,20 +408,10 @@ refreshPage tab model =
             model.arenaArg
 
         condition =
-            case arenaArg of
-                Just arenaArg ->
-                    arenaArg.filter
-
-                Nothing ->
-                    Nothing
+            arenaArg.filter
 
         sort =
-            case model.arenaArg of
-                Just arenaArg ->
-                    arenaArg.sort
-
-                Nothing ->
-                    Nothing
+            arenaArg.sort
 
         request =
             Request.Window.Records.listPageWithFilter model.settings 1 Nothing tab.tab.tableName condition sort
@@ -465,32 +436,22 @@ requestNextPage tab model =
             model.arenaArg
 
         condition =
-            case arenaArg of
-                Just arenaArg ->
-                    let
-                        filter =
-                            arenaArg.filter
-                    in
-                    case filter of
-                        Just filter ->
-                            if Dict.isEmpty filter then
-                                Nothing
-                            else
-                                Just filter
-
-                        Nothing ->
-                            Nothing
+            let
+                filter =
+                    arenaArg.filter
+            in
+            case filter of
+                Just filter ->
+                    if Dict.isEmpty filter then
+                        Nothing
+                    else
+                        Just filter
 
                 Nothing ->
                     Nothing
 
         sort =
-            case model.arenaArg of
-                Just arenaArg ->
-                    arenaArg.sort
-
-                Nothing ->
-                    Nothing
+            arenaArg.sort
 
         tabPage =
             tab.currentPage + 1

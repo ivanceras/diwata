@@ -2,6 +2,7 @@ module Page.Register exposing (ExternalMsg(..), Model, Msg, initialModel, update
 
 import Data.Session as Session exposing (Session)
 import Data.User as User exposing (User)
+import Data.WindowArena as WindowArena
 import Html exposing (..)
 import Html.Attributes exposing (class, placeholder)
 import Html.Events exposing (onInput, onSubmit)
@@ -149,7 +150,7 @@ update msg model =
 
         RegisterCompleted (Ok user) ->
             model
-                => Cmd.batch [ storeSession user, Route.modifyUrl (Route.WindowArena Nothing) ]
+                => Cmd.batch [ storeSession user, Route.modifyUrl (Route.WindowArena WindowArena.default) ]
                 => SetUser user
 
 

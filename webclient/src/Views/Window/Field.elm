@@ -248,7 +248,7 @@ createWidget presentation record tab field maybeValue =
                             [ a
                                 [ class "primary-link"
                                 , onClick (PrimaryLinkClicked tableName recordIdString)
-                                , Route.href (Route.WindowArena (Just (WindowArena.initArgWithRecordId tableName recordIdString)))
+                                , Route.href (Route.WindowArena (WindowArena.initArgWithRecordId tableName recordIdString))
                                 ]
                                 [ text valueString ]
                             ]

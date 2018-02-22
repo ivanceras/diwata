@@ -5,6 +5,7 @@ module Views.Page exposing (ActivePage(..), bodyId, frame)
 
 import Data.User as User exposing (User, Username)
 import Data.UserPhoto as UserPhoto exposing (UserPhoto)
+import Data.WindowArena as WindowArena
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Lazy exposing (lazy2)
@@ -51,7 +52,7 @@ viewHeader : ActivePage -> Maybe User -> Bool -> Html msg
 viewHeader page user isLoading =
     nav [ class "navbar navbar-light" ]
         [ div [ class "container" ]
-            [ a [ class "navbar-brand", Route.href (Route.WindowArena Nothing) ]
+            [ a [ class "navbar-brand", Route.href (Route.WindowArena WindowArena.default) ]
                 [ text "Diwata" ]
             ]
         ]

@@ -22,7 +22,7 @@ import UrlParser as Url exposing ((</>), Parser, oneOf, parseHash, s, string)
 
 
 type Route
-    = WindowArena (Maybe ArenaArg)
+    = WindowArena ArenaArg
     | Login
     | Logout
     | Register
@@ -36,7 +36,8 @@ route =
         , Url.map Logout (s "logout")
         , Url.map Settings (s "settings")
         , Url.map Register (s "register")
-        , Url.map (WindowArena Nothing) (s "")
+
+        --, Url.map (WindowArena Nothing) (s "")
         ]
 
 
@@ -50,12 +51,7 @@ routeToString page =
         pieces =
             case page of
                 WindowArena arenaArgs ->
-                    case arenaArgs of
-                        Nothing ->
-                            []
-
-                        Just arenaArgs ->
-                            [ argToString arenaArgs ]
+                    [ argToString arenaArgs ]
 
                 Login ->
                     [ "login" ]
@@ -89,15 +85,15 @@ modifyUrl =
 fromLocation : Location -> Maybe Route
 fromLocation location =
     if String.isEmpty location.hash then
-        Just (WindowArena Nothing)
+        Just (WindowArena WindowArena.default)
     else
         let
             arenaArgs =
                 parseArenaArgs location.hash
         in
-        case arenaArgs of
-            Just arenaArgs ->
-                Just (WindowArena (Just arenaArgs))
+        case arenaArgs.tableName of
+            Just tableName ->
+                Just (WindowArena arenaArgs)
 
             Nothing ->
                 parseHash route location
