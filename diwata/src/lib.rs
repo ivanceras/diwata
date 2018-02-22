@@ -184,6 +184,26 @@ fn get_data_with_page_sort(table_name: String, page: u32, sort: String) -> Resul
     }
 }
 
+#[get("/<table_name>/<page>/filter/<filter>")]
+fn get_data_with_page_filter(table_name: String, page: u32, filter: String) -> Result<Option<Json<Rows>>, ServiceError> {
+    let em = get_pool_em()?;
+    let dm = get_pool_dm()?;
+    let db_url = &get_db_url()?;
+    let mut cache_pool = cache::CACHE_POOL.lock().unwrap();
+    let windows = cache_pool.get_cached_windows(&em, db_url)?;
+    let table_name = TableName::from(&table_name);
+    let window = window::get_window(&table_name, &windows);
+    let tables = cache_pool.get_cached_tables(&em, db_url)?;
+    let filter = Filter::from_str(&filter);
+    match window {
+        Some(window) => {
+            let rows: Rows =
+                data_read::get_maintable_data(&dm, &tables, &window, Some(filter), None, page, PAGE_SIZE)?;
+            Ok(Some(Json(rows)))
+        }
+        None => Ok(None),
+    }
+}
 
 #[get("/<table_name>/<page>/filter/<filter>/sort/<sort>")]
 fn get_data_with_page_filter_sort(table_name: String, page: u32, filter: String, sort: String) -> Result<Option<Json<Rows>>, ServiceError> {
@@ -465,6 +485,7 @@ pub fn rocket(address: Option<String>, port: Option<u16>) -> Result<Rocket, Conf
             routes![
                 get_data,
                 get_data_with_page,
+                get_data_with_page_filter,
                 get_data_with_page_sort,
                 get_data_with_page_filter_sort,
                 get_detailed_record,
