@@ -52,4 +52,4 @@ isDetailedRecordMaximized =
 
 -}
 columnPad =
-    10
+    20

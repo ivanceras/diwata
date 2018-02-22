@@ -158,16 +158,18 @@ pageRequestNeeded model =
         needed =
             isScrolledBottom model && not model.pageRequestInFlight && not model.reachedLastPage
 
-        _ =
-            Debug.log
-                ("in pageRequestNeeded --> isScrolledBottom: "
-                    ++ toString (isScrolledBottom model)
-                    ++ " pageReqeustInFlight: "
-                    ++ toString model.pageRequestInFlight
-                    ++ " reachedLastPage: "
-                    ++ toString model.reachedLastPage
-                )
-                needed
+        {-
+           _ =
+               Debug.log
+                   ("in pageRequestNeeded --> isScrolledBottom: "
+                       ++ toString (isScrolledBottom model)
+                       ++ " pageReqeustInFlight: "
+                       ++ toString model.pageRequestInFlight
+                       ++ " reachedLastPage: "
+                       ++ toString model.reachedLastPage
+                   )
+                   needed
+        -}
     in
     needed
 

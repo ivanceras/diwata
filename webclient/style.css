@@ -207,6 +207,7 @@ a.primary-link {
 
 .widget-value{
     padding: 0 5px;
+    text-align: center;
 }
 
 .widget-value.is-modified,
@@ -568,7 +569,6 @@ a.primary-link {
     border-style: solid;
     border-color: #ccc;
     height: 30px;
-    padding-right: 20px; /* adjust from the button which is margin-left : -20px */
 }
 
 .dropdown-input button {
