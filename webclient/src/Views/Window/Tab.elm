@@ -30,6 +30,8 @@ import Json.Encode as Encode
 import Page.Errored as Errored exposing (PageLoadError, pageLoadError)
 import Task exposing (Task)
 import Util exposing ((=>), Scroll, onScroll, px, viewIf)
+import Views.Window.Field as Field
+import Views.Window.Presentation as Presentation exposing (Presentation(..))
 import Views.Window.Row as Row
 import Views.Window.Searchbox as Searchbox
 import Views.Window.Toolbar as Toolbar
@@ -434,8 +436,17 @@ viewColumnWithSearchbox model field =
 
         sort =
             model.sort
+
+        ( widgetWidth, widgetHeight ) =
+            Field.calcWidgetSize Presentation.InList field
+
+        columnWidth =
+            widgetWidth + Constant.columnPad
     in
-    div [ class "tab-column-with-filter" ]
+    div
+        [ class "tab-column-with-filter"
+        , style [ ( "width", px columnWidth ) ]
+        ]
         [ viewColumn model.isMultiSort field sort
         , Searchbox.view searchboxModel
             |> Html.map (SearchboxMsg searchboxModel)

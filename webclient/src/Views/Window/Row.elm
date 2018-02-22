@@ -85,9 +85,17 @@ view lookup model =
         ]
         (List.map
             (\value ->
+                let
+                    ( widgetWidth, widgetHeight ) =
+                        Field.calcWidgetSize Presentation.InList value.field
+
+                    rowWidth =
+                        widgetWidth + Constant.columnPad
+                in
                 div
                     [ class "tab-row-value"
                     , Constant.tabRowValueStyle
+                    , style [ ( "width", px rowWidth ) ]
                     ]
                     [ Field.view lookup value
                         |> Html.map (FieldMsg value)

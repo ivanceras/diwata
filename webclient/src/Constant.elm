@@ -43,3 +43,13 @@ showIconTextMinWidth =
 
 isDetailedRecordMaximized =
     False
+
+
+{-|
+
+    After widgets widget are calculated in the main tab list,
+    add a columnPad to perfectly align the column and the widget value
+
+-}
+columnPad =
+    10

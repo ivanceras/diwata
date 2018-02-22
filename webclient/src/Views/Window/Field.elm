@@ -2,6 +2,7 @@ module Views.Window.Field
     exposing
         ( Model
         , Msg(..)
+        , calcWidgetSize
         , dropdownPageRequestNeeded
         , init
         , isModified
@@ -158,6 +159,29 @@ viewWidget lookup model =
                 |> Html.map (DropdownDisplayMsg dropdown)
 
 
+calcWidgetSize : Presentation -> Field -> ( Int, Int )
+calcWidgetSize presentation field =
+    case presentation of
+        InCard ->
+            let
+                ( fieldWidth, fieldHeight ) =
+                    Field.shortOrLongWidth field
+            in
+            case fieldWidth of
+                Field.Short ->
+                    ( 200, fieldHeight )
+
+                Field.Long ->
+                    ( 1000, fieldHeight )
+
+        InList ->
+            let
+                width =
+                    Field.widgetWidthListValue field
+            in
+            ( width, 1 )
+
+
 createWidget : Presentation -> Record -> Tab -> Field -> Maybe Value -> Widget
 createWidget presentation record tab field maybeValue =
     let
@@ -189,25 +213,7 @@ createWidget presentation record tab field maybeValue =
                 |> Widget.alignmentToString
 
         ( widgetWidth, widgetHeight ) =
-            case presentation of
-                InCard ->
-                    let
-                        ( fieldWidth, fieldHeight ) =
-                            Field.shortOrLongWidth field
-                    in
-                    case fieldWidth of
-                        Field.Short ->
-                            ( 200, fieldHeight )
-
-                        Field.Long ->
-                            ( 1000, fieldHeight )
-
-                InList ->
-                    let
-                        width =
-                            Field.widgetWidthListValue field
-                    in
-                    ( width, 1 )
+            calcWidgetSize presentation field
 
         styles =
             style

@@ -168,11 +168,15 @@ textarea {
 
 
 .tab-row{
-    display: flex;
+    display: inline-flex;
 }
 
 .tab-row-value {
-    padding: 5px 5px;
+    border-right: 1px solid #ccc;
+}
+
+.tab-row-value a{
+    line-height: 30px;
 }
 
 .tab-row-value input
@@ -199,6 +203,10 @@ a.primary-link {
     border-color: #ccc;
     height: 30px;
     background-color: transparent;
+}
+
+.widget-value{
+    padding: 0 5px;
 }
 
 .widget-value.is-modified,
@@ -318,7 +326,7 @@ a.primary-link {
     border-bottom: 1px solid #ccc;
 }
 .tab-columns-content {
-    display: flex;
+    display: inline-flex;
     position: relative;
 }
 
@@ -531,7 +539,6 @@ a.primary-link {
 }
 
 .primary-link-wrapper {
-    padding: 5px 20px; 
     overflow: hidden;
 }
 
