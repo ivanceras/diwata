@@ -165,6 +165,9 @@ textarea {
 }
 
 
+.tab-row-wrapper{
+    display: block;
+}
 
 
 .tab-row{

@@ -79,30 +79,32 @@ view lookup model =
 
         -- rearrange fields here if needed
     in
-    div
-        [ class "tab-row"
-        , classList [ ( "is-modified", isModified model ) ]
-        ]
-        (List.map
-            (\value ->
-                let
-                    ( widgetWidth, widgetHeight ) =
-                        Field.calcWidgetSize Presentation.InList value.field
+    div [ class "tab-row-wrapper" ]
+        [ div
+            [ class "tab-row"
+            , classList [ ( "is-modified", isModified model ) ]
+            ]
+            (List.map
+                (\value ->
+                    let
+                        ( widgetWidth, widgetHeight ) =
+                            Field.calcWidgetSize Presentation.InList value.field
 
-                    rowWidth =
-                        widgetWidth + Constant.columnPad
-                in
-                div
-                    [ class "tab-row-value"
-                    , Constant.tabRowValueStyle
-                    , style [ ( "width", px rowWidth ) ]
-                    ]
-                    [ Field.view lookup value
-                        |> Html.map (FieldMsg value)
-                    ]
+                        rowWidth =
+                            widgetWidth + Constant.columnPad
+                    in
+                    div
+                        [ class "tab-row-value"
+                        , Constant.tabRowValueStyle
+                        , style [ ( "width", px rowWidth ) ]
+                        ]
+                        [ Field.view lookup value
+                            |> Html.map (FieldMsg value)
+                        ]
+                )
+                model.fields
             )
-            model.fields
-        )
+        ]
 
 
 viewRowControls : Model -> RecordId -> Tab -> Html Msg
