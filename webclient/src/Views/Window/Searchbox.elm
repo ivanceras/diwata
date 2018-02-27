@@ -8,9 +8,9 @@ module Views.Window.Searchbox
         , view
         )
 
+import Data.Query.Filter as Filter
 import Data.Window.DataType as DataType exposing (DataType)
 import Data.Window.Field as Field exposing (Field)
-import Data.Window.Filter as Filter
 import Data.Window.Value as Value exposing (Value(..))
 import Data.Window.Widget as Widget exposing (Widget(..))
 import Html exposing (..)

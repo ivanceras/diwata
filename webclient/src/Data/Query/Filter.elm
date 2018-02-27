@@ -1,7 +1,8 @@
-module Data.Window.Filter
+module Data.Query.Filter
     exposing
         ( Condition
         , get
+        , new
         , parse
         , put
         , remove
@@ -19,6 +20,11 @@ import Json.Decode as Decode exposing (Decoder)
 
 type alias Condition =
     Dict String String
+
+
+new : Condition
+new =
+    Dict.empty
 
 
 get : ColumnName -> Condition -> Maybe String

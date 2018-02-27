@@ -21,7 +21,7 @@ import Data.Window.RecordDetail as RecordDetail exposing (RecordDetail)
 import Data.Window.Tab as Tab exposing (Tab, TabType(..))
 import Data.Window.TableName as TableName exposing (TableName)
 import Data.Window.Value as Value exposing (Value)
-import Data.WindowArena as WindowArena exposing (ArenaArg, Section(..))
+import Data.WindowArena as WindowArena exposing (Action(..), ArenaArg, Section(..))
 import Dict
 import Html exposing (..)
 import Html.Attributes exposing (attribute, class, classList, href, id, placeholder, src, style)
@@ -55,7 +55,7 @@ import Window as BrowserWindow
 
 
 type alias Model =
-    { selectedRow : RecordDetail
+    { selectedRow : Maybe RecordDetail
     , window : Window
     , hasManyTabs : List Tab.Model
     , indirectTabs : List ( TableName, Tab.Model )
@@ -143,16 +143,28 @@ handleLoadError e =
     pageLoadError Page.WindowArena ("WindowArena DetailedRecord is currently unavailable. Error: " ++ toString e)
 
 
-init : Bool -> Settings -> TableName -> String -> ArenaArg -> Window -> Task PageLoadError Model
-init isMaximized settings tableName selectedRow arenaArg window =
+init : Bool -> Settings -> TableName -> Action -> ArenaArg -> Window -> Task PageLoadError Model
+init isMaximized settings tableName action arenaArg window =
     let
         browserSize =
             BrowserWindow.size
 
-        fetchSelected =
-            Records.fetchSelected settings tableName selectedRow
+        doFetchSelected recordId =
+            Records.fetchSelected settings tableName recordId
                 |> Http.toTask
                 |> Task.mapError handleLoadError
+                |> Task.map Just
+
+        fetchSelected =
+            case action of
+                WindowArena.Select recordId ->
+                    doFetchSelected recordId
+
+                WindowArena.Copy recordId ->
+                    doFetchSelected recordId
+
+                _ ->
+                    Task.succeed Nothing
 
         loadWindowLookups =
             Records.lookups settings Nothing tableName
@@ -167,26 +179,6 @@ init isMaximized settings tableName selectedRow arenaArg window =
                 window.hasManyTabs
                 |> Task.sequence
 
-        sectionSort : Maybe Sort
-        sectionSort =
-            arenaArg.sectionOrder
-
-        hasManySort =
-            case WindowArena.activeSection arenaArg of
-                Just HasMany ->
-                    sectionSort
-
-                _ ->
-                    Nothing
-
-        indirectSort =
-            case WindowArena.activeSection arenaArg of
-                Just Indirect ->
-                    sectionSort
-
-                _ ->
-                    Nothing
-
         splitPercentage =
             case arenaArg.sectionSplit of
                 Just split ->
@@ -194,6 +186,9 @@ init isMaximized settings tableName selectedRow arenaArg window =
 
                 Nothing ->
                     0.6
+
+        sectionQuery =
+            arenaArg.sectionQuery
 
         initHasManyTabs =
             Task.map4
@@ -212,11 +207,16 @@ init isMaximized settings tableName selectedRow arenaArg window =
                         (\hasManyTab hasManyRecordCount ->
                             let
                                 rows =
-                                    RecordDetail.contentInTable detailRows.hasMany hasManyTab.tableName
+                                    case detailRows of
+                                        Just detailRows ->
+                                            RecordDetail.contentInTable detailRows.hasMany hasManyTab.tableName
+
+                                        Nothing ->
+                                            Just Record.emptyRow
                             in
                             case rows of
                                 Just rows ->
-                                    Tab.init Nothing tabSize Nothing sectionSort hasManyTab InHasMany rows hasManyRecordCount
+                                    Tab.init Nothing tabSize sectionQuery hasManyTab InHasMany rows hasManyRecordCount
 
                                 Nothing ->
                                     Debug.crash "Empty row"
@@ -254,11 +254,16 @@ init isMaximized settings tableName selectedRow arenaArg window =
                         (\( linker, indirectTab ) indirectRecordCount ->
                             let
                                 rows =
-                                    RecordDetail.contentInIndirectTable detailRows.indirect linker indirectTab.tableName
+                                    case detailRows of
+                                        Just detailRows ->
+                                            RecordDetail.contentInIndirectTable detailRows.indirect linker indirectTab.tableName
+
+                                        Nothing ->
+                                            Just Record.emptyRow
                             in
                             case rows of
                                 Just rows ->
-                                    ( linker, Tab.init Nothing tabSize Nothing sectionSort indirectTab InIndirect rows indirectRecordCount )
+                                    ( linker, Tab.init Nothing tabSize sectionQuery indirectTab InIndirect rows indirectRecordCount )
 
                                 Nothing ->
                                     Debug.crash "Empty row"
@@ -282,8 +287,20 @@ init isMaximized settings tableName selectedRow arenaArg window =
             , browserSize = browserSize
             , arenaArg = arenaArg
             , lookup = lookup
-            , values = createFields window.mainTab detail.record
-            , oneOneValues = createOneOneFields window.oneOneTabs detail.oneOnes
+            , values =
+                case detail of
+                    Just detail ->
+                        createFields window.mainTab detail.record
+
+                    Nothing ->
+                        []
+            , oneOneValues =
+                case detail of
+                    Just detail ->
+                        createOneOneFields window.oneOneTabs detail.oneOnes
+
+                    Nothing ->
+                        []
             , dropdownPageRequestInFlight = False
             , settings = settings
             , isMaximized = isMaximized
@@ -454,9 +471,6 @@ splitTabHeights window position isMaximized browserSize =
 view : Model -> Html Msg
 view model =
     let
-        mainSelectedRecord =
-            model.selectedRow.record
-
         window =
             model.window
 
@@ -1166,8 +1180,16 @@ requestNextPage section tab model =
         mainTable =
             model.window.mainTab.tableName
 
+        arenaArg =
+            model.arenaArg
+
         recordId =
-            model.arenaArg.selected |> Maybe.withDefault ""
+            case arenaArg.action of
+                WindowArena.Select recordId ->
+                    recordId
+
+                _ ->
+                    Debug.crash "Can not request next page on detail other than selected record"
 
         tabPage =
             tab.currentPage

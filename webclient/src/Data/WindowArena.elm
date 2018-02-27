@@ -1,6 +1,7 @@
 module Data.WindowArena
     exposing
-        ( ArenaArg
+        ( Action(..)
+        , ArenaArg
         , Section(..)
         , activeSection
         , argToString
@@ -15,9 +16,9 @@ module Data.WindowArena
         , updateSplit
         )
 
-import Data.Query as Query exposing (orderClauseParser, orderClauseToString)
+import Data.Query as Query exposing (Query)
+import Data.Query.Filter as Filter exposing (Condition)
 import Data.Query.Sort as Sort exposing (Sort)
-import Data.Window.Filter as Filter exposing (Condition)
 import Data.Window.Record as Record exposing (Record, RecordId)
 import Data.Window.TableName as TableName exposing (TableName, tableNameToString)
 import UrlParser
@@ -92,20 +93,50 @@ Example url:
 -}
 type alias ArenaArg =
     { tableName : Maybe TableName
-    , newRecord : Bool
-    , copyRecord : Maybe String
-    , filter : Maybe Condition
-    , page : Maybe Int
-    , sort : Maybe Sort
-    , selected : Maybe String
+    , action : Action
+    , query : Query
     , sectionTable : Maybe ( Section, TableName )
     , sectionViaLinker : Maybe TableName
     , sectionSplit : Maybe Float
-    , sectionFilter : Maybe Condition
-    , sectionPage : Maybe Int
-    , sectionOrder : Maybe Sort
+    , sectionQuery : Query
     , sectionSelected : Maybe String
     }
+
+
+{-|
+
+    Action of window arena
+    ListPage - list down the records of the window
+    Select - Display the detail of a record
+    NewRecord - Display an empty view for a new record
+    CopyRecord - Copy the contents of the RecordId except for the primary keys and unique keys
+
+-}
+type Action
+    = ListPage
+    | Select String
+    | NewRecord
+    | Copy String
+
+
+actionToString : Action -> String
+actionToString action =
+    let
+        str =
+            case action of
+                ListPage ->
+                    []
+
+                Select recordId ->
+                    [ "select", recordId ]
+
+                NewRecord ->
+                    [ "new" ]
+
+                Copy recordId ->
+                    [ "copy", recordId ]
+    in
+    String.join "/" str
 
 
 activeSection : ArenaArg -> Maybe Section
@@ -121,84 +152,55 @@ activeSection arenaArg =
 argToString : ArenaArg -> String
 argToString arg =
     let
-        appendTable =
+        tableStr =
             case arg.tableName of
                 Just tableName ->
                     [ "window", tableNameToString tableName ]
 
                 Nothing ->
-                    [ "window" ]
+                    []
 
-        appendFilter =
-            case arg.filter of
-                Just cond ->
-                    case Filter.toString cond of
-                        "" ->
-                            appendTable
+        queryStr =
+            Query.mainQueryToString arg.query
 
-                        str ->
-                            appendTable ++ [ "filter", str ]
+        actionStr =
+            actionToString arg.action
 
-                Nothing ->
-                    appendTable
-
-        appendPage =
-            case arg.page of
-                Just page ->
-                    appendFilter ++ [ "page", toString page ]
-
-                Nothing ->
-                    appendFilter
-
-        appendOrder =
-            case arg.sort of
-                Just sort ->
-                    appendPage ++ [ "order", orderClauseToString sort ]
-
-                Nothing ->
-                    appendPage
-
-        appendSelected =
-            case arg.selected of
-                Just selected ->
-                    appendOrder ++ [ "select", selected ]
-
-                Nothing ->
-                    appendOrder
-
-        appendSplit =
+        splitStr =
             case arg.sectionSplit of
                 Just split ->
-                    appendSelected ++ [ "split", toString split ]
+                    [ "split", toString split ]
 
                 Nothing ->
-                    appendSelected
+                    []
 
-        appendSectionTable =
+        sectionTableStr =
             case arg.sectionTable of
                 Just ( section, tableName ) ->
-                    appendSplit ++ [ sectionToString section, tableNameToString tableName ]
+                    [ sectionToString section, tableNameToString tableName ]
 
                 Nothing ->
-                    appendSplit
+                    []
 
-        appendSectionViaLinker =
+        sectionViaLinkerStr =
             case arg.sectionViaLinker of
                 Just linker ->
-                    appendSectionTable ++ [ "via", tableNameToString linker ]
+                    [ "via", tableNameToString linker ]
 
                 Nothing ->
-                    appendSectionTable
+                    []
 
-        appendSectionFilter =
-            case arg.sectionFilter of
-                Just cond ->
-                    appendSectionViaLinker ++ [ "section_filter", Filter.toString cond ]
-
-                Nothing ->
-                    appendSectionViaLinker
+        sectionQueryStr =
+            Query.sectionQueryToString arg.sectionQuery
     in
-    appendSectionFilter
+    tableStr
+        ++ [ queryStr ]
+        ++ [ actionStr ]
+        ++ splitStr
+        ++ sectionTableStr
+        ++ sectionViaLinkerStr
+        ++ [ sectionQueryStr ]
+        |> List.filter (\a -> not (String.isEmpty a))
         |> String.join "/"
 
 
@@ -210,18 +212,12 @@ default =
 initArg : Maybe TableName -> ArenaArg
 initArg tableName =
     { tableName = tableName
-    , newRecord = False
-    , copyRecord = Nothing
-    , filter = Nothing
-    , page = Nothing
-    , sort = Nothing
-    , selected = Nothing
+    , action = ListPage
+    , query = Query.default
     , sectionTable = Nothing
     , sectionSplit = Nothing
     , sectionViaLinker = Nothing
-    , sectionFilter = Nothing
-    , sectionPage = Nothing
-    , sectionOrder = Nothing
+    , sectionQuery = Query.empty
     , sectionSelected = Nothing
     }
 
@@ -232,7 +228,7 @@ initArgWithRecordId tableName recordId =
         arenaArg =
             initArg (Just tableName)
     in
-    { arenaArg | selected = Just recordId }
+    { arenaArg | action = Select recordId }
 
 
 type Section
@@ -291,26 +287,38 @@ parseArenaArgs url =
                     { arg | tableName = TableName.fromString value }
 
                 "new" ->
-                    { arg | newRecord = True }
+                    { arg | action = NewRecord }
 
                 "copy" ->
-                    { arg | copyRecord = Just value }
+                    { arg | action = Copy value }
 
                 "filter" ->
-                    { arg | filter = Just (Filter.parse value) }
+                    { arg | query = Query.updateFilter (Filter.parse value) arg.query }
 
                 "page" ->
                     { arg
-                        | page =
-                            String.toInt value
-                                |> Result.toMaybe
+                        | query =
+                            case String.toInt value of
+                                Ok page ->
+                                    Query.updatePage page arg.query
+
+                                Err e ->
+                                    arg.query
                     }
 
-                "order" ->
-                    { arg | sort = orderClauseParser value }
+                "sort" ->
+                    { arg
+                        | query =
+                            case Sort.parse value of
+                                Just sort ->
+                                    Query.setSort sort arg.query
+
+                                Nothing ->
+                                    arg.query
+                    }
 
                 "select" ->
-                    { arg | selected = Just value }
+                    { arg | action = Select value }
 
                 "split" ->
                     { arg
@@ -329,17 +337,29 @@ parseArenaArgs url =
                     { arg | sectionViaLinker = Just (TableName.fromStringOrBlank value) }
 
                 "section_filter" ->
-                    { arg | sectionFilter = Just (Filter.parse value) }
+                    { arg | sectionQuery = Query.updateFilter (Filter.parse value) arg.sectionQuery }
 
                 "section_page" ->
                     { arg
-                        | sectionPage =
-                            String.toInt value
-                                |> Result.toMaybe
+                        | sectionQuery =
+                            case String.toInt value of
+                                Ok sectionPage ->
+                                    Query.updatePage sectionPage arg.sectionQuery
+
+                                Err e ->
+                                    arg.sectionQuery
                     }
 
-                "section_order" ->
-                    { arg | sectionOrder = orderClauseParser value }
+                "section_sort" ->
+                    { arg
+                        | sectionQuery =
+                            case Sort.parse value of
+                                Just sectionSort ->
+                                    Query.setSort sectionSort arg.sectionQuery
+
+                                Nothing ->
+                                    arg.sectionQuery
+                    }
 
                 "section_select" ->
                     { arg | sectionSelected = Just value }
@@ -352,22 +372,13 @@ parseArenaArgs url =
 
 
 updateFilter : Condition -> ArenaArg -> ArenaArg
-updateFilter condition oldArenaArg =
-    { oldArenaArg | filter = Just condition }
+updateFilter condition arenaArg =
+    { arenaArg | query = Query.updateFilter condition arenaArg.query }
 
 
 updateSort : String -> ArenaArg -> ArenaArg
-updateSort columnName oldArenaArg =
-    let
-        updatedSort =
-            case oldArenaArg.sort of
-                Just sort ->
-                    Just (Sort.updateSort columnName sort)
-
-                Nothing ->
-                    Nothing
-    in
-    { oldArenaArg | sort = updatedSort }
+updateSort columnName arenaArg =
+    { arenaArg | query = Query.updateSort columnName arenaArg.query }
 
 
 updateSplit : Float -> ArenaArg -> ArenaArg
@@ -378,17 +389,15 @@ updateSplit split oldArenaArg =
 removeSelected : ArenaArg -> ArenaArg
 removeSelected arenaArg =
     { arenaArg
-        | selected = Nothing
+        | action = ListPage
         , sectionTable = Nothing
         , sectionSplit = Nothing
         , sectionViaLinker = Nothing
-        , sectionFilter = Nothing
-        , sectionPage = Nothing
-        , sectionOrder = Nothing
+        , sectionQuery = Query.empty
         , sectionSelected = Nothing
     }
 
 
-setSelectedRecordId : RecordId -> ArenaArg -> ArenaArg
+setSelectedRecordId : String -> ArenaArg -> ArenaArg
 setSelectedRecordId recordId arenaArg =
-    { arenaArg | selected = Just (Record.idToString recordId) }
+    { arenaArg | action = Select recordId }

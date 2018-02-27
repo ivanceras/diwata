@@ -2,8 +2,9 @@ module Data.Query.Sort
     exposing
         ( Sort
         , addToSort
-        , isMaybeMultiSort
+        , isMultiSort
         , newSort
+        , parse
         , setColumnSort
         , toString
         , toggleSort
@@ -15,6 +16,27 @@ import Data.Query.Order as Order
 
 type alias Sort =
     List Order.Order
+
+
+parse : String -> Maybe Sort
+parse arg =
+    let
+        segments =
+            String.split "," arg
+
+        orders =
+            List.filterMap
+                (\splinter ->
+                    Order.parser splinter
+                )
+                segments
+    in
+    case List.isEmpty orders of
+        True ->
+            Nothing
+
+        False ->
+            Just orders
 
 
 toString : Sort -> String
@@ -31,16 +53,6 @@ isEmpty sort =
 isMultiSort : Sort -> Bool
 isMultiSort sort =
     List.length sort > 1
-
-
-isMaybeMultiSort : Maybe Sort -> Bool
-isMaybeMultiSort sort =
-    case sort of
-        Just sort ->
-            isMultiSort sort
-
-        Nothing ->
-            False
 
 
 columnInSort : String -> Sort -> Bool

@@ -143,7 +143,7 @@ fn get_data(table_name: String) -> Result<Option<Json<Rows>>, ServiceError> {
     get_data_with_page(table_name, 1)
 }
 
-#[get("/<table_name>/<page>")]
+#[get("/<table_name>/page/<page>")]
 fn get_data_with_page(table_name: String, page: u32) -> Result<Option<Json<Rows>>, ServiceError> {
     let em = get_pool_em()?;
     let dm = get_pool_dm()?;
@@ -163,7 +163,7 @@ fn get_data_with_page(table_name: String, page: u32) -> Result<Option<Json<Rows>
     }
 }
 
-#[get("/<table_name>/<page>/sort/<sort>")]
+#[get("/<table_name>/page/<page>/sort/<sort>")]
 fn get_data_with_page_sort(table_name: String, page: u32, sort: String) -> Result<Option<Json<Rows>>, ServiceError> {
     let em = get_pool_em()?;
     let dm = get_pool_dm()?;
@@ -184,7 +184,7 @@ fn get_data_with_page_sort(table_name: String, page: u32, sort: String) -> Resul
     }
 }
 
-#[get("/<table_name>/<page>/filter/<filter>")]
+#[get("/<table_name>/page/<page>/filter/<filter>")]
 fn get_data_with_page_filter(table_name: String, page: u32, filter: String) -> Result<Option<Json<Rows>>, ServiceError> {
     let em = get_pool_em()?;
     let dm = get_pool_dm()?;
@@ -205,7 +205,7 @@ fn get_data_with_page_filter(table_name: String, page: u32, filter: String) -> R
     }
 }
 
-#[get("/<table_name>/<page>/filter/<filter>/sort/<sort>")]
+#[get("/<table_name>/page/<page>/filter/<filter>/sort/<sort>")]
 fn get_data_with_page_filter_sort(table_name: String, page: u32, filter: String, sort: String) -> Result<Option<Json<Rows>>, ServiceError> {
     let em = get_pool_em()?;
     let dm = get_pool_dm()?;

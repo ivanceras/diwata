@@ -20,7 +20,6 @@ import Data.Session as Session exposing (Session)
 import Data.User as User exposing (User)
 import Data.UserPhoto as UserPhoto
 import Data.Window as Window exposing (Window)
-import Data.Window.Filter as Filter exposing (Condition)
 import Data.Window.GroupedWindow as GroupedWindow exposing (GroupedWindow, WindowName)
 import Data.Window.Lookup as Lookup exposing (Lookup(..))
 import Data.Window.Record as Record exposing (Record, RecordId, Rows)
@@ -134,20 +133,17 @@ init settings session tableName window arenaArg =
         maybeAuthToken =
             Maybe.map .token session.user
 
-        condition =
-            arenaArg.filter
-
-        sort =
-            arenaArg.sort
-
         selectedRecordId =
             Nothing
+
+        query =
+            arenaArg.query
 
         getBrowserSize =
             BrowserWindow.size
 
         loadRecords =
-            Request.Window.Records.listPageWithFilter settings 1 maybeAuthToken tableName condition sort
+            Request.Window.Records.listPageWithQuery settings maybeAuthToken tableName query
                 |> Http.toTask
                 |> Task.mapError (handleLoadError " inLoadrecords")
 
@@ -172,7 +168,7 @@ init settings session tableName window arenaArg =
         mainTabTask =
             Task.map4
                 (\records size lookup totalRecords ->
-                    Tab.init selectedRecordId (calcMainTabSize size) condition sort window.mainTab InMain records totalRecords
+                    Tab.init selectedRecordId (calcMainTabSize size) query window.mainTab InMain records totalRecords
                 )
                 loadRecords
                 getBrowserSize
@@ -308,11 +304,11 @@ update session msg model =
                 ( updatedMainTab, subCmd ) =
                     Tab.update (Tab.SearchboxMsg searchbox searchMsg) model.mainTab
 
-                tabSearchFilter =
-                    updatedMainTab.searchFilter
+                tabQuery =
+                    updatedMainTab.query
 
                 newArenaArg =
-                    WindowArena.updateFilter tabSearchFilter arenaArg
+                    { arenaArg | query = tabQuery }
 
                 updatedModel =
                     { model
@@ -332,8 +328,14 @@ update session msg model =
                 ( updatedMainTab, subCmd ) =
                     Tab.update (Tab.ToggleSort columnName) model.mainTab
 
+                _ =
+                    Debug.log "toggle sort for" columnName
+
                 updatedArenaArg =
-                    { arenaArg | sort = updatedMainTab.sort }
+                    { arenaArg | query = updatedMainTab.query }
+
+                _ =
+                    Debug.log "updatedArenaArg: " updatedArenaArg
 
                 updatedModel =
                     { model
@@ -407,14 +409,14 @@ refreshPage tab model =
         arenaArg =
             model.arenaArg
 
-        condition =
-            arenaArg.filter
+        query =
+            arenaArg.query
 
-        sort =
-            arenaArg.sort
+        pageQuery =
+            Query.updatePage 1 query
 
         request =
-            Request.Window.Records.listPageWithFilter model.settings 1 Nothing tab.tab.tableName condition sort
+            Request.Window.Records.listPageWithQuery model.settings Nothing tab.tab.tableName pageQuery
     in
     request
         |> Http.toTask
@@ -435,28 +437,16 @@ requestNextPage tab model =
         arenaArg =
             model.arenaArg
 
-        condition =
-            let
-                filter =
-                    arenaArg.filter
-            in
-            case filter of
-                Just filter ->
-                    if Dict.isEmpty filter then
-                        Nothing
-                    else
-                        Just filter
-
-                Nothing ->
-                    Nothing
-
-        sort =
-            arenaArg.sort
+        query =
+            arenaArg.query
 
         tabPage =
             tab.currentPage + 1
+
+        pageQuery =
+            Query.updatePage tabPage query
     in
-    Request.Window.Records.listPageWithFilter model.settings tabPage Nothing tab.tab.tableName condition sort
+    Request.Window.Records.listPageWithQuery model.settings Nothing tab.tab.tableName pageQuery
         |> Http.toTask
         |> Task.attempt
             (\result ->

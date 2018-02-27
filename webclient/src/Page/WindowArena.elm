@@ -109,26 +109,29 @@ init settings session arenaArg =
             GroupedWindow.init session tableName
                 |> Task.mapError handleLoadError
 
+        _ =
+            Debug.log "action is:" arenaArg.action
+
         loadSelectedRecord =
             case tableName of
                 Just tableName ->
-                    case arenaArg.selected of
-                        Just selectedRecord ->
-                            Task.andThen
-                                (\window ->
-                                    case window of
-                                        Just window ->
-                                            DetailedRecord.init isDetailedRecordMaximized settings tableName selectedRecord arenaArg window
+                    Task.andThen
+                        (\window ->
+                            case window of
+                                Just window ->
+                                    case arenaArg.action of
+                                        WindowArena.Select recordId ->
+                                            DetailedRecord.init isDetailedRecordMaximized settings tableName arenaArg.action arenaArg window
                                                 |> Task.map Just
                                                 |> Task.mapError handleLoadError
 
-                                        Nothing ->
+                                        _ ->
                                             Task.succeed Nothing
-                                )
-                                loadWindow
 
-                        Nothing ->
-                            Task.succeed Nothing
+                                Nothing ->
+                                    Task.succeed Nothing
+                        )
+                        loadWindow
 
                 Nothing ->
                     Task.succeed Nothing
@@ -320,7 +323,7 @@ update session msg model =
                             Debug.crash "There should be an activeWindow"
 
                 initSelectedRow =
-                    DetailedRecord.init isDetailedRecordMaximized model.settings tableName recordIdString arenaArg activeWindow
+                    DetailedRecord.init isDetailedRecordMaximized model.settings tableName arenaArg.action arenaArg activeWindow
             in
             { model | loadingSelectedRecord = True }
                 => Task.attempt
@@ -345,7 +348,7 @@ update session msg model =
                             Debug.crash "There should be an activeWindow"
 
                 initSelectedRow =
-                    DetailedRecord.init isDetailedRecordMaximized model.settings tableName recordIdString arenaArg activeWindow
+                    DetailedRecord.init isDetailedRecordMaximized model.settings tableName arenaArg.action arenaArg activeWindow
             in
             { model | loadingSelectedRecord = True }
                 => Task.attempt

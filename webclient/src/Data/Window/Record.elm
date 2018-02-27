@@ -4,6 +4,7 @@ module Data.Window.Record
         , RecordId(..)
         , Rows
         , decoder
+        , emptyRow
         , idToString
         , rowsDecoder
         , rowsToRecordList
@@ -23,6 +24,13 @@ import Json.Decode.Pipeline as Pipeline exposing (decode, required)
 type alias Rows =
     { columns : List String
     , data : List (List Value)
+    }
+
+
+emptyRow : Rows
+emptyRow =
+    { columns = []
+    , data = []
     }
 
 

@@ -13,10 +13,11 @@ module Views.Window.Tab
         )
 
 import Constant
-import Data.Query.Order as Order
+import Data.Query as Query exposing (Query)
+import Data.Query.Filter as Filter
+import Data.Query.Order as Order exposing (Order)
 import Data.Query.Sort as Sort exposing (Sort)
 import Data.Window.Field as Field exposing (Field)
-import Data.Window.Filter as Filter exposing (Condition)
 import Data.Window.Lookup as Lookup exposing (Lookup)
 import Data.Window.Record as Record exposing (Record, RecordId, Rows)
 import Data.Window.Tab as Tab exposing (Tab, TabType)
@@ -47,15 +48,14 @@ type alias Model =
     , currentPage : Int
     , reachedLastPage : Bool
     , totalRecords : Int
-    , searchFilter : Condition
-    , sort : Maybe Sort
     , isMultiSort : Bool
+    , query : Query
     , selectedRecordId : Maybe RecordId
     }
 
 
-init : Maybe RecordId -> ( Float, Float ) -> Maybe Condition -> Maybe Sort -> Tab -> TabType -> Rows -> Int -> Model
-init selectedRecordId size condition sort tab tabType rows totalRecords =
+init : Maybe RecordId -> ( Float, Float ) -> Query -> Tab -> TabType -> Rows -> Int -> Model
+init selectedRecordId size query tab tabType rows totalRecords =
     { tab = tab
     , tabType = tabType
     , scroll = Scroll 0 0
@@ -65,15 +65,14 @@ init selectedRecordId size condition sort tab tabType rows totalRecords =
     , currentPage = 1
     , reachedLastPage = False
     , totalRecords = totalRecords
-    , searchFilter =
-        case condition of
-            Just condition ->
-                condition
+    , query = query
+    , isMultiSort =
+        case query.sort of
+            Just sort ->
+                Sort.isMultiSort sort
 
             Nothing ->
-                Dict.empty
-    , sort = sort
-    , isMultiSort = Sort.isMaybeMultiSort sort
+                False
     , selectedRecordId = selectedRecordId
     }
 
@@ -424,20 +423,31 @@ viewColumns model fields =
 viewColumnWithSearchbox : Model -> Field -> Html Msg
 viewColumnWithSearchbox model field =
     let
+        query =
+            model.query
+
+        filter =
+            query.filter
+
         condition =
-            model.searchFilter
+            filter
 
         columnName =
             Field.firstColumnName field
 
         searchValue =
-            Filter.get columnName condition
+            case condition of
+                Just condition ->
+                    Filter.get columnName condition
+
+                Nothing ->
+                    Nothing
 
         searchboxModel =
             Searchbox.init field searchValue
 
         sort =
-            model.sort
+            query.sort
 
         ( widgetWidth, widgetHeight ) =
             Field.calcWidgetSize Presentation.InList field
@@ -675,20 +685,26 @@ update msg model =
                 searchValue =
                     Searchbox.getSearchText newSearchbox
 
-                updatedSearchFilter =
+                query =
+                    model.query
+
+                filter =
+                    query.filter
+
+                updatedQuery =
                     case searchValue of
                         -- remove the filter for a column when search value is empty
                         Just "" ->
-                            Filter.remove columnName model.searchFilter
+                            Query.removeFromFilter columnName query
 
                         Just searchValue ->
-                            Filter.put columnName searchValue model.searchFilter
+                            Query.putToFilter columnName searchValue query
 
                         Nothing ->
-                            model.searchFilter
+                            query
             in
             { model
-                | searchFilter = updatedSearchFilter
+                | query = updatedQuery
                 , currentPage = 0
             }
                 => Cmd.none
@@ -706,7 +722,7 @@ update msg model =
                 => Cmd.none
 
         ToolbarMsg Toolbar.ClickedResetMultiSort ->
-            { model | sort = Nothing }
+            { model | query = Query.removeSort model.query }
                 => Cmd.none
 
         ToolbarMsg Toolbar.ClickedCancelOnMain ->
@@ -736,19 +752,17 @@ update msg model =
                 _ =
                     Debug.log "toggleSort: " columnName
 
-                updatedSort =
-                    case model.sort of
-                        Just sort ->
-                            if model.isMultiSort then
-                                Just (Sort.updateSort columnName sort)
-                            else
-                                Just (Sort.setColumnSort columnName sort)
+                updatedQuery =
+                    if model.isMultiSort then
+                        Query.updateSort columnName model.query
+                    else
+                        Query.setColumnSort columnName model.query
 
-                        Nothing ->
-                            Just (Sort.newSort columnName)
+                _ =
+                    Debug.log "tab updatedQuery: " updatedQuery
             in
             { model
-                | sort = updatedSort
+                | query = updatedQuery
                 , pageRequestInFlight = True -- since this will trigger refreshPage in Window.elm
             }
                 => Cmd.none

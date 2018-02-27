@@ -4,18 +4,16 @@ module Request.Window.Records
         , fetchHasManyRecords
         , fetchIndirectRecords
         , fetchSelected
-        , listPage
-        , listPageWithFilter
-        , listWithFilter
+        , listPageWithQuery
         , lookupPage
         , lookups
         , totalRecords
         )
 
 import Data.AuthToken as AuthToken exposing (AuthToken, withAuthorization)
+import Data.Query as Query exposing (Query)
 import Data.Query.Sort as Sort exposing (Sort)
 import Data.Window as Window exposing (Tag, Window, slugToString)
-import Data.Window.Filter as Filter exposing (Condition)
 import Data.Window.GroupedWindow as GroupedWindow exposing (WindowName)
 import Data.Window.Lookup as Lookup exposing (Lookup)
 import Data.Window.Record as Record exposing (RecordId, Rows)
@@ -38,45 +36,13 @@ import Util exposing ((=>))
 -- LIST --
 
 
-list : Settings -> Maybe AuthToken -> TableName -> Http.Request Rows
-list settings maybeToken tableName =
-    listPage settings 1 maybeToken tableName
-
-
-listWithFilter : Settings -> Maybe AuthToken -> TableName -> Maybe Condition -> Http.Request Rows
-listWithFilter settings maybeToken tableName condition =
-    listPageWithFilter settings 1 maybeToken tableName condition Nothing
-
-
-listPage : Settings -> Int -> Maybe AuthToken -> TableName -> Http.Request Rows
-listPage settings page maybeToken tableName =
-    apiUrl settings ("/data/" ++ tableNameToString tableName ++ "/" ++ toString page)
-        |> HttpBuilder.get
-        |> HttpBuilder.withExpect (Http.expectJson Record.rowsDecoder)
-        |> withAuthorization maybeToken
-        |> HttpBuilder.toRequest
-
-
-listPageWithFilter : Settings -> Int -> Maybe AuthToken -> TableName -> Maybe Condition -> Maybe Sort -> Http.Request Rows
-listPageWithFilter settings page maybeToken tableName condition sort =
+listPageWithQuery : Settings -> Maybe AuthToken -> TableName -> Query -> Http.Request Rows
+listPageWithQuery settings maybeToken tableName query =
     let
-        filterString =
-            case condition of
-                Just condition ->
-                    "/filter/" ++ Filter.toString condition
-
-                Nothing ->
-                    ""
-
-        sortString =
-            case sort of
-                Just sort ->
-                    "/sort/" ++ Sort.toString sort
-
-                Nothing ->
-                    ""
+        queryStr =
+            Query.mainQueryToString query
     in
-    apiUrl settings ("/data/" ++ tableNameToString tableName ++ "/" ++ toString page ++ filterString ++ sortString)
+    apiUrl settings ("/data/" ++ tableNameToString tableName ++ "/" ++ queryStr)
         |> HttpBuilder.get
         |> HttpBuilder.withExpect (Http.expectJson Record.rowsDecoder)
         |> withAuthorization maybeToken
