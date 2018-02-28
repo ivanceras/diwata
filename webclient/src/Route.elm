@@ -36,8 +36,6 @@ route =
         , Url.map Logout (s "logout")
         , Url.map Settings (s "settings")
         , Url.map Register (s "register")
-
-        --, Url.map (WindowArena Nothing) (s "")
         ]
 
 

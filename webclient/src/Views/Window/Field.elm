@@ -13,12 +13,13 @@ module Views.Window.Field
 import Data.Window.DataType as DataType exposing (DataType)
 import Data.Window.Field as Field exposing (Field)
 import Data.Window.Lookup as Lookup exposing (Lookup)
+import Data.Window.Presentation as Presentation exposing (Presentation(..))
 import Data.Window.Record as Record exposing (Record)
 import Data.Window.Tab as Tab exposing (Tab)
 import Data.Window.TableName as TableName exposing (TableName)
 import Data.Window.Value as Value exposing (ArrayValue(..), Value(..))
 import Data.Window.Widget as Widget exposing (ControlWidget, DropdownInfo, Widget(..))
-import Data.WindowArena as WindowArena
+import Data.WindowArena as WindowArena exposing (Action(..))
 import Date
 import Date.Format
 import Dict
@@ -27,7 +28,6 @@ import Html.Attributes exposing (checked, class, classList, for, id, name, selec
 import Html.Events exposing (onCheck, onClick, onInput)
 import Route exposing (Route)
 import Util exposing ((=>), Scroll, px)
-import Views.Window.Presentation as Presentation exposing (Presentation(..))
 import Widgets.DropdownDisplay as DropdownDisplay
 import Widgets.FixDropdown as FixDropdown
 import Widgets.Tagger as Tagger
@@ -37,7 +37,7 @@ type alias Model =
     { tab : Tab
     , field : Field
     , presentation : Presentation
-    , record : Record
+    , record : Maybe Record
     , value : Maybe Value
     , widget : Widget
     , editValue : Maybe Value
@@ -50,14 +50,33 @@ isModified model =
     model.value /= model.editValue
 
 
-init : Presentation -> Record -> Tab -> Field -> Model
-init presentation record tab field =
+init : Presentation -> Action -> Maybe Record -> Tab -> Field -> Model
+init presentation action record tab field =
     let
         columnName =
             Field.columnName field
 
-        maybeValue =
-            Dict.get columnName record
+        origValue =
+            case record of
+                Just record ->
+                    Dict.get columnName record
+
+                Nothing ->
+                    Nothing
+
+        ( maybeValue, editValue ) =
+            case action of
+                Select _ ->
+                    ( origValue, origValue )
+
+                NewRecord _ ->
+                    ( Nothing, Nothing )
+
+                Copy _ ->
+                    ( Nothing, origValue )
+
+                ListPage ->
+                    ( origValue, origValue )
 
         controlWidget =
             field.controlWidget
@@ -71,7 +90,7 @@ init presentation record tab field =
                     Nothing
 
         widget =
-            createWidget presentation record tab field maybeValue
+            createWidget presentation record tab field editValue
     in
     { tab = tab
     , field = field
@@ -79,7 +98,7 @@ init presentation record tab field =
     , record = record
     , widget = widget
     , value = maybeValue
-    , editValue = maybeValue
+    , editValue = editValue
     , dropdownInfo = dropdownInfo
     }
 
@@ -114,9 +133,14 @@ viewWidget lookup model =
                             Nothing
 
                 displayValue =
-                    case Field.displayValues model.field model.record of
-                        Just value ->
-                            value
+                    case model.record of
+                        Just record ->
+                            case Field.displayValues model.field record of
+                                Just value ->
+                                    value
+
+                                Nothing ->
+                                    ""
 
                         Nothing ->
                             ""
@@ -182,7 +206,7 @@ calcWidgetSize presentation field =
             ( width, 1 )
 
 
-createWidget : Presentation -> Record -> Tab -> Field -> Maybe Value -> Widget
+createWidget : Presentation -> Maybe Record -> Tab -> Field -> Maybe Value -> Widget
 createWidget presentation record tab field maybeValue =
     let
         controlWidget =
@@ -239,10 +263,20 @@ createWidget presentation record tab field maybeValue =
                     tab.tableName
 
                 recordId =
-                    Tab.recordId record tab
+                    case record of
+                        Just record ->
+                            Just (Tab.recordId record tab)
+
+                        Nothing ->
+                            Nothing
 
                 recordIdString =
-                    Record.idToString recordId
+                    case recordId of
+                        Just recordId ->
+                            Record.idToString recordId
+
+                        Nothing ->
+                            ""
             in
             case presentation of
                 InList ->

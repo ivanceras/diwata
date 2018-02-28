@@ -15,9 +15,10 @@ import Constant
 import Data.Session as Session exposing (Session)
 import Data.Window as Window exposing (Tag)
 import Data.Window.Lookup as Lookup
+import Data.Window.Presentation as Presentation exposing (Presentation(..))
 import Data.Window.Record as Record exposing (RecordId)
 import Data.Window.TableName as TableName exposing (TableName)
-import Data.WindowArena as WindowArena exposing (ArenaArg)
+import Data.WindowArena as WindowArena exposing (Action(..), ArenaArg)
 import Html exposing (..)
 import Html.Attributes exposing (class, classList, id, style)
 import Http
@@ -44,8 +45,7 @@ import Window as BrowserWindow
 
 
 type alias Model =
-    { openedWindow : List Window.Model
-    , activeWindow : Maybe Window.Model
+    { activeWindow : Maybe Window.Model
     , groupedWindow : GroupedWindow.Model
     , selectedRow : Maybe DetailedRecord.Model
     , arenaArg : ArenaArg
@@ -120,13 +120,14 @@ init settings session arenaArg =
                             case window of
                                 Just window ->
                                     case arenaArg.action of
-                                        WindowArena.Select recordId ->
+                                        WindowArena.ListPage ->
+                                            Task.succeed Nothing
+
+                                        _ ->
+                                            -- For Copy, Select, and New
                                             DetailedRecord.init isDetailedRecordMaximized settings tableName arenaArg.action arenaArg window
                                                 |> Task.map Just
                                                 |> Task.mapError handleLoadError
-
-                                        _ ->
-                                            Task.succeed Nothing
 
                                 Nothing ->
                                     Task.succeed Nothing
@@ -138,8 +139,7 @@ init settings session arenaArg =
     in
     Task.map3
         (\activeWindow groupedWindow selectedRow ->
-            { openedWindow = []
-            , activeWindow = activeWindow
+            { activeWindow = activeWindow
             , groupedWindow = groupedWindow
             , selectedRow = selectedRow
             , arenaArg = arenaArg
@@ -285,7 +285,7 @@ type Msg
     | WindowMsg Window.Msg
     | DetailedRecordMsg DetailedRecord.Msg
     | WindowResized BrowserWindow.Size
-    | InitializedSelectedRow ( DetailedRecord.Model, RecordId )
+    | InitializedSelectedRow ( DetailedRecord.Model, Maybe RecordId )
     | FailedToInitializeSelectedRow
 
 
@@ -306,7 +306,44 @@ update session msg model =
             in
             { model | groupedWindow = newFeed } => Cmd.map GroupedWindowMsg subCmd
 
-        WindowMsg (Window.TabMsg (Tab.RowMsg rowModel Row.ClickDetailedLink)) ->
+        WindowMsg (Window.TabMsg (Tab.RowMsg rowModel Row.ClickedCopyRecord)) ->
+            let
+                recordIdString =
+                    Record.idToString rowModel.recordId
+
+                tableName =
+                    rowModel.tab.tableName
+
+                activeWindow =
+                    case model.activeWindow of
+                        Just activeWindow ->
+                            activeWindow.window
+
+                        Nothing ->
+                            Debug.crash "There should be an activeWindow"
+
+                copyArenaArg =
+                    { arenaArg | action = Copy recordIdString }
+
+                initSelectedRow =
+                    DetailedRecord.init isDetailedRecordMaximized model.settings tableName (Copy recordIdString) copyArenaArg activeWindow
+
+                initSelectedRowTask =
+                    Task.attempt
+                        (\result ->
+                            case result of
+                                Ok result ->
+                                    InitializedSelectedRow ( result, Just rowModel.recordId )
+
+                                Err e ->
+                                    FailedToInitializeSelectedRow
+                        )
+                        initSelectedRow
+            in
+            { model | loadingSelectedRecord = True }
+                => initSelectedRowTask
+
+        WindowMsg (Window.TabMsg (Tab.RowMsg rowModel Row.ClickedDetailedLink)) ->
             let
                 recordIdString =
                     Record.idToString rowModel.recordId
@@ -324,18 +361,21 @@ update session msg model =
 
                 initSelectedRow =
                     DetailedRecord.init isDetailedRecordMaximized model.settings tableName arenaArg.action arenaArg activeWindow
+
+                initSelectedRowTask =
+                    Task.attempt
+                        (\result ->
+                            case result of
+                                Ok result ->
+                                    InitializedSelectedRow ( result, Just rowModel.recordId )
+
+                                Err e ->
+                                    FailedToInitializeSelectedRow
+                        )
+                        initSelectedRow
             in
             { model | loadingSelectedRecord = True }
-                => Task.attempt
-                    (\result ->
-                        case result of
-                            Ok result ->
-                                InitializedSelectedRow ( result, rowModel.recordId )
-
-                            Err e ->
-                                FailedToInitializeSelectedRow
-                    )
-                    initSelectedRow
+                => initSelectedRowTask
 
         WindowMsg (Window.TabMsg (Tab.RowMsg rowModel (Row.FieldMsg fieldModel (Field.PrimaryLinkClicked tableName recordIdString)))) ->
             let
@@ -349,18 +389,21 @@ update session msg model =
 
                 initSelectedRow =
                     DetailedRecord.init isDetailedRecordMaximized model.settings tableName arenaArg.action arenaArg activeWindow
+
+                initSelectedRowTask =
+                    Task.attempt
+                        (\result ->
+                            case result of
+                                Ok result ->
+                                    InitializedSelectedRow ( result, Just rowModel.recordId )
+
+                                Err e ->
+                                    FailedToInitializeSelectedRow
+                        )
+                        initSelectedRow
             in
             { model | loadingSelectedRecord = True }
-                => Task.attempt
-                    (\result ->
-                        case result of
-                            Ok result ->
-                                InitializedSelectedRow ( result, rowModel.recordId )
-
-                            Err e ->
-                                FailedToInitializeSelectedRow
-                    )
-                    initSelectedRow
+                => initSelectedRowTask
 
         InitializedSelectedRow ( selectedRow, recordId ) ->
             let
@@ -369,7 +412,12 @@ update session msg model =
                         Just activeWindow ->
                             let
                                 ( updatedWindow, windowCmd ) =
-                                    Window.update session (Window.TabMsg (Tab.SetFocusedRecord recordId)) activeWindow
+                                    case recordId of
+                                        Just recordId ->
+                                            Window.update session (Window.TabMsg (Tab.SetFocusedRecord recordId)) activeWindow
+
+                                        Nothing ->
+                                            ( activeWindow, Cmd.none )
                             in
                             ( Just updatedWindow, Cmd.map WindowMsg windowCmd )
 
@@ -389,6 +437,51 @@ update session msg model =
                 , loadingSelectedRecord = False
             }
                 => Cmd.none
+
+        WindowMsg (Window.TabMsg (Tab.ToolbarMsg Toolbar.ClickedNewButton)) ->
+            let
+                activeWindow =
+                    case model.activeWindow of
+                        Just activeWindow ->
+                            activeWindow.window
+
+                        Nothing ->
+                            Debug.crash "There should be an activeWindow"
+
+                tableName =
+                    case arenaArg.tableName of
+                        Just tableName ->
+                            tableName
+
+                        Nothing ->
+                            Debug.crash "There should be tableName"
+
+                newArenaArg =
+                    { arenaArg | action = NewRecord InCard }
+
+                initSelectedRow =
+                    DetailedRecord.init isDetailedRecordMaximized model.settings tableName (NewRecord InCard) newArenaArg activeWindow
+
+                initNewRecordTask =
+                    Task.attempt
+                        (\result ->
+                            case result of
+                                Ok result ->
+                                    InitializedSelectedRow ( result, Nothing )
+
+                                Err e ->
+                                    FailedToInitializeSelectedRow
+                        )
+                        initSelectedRow
+            in
+            { model
+                | loadingSelectedRecord = True
+                , arenaArg = newArenaArg
+            }
+                => Cmd.batch
+                    [ initNewRecordTask
+                    , Route.modifyUrl (Route.WindowArena newArenaArg)
+                    ]
 
         WindowMsg subMsg ->
             case model.activeWindow of

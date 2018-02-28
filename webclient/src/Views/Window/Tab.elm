@@ -19,6 +19,7 @@ import Data.Query.Order as Order exposing (Order)
 import Data.Query.Sort as Sort exposing (Sort)
 import Data.Window.Field as Field exposing (Field)
 import Data.Window.Lookup as Lookup exposing (Lookup)
+import Data.Window.Presentation as Presentation exposing (Presentation(..))
 import Data.Window.Record as Record exposing (Record, RecordId, Rows)
 import Data.Window.Tab as Tab exposing (Tab, TabType)
 import Data.Window.TableName as TableName exposing (TableName)
@@ -32,7 +33,6 @@ import Page.Errored as Errored exposing (PageLoadError, pageLoadError)
 import Task exposing (Task)
 import Util exposing ((=>), Scroll, onScroll, px, viewIf)
 import Views.Window.Field as Field
-import Views.Window.Presentation as Presentation exposing (Presentation(..))
 import Views.Window.Row as Row
 import Views.Window.Searchbox as Searchbox
 import Views.Window.Toolbar as Toolbar
@@ -734,6 +734,10 @@ update msg model =
                 => Cmd.batch subCmd
 
         ToolbarMsg toolbarMsg ->
+            let
+                _ =
+                    Debug.log "toolbarMsg" toolbarMsg
+            in
             model => Cmd.none
 
         SetFocusedRecord recordId ->

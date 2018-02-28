@@ -19,6 +19,7 @@ module Data.WindowArena
 import Data.Query as Query exposing (Query)
 import Data.Query.Filter as Filter exposing (Condition)
 import Data.Query.Sort as Sort exposing (Sort)
+import Data.Window.Presentation as Presentation exposing (Presentation(..))
 import Data.Window.Record as Record exposing (Record, RecordId)
 import Data.Window.TableName as TableName exposing (TableName, tableNameToString)
 import UrlParser
@@ -115,7 +116,7 @@ type alias ArenaArg =
 type Action
     = ListPage
     | Select String
-    | NewRecord
+    | NewRecord Presentation
     | Copy String
 
 
@@ -130,8 +131,11 @@ actionToString action =
                 Select recordId ->
                     [ "select", recordId ]
 
-                NewRecord ->
-                    [ "new" ]
+                NewRecord InCard ->
+                    [ "new", "incard" ]
+
+                NewRecord InList ->
+                    [ "new", "inlist" ]
 
                 Copy recordId ->
                     [ "copy", recordId ]
@@ -279,6 +283,9 @@ parseArenaArgs url =
     let
         pairs =
             keyPairs url
+
+        _ =
+            Debug.log "pairs" pairs
     in
     List.foldl
         (\( key, value ) arg ->
@@ -287,7 +294,18 @@ parseArenaArgs url =
                     { arg | tableName = TableName.fromString value }
 
                 "new" ->
-                    { arg | action = NewRecord }
+                    { arg
+                        | action =
+                            case value of
+                                "incard" ->
+                                    NewRecord InCard
+
+                                "inlist" ->
+                                    NewRecord InList
+
+                                _ ->
+                                    ListPage
+                    }
 
                 "copy" ->
                     { arg | action = Copy value }

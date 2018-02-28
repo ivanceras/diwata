@@ -16,6 +16,7 @@ import Data.Session as Session exposing (Session)
 import Data.Window as Window exposing (Window)
 import Data.Window.Field as Field exposing (Field)
 import Data.Window.Lookup as Lookup exposing (Lookup)
+import Data.Window.Presentation as Presentation exposing (Presentation(..))
 import Data.Window.Record as Record exposing (Record, Rows)
 import Data.Window.RecordDetail as RecordDetail exposing (RecordDetail)
 import Data.Window.Tab as Tab exposing (Tab, TabType(..))
@@ -39,7 +40,6 @@ import Task exposing (Task)
 import Util exposing ((=>), onClickPreventDefault, px, viewIf)
 import Views.Page as Page
 import Views.Window.Field as Field
-import Views.Window.Presentation as Presentation exposing (Presentation(..))
 import Views.Window.Tab as Tab
 import Views.Window.Toolbar as Toolbar
 import Window as BrowserWindow
@@ -209,7 +209,12 @@ init isMaximized settings tableName action arenaArg window =
                                 rows =
                                     case detailRows of
                                         Just detailRows ->
-                                            RecordDetail.contentInTable detailRows.hasMany hasManyTab.tableName
+                                            case action of
+                                                Select _ ->
+                                                    RecordDetail.contentInTable detailRows.hasMany hasManyTab.tableName
+
+                                                _ ->
+                                                    Just Record.emptyRow
 
                                         Nothing ->
                                             Just Record.emptyRow
@@ -256,7 +261,12 @@ init isMaximized settings tableName action arenaArg window =
                                 rows =
                                     case detailRows of
                                         Just detailRows ->
-                                            RecordDetail.contentInIndirectTable detailRows.indirect linker indirectTab.tableName
+                                            case action of
+                                                Select _ ->
+                                                    RecordDetail.contentInIndirectTable detailRows.indirect linker indirectTab.tableName
+
+                                                _ ->
+                                                    Just Record.emptyRow
 
                                         Nothing ->
                                             Just Record.emptyRow
@@ -278,6 +288,10 @@ init isMaximized settings tableName action arenaArg window =
     in
     Task.map5
         (\detail hasManyTabs indirectTabs browserSize lookup ->
+            let
+                action =
+                    arenaArg.action
+            in
             { selectedRow = detail
             , window = window
             , hasManyTabs = hasManyTabs
@@ -288,16 +302,22 @@ init isMaximized settings tableName action arenaArg window =
             , arenaArg = arenaArg
             , lookup = lookup
             , values =
-                case detail of
-                    Just detail ->
-                        createFields window.mainTab detail.record
+                case action of
+                    NewRecord presentation ->
+                        createFields (NewRecord presentation) window.mainTab Nothing
 
-                    Nothing ->
+                    Select _ ->
+                        createFields action window.mainTab (Maybe.map .record detail)
+
+                    Copy _ ->
+                        createFields action window.mainTab (Maybe.map .record detail)
+
+                    ListPage ->
                         []
             , oneOneValues =
                 case detail of
                     Just detail ->
-                        createOneOneFields window.oneOneTabs detail.oneOnes
+                        createOneOneFields action window.oneOneTabs detail.oneOnes
 
                     Nothing ->
                         []
@@ -313,8 +333,8 @@ init isMaximized settings tableName action arenaArg window =
         loadWindowLookups
 
 
-createOneOneFields : List Tab -> List ( TableName, Maybe Record ) -> List ( Tab, List Field.Model )
-createOneOneFields oneOneTabs oneOneRecords =
+createOneOneFields : Action -> List Tab -> List ( TableName, Maybe Record ) -> List ( Tab, List Field.Model )
+createOneOneFields action oneOneTabs oneOneRecords =
     List.map
         (\( tableName, record ) ->
             let
@@ -328,12 +348,7 @@ createOneOneFields oneOneTabs oneOneRecords =
             in
             case oneTab of
                 Just oneTab ->
-                    case record of
-                        Just record ->
-                            ( oneTab, createFields oneTab record )
-
-                        Nothing ->
-                            ( oneTab, [] )
+                    ( oneTab, createFields action oneTab record )
 
                 Nothing ->
                     Debug.crash "There should be a oneTab"
@@ -377,11 +392,11 @@ dropdownPageRequestNeeded lookup model =
         Nothing
 
 
-createFields : Tab -> Record -> List Field.Model
-createFields tab record =
+createFields : Action -> Tab -> Maybe Record -> List Field.Model
+createFields action tab record =
     List.map
         (\field ->
-            Field.init InCard record tab field
+            Field.init InCard action record tab field
         )
         tab.fields
 
@@ -660,6 +675,9 @@ viewDetailTabs model =
         window =
             model.window
 
+        mainTabName =
+            window.mainTab.name
+
         selectedRow =
             model.selectedRow
 
@@ -771,6 +789,17 @@ viewDetailTabs model =
                             -- opening the tab in a new tab will open it in it's own window
                             tabLinkArenaArg =
                                 WindowArena.initArg (Just tab.tableName)
+
+                            viaLinker =
+                                case linker of
+                                    Just linker ->
+                                        " , and are connected through " ++ linker.name
+
+                                    Nothing ->
+                                        ""
+
+                            tooltipText =
+                                mainTabName ++ " has many " ++ tab.name ++ ", while " ++ tab.name ++ " can also have many " ++ mainTabName ++ viaLinker
                         in
                         a
                             [ class "detail-tab-name"
@@ -782,7 +811,19 @@ viewDetailTabs model =
                             , Route.href (Route.WindowArena tabLinkArenaArg)
                             , onClickPreventDefault (ChangeActiveTab section tab.tableName linker)
                             ]
-                            [ text tab.name ]
+                            [ div [ class "tab-name-wrapper" ]
+                                [ text tab.name
+                                , div
+                                    [ class "tab-relation tooltip"
+                                    , classList
+                                        [ ( "ion-network", section == Indirect )
+                                        ]
+                                    ]
+                                    [ span [ class "tooltip-text" ]
+                                        [ text tooltipText ]
+                                    ]
+                                ]
+                            ]
                     )
                     detailTabs
                 )
@@ -958,6 +999,13 @@ update session msg model =
                 , indirectTabs = updatedIndirectTabs
             }
                 => Cmd.batch (List.map (Cmd.map TabMsgAll) (hasManySubCmds ++ indirectSubCmds))
+
+        TabMsg ( section, tabModel, Tab.ToolbarMsg Toolbar.ClickedNewButton ) ->
+            let
+                _ =
+                    Debug.log "DetailedRecord: Clicked on NewRecordButton in tab:" tabModel.tab.name
+            in
+            model => Cmd.none
 
         TabMsg ( section, tabModel, tabMsg ) ->
             let
@@ -1186,7 +1234,7 @@ requestNextPage section tab model =
         recordId =
             case arenaArg.action of
                 WindowArena.Select recordId ->
-                    recordId
+                    Just recordId
 
                 _ ->
                     Debug.crash "Can not request next page on detail other than selected record"
@@ -1198,15 +1246,21 @@ requestNextPage section tab model =
             tab.tab.tableName
 
         httpRequest =
-            case section of
-                HasMany ->
-                    Records.fetchHasManyRecords model.settings mainTable recordId sectionTable (tabPage + 1)
+            case recordId of
+                Just recordId ->
+                    case section of
+                        HasMany ->
+                            Records.fetchHasManyRecords model.settings mainTable recordId sectionTable (tabPage + 1)
+                                |> Http.toTask
 
-                Indirect ->
-                    Records.fetchIndirectRecords model.settings mainTable recordId sectionTable (tabPage + 1)
+                        Indirect ->
+                            Records.fetchIndirectRecords model.settings mainTable recordId sectionTable (tabPage + 1)
+                                |> Http.toTask
+
+                Nothing ->
+                    Task.succeed Record.emptyRow
     in
     httpRequest
-        |> Http.toTask
         |> Task.attempt
             (\result ->
                 case result of

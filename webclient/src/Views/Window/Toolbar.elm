@@ -31,10 +31,22 @@ type Msg
     | ClickedResetMultiSort
     | ClickedCancelOnDetail
     | ClickedCancelOnMain
+    | ClickedAddLink
+
+
+type TabType
+    = ForMain
+    | ForHasMany
+    | ForIndirect
 
 
 viewForMain : Model -> Html Msg
 viewForMain model =
+    view ForMain model
+
+
+view : TabType -> Model -> Html Msg
+view tabType model =
     let
         selected =
             model.selected
@@ -88,6 +100,28 @@ viewForMain model =
 
         showText =
             model.showIconText
+
+        showNewButton =
+            case tabType of
+                ForMain ->
+                    True
+
+                ForHasMany ->
+                    False
+
+                ForIndirect ->
+                    False
+
+        showAddLink =
+            case tabType of
+                ForMain ->
+                    False
+
+                ForHasMany ->
+                    True
+
+                ForIndirect ->
+                    True
     in
     div [ class "toolbar btn-group" ]
         [ button
@@ -100,6 +134,18 @@ viewForMain model =
                 |> viewIf showText
             , span [ class "tooltip-text" ] [ text "Create a new record in a form" ]
             ]
+            |> viewIf showNewButton
+        , button
+            [ class "btn btn-large btn-default tooltip"
+            , onClick
+                ClickedAddLink
+            ]
+            [ span [ class "icon icon-link icon-text tab-action" ] []
+            , text "Link record"
+                |> viewIf showText
+            , span [ class "tooltip-text" ] [ text "Search and Link referred record into the selected record" ]
+            ]
+            |> viewIf showAddLink
         , button
             [ class "btn btn-large btn-default tooltip" ]
             [ span [ class "icon icon-floppy icon-text" ] []
@@ -188,12 +234,12 @@ viewForMain model =
 -}
 viewForHasMany : Model -> Html Msg
 viewForHasMany model =
-    viewForMain model
+    view ForHasMany model
 
 
 viewForIndirect : Model -> Html Msg
 viewForIndirect model =
-    viewForHasMany model
+    view ForIndirect model
 
 
 viewForDetailRecord : Model -> Html Msg

@@ -237,7 +237,7 @@ a.primary-link {
 }
 .frozen-head .frozen-head-controls {
     display: flex;
-    padding-left: 40px;
+    padding-left: 20px;
 }
 
 .frozen-head .frozen-head-controls .filter-btn{
@@ -275,13 +275,18 @@ a.primary-link {
     display: flex;
     height: 40px;
     font-size: 14px;
-    padding-top: 10px;
-    padding-left: 30px;
+    padding-left: 10px;
+}
+
+.row-controls .duplicate-record {
+    color: #333;
+    font-weight: 900;
 }
 
 .row-controls  a {
     color: #333;
     outline: none;
+    padding: 0 3px;
 }
 .row-controls > div {
     padding: 0 3px;
@@ -489,6 +494,14 @@ a.primary-link {
     background-color: #f5f5f4;
     border-width: 1px 1px 0 1px;
     border-color: #888;
+}
+
+.tab-name-wrapper {
+    display: flex;
+}
+.tab-name-wrapper .tab-relation {
+    margin-left: 10px;
+    color: #888;
 }
 
 .nav-group .is-view-active {

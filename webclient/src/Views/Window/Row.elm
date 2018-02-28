@@ -13,6 +13,7 @@ module Views.Window.Row
 import Constant
 import Data.Window.Field as Field exposing (Field)
 import Data.Window.Lookup as Lookup exposing (Lookup)
+import Data.Window.Presentation as Presentation exposing (Presentation(..))
 import Data.Window.Record as Record exposing (Record, RecordId)
 import Data.Window.Tab as Tab exposing (Tab)
 import Data.Window.TableName exposing (TableName)
@@ -26,7 +27,6 @@ import Html.Events exposing (onCheck, onClick)
 import Route exposing (Route)
 import Util exposing ((=>), pair, px, viewIf)
 import Views.Window.Field as Field
-import Views.Window.Presentation as Presentation exposing (Presentation(..))
 
 
 type alias Model =
@@ -58,7 +58,7 @@ init isFocused recordId record tab =
 createFields : Record -> Tab -> List Field.Model
 createFields record tab =
     List.map
-        (Field.init InList record tab)
+        (Field.init InList WindowArena.ListPage (Just record) tab)
         tab.fields
 
 
@@ -113,6 +113,7 @@ viewRowControls model recordId tab =
         [ viewFocusIndicator model
         , viewSelectionControl model
         , viewRecordDetail recordId tab
+        , viewCopyControl recordId tab
         , viewUndo model
         , viewSave model
         ]
@@ -138,10 +139,25 @@ viewSelectionControl model =
         ]
 
 
-viewEditInPlace : Html Msg
-viewEditInPlace =
-    div [ class "edit-in-place" ]
-        [ div [ class "icon icon-pencil" ] []
+viewCopyControl : RecordId -> Tab -> Html Msg
+viewCopyControl recordId tab =
+    let
+        recordIdString =
+            Record.idToString recordId
+
+        arenaArg =
+            WindowArena.initArgWithRecordId tab.tableName recordIdString
+
+        copyArenaArg =
+            { arenaArg | action = WindowArena.Copy recordIdString }
+    in
+    a
+        [ Route.href (Route.WindowArena copyArenaArg)
+        , onClick ClickedCopyRecord
+        ]
+        [ div [ class "duplicate-record" ]
+            [ div [ class "fa fa-copy" ] []
+            ]
         ]
 
 
@@ -174,10 +190,10 @@ viewRecordDetail recordId tab =
     in
     a
         [ class "link-to-form"
-        , onClick ClickDetailedLink
+        , onClick ClickedDetailedLink
         , Route.href (Route.WindowArena (WindowArena.initArgWithRecordId tab.tableName recordIdString))
         ]
-        [ div [ class "icon icon-pencil" ]
+        [ div [ class "fa fa-pencil" ]
             []
         ]
 
@@ -196,7 +212,8 @@ type Msg
     = FieldMsg Field.Model Field.Msg
     | ResetChanges
     | ToggleSelect Bool
-    | ClickDetailedLink
+    | ClickedDetailedLink
+    | ClickedCopyRecord
     | SetFocused Bool
 
 
@@ -246,7 +263,11 @@ update msg model =
                 => Cmd.none
 
         -- handled in WindowArena
-        ClickDetailedLink ->
+        ClickedDetailedLink ->
+            model => Cmd.none
+
+        -- handled in WindowArena
+        ClickedCopyRecord ->
             model => Cmd.none
 
         SetFocused v ->
