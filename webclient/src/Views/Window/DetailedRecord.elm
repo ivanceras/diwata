@@ -31,7 +31,6 @@ import Http
 import Json.Decode as Decode
 import Mouse exposing (Position)
 import Page.Errored as Errored exposing (PageLoadError, pageLoadError)
-import Page.Window as Window
 import Request.Window
 import Request.Window.Records as Records
 import Route
@@ -39,6 +38,7 @@ import Settings exposing (Settings)
 import Task exposing (Task)
 import Util exposing ((=>), onClickPreventDefault, px, viewIf)
 import Views.Page as Page
+import Views.Window as Window
 import Views.Window.Field as Field
 import Views.Window.Tab as Tab
 import Views.Window.Toolbar as Toolbar

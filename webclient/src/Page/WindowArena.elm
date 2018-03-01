@@ -23,7 +23,6 @@ import Html exposing (..)
 import Html.Attributes exposing (class, classList, id, style)
 import Http
 import Page.Errored as Errored exposing (PageLoadError, pageLoadError)
-import Page.Window as Window
 import Request.Window
 import Request.Window.Records
 import Route
@@ -32,6 +31,7 @@ import Settings exposing (Settings)
 import Task exposing (Task)
 import Util exposing ((=>), styleIf, viewIf)
 import Views.Page as Page
+import Views.Window as Window
 import Views.Window.DetailedRecord as DetailedRecord
 import Views.Window.Field as Field
 import Views.Window.GroupedWindow as GroupedWindow

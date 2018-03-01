@@ -1,4 +1,4 @@
-module Page.Window
+module Views.Window
     exposing
         ( Model
         , Msg(..)

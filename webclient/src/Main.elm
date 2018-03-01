@@ -13,7 +13,6 @@ import Page.Login as Login
 import Page.NotFound as NotFound
 import Page.Register as Register
 import Page.Settings as Settings
-import Page.Window as Window
 import Page.WindowArena as WindowArena
 import Ports
 import Route exposing (Route)
@@ -21,6 +20,7 @@ import Settings exposing (Settings)
 import Task
 import Util exposing ((=>))
 import Views.Page as Page exposing (ActivePage)
+import Views.Window as Window
 
 
 -- WARNING: Based on discussions around how asset management features
