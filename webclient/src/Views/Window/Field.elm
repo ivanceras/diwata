@@ -10,7 +10,7 @@ module Views.Window.Field
         , view
         )
 
-import Data.Window.DataType as DataType exposing (DataType)
+import Data.Window.DataType as DataType exposing (DataType(..))
 import Data.Window.Field as Field exposing (Field)
 import Data.Window.Lookup as Lookup exposing (Lookup)
 import Data.Window.Presentation as Presentation exposing (Presentation(..))
@@ -31,6 +31,7 @@ import Util exposing ((=>), Scroll, px)
 import Widgets.DropdownDisplay as DropdownDisplay
 import Widgets.FixDropdown as FixDropdown
 import Widgets.Tagger as Tagger
+import Widgets.UuidDropdownDisplay as UuidDropdownDisplay
 
 
 type alias Model =
@@ -178,9 +179,23 @@ viewWidget lookup model =
 
                         Nothing ->
                             list
+
+                fieldDataType =
+                    case Field.simpleDataType model.field of
+                        Just dataType ->
+                            dataType
+
+                        Nothing ->
+                            Debug.crash "There should be data type"
             in
-            DropdownDisplay.view listWithSelected dropdown
-                |> Html.map (DropdownDisplayMsg dropdown)
+            case fieldDataType of
+                DataType.Uuid ->
+                    UuidDropdownDisplay.view listWithSelected dropdown
+                        |> Html.map (UuidDropdownDisplayMsg dropdown)
+
+                _ ->
+                    DropdownDisplay.view listWithSelected dropdown
+                        |> Html.map (DropdownDisplayMsg dropdown)
 
 
 calcWidgetSize : Presentation -> Field -> ( Int, Int )
@@ -511,8 +526,21 @@ createWidget presentation record tab field maybeValue =
 
         TableLookupDropdown ->
             let
+                fieldDataType =
+                    case Field.simpleDataType field of
+                        Just dataType ->
+                            dataType
+
+                        Nothing ->
+                            Debug.crash "unable to get data type"
+
                 dropdownModel =
-                    DropdownDisplay.init alignment widgetWidth maybeValueString
+                    case fieldDataType of
+                        DataType.Uuid ->
+                            UuidDropdownDisplay.init alignment widgetWidth maybeValueString
+
+                        _ ->
+                            DropdownDisplay.init alignment widgetWidth maybeValueString
             in
             TableDropdown dropdownModel
 
@@ -673,6 +701,7 @@ viewDatePicker styles maybeValue =
 
 type Msg
     = DropdownDisplayMsg DropdownDisplay.Model DropdownDisplay.Msg
+    | UuidDropdownDisplayMsg UuidDropdownDisplay.Model UuidDropdownDisplay.Msg
     | FixDropdownMsg FixDropdown.Model FixDropdown.Msg
     | StringValueChanged String
     | BoolValueChanged Bool
@@ -717,6 +746,37 @@ update msg model =
                         , editValue = dropdownValue
                     }
                         => Cmd.map (DropdownDisplayMsg newDropdown) subCmd
+
+                _ ->
+                    model => Cmd.none
+
+        UuidDropdownDisplayMsg dropdown msg ->
+            case model.widget of
+                TableDropdown dropdown ->
+                    let
+                        ( newDropdown, subCmd ) =
+                            UuidDropdownDisplay.update msg dropdown
+
+                        dropdownSelected =
+                            newDropdown.selected
+
+                        dropdownValue =
+                            case dropdownSelected of
+                                Just dropdownSelected ->
+                                    Field.cast dropdownSelected model.field
+                                        |> Just
+
+                                Nothing ->
+                                    Nothing
+
+                        _ =
+                            Debug.log "dropdownValue" dropdownValue
+                    in
+                    { model
+                        | widget = TableDropdown newDropdown
+                        , editValue = dropdownValue
+                    }
+                        => Cmd.map (UuidDropdownDisplayMsg newDropdown) subCmd
 
                 _ ->
                     model => Cmd.none

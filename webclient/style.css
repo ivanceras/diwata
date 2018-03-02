@@ -585,6 +585,7 @@ a.primary-link {
     border-style: solid;
     border-color: #ccc;
     height: 30px;
+    padding-right: 20px;
 }
 
 .dropdown-input button {
@@ -605,12 +606,16 @@ a.primary-link {
   border: 0;
 }
 
+.monospaced {
+    font-family: monospace;
+}
+
 .dropdown-select {
     position: absolute;
     background-color: #fff;
     z-index: 99999;
     max-height: 200px;
-    overflow-y: auto;
+    overflow: auto;
     border: 1px solid #ccc;
     margin-top: 5px;
 }
@@ -634,7 +639,6 @@ a.primary-link {
     vertical-align: middle;
     background-color: #eee;
 }
-
 .dropdown-select .dropdown-option .choice {
     padding-left: 10px;
     line-height: 30px;
