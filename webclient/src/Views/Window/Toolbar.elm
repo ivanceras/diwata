@@ -31,7 +31,8 @@ type Msg
     | ClickedResetMultiSort
     | ClickedCancelOnDetail
     | ClickedCancelOnMain
-    | ClickedAddLink
+    | ClickedLinkExisting
+    | ClickedLinkNewRecord
 
 
 type TabType
@@ -138,12 +139,23 @@ view tabType model =
         , button
             [ class "btn btn-large btn-default tooltip"
             , onClick
-                ClickedAddLink
+                ClickedLinkExisting
             ]
             [ span [ class "icon icon-link icon-text tab-action" ] []
-            , text "Link record"
+            , text "Link existing"
                 |> viewIf showText
-            , span [ class "tooltip-text" ] [ text "Search and Link referred record into the selected record" ]
+            , span [ class "tooltip-text" ] [ text "Search and Link existing record into the selected record" ]
+            ]
+            |> viewIf showAddLink
+        , button
+            [ class "btn btn-large btn-default tooltip"
+            , onClick
+                ClickedLinkNewRecord
+            ]
+            [ span [ class "icon icon-link icon-text tab-action" ] []
+            , text "Link new"
+                |> viewIf showText
+            , span [ class "tooltip-text" ] [ text "Create a new record and link to this selected record" ]
             ]
             |> viewIf showAddLink
         , button
