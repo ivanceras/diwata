@@ -36,7 +36,7 @@ import Request.Window.Records as Records
 import Route
 import Settings exposing (Settings)
 import Task exposing (Task)
-import Util exposing ((=>), onClickPreventDefault, px, viewIf)
+import Util exposing ((=>), onClickPreventDefault, px, styleIf, viewIf)
 import Views.Page as Page
 import Views.Window as Window
 import Views.Window.Field as Field
@@ -415,8 +415,14 @@ allotedSize isMaximized browserSize =
         sideMargins =
             60
 
+        fixMarginBottom =
+            60
+
         marginBottom =
-            40
+            if isMaximized then
+                fixMarginBottom + 0
+            else
+                fixMarginBottom + 40
 
         totalWidthDeductions =
             if isMaximized then
@@ -425,10 +431,7 @@ allotedSize isMaximized browserSize =
                 Constant.detailedMarginLeft + sideMargins
 
         totalHeightDeductions =
-            if isMaximized then
-                marginBottom
-            else
-                marginBottom + 80
+            marginBottom
     in
     ( width - totalWidthDeductions, height - totalHeightDeductions )
 
@@ -519,8 +522,19 @@ view model =
             , showIconText = allotedWidth > Constant.showIconTextMinWidth
             , multiColumnSort = False
             }
+
+        containerHeight =
+            allotedHeight + 20
     in
-    div []
+    div
+        [ class "detailed-selected-row animated fadeInDown"
+        , style [ ( "height", px <| containerHeight ) ]
+        , Constant.detailedSelectedRowStyle
+            |> styleIf (not isMaximized)
+
+        --shadow only if record is not maximized
+        , classList [ ( "detailed-selected-row--shadow", not isMaximized ) ]
+        ]
         [ div
             [ class "toolbar-area" ]
             [ div

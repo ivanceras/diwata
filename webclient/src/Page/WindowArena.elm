@@ -185,18 +185,9 @@ viewSelectedRow : Session -> Model -> Html Msg
 viewSelectedRow session model =
     case model.selectedRow of
         Just selectedRow ->
-            div
-                [ class "detailed-selected-row animated fadeInDown"
-                , Constant.detailedSelectedRowStyle
-                    |> styleIf (not model.isDetailedRecordMaximized)
-
-                --shadow only if record is not maximized
-                , classList [ ( "detailed-selected-row--shadow", not model.isDetailedRecordMaximized ) ]
-                ]
-                [ DetailedRecord.view
-                    selectedRow
-                    |> Html.map DetailedRecordMsg
-                ]
+            DetailedRecord.view
+                selectedRow
+                |> Html.map DetailedRecordMsg
 
         Nothing ->
             text ""
