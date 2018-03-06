@@ -101,7 +101,7 @@ fn get_pool_dm() -> Result<RecordManager, ServiceError> {
 }
 
 #[get("/")]
-fn get_windows() -> Result<Json<Vec<GroupedWindow>>, ServiceError> {
+pub fn get_windows() -> Result<Json<Vec<GroupedWindow>>, ServiceError> {
     let em = get_pool_em()?;
     let db_url = &get_db_url()?;
     let grouped_windows: Vec<GroupedWindow> = window::get_grouped_windows_using_cache(&em, db_url)?;
@@ -109,7 +109,7 @@ fn get_windows() -> Result<Json<Vec<GroupedWindow>>, ServiceError> {
 }
 
 #[get("/<table_name>")]
-fn get_window(table_name: String) -> Result<Option<Json<Window>>, ServiceError> {
+pub fn get_window(table_name: String) -> Result<Option<Json<Window>>, ServiceError> {
     let em = get_pool_em()?;
     let db_url = &get_db_url()?;
     let mut cache_pool = cache::CACHE_POOL.lock().unwrap();
@@ -124,7 +124,7 @@ fn get_window(table_name: String) -> Result<Option<Json<Window>>, ServiceError> 
 }
 
 #[get("/<table_name>")]
-fn get_total_records(table_name: String) -> Result<Option<Json<u64>>, ServiceError> {
+pub fn get_total_records(table_name: String) -> Result<Option<Json<u64>>, ServiceError> {
     let em = get_pool_em()?;
     let db_url = &get_db_url()?;
     let mut cache_pool = cache::CACHE_POOL.lock().unwrap();
@@ -141,12 +141,15 @@ fn get_total_records(table_name: String) -> Result<Option<Json<u64>>, ServiceErr
 }
 
 #[get("/<table_name>")]
-fn get_data(table_name: String) -> Result<Option<Json<Rows>>, ServiceError> {
+pub fn get_data(table_name: String) -> Result<Option<Json<Rows>>, ServiceError> {
     get_data_with_page(table_name, 1)
 }
 
 #[get("/<table_name>/page/<page>")]
-fn get_data_with_page(table_name: String, page: u32) -> Result<Option<Json<Rows>>, ServiceError> {
+pub fn get_data_with_page(
+    table_name: String,
+    page: u32,
+) -> Result<Option<Json<Rows>>, ServiceError> {
     let em = get_pool_em()?;
     let dm = get_pool_dm()?;
     let db_url = &get_db_url()?;
@@ -166,7 +169,7 @@ fn get_data_with_page(table_name: String, page: u32) -> Result<Option<Json<Rows>
 }
 
 #[get("/<table_name>/page/<page>/sort/<sort>")]
-fn get_data_with_page_sort(
+pub fn get_data_with_page_sort(
     table_name: String,
     page: u32,
     sort: String,
@@ -198,7 +201,7 @@ fn get_data_with_page_sort(
 }
 
 #[get("/<table_name>/page/<page>/filter/<filter>")]
-fn get_data_with_page_filter(
+pub fn get_data_with_page_filter(
     table_name: String,
     page: u32,
     filter: String,
@@ -230,7 +233,7 @@ fn get_data_with_page_filter(
 }
 
 #[get("/<table_name>/page/<page>/filter/<filter>/sort/<sort>")]
-fn get_data_with_page_filter_sort(
+pub fn get_data_with_page_filter_sort(
     table_name: String,
     page: u32,
     filter: String,
@@ -264,7 +267,7 @@ fn get_data_with_page_filter_sort(
 }
 
 #[get("/<table_name>/select/<record_id>")]
-fn get_detailed_record(
+pub fn get_detailed_record(
     table_name: String,
     record_id: String,
 ) -> Result<Option<Json<RecordDetail>>, ServiceError> {
@@ -298,7 +301,7 @@ fn get_detailed_record(
 /// used in this window
 /// Note: window is identified by it's table name of the main tab
 #[get("/<table_name>")]
-fn get_window_lookup_data(table_name: String) -> Result<Option<Json<Lookup>>, ServiceError> {
+pub fn get_window_lookup_data(table_name: String) -> Result<Option<Json<Lookup>>, ServiceError> {
     let dm = get_pool_dm()?;
     let em = get_pool_em()?;
     let db_url = &get_db_url()?;
@@ -323,7 +326,7 @@ fn get_window_lookup_data(table_name: String) -> Result<Option<Json<Lookup>>, Se
 /// When the user scrolls to the bottom of the dropdown, a http request is done to retrieve the
 /// next page. All other lookup that points to the same table is also updated
 #[get("/<table_name>/<page>")]
-fn get_lookup_data(table_name: String, page: u32) -> Result<Option<Json<Rows>>, ServiceError> {
+pub fn get_lookup_data(table_name: String, page: u32) -> Result<Option<Json<Rows>>, ServiceError> {
     let dm = get_pool_dm()?;
     let em = get_pool_em()?;
     let db_url = &get_db_url()?;
@@ -345,7 +348,7 @@ fn get_lookup_data(table_name: String, page: u32) -> Result<Option<Json<Rows>>, 
 /// retrieve records from a has_many table based on the selected main records
 /// from the main table
 #[get("/<table_name>/select/<record_id>/has_many/<has_many_table>/<page>/sort/<sort>")]
-fn get_has_many_records(
+pub fn get_has_many_records(
     table_name: String,
     record_id: String,
     has_many_table: String,
@@ -391,7 +394,7 @@ fn get_has_many_records(
 /// retrieve records from a has_many table based on the selected main records
 /// from the main table
 #[get("/<table_name>/select/<record_id>/indirect/<indirect_table>/<page>/sort/<sort>")]
-fn get_indirect_records(
+pub fn get_indirect_records(
     table_name: String,
     record_id: String,
     indirect_table: String,
@@ -461,7 +464,7 @@ fn favicon() -> Option<NamedFile> {
 }
 
 #[delete("/<table_name>", data = "<record_ids>")]
-fn delete_records(
+pub fn delete_records(
     table_name: String,
     record_ids: Json<Vec<String>>,
 ) -> Result<Option<Json<Rows>>, ServiceError> {
