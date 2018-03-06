@@ -9,6 +9,9 @@ extern crate lazy_static;
 extern crate rocket;
 extern crate rocket_contrib;
 extern crate rustorm;
+extern crate serde;
+extern crate serde_json;
+
 use rocket::Rocket;
 use rustorm::Pool;
 use rustorm::pool;
@@ -41,7 +44,6 @@ use intel::tab;
 
 mod error;
 
-
 static PAGE_SIZE: u32 = 40;
 
 lazy_static!{
@@ -52,19 +54,19 @@ lazy_static!{
 }
 
 fn get_db_url() -> Result<String, ServiceError> {
-    match DB_URL.lock(){
+    match DB_URL.lock() {
         Ok(db_url) => Ok(db_url.to_owned()),
-        Err(e) => Err(ServiceError::GenericError(format!("{}", e)))
+        Err(e) => Err(ServiceError::GenericError(format!("{}", e))),
     }
 }
 
 pub fn set_db_url(new_url: String) -> Result<(), ServiceError> {
-    match DB_URL.lock(){
+    match DB_URL.lock() {
         Ok(mut db_url) => {
             *db_url = new_url;
             Ok(())
         }
-        Err(e) => Err(ServiceError::GenericError(format!("{}", e)))
+        Err(e) => Err(ServiceError::GenericError(format!("{}", e))),
     }
 }
 
@@ -128,13 +130,13 @@ fn get_total_records(table_name: String) -> Result<Option<Json<u64>>, ServiceErr
     let mut cache_pool = cache::CACHE_POOL.lock().unwrap();
     let table_name = TableName::from(&table_name);
     let tables = cache_pool.get_cached_tables(&em, db_url)?;
-    let table = table_intel::get_table(&table_name, &tables); 
-    match table{
+    let table = table_intel::get_table(&table_name, &tables);
+    match table {
         Some(table) => {
             let count = data_read::get_total_records(&em, &table.name)?;
             Ok(Some(Json(count)))
         }
-        None => Ok(None)
+        None => Ok(None),
     }
 }
 
@@ -164,7 +166,11 @@ fn get_data_with_page(table_name: String, page: u32) -> Result<Option<Json<Rows>
 }
 
 #[get("/<table_name>/page/<page>/sort/<sort>")]
-fn get_data_with_page_sort(table_name: String, page: u32, sort: String) -> Result<Option<Json<Rows>>, ServiceError> {
+fn get_data_with_page_sort(
+    table_name: String,
+    page: u32,
+    sort: String,
+) -> Result<Option<Json<Rows>>, ServiceError> {
     let em = get_pool_em()?;
     let dm = get_pool_dm()?;
     let db_url = &get_db_url()?;
@@ -176,8 +182,15 @@ fn get_data_with_page_sort(table_name: String, page: u32, sort: String) -> Resul
     let sort = Sort::from_str(&sort);
     match window {
         Some(window) => {
-            let rows: Rows =
-                data_read::get_maintable_data(&dm, &tables, &window, None, Some(sort), page, PAGE_SIZE)?;
+            let rows: Rows = data_read::get_maintable_data(
+                &dm,
+                &tables,
+                &window,
+                None,
+                Some(sort),
+                page,
+                PAGE_SIZE,
+            )?;
             Ok(Some(Json(rows)))
         }
         None => Ok(None),
@@ -185,7 +198,11 @@ fn get_data_with_page_sort(table_name: String, page: u32, sort: String) -> Resul
 }
 
 #[get("/<table_name>/page/<page>/filter/<filter>")]
-fn get_data_with_page_filter(table_name: String, page: u32, filter: String) -> Result<Option<Json<Rows>>, ServiceError> {
+fn get_data_with_page_filter(
+    table_name: String,
+    page: u32,
+    filter: String,
+) -> Result<Option<Json<Rows>>, ServiceError> {
     let em = get_pool_em()?;
     let dm = get_pool_dm()?;
     let db_url = &get_db_url()?;
@@ -197,8 +214,15 @@ fn get_data_with_page_filter(table_name: String, page: u32, filter: String) -> R
     let filter = Filter::from_str(&filter);
     match window {
         Some(window) => {
-            let rows: Rows =
-                data_read::get_maintable_data(&dm, &tables, &window, Some(filter), None, page, PAGE_SIZE)?;
+            let rows: Rows = data_read::get_maintable_data(
+                &dm,
+                &tables,
+                &window,
+                Some(filter),
+                None,
+                page,
+                PAGE_SIZE,
+            )?;
             Ok(Some(Json(rows)))
         }
         None => Ok(None),
@@ -206,7 +230,12 @@ fn get_data_with_page_filter(table_name: String, page: u32, filter: String) -> R
 }
 
 #[get("/<table_name>/page/<page>/filter/<filter>/sort/<sort>")]
-fn get_data_with_page_filter_sort(table_name: String, page: u32, filter: String, sort: String) -> Result<Option<Json<Rows>>, ServiceError> {
+fn get_data_with_page_filter_sort(
+    table_name: String,
+    page: u32,
+    filter: String,
+    sort: String,
+) -> Result<Option<Json<Rows>>, ServiceError> {
     let em = get_pool_em()?;
     let dm = get_pool_dm()?;
     let db_url = &get_db_url()?;
@@ -219,8 +248,15 @@ fn get_data_with_page_filter_sort(table_name: String, page: u32, filter: String,
     let sort = Sort::from_str(&sort);
     match window {
         Some(window) => {
-            let rows: Rows =
-                data_read::get_maintable_data(&dm, &tables, &window, Some(filter), Some(sort), page, PAGE_SIZE)?;
+            let rows: Rows = data_read::get_maintable_data(
+                &dm,
+                &tables,
+                &window,
+                Some(filter),
+                Some(sort),
+                page,
+                PAGE_SIZE,
+            )?;
             Ok(Some(Json(rows)))
         }
         None => Ok(None),
@@ -298,13 +334,8 @@ fn get_lookup_data(table_name: String, page: u32) -> Result<Option<Json<Rows>>, 
     let tables = cache_pool.get_cached_tables(&em, db_url)?;
     match window {
         Some(window) => {
-            let rows: Rows = data_read::get_lookup_data_of_tab(
-                &dm,
-                &tables,
-                &window.main_tab,
-                PAGE_SIZE,
-                page,
-            )?;
+            let rows: Rows =
+                data_read::get_lookup_data_of_tab(&dm, &tables, &window.main_tab, PAGE_SIZE, page)?;
             Ok(Some(Json(rows)))
         }
         None => Ok(None),
@@ -319,7 +350,7 @@ fn get_has_many_records(
     record_id: String,
     has_many_table: String,
     page: u32,
-    sort: String
+    sort: String,
 ) -> Result<Option<Json<Rows>>, ServiceError> {
     let dm = get_pool_dm()?;
     let em = get_pool_em()?;
@@ -365,7 +396,7 @@ fn get_indirect_records(
     record_id: String,
     indirect_table: String,
     page: u32,
-    sort: String
+    sort: String,
 ) -> Result<Option<Json<Rows>>, ServiceError> {
     let dm = get_pool_dm()?;
     let em = get_pool_em()?;
@@ -429,8 +460,11 @@ fn favicon() -> Option<NamedFile> {
     NamedFile::open(Path::new("./public/img/favicon.ico")).ok()
 }
 
-#[delete("/<table_name>", data="<record_ids>")]
-fn delete_records(table_name: String, record_ids: Json<Vec<String>>) -> Result<Option<Json<Rows>>, ServiceError>{
+#[delete("/<table_name>", data = "<record_ids>")]
+fn delete_records(
+    table_name: String,
+    record_ids: Json<Vec<String>>,
+) -> Result<Option<Json<Rows>>, ServiceError> {
     let dm = get_pool_dm()?;
     let em = get_pool_em()?;
     let db_url = &get_db_url()?;
@@ -444,22 +478,23 @@ fn delete_records(table_name: String, record_ids: Json<Vec<String>>) -> Result<O
             let main_table = data_read::get_main_table(window, &tables);
             assert!(main_table.is_some());
             let main_table = main_table.unwrap();
-            println!("delete these records: {:?} from table: {:?}", record_ids, table_name);
+            println!(
+                "delete these records: {:?} from table: {:?}",
+                record_ids, table_name
+            );
             let rows = data_modify::delete_records(&dm, &main_table, &*record_ids)?;
             Ok(Some(Json(rows)))
         }
-        None => {
-            Ok(None)
-        }
+        None => Ok(None),
     }
 }
 
 pub fn rocket(address: Option<String>, port: Option<u16>) -> Result<Rocket, ConfigError> {
-    let address = match address{
+    let address = match address {
         Some(address) => address,
         None => "0.0.0.0".to_string(),
     };
-    let port = match port{
+    let port = match port {
         Some(port) => port,
         None => 8000,
     };
@@ -471,10 +506,9 @@ pub fn rocket(address: Option<String>, port: Option<u16>) -> Result<Rocket, Conf
     let conn = test_db_url_connection();
     match conn {
         Ok(_) => println!("connection is valid"),
-        Err(e) => println!("connection Error: {:?}", e)
+        Err(e) => println!("connection Error: {:?}", e),
     };
-    let server = 
-        rocket::custom(config, true)
+    let server = rocket::custom(config, true)
         .attach(AdHoc::on_response(|_req, resp| {
             resp.set_header(AccessControlAllowOrigin::Any);
         }))
