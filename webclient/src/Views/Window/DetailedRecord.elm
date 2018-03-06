@@ -291,6 +291,12 @@ init isMaximized settings tableName action arenaArg window =
             let
                 action =
                     arenaArg.action
+
+                ( allotedWidth, allotedHeight ) =
+                    allotedSize isMaximized browserSize
+
+                allotedTabWidth =
+                    round allotedWidth
             in
             { selectedRow = detail
             , window = window
@@ -304,20 +310,20 @@ init isMaximized settings tableName action arenaArg window =
             , values =
                 case action of
                     NewRecord presentation ->
-                        createFields (NewRecord presentation) window.mainTab Nothing
+                        createFields allotedTabWidth (NewRecord presentation) window.mainTab Nothing
 
                     Select _ ->
-                        createFields action window.mainTab (Maybe.map .record detail)
+                        createFields allotedTabWidth action window.mainTab (Maybe.map .record detail)
 
                     Copy _ ->
-                        createFields action window.mainTab (Maybe.map .record detail)
+                        createFields allotedTabWidth action window.mainTab (Maybe.map .record detail)
 
                     ListPage ->
                         []
             , oneOneValues =
                 case detail of
                     Just detail ->
-                        createOneOneFields action window.oneOneTabs detail.oneOnes
+                        createOneOneFields allotedTabWidth action window.oneOneTabs detail.oneOnes
 
                     Nothing ->
                         []
@@ -333,8 +339,8 @@ init isMaximized settings tableName action arenaArg window =
         loadWindowLookups
 
 
-createOneOneFields : Action -> List Tab -> List ( TableName, Maybe Record ) -> List ( Tab, List Field.Model )
-createOneOneFields action oneOneTabs oneOneRecords =
+createOneOneFields : Int -> Action -> List Tab -> List ( TableName, Maybe Record ) -> List ( Tab, List Field.Model )
+createOneOneFields allotedTabWidth action oneOneTabs oneOneRecords =
     List.map
         (\( tableName, record ) ->
             let
@@ -348,7 +354,7 @@ createOneOneFields action oneOneTabs oneOneRecords =
             in
             case oneTab of
                 Just oneTab ->
-                    ( oneTab, createFields action oneTab record )
+                    ( oneTab, createFields allotedTabWidth action oneTab record )
 
                 Nothing ->
                     Debug.crash "There should be a oneTab"
@@ -392,11 +398,11 @@ dropdownPageRequestNeeded lookup model =
         Nothing
 
 
-createFields : Action -> Tab -> Maybe Record -> List Field.Model
-createFields action tab record =
+createFields : Int -> Action -> Tab -> Maybe Record -> List Field.Model
+createFields allotedTabWidth action tab record =
     List.map
         (\field ->
-            Field.init InCard action record tab field
+            Field.init allotedTabWidth InCard action record tab field
         )
         tab.fields
 
@@ -524,7 +530,7 @@ view model =
             }
 
         containerHeight =
-            allotedHeight + 20
+            allotedHeight + 40
     in
     div
         [ class "detailed-selected-row animated fadeInDown"

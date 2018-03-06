@@ -58,7 +58,7 @@ init isFocused recordId record tab =
 createFields : Record -> Tab -> List Field.Model
 createFields record tab =
     List.map
-        (Field.init InList WindowArena.ListPage (Just record) tab)
+        (Field.init 0 InList WindowArena.ListPage (Just record) tab)
         tab.fields
 
 
@@ -88,7 +88,7 @@ view lookup model =
                 (\value ->
                     let
                         ( widgetWidth, widgetHeight ) =
-                            Field.calcWidgetSize Presentation.InList value.field
+                            Field.calcWidgetSize 0 Presentation.InList value.field
 
                         rowWidth =
                             widgetWidth + Constant.columnPad

@@ -43,6 +43,7 @@ type alias Model =
     , widget : Widget
     , editValue : Maybe Value
     , dropdownInfo : Maybe DropdownInfo
+    , allotedTabWidth : Int
     }
 
 
@@ -51,8 +52,8 @@ isModified model =
     model.value /= model.editValue
 
 
-init : Presentation -> Action -> Maybe Record -> Tab -> Field -> Model
-init presentation action record tab field =
+init : Int -> Presentation -> Action -> Maybe Record -> Tab -> Field -> Model
+init allotedTabWidth presentation action record tab field =
     let
         columnName =
             Field.columnName field
@@ -91,7 +92,7 @@ init presentation action record tab field =
                     Nothing
 
         widget =
-            createWidget presentation record tab field editValue
+            createWidget allotedTabWidth presentation record tab field editValue
     in
     { tab = tab
     , field = field
@@ -101,6 +102,7 @@ init presentation action record tab field =
     , value = maybeValue
     , editValue = editValue
     , dropdownInfo = dropdownInfo
+    , allotedTabWidth = allotedTabWidth
     }
 
 
@@ -198,8 +200,8 @@ viewWidget lookup model =
                         |> Html.map (DropdownDisplayMsg dropdown)
 
 
-calcWidgetSize : Presentation -> Field -> ( Int, Int )
-calcWidgetSize presentation field =
+calcWidgetSize : Int -> Presentation -> Field -> ( Int, Int )
+calcWidgetSize allotedTabWidth presentation field =
     case presentation of
         InCard ->
             let
@@ -210,8 +212,9 @@ calcWidgetSize presentation field =
                 Field.Short ->
                     ( 200, fieldHeight )
 
+                --- 1000 should be alloted tab width - 20
                 Field.Long ->
-                    ( 1000, fieldHeight )
+                    ( allotedTabWidth - 100, fieldHeight )
 
         InList ->
             let
@@ -221,8 +224,8 @@ calcWidgetSize presentation field =
             ( width, 1 )
 
 
-createWidget : Presentation -> Maybe Record -> Tab -> Field -> Maybe Value -> Widget
-createWidget presentation record tab field maybeValue =
+createWidget : Int -> Presentation -> Maybe Record -> Tab -> Field -> Maybe Value -> Widget
+createWidget allotedTabWidth presentation record tab field maybeValue =
     let
         controlWidget =
             field.controlWidget
@@ -252,7 +255,7 @@ createWidget presentation record tab field maybeValue =
                 |> Widget.alignmentToString
 
         ( widgetWidth, widgetHeight ) =
-            calcWidgetSize presentation field
+            calcWidgetSize allotedTabWidth presentation field
 
         styles =
             style
@@ -854,5 +857,8 @@ updateWidgetValue model value =
 
         field =
             model.field
+
+        allotedTabWidth =
+            model.allotedTabWidth
     in
-    createWidget presentation record tab field value
+    createWidget allotedTabWidth presentation record tab field value

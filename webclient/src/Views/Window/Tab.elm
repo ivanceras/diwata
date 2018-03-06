@@ -450,7 +450,7 @@ viewColumnWithSearchbox model field =
             query.sort
 
         ( widgetWidth, widgetHeight ) =
-            Field.calcWidgetSize Presentation.InList field
+            Field.calcWidgetSize 0 Presentation.InList field
 
         columnWidth =
             widgetWidth + Constant.columnPad
