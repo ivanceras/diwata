@@ -8,9 +8,13 @@ module Views.Window.Toolbar
         , viewForMain
         )
 
+import Color
 import Html exposing (..)
 import Html.Attributes exposing (checked, class, type_)
 import Html.Events exposing (onClick)
+import Ionicon
+import Material.Icons.Action as MaterialAction
+import Material.Icons.Content as MaterialContent
 import Util exposing (viewIf)
 
 
@@ -123,6 +127,12 @@ view tabType model =
 
                 ForIndirect ->
                     True
+
+        iconColor =
+            Color.grayscale 0.5
+
+        iconSize =
+            20
     in
     div [ class "toolbar btn-group" ]
         [ button
@@ -130,7 +140,8 @@ view tabType model =
             , onClick
                 ClickedNewButton
             ]
-            [ span [ class "icon icon-plus icon-text tab-action" ] []
+            [ span [ class "icon icon-text tab-action" ]
+                [ Ionicon.plus iconSize iconColor ]
             , text "New record"
                 |> viewIf showText
             , span [ class "tooltip-text" ] [ text "Create a new record in a form" ]
@@ -141,7 +152,8 @@ view tabType model =
             , onClick
                 ClickedLinkExisting
             ]
-            [ span [ class "icon icon-link icon-text tab-action" ] []
+            [ span [ class "icon icon-text tab-action" ]
+                [ Ionicon.link iconSize iconColor ]
             , text "Link existing"
                 |> viewIf showText
             , span [ class "tooltip-text" ] [ text "Search and Link existing record into the selected record" ]
@@ -160,7 +172,8 @@ view tabType model =
             |> viewIf showAddLink
         , button
             [ class "btn btn-large btn-default tooltip" ]
-            [ span [ class "icon icon-floppy icon-text" ] []
+            [ span [ class "icon icon-text" ]
+                [ Ionicon.checkmark iconSize iconColor ]
             , text "Save"
                 |> viewIf showText
             , modifiedBadge
@@ -170,7 +183,8 @@ view tabType model =
             [ class "btn btn-large btn-default tooltip"
             , onClick ClickedCancelOnMain
             ]
-            [ span [ class "icon icon-block icon-text" ] []
+            [ span [ class "icon icon-text" ]
+                [ MaterialContent.block iconColor iconSize ]
             , text "Cancel"
                 |> viewIf showText
             , span [ class "tooltip-text" ] [ text cancelTooltip ]
@@ -179,7 +193,9 @@ view tabType model =
             [ class "btn btn-large btn-default tooltip"
             , onClick ClickedMainDelete
             ]
-            [ span [ class "icon icon-trash icon-text" ] []
+            [ span [ class "icon icon-text" ]
+                [ Ionicon.trashA iconSize iconColor
+                ]
             , text "Delete"
                 |> viewIf showText
             , deleteBadge
@@ -187,21 +203,24 @@ view tabType model =
             ]
         , button
             [ class "btn btn-large btn-default tooltip" ]
-            [ span [ class "icon icon-arrows-ccw icon-text" ] []
+            [ span [ class "icon icon-text" ]
+                [ Ionicon.refresh iconSize iconColor ]
             , text "Refresh"
                 |> viewIf showText
             , span [ class "tooltip-text" ] [ text "Get record list from server" ]
             ]
         , button
             [ class "btn btn-large btn-default tooltip" ]
-            [ i [ class "toolbar-fa fa fa-filter" ] []
+            [ i [ class "toolbar-fa " ]
+                [ Ionicon.funnel iconSize iconColor ]
             , text "Clear Filters"
                 |> viewIf showText
             , span [ class "tooltip-text" ] [ text "Clear filters" ]
             ]
         , button
             [ class "btn btn-large btn-default tooltip" ]
-            [ i [ class "toolbar-fa fa fa-filter" ] []
+            [ i [ class "toolbar-fa" ]
+                [ Ionicon.funnel iconSize iconColor ]
             , text "Advance filter"
                 |> viewIf showText
             , span [ class "tooltip-text" ] [ text "Open modal filter with advance functionality" ]
@@ -230,7 +249,8 @@ view tabType model =
             , span [ class "tooltip-text" ] [ text "Reset the order of sorting" ]
             ]
         , button [ class "btn btn-large btn-default tooltip" ]
-            [ span [ class "icon icon-export icon-text" ] []
+            [ span [ class "icon icon-text" ]
+                [ Ionicon.share iconSize iconColor ]
             , text "Export"
                 |> viewIf showText
             , span [ class "tooltip-text" ] [ text "Export to spreadsheet" ]
