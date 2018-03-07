@@ -22,6 +22,7 @@ overkill, so we use simpler APIs instead.
 -}
 
 import Color
+import Constant
 import Data.AuthToken as AuthToken exposing (AuthToken)
 import Data.Session as Session exposing (Session)
 import Data.User as User exposing (Username)
@@ -106,12 +107,12 @@ viewWindowName activeWindow windowName =
 
         iconColor =
             if isView then
-                Color.rgba 104 138 2 1
+                Constant.viewIconColor
             else
-                Color.grayscale 0.5
+                Constant.iconColor
 
         iconSize =
-            20
+            Constant.iconSize
     in
     a
         [ class "nav-group-item"

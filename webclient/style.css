@@ -286,10 +286,10 @@ a.primary-link {
 .row-controls  a {
     color: #333;
     outline: none;
-    padding: 0 3px;
+    padding: 0 1px;
 }
 .row-controls > div {
-    padding: 0 3px;
+    padding: 0 1px;
 }
 
 .row-controls .row-focus-indicator {
