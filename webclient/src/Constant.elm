@@ -1,5 +1,6 @@
 module Constant exposing (..)
 
+import Color
 import Html.Attributes exposing (style)
 import Util exposing (px)
 
@@ -53,3 +54,39 @@ isDetailedRecordMaximized =
 -}
 columnPad =
     20
+
+
+{-|
+
+    icon color for the toolbar and table list icon
+    and icon color for the row controls
+
+-}
+iconColor =
+    Color.grayscale 0.5
+
+
+{-|
+
+    when a table model is a view color it with greenish
+
+-}
+viewIconColor =
+    Color.rgba 104 138 2 1
+
+
+{-|
+
+    icon size for the toolbars, table list and row controls
+
+-}
+iconSize =
+    20
+
+
+rowControlIconSize =
+    16
+
+
+columnSearchIconSize =
+    14

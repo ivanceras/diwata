@@ -102,12 +102,12 @@ textarea {
     text-decoration: none;
 }
 
-.nav-group-item .icon {
+.nav-group-item .table-icon {
     width: 19px;
     height: 18px;
     float: left;
     color: #737475;
-    margin-top: -3px;
+    margin-top: 2px;
     margin-right: 7px;
     font-size: 18px;
     text-align: center;
@@ -286,10 +286,10 @@ a.primary-link {
 .row-controls  a {
     color: #333;
     outline: none;
-    padding: 0 3px;
+    padding: 0 1px;
 }
 .row-controls > div {
-    padding: 0 3px;
+    padding: 0 1px;
 }
 
 .row-controls .row-focus-indicator {

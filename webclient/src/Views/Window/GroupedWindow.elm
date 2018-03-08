@@ -21,6 +21,8 @@ overkill, so we use simpler APIs instead.
 
 -}
 
+import Color
+import Constant
 import Data.AuthToken as AuthToken exposing (AuthToken)
 import Data.Session as Session exposing (Session)
 import Data.User as User exposing (Username)
@@ -30,15 +32,17 @@ import Data.Window.TableName as TableName exposing (TableName, tableNameToString
 import Data.WindowArena as WindowArena
 import Dom.Scroll
 import Html exposing (..)
-import Html.Attributes exposing (attribute, class, classList, href, id, placeholder, src)
+import Html.Attributes exposing (attribute, class, classList, href, id, placeholder, src, style)
 import Html.Events exposing (onClick)
 import Http
+import Ionicon
+import Material.Icons.Action as MaterialAction
 import Request.Window
 import Route exposing (Route)
 import SelectList exposing (Position(..), SelectList)
 import Settings exposing (Settings)
 import Task exposing (Task)
-import Util exposing ((=>), onClickStopPropagation, pair, viewIf)
+import Util exposing ((=>), onClickStopPropagation, pair, px, viewIf)
 import Views.Errors as Errors
 import Views.Page exposing (bodyId)
 
@@ -100,6 +104,15 @@ viewWindowName activeWindow windowName =
 
         isView =
             windowName.isView
+
+        iconColor =
+            if isView then
+                Constant.viewIconColor
+            else
+                Constant.iconColor
+
+        iconSize =
+            Constant.iconSize
     in
     a
         [ class "nav-group-item"
@@ -107,10 +120,10 @@ viewWindowName activeWindow windowName =
         , Route.href (Route.WindowArena (WindowArena.initArg (Just windowName.tableName)))
         ]
         [ span
-            [ class "icon icon-list"
+            [ class "table-icon"
             , classList [ ( "is-view-icon", isView ) ]
             ]
-            []
+            [ MaterialAction.list iconColor iconSize ]
         , text windowName.name
         ]
 

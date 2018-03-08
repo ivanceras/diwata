@@ -24,6 +24,11 @@ import Dict
 import Html exposing (..)
 import Html.Attributes exposing (attribute, checked, class, classList, href, id, placeholder, src, style, type_)
 import Html.Events exposing (onCheck, onClick)
+import Ionicon
+import Material.Icons.Action as MaterialAction
+import Material.Icons.Content as MaterialContent
+import Material.Icons.Editor as MaterialEditor
+import Material.Icons.Maps as MaterialMaps
 import Route exposing (Route)
 import Util exposing ((=>), pair, px, viewIf)
 import Views.Window.Field as Field
@@ -121,8 +126,16 @@ viewRowControls model recordId tab =
 
 viewFocusIndicator : Model -> Html Msg
 viewFocusIndicator model =
+    let
+        iconColor =
+            Constant.iconColor
+
+        iconSize =
+            Constant.iconSize
+    in
     div [ class "row-focus-indicator" ]
-        [ i [ class "fa fa-caret-right" ] []
+        [ i [ class "fa" ]
+            [ Ionicon.play iconSize iconColor ]
             |> viewIf model.isFocused
         ]
 
@@ -150,35 +163,58 @@ viewCopyControl recordId tab =
 
         copyArenaArg =
             { arenaArg | action = WindowArena.Copy recordIdString }
+
+        iconColor =
+            Constant.iconColor
+
+        iconSize =
+            Constant.rowControlIconSize
     in
     a
         [ Route.href (Route.WindowArena copyArenaArg)
         , onClick ClickedCopyRecord
         ]
         [ div [ class "duplicate-record" ]
-            [ div [ class "fa fa-copy" ] []
+            [ div [ class "fa " ]
+                [ MaterialContent.content_copy iconColor iconSize ]
             ]
         ]
 
 
 viewUndo : Model -> Html Msg
 viewUndo model =
+    let
+        iconColor =
+            Constant.iconColor
+
+        iconSize =
+            Constant.rowControlIconSize
+    in
     div
         [ class "row-undo"
         , classList [ ( "is-active", isModified model ) ]
         , onClick ResetChanges
         ]
-        [ div [ class "icon icon-block" ] []
+        [ div [ class "icon " ]
+            [ MaterialContent.block iconColor iconSize ]
         ]
 
 
 viewSave : Model -> Html Msg
 viewSave model =
+    let
+        iconColor =
+            Constant.iconColor
+
+        iconSize =
+            Constant.rowControlIconSize
+    in
     div
         [ class "row-save"
         , classList [ ( "is-active", isModified model ) ]
         ]
-        [ div [ class "icon icon-floppy" ] []
+        [ div [ class "icon" ]
+            [ MaterialContent.save iconColor iconSize ]
         ]
 
 
@@ -187,14 +223,20 @@ viewRecordDetail recordId tab =
     let
         recordIdString =
             Record.idToString recordId
+
+        iconColor =
+            Constant.iconColor
+
+        iconSize =
+            Constant.rowControlIconSize
     in
     a
         [ class "link-to-form"
         , onClick ClickedDetailedLink
         , Route.href (Route.WindowArena (WindowArena.initArgWithRecordId tab.tableName recordIdString))
         ]
-        [ div [ class "fa fa-pencil" ]
-            []
+        [ div [ class "fa" ]
+            [ Ionicon.edit iconSize iconColor ]
         ]
 
 

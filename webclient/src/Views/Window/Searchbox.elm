@@ -8,6 +8,7 @@ module Views.Window.Searchbox
         , view
         )
 
+import Constant
 import Data.Query.Filter as Filter
 import Data.Window.DataType as DataType exposing (DataType)
 import Data.Window.Field as Field exposing (Field)
@@ -16,6 +17,7 @@ import Data.Window.Widget as Widget exposing (Widget(..))
 import Html exposing (..)
 import Html.Attributes exposing (class, style, type_, value)
 import Html.Events exposing (onCheck, onInput)
+import Ionicon
 import Util exposing ((=>), px)
 
 
@@ -55,11 +57,17 @@ getSearchText model =
 
 textSearch : Attribute Msg -> String -> Html Msg
 textSearch styles searchValue =
+    let
+        iconColor =
+            Constant.iconColor
+
+        iconSize =
+            Constant.columnSearchIconSize
+    in
     div [ class "column-filter" ]
         [ i
-            [ class "fa fa-search filter-value-icon"
-            ]
-            []
+            [ class "fa filter-value-icon" ]
+            [ Ionicon.search iconSize iconColor ]
         , input
             [ class "filter-value"
             , styles
@@ -73,11 +81,17 @@ textSearch styles searchValue =
 
 numberSearch : Attribute Msg -> String -> Html Msg
 numberSearch styles searchValue =
+    let
+        iconColor =
+            Constant.iconColor
+
+        iconSize =
+            Constant.columnSearchIconSize
+    in
     div [ class "column-filter" ]
         [ i
-            [ class "fa fa-search filter-value-icon"
-            ]
-            []
+            [ class "fa filter-value-icon" ]
+            [ Ionicon.search iconSize iconColor ]
         , input
             [ class "filter-value"
             , type_ "number"
