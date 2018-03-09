@@ -988,10 +988,28 @@ a.primary-link {
 .loading-indicator{
     margin-top: -40px;
     margin-left: 150px;
+    width: 30px;
+    height: 30px;
 }
 
 .selected-record-loading-indicator{
     margin: auto;
+    width: 30px;
+    height: 30px;
+}
+.spin {
+    animation-name: spin;
+    animation-duration: 2s;
+    animation-iteration-count: infinite;
+    transform-origin: 50% 50%;
+}
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 .window-and-selected-row{

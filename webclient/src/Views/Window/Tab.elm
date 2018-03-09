@@ -27,6 +27,7 @@ import Dict exposing (Dict)
 import Html exposing (..)
 import Html.Attributes exposing (attribute, checked, class, classList, href, id, placeholder, property, src, style, type_)
 import Html.Events exposing (onCheck, onClick)
+import Ionicon
 import Json.Decode as Decode exposing (Decoder)
 import Json.Encode as Encode
 import Page.Errored as Errored exposing (PageLoadError, pageLoadError)
@@ -258,12 +259,18 @@ listView lookup model =
 
 viewLoadingIndicator : Model -> Html Msg
 viewLoadingIndicator model =
+    let
+        iconColor =
+            Constant.iconColor
+
+        iconSize =
+            30
+    in
     if model.pageRequestInFlight then
         div
-            [ class "loading-indicator animated fadeInUp"
+            [ class "loading-indicator spin animated fadeInUp"
             ]
-            [ i [ class "fa fa-spinner fa-pulse fa-2x fa-fw" ] []
-            ]
+            [ Ionicon.loadB iconSize iconColor ]
     else
         text ""
 
