@@ -22,6 +22,7 @@ import Data.WindowArena as WindowArena exposing (Action(..), ArenaArg)
 import Html exposing (..)
 import Html.Attributes exposing (class, classList, id, style)
 import Http
+import Ionicon
 import Page.Errored as Errored exposing (PageLoadError, pageLoadError)
 import Request.Window
 import Request.Window.Records
@@ -254,8 +255,15 @@ viewBanner model =
 
 viewLoadingIndicator : Model -> Html Msg
 viewLoadingIndicator model =
+    let
+        iconColor =
+            Constant.iconColor
+
+        iconSize =
+            30
+    in
     div
-        [ class "selected-record-loading-indicator animated fadeIn"
+        [ class "selected-record-loading-indicator spin animated fadeIn"
 
         -- display none to be able to preload it
         , if model.loadingSelectedRecord then
@@ -263,8 +271,7 @@ viewLoadingIndicator model =
           else
             style [ ( "display", "none" ) ]
         ]
-        [ i [ class "fa fa-spinner fa-pulse fa-2x fa-fw" ] []
-        ]
+        [ Ionicon.loadA iconSize iconColor ]
 
 
 
