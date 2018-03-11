@@ -12,8 +12,6 @@ services:
 before_script:
   - sh ./dbscripts/setup.sh
   - cd ..
-  - git clone https://github.com/ivanceras/sqlite
-  - git clone https://github.com/ivanceras/r2d2-sqlite3
   - git clone https://github.com/ivanceras/bazaar
   - git clone https://github.com/ivanceras/dota-sql
   - cd bazaar/scripts && sh setup.sh && cd .. && cd ..
