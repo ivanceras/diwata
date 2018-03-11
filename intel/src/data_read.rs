@@ -17,11 +17,10 @@ use data_container::Lookup;
 use rustorm::FromDao;
 use dao;
 use data_container::Filter;
-use data_container::{Sort,Direction};
+use data_container::{Direction, Sort};
 use std::collections::BTreeMap;
 use common;
 use query_builder::Query;
-
 
 macro_rules! some {
     ($expr: expr) => {
@@ -39,14 +38,16 @@ pub fn get_main_table<'a>(window: &Window, tables: &'a Vec<Table>) -> Option<&'a
     main_table
 }
 
-
 pub fn get_total_records(em: &EntityManager, table_name: &TableName) -> Result<u64, DbError> {
     #[derive(FromDao)]
-    struct Count{
-        count: i64
+    struct Count {
+        count: i64,
     }
-    let sql = format!("SELECT COUNT(*) AS count FROM {}", table_name.complete_name());
-    let count: Result<Count,DbError> = em.execute_sql_with_one_return(&sql, &[]);
+    let sql = format!(
+        "SELECT COUNT(*) AS count FROM {}",
+        table_name.complete_name()
+    );
+    let count: Result<Count, DbError> = em.execute_sql_with_one_return(&sql, &[]);
     count.map(|c| c.count as u64)
 }
 
@@ -74,10 +75,10 @@ pub fn get_maintable_data(
     query.from(&main_tablename);
     query.left_join_display_source(&window.main_tab, tables);
 
-    match filter{
+    match filter {
         Some(filter) => {
             query.append("WHERE ");
-            for (i,cond) in filter.conditions.iter().enumerate(){
+            for (i, cond) in filter.conditions.iter().enumerate() {
                 if i > 0 {
                     query.append("AND ");
                 }
@@ -85,17 +86,20 @@ pub fn get_maintable_data(
                 let value_str = format!("{}%", cond.right.to_string());
                 let value = Value::Text(value_str);
                 common::validate_column(&column_name, window)?;
-                query.append(&format!("{} ILIKE ${} ", column_name.complete_name(), i+1));
+                query.append(&format!(
+                    "{} ILIKE ${} ",
+                    column_name.complete_name(),
+                    i + 1
+                ));
                 query.add_param(value);
             }
-
-        },
+        }
         None => (),
     }
     if let Some(sort) = sort {
         if sort.orders.len() > 0 {
             query.append("ORDER BY ");
-            for (i,order) in sort.orders.iter().enumerate() {
+            for (i, order) in sort.orders.iter().enumerate() {
                 if i > 0 {
                     query.append(", ");
                 }
@@ -147,8 +151,7 @@ pub fn get_selected_record_detail(
         query.add_param(value.clone());
     }
 
-
-    let record: Option<Record> = query.collect_maybe_record(dm)?; 
+    let record: Option<Record> = query.collect_maybe_record(dm)?;
 
     match record {
         Some(record) => {
@@ -191,7 +194,11 @@ pub fn get_selected_record_detail(
                     page_size,
                     1,
                 )?;
-                indirect_records.push((linker_table.clone(), indirect_tab.table_name.clone(), ind_records));
+                indirect_records.push((
+                    linker_table.clone(),
+                    indirect_tab.table_name.clone(),
+                    ind_records,
+                ));
             }
             let detail = RecordDetail {
                 record: record,
@@ -204,7 +211,6 @@ pub fn get_selected_record_detail(
         None => Ok(None),
     }
 }
-
 
 fn get_one_one_record(
     dm: &RecordManager,
@@ -227,7 +233,6 @@ fn get_one_one_record(
         one_one_table.get_referred_columns_to_table(&main_table.name);
     let one_one_pk = one_one_table.get_primary_column_names();
     let one_one_pk_data_types = one_one_table.get_primary_column_types();
-
 
     for referred_columns in referred_columns_to_main_table.iter() {
         for (i, rc) in referred_columns.iter().enumerate() {
@@ -295,7 +300,6 @@ fn get_has_many_records(
     let has_many_fk = has_many_table.get_foreign_column_names_to_table(&main_table.name);
     let has_many_fk_data_types = has_many_table.get_foreign_column_types_to_table(&main_table.name);
     assert_eq!(has_many_fk.len(), has_many_fk_data_types.len());
-
 
     let referred_columns_to_main_table: Option<&Vec<ColumnName>> =
         has_many_table.get_referred_columns_to_table(&main_table.name);
@@ -443,8 +447,8 @@ pub fn get_all_lookup_for_window(
         lookup_tables.append(&mut lookup);
     }
     println!("total tables: {} {:#?}", lookup_tables.len(), lookup_tables);
-    lookup_tables.sort_by(|a,b|a.0.name.cmp(&b.0.name));
-    lookup_tables.dedup_by(|a,b|a.0.name == b.0.name);
+    lookup_tables.sort_by(|a, b| a.0.name.cmp(&b.0.name));
+    lookup_tables.dedup_by(|a, b| a.0.name == b.0.name);
     println!("after dedup: {} {:#?}", lookup_tables.len(), lookup_tables);
     let mut lookup_data = vec![];
     for (lookup_table_name, display_columns) in lookup_tables {
@@ -457,8 +461,8 @@ pub fn get_all_lookup_for_window(
             1,
         )?;
         let lookup_table = some!(table_intel::get_table(lookup_table_name, tables));
-        let mut column_datatypes:BTreeMap<String, SqlType> = BTreeMap::new();
-        for column in lookup_table.columns.iter(){
+        let mut column_datatypes: BTreeMap<String, SqlType> = BTreeMap::new();
+        for column in lookup_table.columns.iter() {
             column_datatypes.insert(column.name.name.clone(), column.get_sql_type());
         }
         let rows = common::cast_rows(rows, &column_datatypes);
@@ -566,7 +570,7 @@ mod tests {
         let em = em.unwrap();
         let dm = pool.dm(db_url);
         assert!(dm.is_ok());
-        let dm  = dm.unwrap();
+        let dm = dm.unwrap();
         let tables = em.get_all_tables().unwrap();
         let windows = window::derive_all_windows(&tables);
         let table_name = TableName::from("bazaar.address");

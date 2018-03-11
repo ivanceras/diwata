@@ -54,7 +54,7 @@ impl ColumnDetail {
             ColumnDetail::Simple(ref column_name, _) => column_name == arg_column_name,
             ColumnDetail::Compound(ref column_names_types) => column_names_types
                 .iter()
-                .any(|&(ref column_name, _)| column_name == arg_column_name)
+                .any(|&(ref column_name, _)| column_name == arg_column_name),
         }
     }
 }
@@ -270,7 +270,7 @@ impl Field {
                     Some(Reference::Enum(name.to_string(), choices.to_vec()))
                 }
                 SqlType::ArrayType(ArrayType::Text) => Some(Reference::Tag),
-                SqlType::ArrayType(ArrayType::Enum(_,_)) => Some(Reference::Tag),
+                SqlType::ArrayType(ArrayType::Enum(_, _)) => Some(Reference::Tag),
                 _ => {
                     println!("column '{}' is not yet dealt with", column_name);
                     None

@@ -1,15 +1,15 @@
 #![deny(warnings)]
 #![allow(dead_code)]
+extern crate bigdecimal;
 #[macro_use]
 extern crate lazy_static;
+extern crate rustorm;
 #[macro_use]
 extern crate rustorm_codegen;
-extern crate rustorm;
-extern crate dao;
+extern crate rustorm_dao as dao;
 #[macro_use]
 extern crate serde_derive;
 extern crate uuid;
-extern crate bigdecimal;
 
 mod reference;
 mod widget;

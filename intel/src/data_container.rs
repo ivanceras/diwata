@@ -43,7 +43,6 @@ pub struct Condition {
 }
 
 impl Condition {
-
     //TODO: verify if the column is really a column of the involved tables otherwise SQL injection
     //is possible
     fn from_str(s: &str) -> Self {
@@ -52,9 +51,9 @@ impl Condition {
         let column = splinters[0];
         let value = splinters[1].to_string();
         let column_name = ColumnName::from(column);
-        Condition{
+        Condition {
             left: column_name,
-            right: value
+            right: value,
         }
     }
 }
@@ -64,33 +63,30 @@ impl Condition {
 /// String will be ILIKE '%?'
 /// Date will be in between
 /// number will text_cast then ilike
-pub struct Filter{
+pub struct Filter {
     pub conditions: Vec<Condition>,
 }
 
-impl Filter{
-
+impl Filter {
     pub fn from_str(s: &str) -> Self {
         let splinters: Vec<&str> = s.split("&").collect();
         let mut conditions = vec![];
-        for splinter in splinters.iter(){
+        for splinter in splinters.iter() {
             let cond = Condition::from_str(splinter);
             conditions.push(cond);
         }
-        Filter{
-            conditions
-        }
+        Filter { conditions }
     }
 }
 
-pub struct Order{
+pub struct Order {
     pub column_name: ColumnName,
     pub direction: Direction,
 }
 
-impl Order{
+impl Order {
     fn from_str(s: &str) -> Self {
-        let splinters:Vec<&str> = s.split(".").collect();
+        let splinters: Vec<&str> = s.split(".").collect();
         let len = splinters.len();
         let mut cols = splinters.clone();
         let dir = cols.split_off(len - 1);
@@ -99,50 +95,44 @@ impl Order{
             match dir {
                 "asc" => Some(Direction::Asc),
                 "desc" => Some(Direction::Desc),
-                _ => None
+                _ => None,
             }
-        }
-        else{
+        } else {
             None
         };
         let column = cols.join(".");
         let column_name = ColumnName::from(&column);
-        match direction{
-            Some(direction) => Order{
+        match direction {
+            Some(direction) => Order {
                 column_name: column_name,
-                direction: direction
+                direction: direction,
             },
-            None => Order{
+            None => Order {
                 column_name: ColumnName::from(&splinters.join(".")),
-                direction: Direction::Asc
-            }
+                direction: Direction::Asc,
+            },
         }
-
     }
 }
 
 #[derive(PartialEq)]
 pub enum Direction {
     Asc,
-    Desc
+    Desc,
 }
 
-
-pub struct Sort{
-    pub orders: Vec<Order>
+pub struct Sort {
+    pub orders: Vec<Order>,
 }
 
 impl Sort {
-
     pub fn from_str(s: &str) -> Self {
         let splinters: Vec<&str> = s.split(",").collect();
         let mut orders = vec![];
-        for splinter in splinters.iter(){
+        for splinter in splinters.iter() {
             let order = Order::from_str(splinter);
             orders.push(order);
         }
-        Sort{
-            orders
-        }
+        Sort { orders }
     }
 }

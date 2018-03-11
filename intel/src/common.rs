@@ -1,4 +1,3 @@
-
 //! provides data service for window
 use window::Window;
 use rustorm::Rows;
@@ -15,29 +14,24 @@ use std::str::FromStr;
 use rustorm::common;
 use std::collections::BTreeMap;
 
-
-
 pub fn calc_offset(page: u32, page_size: u32) -> u32 {
     (page - 1) * page_size
 }
 
-
-
 pub fn cast_rows(rows: Rows, column_datatypes: &BTreeMap<String, SqlType>) -> Rows {
-    let new_columns:Vec<String> = rows.columns.iter().map(|c|c.to_owned()).collect();
+    let new_columns: Vec<String> = rows.columns.iter().map(|c| c.to_owned()).collect();
     let mut casted_rows = Rows::new(new_columns);
-    for dao in rows.iter(){
+    for dao in rows.iter() {
         let mut new_row = vec![];
-        for col in rows.columns.iter(){
+        for col in rows.columns.iter() {
             let sql_type = column_datatypes.get(col);
             let value = dao.get_value(col);
             assert!(value.is_some());
             let value = value.unwrap();
-            if let Some(sql_type) = sql_type{
+            if let Some(sql_type) = sql_type {
                 let casted = common::cast_type(value, sql_type);
                 new_row.push(casted);
-            }
-            else{
+            } else {
                 new_row.push(value.clone());
             }
         }
@@ -48,27 +42,29 @@ pub fn cast_rows(rows: Rows, column_datatypes: &BTreeMap<String, SqlType>) -> Ro
 
 pub fn cast_record(record: Record, column_datatypes: &BTreeMap<String, SqlType>) -> Record {
     let mut new_rec = Record::new();
-    for (k,_v) in record.0.iter(){
+    for (k, _v) in record.0.iter() {
         let column = k.to_string();
         let sql_type = column_datatypes.get(&column);
         let value = record.get_value(&column);
         assert!(value.is_some());
         let value = value.unwrap();
-        if let Some(sql_type) = sql_type{
+        if let Some(sql_type) = sql_type {
             let casted = common::cast_type(&value, sql_type);
-            new_rec.insert_value(column, casted); 
+            new_rec.insert_value(column, casted);
         }
     }
     new_rec
 }
 
 //that belong to this window, otherwise raise a SQL injection attempt error
-pub fn validate_column(column_name: &ColumnName, window: &Window) -> Result<(), DbError>{
-    if window.has_column_name(column_name){
+pub fn validate_column(column_name: &ColumnName, window: &Window) -> Result<(), DbError> {
+    if window.has_column_name(column_name) {
         Ok(())
-    }else{
-        Err(DbError::SqlInjectionAttempt(
-                    format!("Column:'{}' does not exist", column_name.complete_name())))
+    } else {
+        Err(DbError::SqlInjectionAttempt(format!(
+            "Column:'{}' does not exist",
+            column_name.complete_name()
+        )))
     }
 }
 
@@ -135,16 +131,13 @@ pub fn extract_record_id<'a>(
                 }
             }
 
-            SqlType::Varchar => {
-                  Value::Text(splinter.to_string()) 
-            }
+            SqlType::Varchar => Value::Text(splinter.to_string()),
             _ => panic!("primary with type {:?} is not yet covered", pk_type),
         };
         record_id.push((pk_column, value));
     }
     Ok(record_id)
 }
-
 
 /// get the value which matches the column name and cast the value to the required data type
 /// supported casting:
@@ -164,21 +157,15 @@ pub fn find_value<'a>(
 /// convert Vec<Record> to Rows
 pub fn records_to_rows(columns: &Vec<String>, records: Vec<Record>) -> Rows {
     let mut rows = Rows::new(columns.clone());
-    for record in records{
+    for record in records {
         let mut values = vec![];
-        for col in columns.iter(){
+        for col in columns.iter() {
             let value = record.get_value(&col);
             assert!(value.is_some());
             let value = value.unwrap();
-            values.push(value); 
+            values.push(value);
         }
         rows.push(values);
     }
     rows
 }
-
-
-
-
-
-

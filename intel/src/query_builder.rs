@@ -11,17 +11,15 @@ use rustorm::RecordManager;
 use common;
 use table_intel;
 
-pub struct Query{
+pub struct Query {
     sql: String,
     params: Vec<Value>,
     column_datatypes: BTreeMap<String, SqlType>,
 }
 
-
-impl Query{
-
-    pub fn new() -> Self{
-        Query{
+impl Query {
+    pub fn new() -> Self {
+        Query {
             sql: String::new(),
             params: vec![],
             column_datatypes: BTreeMap::new(),
@@ -41,8 +39,9 @@ impl Query{
     }
 
     pub fn add_table_datatypes(&mut self, table: &Table) {
-        for column in table.columns.iter(){
-            self.column_datatypes.insert(column.name.name.clone(), column.get_sql_type());
+        for column in table.columns.iter() {
+            self.column_datatypes
+                .insert(column.name.name.clone(), column.get_sql_type());
         }
     }
 
@@ -64,16 +63,13 @@ impl Query{
                     let source_table_rename = format!("{}_{}", field_column_name, source_tablename);
                     for display_column in &dropdown_info.display.columns {
                         let display_column_name = &display_column.name;
-                        let rename = format!("{}.{}.{}",
-                            field_column_name,
-                            source_tablename,
-                            display_column_name
+                        let rename = format!(
+                            "{}.{}.{}",
+                            field_column_name, source_tablename, display_column_name
                         );
                         self.append(&format!(
                             ", {}.{} as \"{}\" ",
-                            source_table_rename,
-                            display_column_name,
-                            rename
+                            source_table_rename, display_column_name, rename
                         ));
                     }
                 }
@@ -142,4 +138,3 @@ impl Query{
         record.map(|r| r.map(|o| common::cast_record(o, &self.column_datatypes)))
     }
 }
-

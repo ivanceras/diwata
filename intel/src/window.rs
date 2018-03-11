@@ -76,9 +76,11 @@ impl Window {
             .map(|t| {
                 let has_repeat = has_repeating_tab(&t.indirect_table.name, indirect);
                 let tab_name = if has_repeat {
-                    Some(format!("{} (via {})", t.indirect_table.name.name, t.linker.name.name))
-                }
-                else{
+                    Some(format!(
+                        "{} (via {})",
+                        t.indirect_table.name.name, t.linker.name.name
+                    ))
+                } else {
                     None
                 };
                 (
@@ -102,26 +104,25 @@ impl Window {
 
     pub fn has_column_name(&self, column_name: &ColumnName) -> bool {
         self.main_tab.has_column_name(column_name)
-            || 
-        self.has_many_tabs.iter()
-            .any(|tab| tab.has_column_name(column_name))
-            ||
-        self.indirect_tabs.iter()
-            .any(|&(_,ref tab)| tab.has_column_name(column_name))
+            || self.has_many_tabs
+                .iter()
+                .any(|tab| tab.has_column_name(column_name))
+            || self.indirect_tabs
+                .iter()
+                .any(|&(_, ref tab)| tab.has_column_name(column_name))
     }
 }
 
-fn has_repeating_tab(table_name: &TableName, indirect: &Vec<IndirectTable> ) -> bool {
+fn has_repeating_tab(table_name: &TableName, indirect: &Vec<IndirectTable>) -> bool {
     let mut matched = 0;
-    for ind in indirect.iter(){
+    for ind in indirect.iter() {
         if ind.indirect_table.name == *table_name {
             matched += 1;
         }
     }
     if matched > 1 {
         true
-    }
-    else{
+    } else {
         false
     }
 }

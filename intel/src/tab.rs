@@ -21,7 +21,6 @@ pub struct Tab {
     pub display: Option<IdentifierDisplay>,
 }
 
-
 impl Tab {
     pub fn from_table(table: &Table, name: Option<String>, tables: &Vec<Table>) -> Self {
         let fields = Self::derive_fields(table, tables);
@@ -180,7 +179,8 @@ impl Tab {
     }
 
     pub fn has_column_name(&self, column_name: &ColumnName) -> bool {
-        self.fields.iter()
+        self.fields
+            .iter()
             .any(|field| field.has_column_name(column_name))
     }
 }

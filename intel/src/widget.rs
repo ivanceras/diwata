@@ -177,49 +177,45 @@ impl ControlWidget {
 
         let dropdown = Tab::derive_dropdowninfo(table)
             .map(|dropdown_info| Dropdown::TableDropdown(dropdown_info));
-        
+
         // derive the width from the the total of width in dropdown display + separator
         let display_width = match dropdown {
-            Some(ref dropdown) => {
-                match *dropdown {
-                    Dropdown::TableDropdown(ref dropdown_info) => {
-                        let display = &dropdown_info.display;
-                        let separator_width = match display.separator {
-                            Some(ref separator) => separator.len(),
-                            None => 0
-                        };
-                        let display_widths:i32 =  display.columns.iter()
-                                .map(|col_name| {
-                                    let column = table.get_column(col_name);
-                                    match column{
-                                        Some(column) => Self::get_width(column).unwrap_or(0),
-                                        None => 0
-                                    }
-                                })
-                                .sum();
-                        display_widths + separator_width as i32
-                    }
+            Some(ref dropdown) => match *dropdown {
+                Dropdown::TableDropdown(ref dropdown_info) => {
+                    let display = &dropdown_info.display;
+                    let separator_width = match display.separator {
+                        Some(ref separator) => separator.len(),
+                        None => 0,
+                    };
+                    let display_widths: i32 = display
+                        .columns
+                        .iter()
+                        .map(|col_name| {
+                            let column = table.get_column(col_name);
+                            match column {
+                                Some(column) => Self::get_width(column).unwrap_or(0),
+                                None => 0,
+                            }
+                        })
+                        .sum();
+                    display_widths + separator_width as i32
                 }
-            }
-            None => 0
+            },
+            None => 0,
         };
 
-
         let alignment = match dropdown {
-            Some(ref dropdown) => {
-                match *dropdown {
-                    Dropdown::TableDropdown(ref dropdown_info) => {
-                        let display = &dropdown_info.display;
-                        if display.columns.len() > 0 {
-                            Alignment::Left
-                        }
-                        else {
-                            Alignment::Right
-                        }
+            Some(ref dropdown) => match *dropdown {
+                Dropdown::TableDropdown(ref dropdown_info) => {
+                    let display = &dropdown_info.display;
+                    if display.columns.len() > 0 {
+                        Alignment::Left
+                    } else {
+                        Alignment::Right
                     }
                 }
-            }
-            None => Alignment::Left
+            },
+            None => Alignment::Left,
         };
 
         ControlWidget {
@@ -228,7 +224,7 @@ impl ControlWidget {
             width: pk_width + display_width,
             max_len: None,
             height: 1,
-            alignment
+            alignment,
         }
     }
 

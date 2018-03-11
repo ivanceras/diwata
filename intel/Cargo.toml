@@ -4,12 +4,21 @@ version = "0.1.0"
 authors = ["lee"]
 
 [dependencies]
-rustorm = {path = "../rustorm"}
-rustorm_codegen = {path = "../rustorm/codegen"}
-dao = {path = "../rustorm/dao"}
 serde = "1.0.15"
 serde_derive = "1.0.15"
 serde_json = "1.0.3"
 lazy_static = "1.0.0"
 uuid = "0.5.1"
 bigdecimal = "0.0.10"
+
+[dependencies.rustorm]
+#path = "../rustorm"
+version = "0.10"
+
+[dependencies.rustorm_codegen]
+#path = "../rustorm/codegen"
+version = "0.1"
+
+[dependencies.rustorm_dao]
+#path = "../rustorm/dao"
+version = "0.1"

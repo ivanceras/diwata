@@ -142,13 +142,15 @@ viewFocusIndicator model =
 
 viewSelectionControl : Model -> Html Msg
 viewSelectionControl model =
-    div [ class "row-select" ]
+    div [ class "row-select tooltip" ]
         [ input
             [ type_ "checkbox"
             , onCheck ToggleSelect
             , checked model.selected
             ]
             []
+        , span [ class "tooltip-text" ]
+            [ text "Select" ]
         ]
 
 
@@ -174,9 +176,11 @@ viewCopyControl recordId tab =
         [ Route.href (Route.WindowArena copyArenaArg)
         , onClick ClickedCopyRecord
         ]
-        [ div [ class "duplicate-record" ]
+        [ div [ class "duplicate-record tooltip" ]
             [ div [ class "fa " ]
                 [ MaterialContent.content_copy iconColor iconSize ]
+            , span [ class "tooltip-text" ]
+                [ text "Copy" ]
             ]
         ]
 
@@ -191,12 +195,14 @@ viewUndo model =
             Constant.rowControlIconSize
     in
     div
-        [ class "row-undo"
+        [ class "row-undo tooltip"
         , classList [ ( "is-active", isModified model ) ]
         , onClick ResetChanges
         ]
         [ div [ class "icon " ]
             [ MaterialContent.block iconColor iconSize ]
+        , span [ class "tooltip-text" ]
+            [ text "Undo" ]
         ]
 
 
@@ -210,11 +216,13 @@ viewSave model =
             Constant.rowControlIconSize
     in
     div
-        [ class "row-save"
+        [ class "row-save tooltip"
         , classList [ ( "is-active", isModified model ) ]
         ]
         [ div [ class "icon" ]
             [ MaterialContent.save iconColor iconSize ]
+        , span [ class "tooltip-text" ]
+            [ text "Save" ]
         ]
 
 
@@ -231,12 +239,14 @@ viewRecordDetail recordId tab =
             Constant.rowControlIconSize
     in
     a
-        [ class "link-to-form"
+        [ class "link-to-form tooltip"
         , onClick ClickedDetailedLink
         , Route.href (Route.WindowArena (WindowArena.initArgWithRecordId tab.tableName recordIdString))
         ]
         [ div [ class "fa" ]
             [ Ionicon.edit iconSize iconColor ]
+        , span [ class "tooltip-text" ]
+            [ text "Edit" ]
         ]
 
 
