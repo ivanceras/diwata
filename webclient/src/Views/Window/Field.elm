@@ -31,7 +31,6 @@ import Util exposing ((=>), Scroll, px)
 import Widgets.DropdownDisplay as DropdownDisplay
 import Widgets.FixDropdown as FixDropdown
 import Widgets.Tagger as Tagger
-import Widgets.UuidDropdownDisplay as UuidDropdownDisplay
 
 
 type alias Model =
@@ -127,14 +126,6 @@ viewWidget lookup model =
 
         TableDropdown dropdown ->
             let
-                pkValue =
-                    case model.value of
-                        Just v ->
-                            Just (Value.valueToString v)
-
-                        Nothing ->
-                            Nothing
-
                 displayValue =
                     case model.record of
                         Just record ->
@@ -166,7 +157,7 @@ viewWidget lookup model =
                     listRecordToListString dropdownInfo recordList
 
                 listWithSelected =
-                    case pkValue of
+                    case model.value of
                         Just pkValue ->
                             if
                                 List.any
@@ -190,14 +181,8 @@ viewWidget lookup model =
                         Nothing ->
                             Debug.crash "There should be data type"
             in
-            case fieldDataType of
-                DataType.Uuid ->
-                    UuidDropdownDisplay.view listWithSelected dropdown
-                        |> Html.map (UuidDropdownDisplayMsg dropdown)
-
-                _ ->
-                    DropdownDisplay.view listWithSelected dropdown
-                        |> Html.map (DropdownDisplayMsg dropdown)
+            DropdownDisplay.view listWithSelected dropdown
+                |> Html.map (DropdownDisplayMsg dropdown)
 
 
 calcWidgetSize : Int -> Presentation -> Field -> ( Int, Int )
@@ -538,19 +523,14 @@ createWidget allotedTabWidth presentation record tab field maybeValue =
                             Debug.crash "unable to get data type"
 
                 dropdownModel =
-                    case fieldDataType of
-                        DataType.Uuid ->
-                            UuidDropdownDisplay.init alignment widgetWidth maybeValueString
-
-                        _ ->
-                            DropdownDisplay.init alignment widgetWidth maybeValueString
+                    DropdownDisplay.init alignment widgetWidth maybeValue
             in
             TableDropdown dropdownModel
 
         AutocompleteDropdown ->
             let
                 dropdownModel =
-                    DropdownDisplay.init alignment widgetWidth maybeValueString
+                    DropdownDisplay.init alignment widgetWidth maybeValue
             in
             TableDropdown dropdownModel
 
@@ -568,7 +548,7 @@ valueToString maybeValue =
             ""
 
 
-listRecordToListString : DropdownInfo -> List Record -> List ( String, String )
+listRecordToListString : DropdownInfo -> List Record -> List ( Value, String )
 listRecordToListString dropdownInfo lookupRecords =
     let
         displayColumns =
@@ -615,15 +595,15 @@ listRecordToListString dropdownInfo lookupRecords =
                         )
                         pk
 
-                displayPkString =
-                    List.map
-                        (\value ->
-                            Value.valueToString value
-                        )
-                        displayPk
-                        |> String.join " "
+                onePk =
+                    case List.head displayPk of
+                        Just displayPk ->
+                            displayPk
+
+                        Nothing ->
+                            Debug.crash "Only 1 pk is supported for now"
             in
-            ( displayPkString, displayString )
+            ( onePk, displayString )
         )
         lookupRecords
 
@@ -704,7 +684,6 @@ viewDatePicker styles maybeValue =
 
 type Msg
     = DropdownDisplayMsg DropdownDisplay.Model DropdownDisplay.Msg
-    | UuidDropdownDisplayMsg UuidDropdownDisplay.Model UuidDropdownDisplay.Msg
     | FixDropdownMsg FixDropdown.Model FixDropdown.Msg
     | StringValueChanged String
     | BoolValueChanged Bool
@@ -722,67 +701,26 @@ type Widget
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        DropdownDisplayMsg dropdown (DropdownDisplay.SelectionChanged dropdownValue) ->
+            let
+                ( newDropdown, subCmd ) =
+                    DropdownDisplay.update (DropdownDisplay.SelectionChanged dropdownValue) dropdown
+            in
+            { model
+                | editValue = Just dropdownValue
+                , widget = TableDropdown newDropdown
+            }
+                => Cmd.map (DropdownDisplayMsg newDropdown) subCmd
+
         DropdownDisplayMsg dropdown msg ->
-            case model.widget of
-                TableDropdown dropdown ->
-                    let
-                        ( newDropdown, subCmd ) =
-                            DropdownDisplay.update msg dropdown
-
-                        dropdownSelected =
-                            newDropdown.selected
-
-                        dropdownValue =
-                            case dropdownSelected of
-                                Just dropdownSelected ->
-                                    Field.cast dropdownSelected model.field
-                                        |> Just
-
-                                Nothing ->
-                                    Nothing
-
-                        _ =
-                            Debug.log "dropdownValue" dropdownValue
-                    in
-                    { model
-                        | widget = TableDropdown newDropdown
-                        , editValue = dropdownValue
-                    }
-                        => Cmd.map (DropdownDisplayMsg newDropdown) subCmd
-
-                _ ->
-                    model => Cmd.none
-
-        UuidDropdownDisplayMsg dropdown msg ->
-            case model.widget of
-                TableDropdown dropdown ->
-                    let
-                        ( newDropdown, subCmd ) =
-                            UuidDropdownDisplay.update msg dropdown
-
-                        dropdownSelected =
-                            newDropdown.selected
-
-                        dropdownValue =
-                            case dropdownSelected of
-                                Just dropdownSelected ->
-                                    Field.cast dropdownSelected model.field
-                                        |> Just
-
-                                Nothing ->
-                                    Nothing
-
-                        _ =
-                            Debug.log "dropdownValue" dropdownValue
-                    in
-                    { model
-                        | widget = TableDropdown newDropdown
-                        , editValue = dropdownValue
-                    }
-                        => Cmd.map (UuidDropdownDisplayMsg newDropdown) subCmd
-
-                _ ->
-                    model => Cmd.none
+            let
+                ( newDropdown, subCmd ) =
+                    DropdownDisplay.update msg dropdown
+            in
+            { model
+                | widget = TableDropdown newDropdown
+            }
+                => Cmd.map (DropdownDisplayMsg newDropdown) subCmd
 
         FixDropdownMsg fixDropdown msg ->
             case model.widget of

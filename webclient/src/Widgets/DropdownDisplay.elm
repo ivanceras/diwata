@@ -1,6 +1,7 @@
 module Widgets.DropdownDisplay exposing (Model, Msg(..), init, pageRequestNeeded, update, view)
 
 import Data.Window.Field as Field
+import Data.Window.Value as Value exposing (Value)
 import Data.Window.Widget as Widget exposing (Alignment)
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -10,14 +11,14 @@ import Util exposing ((=>), Scroll, onScroll, px, viewIf)
 
 type alias Model =
     { opened : Bool
-    , selected : Maybe String
+    , selected : Maybe Value
     , scroll : Scroll
     , alignment : Alignment
     , width : Int
     }
 
 
-init : Alignment -> Int -> Maybe String -> Model
+init : Alignment -> Int -> Maybe Value -> Model
 init alignment width selected =
     { opened = False
     , selected = selected
@@ -27,18 +28,29 @@ init alignment width selected =
     }
 
 
-pkCharWidth : List ( String, a ) -> Int
+pkCharWidth : List ( Value, a ) -> Int
 pkCharWidth list =
     List.map
         (\( pk, display ) ->
-            String.length pk
+            String.length (Value.valueToString pk)
         )
         list
         |> List.maximum
         |> Maybe.withDefault 0
 
 
-calcPkWidth : List ( String, a ) -> Int
+choiceCharWidth : List ( a, String ) -> Int
+choiceCharWidth list =
+    List.map
+        (\( pk, display ) ->
+            String.length display
+        )
+        list
+        |> List.maximum
+        |> Maybe.withDefault 0
+
+
+calcPkWidth : List ( Value, a ) -> Int
 calcPkWidth list =
     let
         charWidth =
@@ -50,7 +62,19 @@ calcPkWidth list =
     charWidth * fontWidth
 
 
-estimatedListHeight : List ( String, a ) -> Float
+calcChoiceWidth : List ( a, String ) -> Int
+calcChoiceWidth list =
+    let
+        charWidth =
+            choiceCharWidth list
+
+        ( fontWidth, _ ) =
+            Field.fontSize
+    in
+    charWidth * fontWidth
+
+
+estimatedListHeight : List ( Value, a ) -> Float
 estimatedListHeight list =
     let
         optionHeight =
@@ -62,7 +86,7 @@ estimatedListHeight list =
     optionHeight * toFloat optionLen
 
 
-isScrolledBottom : List ( String, a ) -> Model -> Bool
+isScrolledBottom : List ( Value, a ) -> Model -> Bool
 isScrolledBottom list model =
     let
         dropdownHeight =
@@ -81,12 +105,12 @@ isScrolledBottom list model =
     scrollTop + dropdownHeight > contentHeight - bottomAllowance
 
 
-pageRequestNeeded : List ( String, String ) -> Model -> Bool
+pageRequestNeeded : List ( Value, String ) -> Model -> Bool
 pageRequestNeeded list model =
     isScrolledBottom list model
 
 
-view : List ( String, String ) -> Model -> Html Msg
+view : List ( Value, String ) -> Model -> Html Msg
 view list model =
     let
         alignment =
@@ -110,7 +134,7 @@ view list model =
         ]
 
 
-viewInputButton : Attribute Msg -> List ( String, String ) -> Model -> Html Msg
+viewInputButton : Attribute Msg -> List ( Value, String ) -> Model -> Html Msg
 viewInputButton styles list model =
     let
         selectedValue =
@@ -133,10 +157,24 @@ viewInputButton styles list model =
                         pkWidth =
                             pkCharWidth list
 
+                        pkString =
+                            Value.valueToString pk
+
                         pkPadded =
-                            String.padLeft pkWidth ' ' pk
+                            String.padLeft pkWidth ' ' pkString
+
+                        choiceWidth =
+                            choiceCharWidth list
+
+                        choicePadded =
+                            String.padLeft choiceWidth ' ' choice
                     in
-                    pkPadded ++ "  |  " ++ choice
+                    case pk of
+                        Value.Uuid _ ->
+                            choicePadded ++ "  |   " ++ pkString
+
+                        _ ->
+                            pkPadded ++ "  |  " ++ choice
 
                 Nothing ->
                     ""
@@ -158,7 +196,7 @@ viewInputButton styles list model =
         ]
 
 
-viewDropdown : Attribute Msg -> List ( String, String ) -> Model -> Html Msg
+viewDropdown : Attribute Msg -> List ( Value, String ) -> Model -> Html Msg
 viewDropdown styles list model =
     let
         sorted =
@@ -170,6 +208,9 @@ viewDropdown styles list model =
 
         pkWidth =
             calcPkWidth sorted
+
+        choiceWidth =
+            calcChoiceWidth sorted
     in
     div
         [ class "dropdown-select"
@@ -177,12 +218,26 @@ viewDropdown styles list model =
         , styles
         ]
         [ div [ class "dropdown-options" ]
-            (List.map (viewOption pkWidth) sorted)
+            (List.map (viewOption ( pkWidth, choiceWidth )) sorted)
         ]
 
 
-viewOption : Int -> ( String, String ) -> Html Msg
-viewOption pkWidth ( pk, choice ) =
+viewOption : ( Int, Int ) -> ( Value, String ) -> Html Msg
+viewOption ( pkWidth, choiceWidth ) ( pk, choice ) =
+    case pk of
+        Value.Uuid _ ->
+            viewOptionUuid choiceWidth ( pk, choice )
+
+        _ ->
+            viewOptionInt pkWidth ( pk, choice )
+
+
+viewOptionInt : Int -> ( Value, String ) -> Html Msg
+viewOptionInt pkWidth ( pk, choice ) =
+    let
+        pkString =
+            Value.valueToString pk
+    in
     div
         [ class "dropdown-option"
         , onMouseDown (SelectionChanged pk)
@@ -191,16 +246,38 @@ viewOption pkWidth ( pk, choice ) =
             [ class "pk-value"
             , style [ ( "min-width", px pkWidth ) ]
             ]
-            [ text pk ]
+            [ text pkString ]
         , div [ class "choice" ]
             [ text choice ]
+        ]
+
+
+viewOptionUuid : Int -> ( Value, String ) -> Html Msg
+viewOptionUuid choiceWidth ( pk, choice ) =
+    let
+        pkString =
+            Value.valueToString pk
+    in
+    div
+        [ class "dropdown-option"
+        , onMouseDown (SelectionChanged pk)
+        ]
+        [ div
+            [ class "choice"
+            , style [ ( "min-width", px choiceWidth ) ]
+            ]
+            [ text choice ]
+        , div
+            [ class "pk-value monospaced"
+            ]
+            [ text pkString ]
         ]
 
 
 type Msg
     = ToggleDropdown
     | CloseDropdown
-    | SelectionChanged String
+    | SelectionChanged Value
     | DropdownScrolled Scroll
 
 
