@@ -10,6 +10,7 @@ module Views.Window.Field
         , view
         )
 
+import Constant
 import Data.Window.DataType as DataType exposing (DataType(..))
 import Data.Window.Field as Field exposing (Field)
 import Data.Window.Lookup as Lookup exposing (Lookup)
@@ -26,6 +27,7 @@ import Dict
 import Html exposing (..)
 import Html.Attributes exposing (checked, class, classList, for, id, name, selected, src, style, type_, value)
 import Html.Events exposing (onCheck, onClick, onInput)
+import Ionicon
 import Route exposing (Route)
 import Util exposing ((=>), Scroll, px)
 import Widgets.DropdownDisplay as DropdownDisplay
@@ -212,6 +214,25 @@ calcWidgetSize allotedTabWidth presentation field =
 createWidget : Int -> Presentation -> Maybe Record -> Tab -> Field -> Maybe Value -> Widget
 createWidget allotedTabWidth presentation record tab field maybeValue =
     let
+        columnName =
+            Field.columnName field
+
+        recordId =
+            case record of
+                Just record ->
+                    Just (Tab.recordId record tab)
+
+                Nothing ->
+                    Nothing
+
+        recordIdString =
+            case recordId of
+                Just recordId ->
+                    Record.idToString recordId
+
+                Nothing ->
+                    ""
+
         controlWidget =
             field.controlWidget
 
@@ -264,22 +285,6 @@ createWidget allotedTabWidth presentation record tab field maybeValue =
             let
                 tableName =
                     tab.tableName
-
-                recordId =
-                    case record of
-                        Just record ->
-                            Just (Tab.recordId record tab)
-
-                        Nothing ->
-                            Nothing
-
-                recordIdString =
-                    case recordId of
-                        Just recordId ->
-                            Record.idToString recordId
-
-                        Nothing ->
-                            ""
             in
             case presentation of
                 InList ->
@@ -438,6 +443,18 @@ createWidget allotedTabWidth presentation record tab field maybeValue =
             let
                 _ =
                     Debug.log "fileupload for" valueString
+
+                iconColor =
+                    Constant.iconColor
+
+                iconSize =
+                    20
+
+                fileInputLabel =
+                    "file-input-" ++ columnName
+
+                rowFileInputLabel =
+                    "file-input-" ++ recordIdString ++ "-" ++ columnName
             in
             case presentation of
                 InList ->
@@ -447,6 +464,20 @@ createWidget allotedTabWidth presentation record tab field maybeValue =
                             , styles
                             ]
                             [ img [ src valueString ] []
+                            , div [ class "image-upload" ]
+                                [ label
+                                    [ for rowFileInputLabel
+                                    , class "tooltip"
+                                    ]
+                                    [ Ionicon.edit iconSize iconColor
+                                    , span [ class "tooltip-text" ] [ text "Change image" ]
+                                    ]
+                                , input
+                                    [ id rowFileInputLabel
+                                    , type_ "file"
+                                    ]
+                                    []
+                                ]
                             ]
                         )
 
@@ -454,9 +485,22 @@ createWidget allotedTabWidth presentation record tab field maybeValue =
                     HtmlWidget
                         (div
                             [ class "card-value-image"
-                            , styles
                             ]
                             [ img [ src valueString ] []
+                            , div [ class "image-upload" ]
+                                [ label
+                                    [ for fileInputLabel
+                                    , class "tooltip"
+                                    ]
+                                    [ Ionicon.edit iconSize iconColor
+                                    , span [ class "tooltip-text" ] [ text "Change image" ]
+                                    ]
+                                , input
+                                    [ id fileInputLabel
+                                    , type_ "file"
+                                    ]
+                                    []
+                                ]
                             ]
                         )
 

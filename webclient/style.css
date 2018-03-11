@@ -1046,9 +1046,38 @@ a.primary-link {
     background:#5fba7d;
 }
 
+.row-value-image{
+    display: flex;
+}
+.row-value-image .image-upload{
+    visibility: hidden;
+}
+.row-value-image:hover .image-upload{
+    visibility: visible;
+}
 .row-value-image img{
     height: 30px;
 }
 
 .card-value-image {
+    display: flex;
+}
+
+.card-value-image .image-upload{
+    visibility: hidden;
+}
+
+.card-value-image:hover .image-upload{
+    visibility: visible;
+}
+
+.image-upload > input
+{
+    display: none;
+}
+
+.image-upload svg
+{
+    width: 80px;
+    cursor: pointer;
 }
