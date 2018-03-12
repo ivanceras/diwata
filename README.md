@@ -61,8 +61,8 @@ Compile and run
 ```
 git clone https://github.com/ivanceras/diwata
 cd diwata
+git submodule update --init --recursive
 rustup self update && rustup update
-rustup override set nightly
 cd webclient && ./compile.sh && cd ..
 
 cargo run -p diwata -- --dburl <db_url>
