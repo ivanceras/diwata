@@ -1,11 +1,14 @@
 module Widgets.DropdownDisplay exposing (Model, Msg(..), init, pageRequestNeeded, update, view)
 
+import Color
+import Constant
 import Data.Window.Field as Field
 import Data.Window.Value as Value exposing (Value)
 import Data.Window.Widget as Widget exposing (Alignment)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import Ionicon
 import Util exposing ((=>), Scroll, onScroll, px, viewIf)
 
 
@@ -137,6 +140,12 @@ view list model =
 viewInputButton : Attribute Msg -> List ( Value, String ) -> Model -> Html Msg
 viewInputButton styles list model =
     let
+        iconSize =
+            14
+
+        iconColor =
+            Color.black
+
         selectedValue =
             case model.selected of
                 Just selected ->
@@ -191,7 +200,7 @@ viewInputButton styles list model =
             [ onClick ToggleDropdown
             , onBlur CloseDropdown
             ]
-            [ i [ class "fa fa-caret-down" ] []
+            [ Ionicon.arrowDownB iconSize iconColor
             ]
         ]
 
