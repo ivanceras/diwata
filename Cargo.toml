@@ -1,7 +1,7 @@
 [workspace]
 members = [
     "intel",
-    "diwata",
+    "server",
     "rustorm",
     "rustorm/codegen",
     "rustorm/dao"

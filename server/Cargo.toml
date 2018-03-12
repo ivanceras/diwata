@@ -1,7 +1,9 @@
 [package]
-name = "diwata"
+name = "diwata_server"
 version = "0.1.0"
 authors = ["Jovansonlee Cesar <ivanceras@gmail.com>"]
+license = "MIT"
+description = "Decides the routing of url request"
 
 [dependencies]
 chrono = "0.4.0"
@@ -16,7 +18,7 @@ structopt = "0.1"
 structopt-derive = "0.1"
 
 
-[dependencies.intel]
+[dependencies.diwata_intel]
 path = "../intel"
 version = "0.1"
 

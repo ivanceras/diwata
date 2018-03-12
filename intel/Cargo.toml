@@ -1,7 +1,9 @@
 [package]
-name = "intel"
+name = "diwata_intel"
 version = "0.1.0"
-authors = ["lee"]
+authors = [ "Jovansonlee Cesar <ivanceras@gmail.com>" ]
+license = "MIT"
+description = "Contains algorithmns and heuristics to interpret data"
 
 [dependencies]
 serde = "1.0.15"

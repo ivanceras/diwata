@@ -1,5 +1,5 @@
 #![deny(warnings)]
-extern crate diwata;
+extern crate diwata_server as server;
 extern crate structopt;
 #[macro_use]
 extern crate structopt_derive;
@@ -22,11 +22,11 @@ struct Opt {
 fn main() {
     let opt = Opt::from_args();
     println!("opt: {:?}", opt);
-    match diwata::set_db_url(opt.db_url) {
+    match server::set_db_url(opt.db_url) {
         Ok(_) => println!("url is set"),
         Err(_) => println!("unable to set db_url"),
     }
-    match diwata::rocket(opt.address, opt.port) {
+    match server::rocket(opt.address, opt.port) {
         Ok(server) => {
             println!("Launching..");
             server.launch();

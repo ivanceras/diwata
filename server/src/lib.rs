@@ -3,7 +3,7 @@
 #![plugin(rocket_codegen)]
 #![feature(match_default_bindings)]
 
-extern crate intel;
+extern crate diwata_intel as intel;
 #[macro_use]
 extern crate lazy_static;
 extern crate rocket;
