@@ -36,4 +36,4 @@ test:
 
 build:
   script:
-    - cargo build -p diwata --release
+    - cargo build -p diwata_server --release

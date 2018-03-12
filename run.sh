@@ -1,4 +1,4 @@
 reset
 cd webclient && ./compile.sh
 cd ..
-cargo run -p diwata -- --dburl=$1
+cargo run -p diwata_server -- --dburl=$1
