@@ -264,14 +264,9 @@ viewLoadingIndicator model =
     in
     div
         [ class "selected-record-loading-indicator spin animated fadeIn"
-
-        -- display none to be able to preload it
-        , if model.loadingSelectedRecord then
-            style [ ( "display", "block" ) ]
-          else
-            style [ ( "display", "none" ) ]
         ]
         [ Ionicon.loadA iconSize iconColor ]
+        |> viewIf model.loadingSelectedRecord
 
 
 

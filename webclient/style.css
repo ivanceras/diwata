@@ -47,7 +47,7 @@ textarea {
 }
 .window-content {
     position: relative;
-    overflow-y: auto;
+    overflow: hidden;
     display: flex;
     flex: 1;
 }
