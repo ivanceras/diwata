@@ -13,6 +13,7 @@ module Data.Window.TableName
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Extra
 import Json.Decode.Pipeline as Pipeline exposing (custom, decode, hardcoded, required)
+import Json.Encode as Encode
 import Markdown
 import UrlParser
 
@@ -22,6 +23,29 @@ type alias TableName =
     , schema : Maybe String
     , alias : Maybe String
     }
+
+
+encoder : TableName -> Encode.Value
+encoder tableName =
+    Encode.object
+        [ ( "name", Encode.string tableName.name )
+        , ( "schema"
+          , case tableName.schema of
+                Just schema ->
+                    Encode.string schema
+
+                Nothing ->
+                    Encode.null
+          )
+        , ( "alias"
+          , case tableName.alias of
+                Just alias ->
+                    Encode.string alias
+
+                Nothing ->
+                    Encode.null
+          )
+        ]
 
 
 maybeTableNameToString : Maybe TableName -> String

@@ -19,12 +19,35 @@ import Dict exposing (Dict)
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Extra
 import Json.Decode.Pipeline as Pipeline exposing (decode, required)
+import Json.Encode as Encode
 
 
 type alias Rows =
     { columns : List String
     , data : List (List Value)
     }
+
+
+rowsEncoder : Rows -> Encode.Value
+rowsEncoder rows =
+    let
+        data =
+            List.map
+                (\d ->
+                    List.map
+                        (\c ->
+                            Value.encoder c
+                        )
+                        d
+                        |> Encode.list
+                )
+                rows.data
+                |> Encode.list
+    in
+    Encode.object
+        [ ( "columns", Encode.list (List.map Encode.string rows.columns) )
+        , ( "data", data )
+        ]
 
 
 emptyRow : Rows
@@ -38,47 +61,18 @@ type alias Record =
     Dict String Value
 
 
-{-|
-
-    Clicking on save button can mean:
-     - save the newly inserted records into the database
-     - save the modified records into the database
-
-    TODO: need to consider the linked hasMany and indirect records
-
--}
-type alias SaveContainer =
-    { forInsert : ( TableName, List RecordDetailChangeset )
-    , forUpdate : ( TableName, List RecordDetailChangeset )
-    }
-
-
-{-|
-
-    This is used when records have details which can be
-     - unlink: remove the linkage of has_many/indirect record to the selected record
-     - linkExisting: take the id of an existing has_many/indirect record and put it in the linker table
-     - linkNew: create a new has_many/indirect record and put it's primary id to the linker table
-
--}
-type RecordLinkAction
-    = Unlink
-    | LinkExisting
-    | LinkNew
-
-
-{-|
-
-    Aside from the changes in the main record, changes in the detail record (has_many/indirect) record linked to this selected
-    record will also have to be carried and saved into the database
-
--}
-type alias RecordDetailChangeset =
-    { record : Record
-    , oneOnes : List ( TableName, Maybe Record )
-    , hasMany : ( RecordLinkAction, List ( TableName, Rows ) )
-    , indirect : ( RecordLinkAction, List ( TableName, Rows ) )
-    }
+encoder : Record -> Encode.Value
+encoder record =
+    let
+        list =
+            Dict.toList record
+    in
+    List.map
+        (\( k, v ) ->
+            ( k, Value.encoder v )
+        )
+        list
+        |> Encode.object
 
 
 rowsToRecordList : Rows -> List Record

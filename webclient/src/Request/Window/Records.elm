@@ -11,6 +11,7 @@ module Request.Window.Records
         )
 
 import Data.AuthToken as AuthToken exposing (AuthToken, withAuthorization)
+import Data.DataContainer
 import Data.Query as Query exposing (Query)
 import Data.Query.Sort as Sort exposing (Sort)
 import Data.Window as Window exposing (Tag, Window, slugToString)
