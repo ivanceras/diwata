@@ -4,6 +4,7 @@ module Views.Window.Field
         , Msg(..)
         , calcWidgetSize
         , dropdownPageRequestNeeded
+        , editedValue
         , init
         , isModified
         , update
@@ -46,6 +47,21 @@ type alias Model =
     , dropdownInfo : Maybe DropdownInfo
     , allotedTabWidth : Int
     }
+
+
+{-|
+
+    The edited value of this field model
+
+-}
+editedValue : Model -> Value
+editedValue model =
+    case model.editValue of
+        Just value ->
+            value
+
+        Nothing ->
+            Value.Nil
 
 
 isModified : Model -> Bool

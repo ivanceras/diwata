@@ -37,6 +37,7 @@ type Msg
     | ToggleMultiSort
     | ClickedResetMultiSort
     | ClickedCancelOnDetail
+    | ClickedSaveOnDetail
     | ClickedCancelOnMain
     | ClickedLinkExisting
     | ClickedLinkNewRecord
@@ -302,7 +303,9 @@ viewForDetailRecord model =
     in
     div [ class "toolbar btn-group" ]
         [ button
-            [ class "btn btn-large btn-default tooltip" ]
+            [ class "btn btn-large btn-default tooltip"
+            , onClick ClickedSaveOnDetail
+            ]
             [ span [ class "icon icon-text" ]
                 [ MaterialContent.save iconColor iconSize ]
             , text "Save"

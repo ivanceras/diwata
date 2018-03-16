@@ -7,6 +7,7 @@ module Data.Window.Record
         , emptyRow
         , encoder
         , idToString
+        , listRecordToRows
         , rowsDecoder
         , rowsEncoder
         , rowsToRecordList
@@ -85,6 +86,30 @@ rowsToRecordList rows =
                 |> Dict.fromList
         )
         rows.data
+
+
+listRecordToRows : List String -> List Record -> Rows
+listRecordToRows columns listRecord =
+    let
+        data =
+            List.map
+                (\record ->
+                    List.map
+                        (\column ->
+                            case Dict.get column record of
+                                Just value ->
+                                    value
+
+                                Nothing ->
+                                    Value.Nil
+                        )
+                        columns
+                )
+                listRecord
+    in
+    { columns = columns
+    , data = data
+    }
 
 
 

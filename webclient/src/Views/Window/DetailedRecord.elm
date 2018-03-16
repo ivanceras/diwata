@@ -83,6 +83,28 @@ type FieldContainer
     | OneOne
 
 
+{-|
+
+    The edited record, collection of edited value for each field
+
+-}
+editedRecord : Model -> Record
+editedRecord model =
+    List.map
+        (\field ->
+            let
+                editedValue =
+                    Field.editedValue field
+
+                columnName =
+                    Field.columnName field.field
+            in
+            ( columnName, editedValue )
+        )
+        model.values
+        |> Dict.fromList
+
+
 initialPosition : Float -> Bool -> BrowserWindow.Size -> Position
 initialPosition split isMaximized browserSize =
     let
@@ -1150,6 +1172,13 @@ update session msg model =
             in
             { model | arenaArg = newArenaArg }
                 => Route.modifyUrl (Route.WindowArena newArenaArg)
+
+        ToolbarMsg Toolbar.ClickedSaveOnDetail ->
+            let
+                record =
+                    editedRecord model
+            in
+            model => Cmd.none
 
         ToolbarMsg Toolbar.ClickedCancelOnDetail ->
             let

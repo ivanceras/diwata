@@ -3,6 +3,7 @@ module Views.Window.Row
         ( Model
         , Msg(..)
         , dropdownPageRequestNeeded
+        , editedRecord
         , init
         , isModified
         , update
@@ -42,6 +43,28 @@ type alias Model =
     , fields : List Field.Model
     , isFocused : Bool
     }
+
+
+{-|
+
+    Get the edited records for each field
+
+-}
+editedRecord : Model -> Record
+editedRecord model =
+    List.map
+        (\field ->
+            let
+                value =
+                    Field.editedValue field
+
+                columnName =
+                    Field.columnName field.field
+            in
+            ( columnName, value )
+        )
+        model.fields
+        |> Dict.fromList
 
 
 isModified : Model -> Bool

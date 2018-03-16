@@ -55,6 +55,27 @@ type alias Model =
     }
 
 
+editedRows : Model -> Rows
+editedRows model =
+    let
+        columns =
+            Tab.columnNames model.tab
+
+        listRecords =
+            List.map
+                (\page ->
+                    List.map
+                        (\row ->
+                            Row.editedRecord row
+                        )
+                        page
+                )
+                model.pageRows
+                |> List.concat
+    in
+    Record.listRecordToRows columns listRecords
+
+
 init : Maybe RecordId -> ( Float, Float ) -> Query -> Tab -> TabType -> Rows -> Int -> Model
 init selectedRecordId size query tab tabType rows totalRecords =
     { tab = tab
