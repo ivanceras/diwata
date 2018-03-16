@@ -21,6 +21,30 @@ type alias SaveContainer =
     }
 
 
+containerEncoder : SaveContainer -> Encode.Value
+containerEncoder container =
+    Encode.object
+        [ ( "for_insert"
+          , case container.forInsert of
+                ( tableName, changesets ) ->
+                    Encode.list
+                        [ TableName.encoder tableName
+                        , List.map changesetEncoder changesets
+                            |> Encode.list
+                        ]
+          )
+        , ( "for_update"
+          , case container.forUpdate of
+                ( tableName, changesets ) ->
+                    Encode.list
+                        [ TableName.encoder tableName
+                        , List.map changesetEncoder changesets
+                            |> Encode.list
+                        ]
+          )
+        ]
+
+
 {-|
 
     This is used when records have details which can be
@@ -58,5 +82,61 @@ type alias RecordDetailChangeset =
     { record : Record
     , oneOnes : List ( TableName, Maybe Record )
     , hasMany : ( RecordLinkAction, List ( TableName, Rows ) )
-    , indirect : ( RecordLinkAction, List ( TableName, Rows ) )
+    , indirect : ( RecordLinkAction, List ( TableName, TableName, Rows ) )
     }
+
+
+changesetEncoder : RecordDetailChangeset -> Encode.Value
+changesetEncoder changeset =
+    Encode.object
+        [ ( "record", Record.encoder changeset.record )
+        , ( "one_ones"
+          , List.map
+                (\( tableName, record ) ->
+                    Encode.list
+                        [ TableName.encoder tableName
+                        , case record of
+                            Just record ->
+                                Record.encoder record
+
+                            Nothing ->
+                                Encode.null
+                        ]
+                )
+                changeset.oneOnes
+                |> Encode.list
+          )
+        , ( "has_many"
+          , case changeset.hasMany of
+                ( action, list ) ->
+                    Encode.list
+                        [ recordLinkActionEncoder action
+                        , List.map
+                            (\( tableName, rows ) ->
+                                Encode.list
+                                    [ TableName.encoder tableName
+                                    , Record.rowsEncoder rows
+                                    ]
+                            )
+                            list
+                            |> Encode.list
+                        ]
+          )
+        , ( "indirect"
+          , case changeset.indirect of
+                ( action, list ) ->
+                    Encode.list
+                        [ recordLinkActionEncoder action
+                        , List.map
+                            (\( tableName, via, rows ) ->
+                                Encode.list
+                                    [ TableName.encoder tableName
+                                    , TableName.encoder via
+                                    , Record.rowsEncoder rows
+                                    ]
+                            )
+                            list
+                            |> Encode.list
+                        ]
+          )
+        ]

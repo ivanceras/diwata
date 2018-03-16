@@ -5,8 +5,10 @@ module Data.Window.Record
         , Rows
         , decoder
         , emptyRow
+        , encoder
         , idToString
         , rowsDecoder
+        , rowsEncoder
         , rowsToRecordList
         )
 

@@ -2,6 +2,7 @@ module Data.Window.TableName
     exposing
         ( TableName
         , decoder
+        , encoder
         , fromString
         , fromStringOrBlank
         , maybeTableNameParser
