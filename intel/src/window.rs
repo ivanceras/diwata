@@ -1,15 +1,15 @@
-use rustorm::TableName;
-use tab::Tab;
-use rustorm::DbError;
-use rustorm::table::SchemaContent;
-use rustorm::EntityManager;
-use rustorm::Table;
-use table_intel::TableIntel;
-use table_intel::IndirectTable;
-use table_intel;
 use cache;
 use error::IntelError;
 use rustorm::ColumnName;
+use rustorm::DbError;
+use rustorm::EntityManager;
+use rustorm::Table;
+use rustorm::TableName;
+use rustorm::table::SchemaContent;
+use tab::Tab;
+use table_intel;
+use table_intel::IndirectTable;
+use table_intel::TableIntel;
 
 #[derive(Debug, Serialize, Clone)]
 pub struct Window {

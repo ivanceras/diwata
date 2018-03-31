@@ -1,15 +1,15 @@
 //! collection of functions that modify the database
 //! using UPDATE and DELETE SQL
 
-use rustorm::Value;
-use rustorm::ColumnName;
-use error::IntelError;
-use rustorm::Table;
-use rustorm::Rows;
-use rustorm::DbError;
-use rustorm::RecordManager;
-use rustorm::Record;
 use common;
+use error::IntelError;
+use rustorm::ColumnName;
+use rustorm::DbError;
+use rustorm::Record;
+use rustorm::RecordManager;
+use rustorm::Rows;
+use rustorm::Table;
+use rustorm::Value;
 
 /// delete the records with the following record_ids
 /// return the total number of records deleted

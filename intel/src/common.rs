@@ -1,18 +1,18 @@
 //! provides data service for window
-use window::Window;
-use rustorm::Rows;
-use rustorm::DbError;
-use error::IntelError;
-use rustorm::Value;
-use rustorm::types::SqlType;
-use uuid::Uuid;
-use rustorm::Record;
-use rustorm::ColumnName;
-pub use data_container::RecordDetail;
 use bigdecimal::BigDecimal;
-use std::str::FromStr;
+pub use data_container::RecordDetail;
+use error::IntelError;
+use rustorm::ColumnName;
+use rustorm::DbError;
+use rustorm::Record;
+use rustorm::Rows;
+use rustorm::Value;
 use rustorm::common;
+use rustorm::types::SqlType;
 use std::collections::BTreeMap;
+use std::str::FromStr;
+use uuid::Uuid;
+use window::Window;
 
 pub fn calc_offset(page: u32, page_size: u32) -> u32 {
     (page - 1) * page_size

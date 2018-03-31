@@ -1,5 +1,5 @@
-use rustorm::error::DbError;
 use intel::error::IntelError;
+use rustorm::error::DbError;
 
 #[derive(Debug)]
 pub enum ServiceError {

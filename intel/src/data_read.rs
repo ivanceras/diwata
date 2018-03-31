@@ -1,35 +1,33 @@
-use rustorm::EntityManager;
-use rustorm::TableName;
-use window::Window;
-use rustorm::Table;
-use table_intel;
-use rustorm::Rows;
-use rustorm::DbError;
-use error::IntelError;
-use rustorm::Value;
-use rustorm::types::SqlType;
-use rustorm::Record;
-use rustorm::RecordManager;
-use rustorm::ColumnName;
-use tab::Tab;
-pub use data_container::RecordDetail;
-use data_container::Lookup;
-use rustorm::FromDao;
+use common;
 use dao;
 use data_container::Filter;
+use data_container::Lookup;
+pub use data_container::RecordDetail;
 use data_container::{Direction, Sort};
-use std::collections::BTreeMap;
-use common;
+use error::IntelError;
 use query_builder::Query;
+use rustorm::ColumnName;
+use rustorm::DbError;
+use rustorm::EntityManager;
+use rustorm::FromDao;
+use rustorm::Record;
+use rustorm::RecordManager;
+use rustorm::Rows;
+use rustorm::Table;
+use rustorm::TableName;
+use rustorm::Value;
+use rustorm::types::SqlType;
+use std::collections::BTreeMap;
+use tab::Tab;
+use table_intel;
+use window::Window;
 
 macro_rules! some {
-    ($expr: expr) => {
-        {
-            let value = $expr;
-            assert!(value.is_some());
-            value.unwrap()
-        }
-    }
+    ($expr:expr) => {{
+        let value = $expr;
+        assert!(value.is_some());
+        value.unwrap()
+    }};
 }
 
 pub fn get_main_table<'a>(window: &Window, tables: &'a Vec<Table>) -> Option<&'a Table> {

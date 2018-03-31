@@ -1,13 +1,13 @@
 use rustorm::Column;
 
+use data_container::DropdownInfo;
 use reference::Reference;
-use rustorm::types::SqlType;
+use rustorm::ColumnName;
+use rustorm::Table;
 use rustorm::column::Capacity;
 use rustorm::types::ArrayType;
-use rustorm::Table;
+use rustorm::types::SqlType;
 use widget::ControlWidget;
-use rustorm::ColumnName;
-use data_container::DropdownInfo;
 use widget::Dropdown;
 
 #[derive(Debug, Serialize, Clone)]

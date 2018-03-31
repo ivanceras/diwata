@@ -1,7 +1,7 @@
-use rustorm::TableName;
-use rustorm::Rows;
-use rustorm::Record;
 use rustorm::ColumnName;
+use rustorm::Record;
+use rustorm::Rows;
+use rustorm::TableName;
 
 #[derive(Debug, Serialize)]
 pub struct RecordDetail {

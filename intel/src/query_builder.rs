@@ -1,14 +1,14 @@
-use std::collections::BTreeMap;
-use rustorm::Value;
-use rustorm::types::SqlType;
-use rustorm::Table;
-use tab::Tab;
-use rustorm::TableName;
+use common;
 use rustorm::DbError;
-use rustorm::Rows;
 use rustorm::Record;
 use rustorm::RecordManager;
-use common;
+use rustorm::Rows;
+use rustorm::Table;
+use rustorm::TableName;
+use rustorm::Value;
+use rustorm::types::SqlType;
+use std::collections::BTreeMap;
+use tab::Tab;
 use table_intel;
 
 pub struct Query {

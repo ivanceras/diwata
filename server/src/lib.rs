@@ -12,45 +12,43 @@ extern crate rustorm;
 extern crate serde;
 extern crate serde_json;
 
-use rocket::Rocket;
-use rustorm::Pool;
-use rustorm::pool;
-use rocket_contrib::Json;
-use intel::Window;
-use intel::data_read;
-use intel::window::{self, GroupedWindow};
-use std::sync::{Arc, Mutex};
-use rustorm::TableName;
-use rocket::fairing::AdHoc;
-use rocket::http::hyper::header::AccessControlAllowOrigin;
-use rustorm::Rows;
-use rustorm::EntityManager;
 use error::ServiceError;
+use intel::Window;
 use intel::cache;
-use intel::data_read::RecordDetail;
-use rustorm::RecordManager;
-use std::path::{Path, PathBuf};
-use rocket::response::NamedFile;
-use rocket::response::Redirect;
-use intel::tab::Tab;
-use intel::data_container::Lookup;
-use intel::table_intel;
-use rocket::Config;
-use rocket::config::ConfigError;
 use intel::data_container::Filter;
+use intel::data_container::Lookup;
 use intel::data_container::Sort;
 use intel::data_modify;
+use intel::data_read;
+use intel::data_read::RecordDetail;
 use intel::tab;
+use intel::tab::Tab;
+use intel::table_intel;
+use intel::window::{self, GroupedWindow};
+use rocket::Config;
+use rocket::Rocket;
+use rocket::config::ConfigError;
+use rocket::fairing::AdHoc;
+use rocket::http::hyper::header::AccessControlAllowOrigin;
+use rocket::response::NamedFile;
+use rocket::response::Redirect;
+use rocket_contrib::Json;
+use rustorm::EntityManager;
+use rustorm::Pool;
+use rustorm::RecordManager;
+use rustorm::Rows;
+use rustorm::TableName;
+use rustorm::pool;
+use std::path::{Path, PathBuf};
+use std::sync::{Arc, Mutex};
 
 mod error;
 
 static PAGE_SIZE: u32 = 40;
 
-lazy_static!{
+lazy_static! {
     pub static ref DB_URL: Mutex<String> = Mutex::new("".to_string());
-    pub static ref POOL: Arc<Mutex<Pool>> = {
-        Arc::new(Mutex::new(Pool::new()))
-    };
+    pub static ref POOL: Arc<Mutex<Pool>> = { Arc::new(Mutex::new(Pool::new())) };
 }
 
 fn get_db_url() -> Result<String, ServiceError> {

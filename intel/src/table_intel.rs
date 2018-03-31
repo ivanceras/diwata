@@ -2,8 +2,8 @@
 //! table level/grade
 //!
 
-use rustorm::Table;
 use rustorm::ColumnName;
+use rustorm::Table;
 use rustorm::TableName;
 
 pub struct TableIntel<'a>(pub &'a Table);

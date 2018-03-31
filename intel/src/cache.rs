@@ -1,15 +1,13 @@
-use rustorm::Table;
-use window::Window;
-use window;
-use rustorm::EntityManager;
-use std::collections::BTreeMap;
 use error::IntelError;
+use rustorm::EntityManager;
+use rustorm::Table;
+use std::collections::BTreeMap;
 use std::sync::{Arc, Mutex};
+use window;
+use window::Window;
 
-lazy_static!{
-    pub static ref CACHE_POOL: Arc<Mutex<CachePool>> = {
-        Arc::new(Mutex::new(CachePool::new()))
-    };
+lazy_static! {
+    pub static ref CACHE_POOL: Arc<Mutex<CachePool>> = { Arc::new(Mutex::new(CachePool::new())) };
 }
 
 /// contains an atlas of cache, one for each String key

@@ -1,13 +1,13 @@
-use rustorm::TableName;
 use rustorm::ColumnName;
+use rustorm::TableName;
 use rustorm::table::ForeignKey;
 
-use field::Field;
-use rustorm::Table;
-use rustorm::Column;
-use table_intel;
 use data_container::DropdownInfo;
 use data_container::IdentifierDisplay;
+use field::Field;
+use rustorm::Column;
+use rustorm::Table;
+use table_intel;
 
 #[derive(Debug, Serialize, Clone)]
 pub struct Tab {

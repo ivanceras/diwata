@@ -1,8 +1,8 @@
+use data_container::DropdownInfo;
 use reference::Reference;
 use rustorm::Column;
 use rustorm::Table;
 use rustorm::types::SqlType;
-use data_container::DropdownInfo;
 use tab::Tab;
 
 #[derive(Debug, Serialize, Clone)]
