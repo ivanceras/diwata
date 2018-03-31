@@ -1,4 +1,4 @@
-module Settings exposing (Settings, decoder, empty, fromJson)
+module Settings exposing (Settings, decoder, fromJson)
 
 import Json.Decode as Decode exposing (Decoder, Value)
 import Json.Decode.Extra
@@ -14,14 +14,14 @@ type alias Settings =
 
 
 --TODO: remove this after refactoring
-
-
-empty : Settings
-empty =
-    { dbUrl = ""
-    , apiEndPoint = Nothing
-    , grouped = False
-    }
+{-
+   empty : Settings
+   empty =
+       { dbUrl = ""
+       , apiEndPoint = Nothing
+       , grouped = False
+       }
+-}
 
 
 decoder : Decoder Settings

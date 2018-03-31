@@ -1,14 +1,6 @@
-module Request.Helpers exposing (apiUrl, apiUrlTmp)
+module Request.Helpers exposing (apiUrl)
 
 import Settings exposing (Settings)
-
-
--- TODO remove this
-
-
-apiUrlTmp : String -> String
-apiUrlTmp str =
-    "error" ++ str
 
 
 apiUrl : Settings -> String -> String

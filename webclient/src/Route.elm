@@ -25,7 +25,6 @@ type Route
     = WindowArena ArenaArg
     | Login
     | Logout
-    | Register
     | Settings
 
 
@@ -35,7 +34,6 @@ route =
         [ Url.map Login (s "login")
         , Url.map Logout (s "logout")
         , Url.map Settings (s "settings")
-        , Url.map Register (s "register")
         ]
 
 
@@ -56,9 +54,6 @@ routeToString page =
 
                 Logout ->
                     [ "logout" ]
-
-                Register ->
-                    [ "register" ]
 
                 Settings ->
                     [ "settings" ]

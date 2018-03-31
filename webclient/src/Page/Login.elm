@@ -14,6 +14,7 @@ import Json.Decode as Decode exposing (Decoder, decodeString, field, string)
 import Json.Decode.Pipeline as Pipeline exposing (decode, optional)
 import Request.User exposing (storeSession)
 import Route exposing (Route)
+import Settings exposing (Settings)
 import Util exposing ((=>))
 import Validate exposing (..)
 import Views.Form as Form
@@ -26,6 +27,7 @@ type alias Model =
     { errors : List Error
     , email : String
     , password : String
+    , settings : Settings
     }
 
 
@@ -34,6 +36,7 @@ initialModel =
     { errors = []
     , email = ""
     , password = ""
+    , settings = Settings.empty
     }
 
 
@@ -48,10 +51,6 @@ view session model =
             [ div [ class "row" ]
                 [ div [ class "col-md-6 offset-md-3 col-xs-12" ]
                     [ h1 [ class "text-xs-center" ] [ text "Sign in" ]
-                    , p [ class "text-xs-center" ]
-                        [ a [ Route.href Route.Register ]
-                            [ text "Need an account?" ]
-                        ]
                     , Form.viewErrors model.errors
                     , viewForm
                     ]

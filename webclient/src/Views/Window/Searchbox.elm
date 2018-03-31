@@ -283,6 +283,9 @@ createSearchbox model =
                 DataType.Text ->
                     textSearch styles value1String
 
+                DataType.Varchar ->
+                    textSearch styles value1String
+
                 DataType.Uuid ->
                     textSearch styles value1String
 

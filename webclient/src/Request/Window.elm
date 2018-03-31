@@ -17,7 +17,7 @@ import Http
 import HttpBuilder exposing (RequestBuilder, withBody, withExpect, withQueryParams)
 import Json.Decode as Decode
 import Json.Encode as Encode
-import Request.Helpers exposing (apiUrl, apiUrlTmp)
+import Request.Helpers exposing (apiUrl)
 import Settings exposing (Settings)
 import Util exposing ((=>))
 

@@ -8,7 +8,8 @@ import Json.Decode as Decode
 import Json.Encode as Encode
 import Json.Encode.Extra as EncodeExtra
 import Ports
-import Request.Helpers exposing (apiUrlTmp)
+import Request.Helpers exposing (apiUrl)
+import Settings exposing (Settings)
 import Util exposing ((=>))
 
 
@@ -20,8 +21,8 @@ storeSession user =
         |> Ports.storeSession
 
 
-login : { r | email : String, password : String } -> Http.Request User
-login { email, password } =
+login : { r | email : String, password : String, settings : Settings } -> Http.Request User
+login { email, password, settings } =
     let
         user =
             Encode.object
@@ -34,11 +35,11 @@ login { email, password } =
                 |> Http.jsonBody
     in
     Decode.field "user" User.decoder
-        |> Http.post (apiUrlTmp "/users/login") body
+        |> Http.post (apiUrl settings "/users/login") body
 
 
-register : { r | username : String, email : String, password : String } -> Http.Request User
-register { username, email, password } =
+register : { r | username : String, email : String, password : String, settings : Settings } -> Http.Request User
+register { username, email, password, settings } =
     let
         user =
             Encode.object
@@ -52,7 +53,7 @@ register { username, email, password } =
                 |> Http.jsonBody
     in
     Decode.field "user" User.decoder
-        |> Http.post (apiUrlTmp "/users") body
+        |> Http.post (apiUrl settings "/users") body
 
 
 edit :
@@ -62,10 +63,11 @@ edit :
         , bio : String
         , password : Maybe String
         , image : Maybe String
+        , settings : Settings
     }
     -> Maybe AuthToken
     -> Http.Request User
-edit { username, email, bio, password, image } maybeToken =
+edit { username, email, bio, password, image, settings } maybeToken =
     let
         updates =
             [ Just ("username" => Encode.string username)
@@ -87,7 +89,7 @@ edit { username, email, bio, password, image } maybeToken =
                 |> Decode.field "user"
                 |> Http.expectJson
     in
-    apiUrlTmp "/user"
+    apiUrl settings "/user"
         |> HttpBuilder.put
         |> HttpBuilder.withExpect expect
         |> HttpBuilder.withBody body

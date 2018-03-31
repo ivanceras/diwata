@@ -11,7 +11,6 @@ import Navigation exposing (Location)
 import Page.Errored as Errored exposing (PageLoadError)
 import Page.Login as Login
 import Page.NotFound as NotFound
-import Page.Register as Register
 import Page.Settings as Settings
 import Page.WindowArena as WindowArena
 import Ports
@@ -36,7 +35,6 @@ type Page
     | WindowArena WindowArena.Model
     | Settings Settings.Model
     | Login Login.Model
-    | Register Register.Model
     | Window Window.Model
 
 
@@ -144,11 +142,6 @@ viewPage session isLoading page =
                 |> frame Page.Other
                 |> Html.map LoginMsg
 
-        Register subModel ->
-            Register.view session subModel
-                |> frame Page.Other
-                |> Html.map RegisterMsg
-
         Window subModel ->
             Window.view session subModel
                 |> frame Page.Other
@@ -206,9 +199,6 @@ pageSubscriptions page =
         Login _ ->
             Sub.none
 
-        Register _ ->
-            Sub.none
-
         Window _ ->
             Sub.none
 
@@ -225,7 +215,6 @@ type Msg
     | SettingsMsg Settings.Msg
     | SetUser (Maybe User)
     | LoginMsg Login.Msg
-    | RegisterMsg Register.Msg
     | WindowMsg Window.Msg
 
 
@@ -281,9 +270,6 @@ setRoute maybeRoute model =
                     [ Ports.storeSession Nothing
                     , Route.modifyUrl (Route.WindowArena WindowArena.default)
                     ]
-
-        Just Route.Register ->
-            { model | pageState = Loaded (Register Register.initialModel) } => Cmd.none
 
 
 pageErrored : Model -> ActivePage -> String -> ( Model, Cmd msg )
@@ -393,26 +379,6 @@ updatePage page msg model =
             in
             { newModel | pageState = Loaded (Login pageModel) }
                 => Cmd.map LoginMsg cmd
-
-        ( RegisterMsg subMsg, Register subModel ) ->
-            let
-                ( ( pageModel, cmd ), msgFromPage ) =
-                    Register.update subMsg subModel
-
-                newModel =
-                    case msgFromPage of
-                        Register.NoOp ->
-                            model
-
-                        Register.SetUser user ->
-                            let
-                                session =
-                                    model.session
-                            in
-                            { model | session = { user = Just user } }
-            in
-            { newModel | pageState = Loaded (Register pageModel) }
-                => Cmd.map RegisterMsg cmd
 
         ( WindowArenaMsg subMsg, WindowArena subModel ) ->
             toPage WindowArena WindowArenaMsg (WindowArena.update session) subMsg subModel

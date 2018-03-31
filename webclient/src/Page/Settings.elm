@@ -12,6 +12,7 @@ import Json.Decode as Decode exposing (Decoder, decodeString, field, list, strin
 import Json.Decode.Pipeline as Pipeline exposing (decode, optional)
 import Request.User exposing (storeSession)
 import Route
+import Settings exposing (Settings)
 import Util exposing ((=>), pair)
 import Validate exposing (..)
 import Views.Form as Form
@@ -27,6 +28,7 @@ type alias Model =
     , bio : String
     , username : String
     , password : Maybe String
+    , settings : Settings
     }
 
 
@@ -38,6 +40,7 @@ init user =
     , bio = Maybe.withDefault "" user.bio
     , username = User.usernameToString user.username
     , password = Nothing
+    , settings = Settings.empty
     }
 
 

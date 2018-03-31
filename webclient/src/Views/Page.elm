@@ -24,7 +24,6 @@ type ActivePage
     = Other
     | WindowArena
     | Login
-    | Register
     | Settings
     | Profile Username
     | NewWindow
@@ -67,7 +66,6 @@ viewSignIn page user =
     case user of
         Nothing ->
             [ linkTo Route.Login [ text "Sign in" ]
-            , linkTo Route.Register [ text "Sign up" ]
             ]
 
         Just user ->
@@ -103,9 +101,6 @@ isActive page route =
             True
 
         ( Login, Route.Login ) ->
-            True
-
-        ( Register, Route.Register ) ->
             True
 
         ( Settings, Route.Settings ) ->
