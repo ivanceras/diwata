@@ -224,6 +224,9 @@ setRoute maybeRoute model =
         _ =
             Debug.log "setting route"
 
+        settings =
+            model.settings
+
         prevPage =
             getPage model.pageState
 
@@ -249,7 +252,7 @@ setRoute maybeRoute model =
         Just Route.Settings ->
             case model.session.user of
                 Just user ->
-                    { model | pageState = Loaded (Settings (Settings.init user)) } => Cmd.none
+                    { model | pageState = Loaded (Settings (Settings.init settings user)) } => Cmd.none
 
                 Nothing ->
                     errored Page.Settings "You must be signed in to access your settings."
@@ -258,7 +261,7 @@ setRoute maybeRoute model =
             transition HomeLoaded (WindowArena.init model.settings model.session arenaArg)
 
         Just Route.Login ->
-            { model | pageState = Loaded (Login Login.initialModel) } => Cmd.none
+            { model | pageState = Loaded (Login (Login.initialModel settings)) } => Cmd.none
 
         Just Route.Logout ->
             let

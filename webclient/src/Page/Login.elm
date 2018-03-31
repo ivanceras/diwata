@@ -31,12 +31,12 @@ type alias Model =
     }
 
 
-initialModel : Model
-initialModel =
+initialModel : Settings -> Model
+initialModel settings =
     { errors = []
     , email = ""
     , password = ""
-    , settings = Settings.empty
+    , settings = settings
     }
 
 

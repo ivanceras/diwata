@@ -107,7 +107,7 @@ init settings session arenaArg =
                     Task.succeed Nothing
 
         loadWindowList =
-            GroupedWindow.init session tableName
+            GroupedWindow.init settings session tableName
                 |> Task.mapError handleLoadError
 
         _ =

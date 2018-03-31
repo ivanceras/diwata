@@ -37,6 +37,15 @@ import Util exposing ((=>))
 -- LIST --
 
 
+header : Settings -> RequestBuilder a -> RequestBuilder a
+header settings request =
+    let
+        dbUrl =
+            settings.dbUrl
+    in
+    HttpBuilder.withHeader "db_url" dbUrl request
+
+
 listPageWithQuery : Settings -> Maybe AuthToken -> TableName -> Query -> Http.Request Rows
 listPageWithQuery settings maybeToken tableName query =
     let
@@ -45,6 +54,7 @@ listPageWithQuery settings maybeToken tableName query =
     in
     apiUrl settings ("/data/" ++ tableNameToString tableName ++ "/" ++ queryStr)
         |> HttpBuilder.get
+        |> header settings
         |> HttpBuilder.withExpect (Http.expectJson Record.rowsDecoder)
         |> withAuthorization maybeToken
         |> HttpBuilder.toRequest
@@ -54,6 +64,7 @@ totalRecords : Settings -> Maybe AuthToken -> TableName -> Http.Request Int
 totalRecords settings maybeToken tableName =
     apiUrl settings ("/record_count/" ++ tableNameToString tableName)
         |> HttpBuilder.get
+        |> header settings
         |> HttpBuilder.withExpect (Http.expectJson Decode.int)
         |> withAuthorization maybeToken
         |> HttpBuilder.toRequest
@@ -63,6 +74,7 @@ lookups : Settings -> Maybe AuthToken -> TableName -> Http.Request Lookup
 lookups settings maybeToken tableName =
     apiUrl settings ("/lookup_all/" ++ tableNameToString tableName)
         |> HttpBuilder.get
+        |> header settings
         |> HttpBuilder.withExpect (Http.expectJson Lookup.decoder)
         |> withAuthorization maybeToken
         |> HttpBuilder.toRequest
@@ -72,6 +84,7 @@ lookupPage : Settings -> Int -> Maybe AuthToken -> TableName -> Http.Request Row
 lookupPage settings page maybeToken tableName =
     apiUrl settings ("/lookup/" ++ tableNameToString tableName ++ "/" ++ toString page)
         |> HttpBuilder.get
+        |> header settings
         |> HttpBuilder.withExpect (Http.expectJson Record.rowsDecoder)
         |> withAuthorization maybeToken
         |> HttpBuilder.toRequest
@@ -81,6 +94,7 @@ fetchSelected : Settings -> TableName -> String -> Http.Request RecordDetail
 fetchSelected settings tableName selectedRow =
     apiUrl settings ("/data/" ++ tableNameToString tableName ++ "/select/" ++ selectedRow)
         |> HttpBuilder.get
+        |> header settings
         |> HttpBuilder.withExpect (Http.expectJson RecordDetail.decoder)
         |> HttpBuilder.toRequest
 
@@ -98,6 +112,7 @@ fetchHasManyRecords settings tableName selectedRow hasManyTable hasManyPage =
             ++ toString hasManyPage
         )
         |> HttpBuilder.get
+        |> header settings
         |> HttpBuilder.withExpect (Http.expectJson Record.rowsDecoder)
         |> HttpBuilder.toRequest
 
@@ -115,6 +130,7 @@ fetchIndirectRecords settings tableName selectedRow hasManyTable hasManyPage =
             ++ toString hasManyPage
         )
         |> HttpBuilder.get
+        |> header settings
         |> HttpBuilder.withExpect (Http.expectJson Record.rowsDecoder)
         |> HttpBuilder.toRequest
 
@@ -123,5 +139,6 @@ delete : Settings -> TableName -> RecordId -> AuthToken -> Http.Request ()
 delete settings tableName recordId token =
     apiUrl settings ("/window/" ++ tableNameToString tableName ++ "/data/" ++ Record.idToString recordId)
         |> HttpBuilder.delete
+        |> header settings
         |> withAuthorization (Just token)
         |> HttpBuilder.toRequest

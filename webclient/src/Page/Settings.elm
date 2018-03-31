@@ -32,15 +32,15 @@ type alias Model =
     }
 
 
-init : User -> Model
-init user =
+init : Settings -> User -> Model
+init settings user =
     { errors = []
     , image = UserPhoto.toMaybeString user.image
     , email = user.email
     , bio = Maybe.withDefault "" user.bio
     , username = User.usernameToString user.username
     , password = Nothing
-    , settings = Settings.empty
+    , settings = settings
     }
 
 

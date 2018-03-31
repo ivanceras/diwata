@@ -66,8 +66,8 @@ type alias InternalModel =
     }
 
 
-init : Session -> Maybe TableName -> Task Http.Error Model
-init session activeWindow =
+init : Settings -> Session -> Maybe TableName -> Task Http.Error Model
+init settings session activeWindow =
     let
         toModel ( activeWindow, groupedWindow ) =
             Model
@@ -77,7 +77,7 @@ init session activeWindow =
                 , isLoading = False
                 }
     in
-    fetch (Maybe.map .token session.user) activeWindow
+    fetch settings (Maybe.map .token session.user) activeWindow
         |> Task.map toModel
 
 
@@ -178,8 +178,8 @@ updateInternal session msg model =
                 => Cmd.none
 
 
-fetch : Maybe AuthToken -> Maybe TableName -> Task Http.Error ( Maybe TableName, List GroupedWindow )
-fetch token activeWindow =
-    Request.Window.list Settings.empty token
+fetch : Settings -> Maybe AuthToken -> Maybe TableName -> Task Http.Error ( Maybe TableName, List GroupedWindow )
+fetch settings token activeWindow =
+    Request.Window.list settings token
         |> Http.toTask
         |> Task.map (\groupedWindow -> ( activeWindow, groupedWindow ))
