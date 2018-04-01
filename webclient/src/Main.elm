@@ -11,7 +11,6 @@ import Navigation exposing (Location)
 import Page.Errored as Errored exposing (PageLoadError)
 import Page.Login as Login
 import Page.NotFound as NotFound
-import Page.Settings as Settings
 import Page.WindowArena as WindowArena
 import Ports
 import Route exposing (Route)
@@ -33,7 +32,6 @@ type Page
     | NotFound
     | Errored PageLoadError
     | WindowArena WindowArena.Model
-    | Settings Settings.Model
     | Login Login.Model
     | Window Window.Model
 
@@ -72,11 +70,20 @@ init val location =
         _ =
             Debug.log "corrected settings: " correctedSettings
     in
-    setRoute (Route.fromLocation location)
-        { pageState = Loaded initialPage
-        , session = { user = decodeUserFromJson val }
-        , settings = Settings.fromJson val
-        }
+    case settings.dbUrl of
+        Just dbUrl ->
+            setRoute (Route.fromLocation location)
+                { pageState = Loaded initialPage
+                , session = { user = decodeUserFromJson val }
+                , settings = Settings.fromJson val
+                }
+
+        Nothing ->
+            setRoute (Just Route.Login)
+                { pageState = Loaded initialPage
+                , session = { user = decodeUserFromJson val }
+                , settings = Settings.fromJson val
+                }
 
 
 decodeUserFromJson : Value -> Maybe User
@@ -126,11 +133,6 @@ viewPage session isLoading page =
         Errored subModel ->
             Errored.view session subModel
                 |> frame Page.Other
-
-        Settings subModel ->
-            Settings.view session subModel
-                |> frame Page.Other
-                |> Html.map SettingsMsg
 
         WindowArena subModel ->
             WindowArena.view session subModel
@@ -190,9 +192,6 @@ pageSubscriptions page =
         NotFound ->
             Sub.none
 
-        Settings _ ->
-            Sub.none
-
         WindowArena windowArenaModel ->
             Sub.map WindowArenaMsg (WindowArena.subscriptions windowArenaModel)
 
@@ -212,7 +211,6 @@ type Msg
     | HomeLoaded (Result PageLoadError WindowArena.Model)
     | WindowLoaded (Result PageLoadError Window.Model)
     | WindowArenaMsg WindowArena.Msg
-    | SettingsMsg Settings.Msg
     | SetUser (Maybe User)
     | LoginMsg Login.Msg
     | WindowMsg Window.Msg
@@ -248,14 +246,6 @@ setRoute maybeRoute model =
     case maybeRoute of
         Nothing ->
             { model | pageState = Loaded NotFound } => Cmd.none
-
-        Just Route.Settings ->
-            case model.session.user of
-                Just user ->
-                    { model | pageState = Loaded (Settings (Settings.init settings user)) } => Cmd.none
-
-                Nothing ->
-                    errored Page.Settings "You must be signed in to access your settings."
 
         Just (Route.WindowArena arenaArg) ->
             transition HomeLoaded (WindowArena.init model.settings model.session arenaArg)
@@ -343,26 +333,6 @@ updatePage page msg model =
             { model | session = { session | user = user } }
                 => cmd
 
-        ( SettingsMsg subMsg, Settings subModel ) ->
-            let
-                ( ( pageModel, cmd ), msgFromPage ) =
-                    Settings.update model.session subMsg subModel
-
-                newModel =
-                    case msgFromPage of
-                        Settings.NoOp ->
-                            model
-
-                        Settings.SetUser user ->
-                            let
-                                session =
-                                    model.session
-                            in
-                            { model | session = { user = Just user } }
-            in
-            { newModel | pageState = Loaded (Settings pageModel) }
-                => Cmd.map SettingsMsg cmd
-
         ( LoginMsg subMsg, Login subModel ) ->
             let
                 ( ( pageModel, cmd ), msgFromPage ) =
@@ -373,12 +343,8 @@ updatePage page msg model =
                         Login.NoOp ->
                             model
 
-                        Login.SetUser user ->
-                            let
-                                session =
-                                    model.session
-                            in
-                            { model | session = { user = Just user } }
+                        Login.SetSettings settings ->
+                            { model | settings = settings }
             in
             { newModel | pageState = Loaded (Login pageModel) }
                 => Cmd.map LoginMsg cmd

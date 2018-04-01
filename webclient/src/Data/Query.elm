@@ -67,7 +67,10 @@ queryToString inSection query =
         pageStr =
             case query.page of
                 Just page ->
-                    [ prefix ++ "page", toString page ]
+                    if page == 1 then
+                        []
+                    else
+                        [ prefix ++ "page", toString page ]
 
                 Nothing ->
                     []

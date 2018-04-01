@@ -63,15 +63,8 @@ viewSignIn page user =
         linkTo =
             navbarLink page
     in
-    case user of
-        Nothing ->
-            [ linkTo Route.Login [ text "Sign in" ]
-            ]
-
-        Just user ->
-            [ linkTo Route.Settings [ i [ class "ion-gear-a" ] [], text " Settings" ]
-            , linkTo Route.Logout [ text "Sign out" ]
-            ]
+    [ linkTo Route.Login [ text "Sign in" ]
+    ]
 
 
 viewFooter : Html msg
@@ -101,9 +94,6 @@ isActive page route =
             True
 
         ( Login, Route.Login ) ->
-            True
-
-        ( Settings, Route.Settings ) ->
             True
 
         _ ->

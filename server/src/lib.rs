@@ -80,10 +80,11 @@ fn get_pool_em() -> Result<EntityManager, ServiceError> {
     }
 }
 
-fn test_db_url_connection() -> Result<(), ServiceError> {
+#[get("/")]
+fn test_db_url_connection() -> Result<Json<bool>, ServiceError> {
     let db_url = &get_db_url()?;
-    pool::test_connection(db_url)?;
-    Ok(())
+    pool::test_connection(&db_url)?;
+    Ok(Json(true))
 }
 
 fn get_pool_dm() -> Result<RecordManager, ServiceError> {
@@ -504,17 +505,26 @@ pub fn rocket(address: Option<String>, port: Option<u16>) -> Result<Rocket, Conf
     let mut config = Config::development()?;
     config.set_port(port);
     config.set_address(address)?;
-    let conn = test_db_url_connection();
-    match conn {
-        Ok(_) => println!("connection is valid"),
-        Err(e) => println!("connection Error: {:?}", e),
-    };
     let server = rocket::custom(config, true)
         .attach(AdHoc::on_response(|_req, resp| {
             resp.set_header(AccessControlAllowOrigin::Any);
         }))
+        .attach(AdHoc::on_request(|req, _resp| {
+            let db_urls: Vec<&str> = req.headers().get("db_url").collect();
+            println!("db_urls: {:?}", db_urls);
+            if db_urls.len() != 1 {
+                println!("no db_url specified, using the previous one");
+            } else {
+                let db_url = db_urls[0];
+                match set_db_url(db_url.to_string()) {
+                    Ok(_) => println!("db_url is set"),
+                    Err(e) => println!("error setting db_url: {:?}", e),
+                }
+            }
+        }))
         .mount("/", routes![redirect_to_web, favicon])
         .mount("/web", routes![webclient_index, webclient])
+        .mount("/test", routes![test_db_url_connection])
         .mount(
             "/data",
             routes![

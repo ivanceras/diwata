@@ -4,6 +4,7 @@ module Request.Window.Records
         , fetchHasManyRecords
         , fetchIndirectRecords
         , fetchSelected
+        , header
         , listPageWithQuery
         , lookupPage
         , lookups
@@ -43,7 +44,12 @@ header settings request =
         dbUrl =
             settings.dbUrl
     in
-    HttpBuilder.withHeader "db_url" dbUrl request
+    case dbUrl of
+        Just dbUrl ->
+            HttpBuilder.withHeader "db_url" dbUrl request
+
+        Nothing ->
+            request
 
 
 listPageWithQuery : Settings -> Maybe AuthToken -> TableName -> Query -> Http.Request Rows

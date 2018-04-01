@@ -9,8 +9,6 @@ use structopt::StructOpt;
 #[derive(StructOpt, Debug)]
 #[structopt(name = "diwata", about = "A user friendly database interface")]
 struct Opt {
-    #[structopt(short = "u", long = "db-url", help = "Database url to connect to")]
-    db_url: String,
     #[structopt(short = "a", long = "address",
                 help = "The address the server would listen, default is 0.0.0.0")]
     address: Option<String>,
@@ -22,10 +20,6 @@ struct Opt {
 fn main() {
     let opt = Opt::from_args();
     println!("opt: {:?}", opt);
-    match server::set_db_url(opt.db_url) {
-        Ok(_) => println!("url is set"),
-        Err(_) => println!("unable to set db_url"),
-    }
     match server::rocket(opt.address, opt.port) {
         Ok(server) => {
             println!("Launching..");

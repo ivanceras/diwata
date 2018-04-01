@@ -12,7 +12,7 @@ import Html.Events exposing (onInput, onSubmit)
 import Http
 import Json.Decode as Decode exposing (Decoder, decodeString, field, string)
 import Json.Decode.Pipeline as Pipeline exposing (decode, optional)
-import Request.User exposing (storeSession)
+import Request.User
 import Route exposing (Route)
 import Settings exposing (Settings)
 import Util exposing ((=>))
@@ -25,8 +25,7 @@ import Views.Form as Form
 
 type alias Model =
     { errors : List Error
-    , email : String
-    , password : String
+    , dbUrl : String
     , settings : Settings
     }
 
@@ -34,8 +33,7 @@ type alias Model =
 initialModel : Settings -> Model
 initialModel settings =
     { errors = []
-    , email = ""
-    , password = ""
+    , dbUrl = ""
     , settings = settings
     }
 
@@ -64,18 +62,12 @@ viewForm =
     Html.form [ onSubmit SubmitForm ]
         [ Form.input
             [ class "form-control-lg"
-            , placeholder "Email"
-            , onInput SetEmail
-            ]
-            []
-        , Form.password
-            [ class "form-control-lg"
-            , placeholder "Password"
-            , onInput SetPassword
+            , placeholder "db url"
+            , onInput SetDbUrl
             ]
             []
         , button [ class "btn btn-lg btn-primary pull-xs-right" ]
-            [ text "Sign in" ]
+            [ text "Connect" ]
         ]
 
 
@@ -85,14 +77,13 @@ viewForm =
 
 type Msg
     = SubmitForm
-    | SetEmail String
-    | SetPassword String
-    | LoginCompleted (Result Http.Error User)
+    | SetDbUrl String
+    | LoginCompleted (Result Http.Error Bool)
 
 
 type ExternalMsg
     = NoOp
-    | SetUser User
+    | SetSettings Settings
 
 
 update : Msg -> Model -> ( ( Model, Cmd Msg ), ExternalMsg )
@@ -102,7 +93,7 @@ update msg model =
             case validate model of
                 [] ->
                     { model | errors = [] }
-                        => Http.send LoginCompleted (Request.User.login model)
+                        => Http.send LoginCompleted (Request.User.login model.settings)
                         => NoOp
 
                 errors ->
@@ -110,13 +101,11 @@ update msg model =
                         => Cmd.none
                         => NoOp
 
-        SetEmail email ->
-            { model | email = email }
-                => Cmd.none
-                => NoOp
-
-        SetPassword password ->
-            { model | password = password }
+        SetDbUrl dbUrl ->
+            { model
+                | dbUrl = dbUrl
+                , settings = Settings.setDbUrl model.settings dbUrl
+            }
                 => Cmd.none
                 => NoOp
 
@@ -136,10 +125,10 @@ update msg model =
                 => Cmd.none
                 => NoOp
 
-        LoginCompleted (Ok user) ->
+        LoginCompleted (Ok v) ->
             model
-                => Cmd.batch [ storeSession user, Route.modifyUrl (Route.WindowArena WindowArena.default) ]
-                => SetUser user
+                => Cmd.batch [ Route.modifyUrl (Route.WindowArena WindowArena.default) ]
+                => SetSettings model.settings
 
 
 
@@ -169,7 +158,7 @@ Field. This way you can call this:
 
 viewFormErrors Email model.errors
 
-...next to the `email` field, and call `viewFormErrors Password model.errors`
+...next to the `dbUrl` field, and call `viewFormErrors Password model.errors`
 next to the `password` field, and so on.
 
 -}
@@ -180,17 +169,14 @@ type alias Error =
 validate : Model -> List Error
 validate =
     Validate.all
-        [ .email >> ifBlank (Email => "email can't be blank.")
-        , .password >> ifBlank (Password => "password can't be blank.")
+        [ .dbUrl >> ifBlank (Email => "dbUrl can't be blank.")
         ]
 
 
 errorsDecoder : Decoder (List String)
 errorsDecoder =
-    decode (\email username password -> List.concat [ email, username, password ])
-        |> optionalError "email"
-        |> optionalError "username"
-        |> optionalError "password"
+    decode (\dbUrl -> List.concat [ dbUrl ])
+        |> optionalError "dbUrl"
 
 
 optionalError : String -> Decoder (List String -> a) -> Decoder a

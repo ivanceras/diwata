@@ -1,4 +1,4 @@
-module Settings exposing (Settings, decoder, fromJson)
+module Settings exposing (Settings, decoder, fromJson, setDbUrl)
 
 import Json.Decode as Decode exposing (Decoder, Value)
 import Json.Decode.Extra
@@ -6,28 +6,21 @@ import Json.Decode.Pipeline as Pipeline exposing (custom, decode, required)
 
 
 type alias Settings =
-    { dbUrl : String
+    { dbUrl : Maybe String
     , apiEndPoint : Maybe String
     , grouped : Bool
     }
 
 
-
---TODO: remove this after refactoring
-{-
-   empty : Settings
-   empty =
-       { dbUrl = ""
-       , apiEndPoint = Nothing
-       , grouped = False
-       }
--}
+setDbUrl : Settings -> String -> Settings
+setDbUrl settings dbUrl =
+    { settings | dbUrl = Just dbUrl }
 
 
 decoder : Decoder Settings
 decoder =
     decode Settings
-        |> required "db_url" Decode.string
+        |> required "db_url" (Decode.nullable Decode.string)
         |> required "api_endpoint" (Decode.nullable Decode.string)
         |> required "grouped" Decode.bool
 

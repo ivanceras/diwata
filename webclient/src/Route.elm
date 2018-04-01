@@ -25,7 +25,6 @@ type Route
     = WindowArena ArenaArg
     | Login
     | Logout
-    | Settings
 
 
 route : Parser (Route -> a) a
@@ -33,7 +32,6 @@ route =
     oneOf
         [ Url.map Login (s "login")
         , Url.map Logout (s "logout")
-        , Url.map Settings (s "settings")
         ]
 
 
@@ -55,10 +53,13 @@ routeToString page =
                 Logout ->
                     [ "logout" ]
 
-                Settings ->
-                    [ "settings" ]
+        cleanPieces =
+            List.filter (String.isEmpty >> not) pieces
     in
-    "#/" ++ String.join "/" pieces
+    if List.length cleanPieces > 0 then
+        "#/" ++ String.join "/" cleanPieces
+    else
+        ""
 
 
 

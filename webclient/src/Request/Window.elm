@@ -18,6 +18,7 @@ import HttpBuilder exposing (RequestBuilder, withBody, withExpect, withQueryPara
 import Json.Decode as Decode
 import Json.Encode as Encode
 import Request.Helpers exposing (apiUrl)
+import Request.Window.Records exposing (header)
 import Settings exposing (Settings)
 import Util exposing ((=>))
 
@@ -31,6 +32,7 @@ get settings maybeToken tableName =
     in
     apiUrl settings ("/window/" ++ tableNameToString tableName)
         |> HttpBuilder.get
+        |> header settings
         |> HttpBuilder.withExpect expect
         |> withAuthorization maybeToken
         |> HttpBuilder.toRequest
@@ -46,6 +48,7 @@ list settings maybeToken =
     in
     apiUrl settings "/windows"
         |> HttpBuilder.get
+        |> header settings
         |> HttpBuilder.withExpect expect
         |> withAuthorization maybeToken
         |> HttpBuilder.toRequest
