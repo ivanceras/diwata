@@ -12,7 +12,7 @@ extern crate rustorm;
 extern crate serde;
 extern crate serde_json;
 
-use error::ServiceError;
+pub use error::ServiceError;
 use intel::Window;
 use intel::cache;
 use intel::data_container::Filter;
@@ -81,7 +81,7 @@ fn get_pool_em() -> Result<EntityManager, ServiceError> {
 }
 
 #[get("/")]
-fn test_db_url_connection() -> Result<Json<bool>, ServiceError> {
+pub fn test_db_url_connection() -> Result<Json<bool>, ServiceError> {
     let db_url = &get_db_url()?;
     pool::test_connection(&db_url)?;
     Ok(Json(true))
