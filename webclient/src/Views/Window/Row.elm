@@ -115,7 +115,7 @@ view lookup model =
             (List.map
                 (\value ->
                     let
-                        ( widgetWidth, widgetHeight ) =
+                        ( widthClass, widgetWidth, widgetHeight ) =
                             Field.calcWidgetSize 0 Presentation.InList value.field
 
                         rowWidth =

@@ -13,7 +13,7 @@ module Views.Window.Field
 
 import Constant
 import Data.Window.DataType as DataType exposing (DataType(..))
-import Data.Window.Field as Field exposing (Field)
+import Data.Window.Field as Field exposing (Field, FieldWidth)
 import Data.Window.Lookup as Lookup exposing (Lookup)
 import Data.Window.Presentation as Presentation exposing (Presentation(..))
 import Data.Window.Record as Record exposing (Record)
@@ -203,7 +203,7 @@ viewWidget lookup model =
                 |> Html.map (DropdownDisplayMsg dropdown)
 
 
-calcWidgetSize : Int -> Presentation -> Field -> ( Int, Int )
+calcWidgetSize : Int -> Presentation -> Field -> ( FieldWidth, Int, Int )
 calcWidgetSize allotedTabWidth presentation field =
     case presentation of
         InCard ->
@@ -213,18 +213,18 @@ calcWidgetSize allotedTabWidth presentation field =
             in
             case fieldWidth of
                 Field.Short ->
-                    ( 200, fieldHeight )
+                    ( Field.Short, 200, fieldHeight )
 
                 --- 1000 should be alloted tab width - 20
                 Field.Long ->
-                    ( allotedTabWidth - 100, fieldHeight )
+                    ( Field.Long, 1000, fieldHeight )
 
         InList ->
             let
                 width =
                     Field.widgetWidthListValue field
             in
-            ( width, 1 )
+            ( Field.Short, width, 1 )
 
 
 createWidget : Int -> Presentation -> Maybe Record -> Tab -> Field -> Maybe Value -> Widget
@@ -276,13 +276,20 @@ createWidget allotedTabWidth presentation record tab field maybeValue =
             alignment
                 |> Widget.alignmentToString
 
-        ( widgetWidth, widgetHeight ) =
+        ( widthClass, widgetWidth, widgetHeight ) =
             calcWidgetSize allotedTabWidth presentation field
 
         styles =
             style
                 [ ( "text-align", alignmentString )
-                , ( "width", px widgetWidth )
+                , ( "width"
+                  , case widthClass of
+                        Field.Long ->
+                            "90%"
+
+                        Field.Short ->
+                            px widgetWidth
+                  )
                 ]
     in
     case widget of
