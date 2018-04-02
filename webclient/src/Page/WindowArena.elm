@@ -161,6 +161,21 @@ init settings session arenaArg =
 
 view : Session -> Model -> Html Msg
 view session model =
+    let
+        recordSelected =
+            case model.selectedRow of
+                Just _ ->
+                    True
+
+                Nothing ->
+                    False
+
+        showList =
+            if recordSelected then
+                not model.isDetailedRecordMaximized
+            else
+                True
+    in
     div [ class "window" ]
         [ viewBanner model
         , div [ class "window-content" ]
@@ -174,6 +189,7 @@ view session model =
                         [ viewTabNames model ]
                     , div [ class "window-and-selected-row" ]
                         [ viewWindow session model.activeWindow
+                            |> viewIf showList
                         , viewSelectedRow session model
                         ]
                     ]

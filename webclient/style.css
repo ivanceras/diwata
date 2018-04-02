@@ -1,8 +1,15 @@
 /* override photon user-select: none */
 * { 
-    user-select: auto;
-    -webkit-user-select: auto;
+    user-select: none;
+    -webkit-user-select: none;
 }
+
+input, label, a{
+    user-select: text;
+    -webkit-user-select: text;
+    outline: 0;
+}
+
 body {
     padding: 0;
     margin: 0;
@@ -428,8 +435,13 @@ a.primary-link {
     outline: 0
 }
 
+.filter-icon-wrapper {
+    height: 20px;
+}
+
 .filter-value-icon{
     width: 16px;
+    height: 19px;
     color: #aaa;
     padding: 3px 2px 0 3px;
     border-color: #aaa;
@@ -648,7 +660,7 @@ a.primary-link {
 
 .toolbar-area {
     display:flex;
-    overflow-x: auto;
+    /*overflow-x: auto;*/
     padding: 50px 0 10px 0;
     margin-left: 20px;
     background-color: #f5f5f4;
@@ -811,11 +823,17 @@ a.primary-link {
   display: inline-block;
   vertical-align: middle;
   -webkit-app-region: no-drag;
+  text-align: center;
 }
 .btn-group .btn {
   position: relative;
   float: left;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
 }
+
 .btn-group .btn:focus, .btn-group .btn:active {
   z-index: 2;
 }

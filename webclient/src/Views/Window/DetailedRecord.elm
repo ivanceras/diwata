@@ -527,7 +527,7 @@ view model =
             getPosition model
 
         isMaximized =
-            model.isMaximized
+            model.isMaximized || Constant.isDetailedRecordMaximized
 
         browserSize =
             model.browserSize
@@ -548,6 +548,11 @@ view model =
                 else
                     0
             , showIconText = allotedWidth > Constant.showIconTextMinWidth
+            , moveDownIconText =
+                allotedWidth
+                    < Constant.moveDownIconTextMinWidth
+                    && allotedWidth
+                    > Constant.showIconTextMinWidth
             , multiColumnSort = False
             }
 

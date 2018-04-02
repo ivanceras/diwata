@@ -42,8 +42,12 @@ showIconTextMinWidth =
     800
 
 
+moveDownIconTextMinWidth =
+    1000
+
+
 isDetailedRecordMaximized =
-    False
+    True
 
 
 {-|

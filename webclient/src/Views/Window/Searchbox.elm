@@ -65,13 +65,14 @@ textSearch styles searchValue =
             Constant.columnSearchIconSize
     in
     div [ class "column-filter" ]
-        [ i
-            [ class "fa filter-value-icon" ]
-            [ Ionicon.search iconSize iconColor ]
+        [ div [ class "filter-icon-wrapper" ]
+            [ div [ class "fa filter-value-icon" ]
+                [ Ionicon.search iconSize iconColor ]
+            ]
         , input
             [ class "filter-value"
             , styles
-            , type_ "search"
+            , type_ "text" -- "search" will render badly in webkit-gtk
             , value searchValue
             , onInput StringValue1Changed
             ]

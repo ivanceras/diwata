@@ -232,6 +232,7 @@ listView lookup model =
             { selected = selectedRowCount model
             , modified = countAllModifiedRows model
             , showIconText = width > Constant.showIconTextMinWidth
+            , moveDownIconText = width > Constant.showIconTextMinWidth && width < Constant.moveDownIconTextMinWidth
             , multiColumnSort = model.isMultiSort
             }
 
