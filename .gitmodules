@@ -4,3 +4,6 @@
 [submodule "rustorm"]
 	path = rustorm
 	url = https://ivanceras@github.com/ivanceras/rustorm
+[submodule "elm-webclient"]
+	path = elm-webclient
+	url = https://ivanceras@github.com/ivanceras/elm-webclient.git

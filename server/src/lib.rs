@@ -11,6 +11,11 @@ extern crate rocket_contrib;
 extern crate rustorm;
 extern crate serde;
 extern crate serde_json;
+#[macro_use]
+extern crate structopt_derive;
+extern crate structopt;
+
+use structopt::StructOpt;
 
 pub use error::ServiceError;
 use intel::Window;
@@ -545,4 +550,28 @@ pub fn rocket(address: Option<String>, port: Option<u16>) -> Result<Rocket, Conf
         .mount("/window", routes![get_window,])
         .mount("/windows", routes![get_windows,]);
     Ok(server)
+}
+
+
+#[derive(StructOpt, Debug)]
+#[structopt(name = "diwata", about = "A user friendly database interface")]
+struct Opt {
+    #[structopt(short = "a", long = "address",
+                help = "The address the server would listen, default is 0.0.0.0")]
+    address: Option<String>,
+    #[structopt(short = "p", long = "port",
+                help = "What port this server would listen to, default is 8000")]
+    port: Option<u16>,
+}
+
+pub fn start() {
+    let opt = Opt::from_args();
+    println!("opt: {:?}", opt);
+    match rocket(opt.address, opt.port) {
+        Ok(server) => {
+            println!("Launching..");
+            server.launch();
+        }
+        Err(e) => panic!("unable to initialize server: {}", e),
+    }
 }
