@@ -552,10 +552,12 @@ pub fn rocket(address: Option<String>, port: Option<u16>) -> Result<Rocket, Conf
     Ok(server)
 }
 
-
 #[derive(StructOpt, Debug)]
 #[structopt(name = "diwata", about = "A user friendly database interface")]
 struct Opt {
+    #[structopt(short = "u", long = "db-url",
+                help = "Database url to connect to, when set all data is exposed without login needed in the client side")]
+    db_url: Option<String>,
     #[structopt(short = "a", long = "address",
                 help = "The address the server would listen, default is 0.0.0.0")]
     address: Option<String>,
