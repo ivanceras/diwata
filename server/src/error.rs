@@ -7,6 +7,7 @@ pub enum ServiceError {
     PoolResourceError,
     IntelError(IntelError),
     DbError(DbError),
+    NoDbUrlSpecified,
 }
 
 impl From<DbError> for ServiceError {

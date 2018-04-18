@@ -52,21 +52,45 @@ mod error;
 static PAGE_SIZE: u32 = 40;
 
 lazy_static! {
-    pub static ref DB_URL: Mutex<String> = Mutex::new("".to_string());
+    pub static ref DB_URL: Mutex<Option<String>> = Mutex::new(None);
     pub static ref POOL: Arc<Mutex<Pool>> = { Arc::new(Mutex::new(Pool::new())) };
 }
 
-fn get_db_url() -> Result<String, ServiceError> {
+fn get_db_url_value() -> Result<Option<String>, ServiceError> {
     match DB_URL.lock() {
-        Ok(db_url) => Ok(db_url.to_owned()),
+        Ok(db_url) => {
+            if let Some(ref db_url) = *db_url {
+                Ok(Some(db_url.to_owned()))
+            } else {
+                Ok(None)
+            }
+        }
         Err(e) => Err(ServiceError::GenericError(format!("{}", e))),
     }
+}
+
+fn get_db_url() -> Result<String, ServiceError> {
+    match get_db_url_value() {
+        Ok(db_url) => {
+            if let Some(ref db_url) = db_url {
+                Ok(db_url.to_owned())
+            } else {
+                Err(ServiceError::NoDbUrlSpecified)
+            }
+        }
+        Err(e) => Err(e),
+    }
+}
+
+#[get("/")]
+pub fn get_db_url_service() -> Result<Option<String>, ServiceError> {
+    get_db_url_value()
 }
 
 pub fn set_db_url(new_url: String) -> Result<(), ServiceError> {
     match DB_URL.lock() {
         Ok(mut db_url) => {
-            *db_url = new_url;
+            *db_url = Some(new_url);
             Ok(())
         }
         Err(e) => Err(ServiceError::GenericError(format!("{}", e))),
@@ -530,6 +554,7 @@ pub fn rocket(address: Option<String>, port: Option<u16>) -> Result<Rocket, Conf
         .mount("/", routes![redirect_to_web, favicon])
         .mount("/web", routes![webclient_index, webclient])
         .mount("/test", routes![test_db_url_connection])
+        .mount("db_url", routes![get_db_url_service])
         .mount(
             "/data",
             routes![
@@ -569,6 +594,12 @@ struct Opt {
 pub fn start() {
     let opt = Opt::from_args();
     println!("opt: {:?}", opt);
+    if let Some(db_url) = opt.db_url {
+        match set_db_url(db_url) {
+            Ok(_) => println!("url is set"),
+            Err(_) => println!("unable to set db_url"),
+        }
+    }
     match rocket(opt.address, opt.port) {
         Ok(server) => {
             println!("Launching..");

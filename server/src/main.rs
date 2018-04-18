@@ -2,6 +2,6 @@
 extern crate diwata_server as server;
 extern crate structopt;
 
-fn main(){
+fn main() {
     server::start()
 }
