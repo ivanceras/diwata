@@ -6,6 +6,7 @@ pub use data_container::RecordDetail;
 use data_container::{Direction, Sort};
 use error::IntelError;
 use query_builder::Query;
+use rustorm::types::SqlType;
 use rustorm::ColumnName;
 use rustorm::DbError;
 use rustorm::EntityManager;
@@ -16,7 +17,6 @@ use rustorm::Rows;
 use rustorm::Table;
 use rustorm::TableName;
 use rustorm::Value;
-use rustorm::types::SqlType;
 use std::collections::BTreeMap;
 use tab::Tab;
 use table_intel;
@@ -436,11 +436,17 @@ pub fn get_all_lookup_for_window(
     }
 
     for has_many_tab in &window.has_many_tabs {
+        // treat this tab to be also a lookup for linking records in
+        lookup_tables.push((&has_many_tab.table_name, has_many_tab.get_display_columns()));
+
         let mut lookup = get_tab_lookup_tablenames(has_many_tab);
         lookup_tables.append(&mut lookup);
     }
 
     for &(ref _linker_table, ref indirect_tab) in &window.indirect_tabs {
+        // treat this tab to be also a lookup for linking records in
+        lookup_tables.push((&indirect_tab.table_name, indirect_tab.get_display_columns()));
+
         let mut lookup = get_tab_lookup_tablenames(indirect_tab);
         lookup_tables.append(&mut lookup);
     }
@@ -519,7 +525,7 @@ pub fn get_lookup_data_of_table_with_display_columns(
     let table = some!(table_intel::get_table(table_name, tables));
 
     let primary_columns = table.get_primary_column_names();
-    assert!(primary_columns.len() > 0);
+    //assert!(primary_columns.len() > 0);
     let mut sql = format!("SELECT ");
     for (i, pk) in primary_columns.iter().enumerate() {
         if i > 0 {
