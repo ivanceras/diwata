@@ -260,12 +260,20 @@ pub fn get_data_with_page_filter(
     }
 }
 
+#[get("/<table_name>/sort/<sort>")]
+pub fn get_data_with_sort(
+    table_name: String,
+    sort: String,
+) -> Result<Option<Json<Rows>>, ServiceError> {
+    get_data_with_page_filter_sort(table_name, 1, None, Some(sort))
+}
+
 #[get("/<table_name>/page/<page>/filter/<filter>/sort/<sort>")]
 pub fn get_data_with_page_filter_sort(
     table_name: String,
     page: u32,
-    filter: String,
-    sort: String,
+    filter: Option<String>,
+    sort: Option<String>,
 ) -> Result<Option<Json<Rows>>, ServiceError> {
     let em = get_pool_em()?;
     let dm = get_pool_dm()?;
@@ -275,16 +283,16 @@ pub fn get_data_with_page_filter_sort(
     let table_name = TableName::from(&table_name);
     let window = window::get_window(&table_name, &windows);
     let tables = cache_pool.get_cached_tables(&em, db_url)?;
-    let filter = Filter::from_str(&filter);
-    let sort = Sort::from_str(&sort);
+    let filter = filter.map(|s| Filter::from_str(&s));
+    let sort = sort.map(|s| Sort::from_str(&s));
     match window {
         Some(window) => {
             let rows: Rows = data_read::get_maintable_data(
                 &dm,
                 &tables,
                 &window,
-                Some(filter),
-                Some(sort),
+                filter,
+                sort,
                 page,
                 PAGE_SIZE,
             )?;
@@ -376,12 +384,12 @@ pub fn get_lookup_data(table_name: String, page: u32) -> Result<Option<Json<Rows
 /// retrieve records from a has_many table based on the selected main records
 /// from the main table
 #[get("/<table_name>/select/<record_id>/has_many/<has_many_table>/<page>/sort/<sort>")]
-pub fn get_has_many_records(
+pub fn get_has_many_records_with_page_sort(
     table_name: String,
     record_id: String,
     has_many_table: String,
     page: u32,
-    sort: String,
+    sort: Option<String>,
 ) -> Result<Option<Json<Rows>>, ServiceError> {
     let dm = get_pool_dm()?;
     let em = get_pool_em()?;
@@ -392,7 +400,7 @@ pub fn get_has_many_records(
     let window = window::get_window(&table_name, &windows);
     let tables = cache_pool.get_cached_tables(&em, db_url)?;
     let has_many_table_name = TableName::from(&has_many_table);
-    println!("sort: {}", sort);
+    println!("sort: {:#?}", sort);
     match window {
         Some(window) => {
             let main_table = data_read::get_main_table(window, &tables);
@@ -422,12 +430,12 @@ pub fn get_has_many_records(
 /// retrieve records from a has_many table based on the selected main records
 /// from the main table
 #[get("/<table_name>/select/<record_id>/indirect/<indirect_table>/<page>/sort/<sort>")]
-pub fn get_indirect_records(
+pub fn get_indirect_records_with_page_sort(
     table_name: String,
     record_id: String,
     indirect_table: String,
     page: u32,
-    sort: String,
+    sort: Option<String>,
 ) -> Result<Option<Json<Rows>>, ServiceError> {
     let dm = get_pool_dm()?;
     let em = get_pool_em()?;
@@ -438,7 +446,7 @@ pub fn get_indirect_records(
     let window = window::get_window(&table_name, &windows);
     let tables = cache_pool.get_cached_tables(&em, db_url)?;
     let indirect_table_name = TableName::from(&indirect_table);
-    println!("sort: {}", sort);
+    println!("sort: {:#?}", sort);
     match window {
         Some(window) => {
             let main_table = data_read::get_main_table(window, &tables);
@@ -559,13 +567,14 @@ pub fn rocket(address: Option<String>, port: Option<u16>) -> Result<Rocket, Conf
             "/data",
             routes![
                 get_data,
+                get_data_with_sort,
                 get_data_with_page,
                 get_data_with_page_filter,
                 get_data_with_page_sort,
                 get_data_with_page_filter_sort,
                 get_detailed_record,
-                get_has_many_records,
-                get_indirect_records,
+                get_has_many_records_with_page_sort,
+                get_indirect_records_with_page_sort,
                 delete_records,
             ],
         )

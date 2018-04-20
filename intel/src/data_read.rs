@@ -6,7 +6,6 @@ pub use data_container::RecordDetail;
 use data_container::{Direction, Sort};
 use error::IntelError;
 use query_builder::Query;
-use rustorm::types::SqlType;
 use rustorm::ColumnName;
 use rustorm::DbError;
 use rustorm::EntityManager;
@@ -17,6 +16,7 @@ use rustorm::Rows;
 use rustorm::Table;
 use rustorm::TableName;
 use rustorm::Value;
+use rustorm::types::SqlType;
 use std::collections::BTreeMap;
 use tab::Tab;
 use table_intel;
@@ -95,6 +95,7 @@ pub fn get_maintable_data(
         None => (),
     }
     if let Some(sort) = sort {
+        /*
         if sort.orders.len() > 0 {
             query.append("ORDER BY ");
             for (i, order) in sort.orders.iter().enumerate() {
@@ -110,6 +111,8 @@ pub fn get_maintable_data(
                 }
             }
         }
+        */
+        query.set_sort(sort);
     }
     query.set_page(page, page_size);
     query.collect_rows(dm)

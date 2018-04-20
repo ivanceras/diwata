@@ -1,4 +1,5 @@
 use common;
+use data_container::{Direction, Sort};
 use rustorm::DbError;
 use rustorm::Record;
 use rustorm::RecordManager;
@@ -121,6 +122,24 @@ impl Query {
 
     pub fn from(&mut self, table_name: &TableName) {
         self.append(&format!("\nFROM {} \n", table_name.complete_name()));
+    }
+
+    pub fn set_sort(&mut self, sort: Sort) {
+        if sort.orders.len() > 0 {
+            self.append("ORDER BY ");
+            for (i, order) in sort.orders.iter().enumerate() {
+                if i > 0 {
+                    self.append(", ");
+                }
+                self.append(&format!("{} ", order.column_name.complete_name()));
+                if order.direction == Direction::Asc {
+                    self.append("ASC ");
+                }
+                if order.direction == Direction::Desc {
+                    self.append("DESC ");
+                }
+            }
+        }
     }
 
     pub fn set_page(&mut self, page: u32, page_size: u32) {
