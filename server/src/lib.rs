@@ -381,6 +381,16 @@ pub fn get_lookup_data(table_name: String, page: u32) -> Result<Option<Json<Rows
     }
 }
 
+#[get("/<table_name>/select/<record_id>/has_many/<has_many_table>/<page>")]
+pub fn get_has_many_records_with_page(
+    table_name: String,
+    record_id: String,
+    has_many_table: String,
+    page: u32,
+) -> Result<Option<Json<Rows>>, ServiceError> {
+    get_has_many_records_with_page_sort(table_name, record_id, has_many_table, page, None)
+}
+
 /// retrieve records from a has_many table based on the selected main records
 /// from the main table
 #[get("/<table_name>/select/<record_id>/has_many/<has_many_table>/<page>/sort/<sort>")]
@@ -425,6 +435,16 @@ pub fn get_has_many_records_with_page_sort(
         }
         None => Ok(None),
     }
+}
+
+#[get("/<table_name>/select/<record_id>/indirect/<indirect_table>/<page>")]
+pub fn get_indirect_records_with_page(
+    table_name: String,
+    record_id: String,
+    indirect_table: String,
+    page: u32,
+) -> Result<Option<Json<Rows>>, ServiceError> {
+    get_indirect_records_with_page_sort(table_name, record_id, indirect_table, page, None)
 }
 
 /// retrieve records from a has_many table based on the selected main records
@@ -573,6 +593,7 @@ pub fn rocket(address: Option<String>, port: Option<u16>) -> Result<Rocket, Conf
                 get_data_with_page_sort,
                 get_data_with_page_filter_sort,
                 get_detailed_record,
+                get_has_many_records_with_page,
                 get_has_many_records_with_page_sort,
                 get_indirect_records_with_page_sort,
                 delete_records,
