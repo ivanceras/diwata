@@ -51,9 +51,8 @@ to the applications you are building.
 - Deleting a record will also delete the has_many records.
 - Deleting a record will also delete the linker values in of the indirect records.
 - In HasMany tab, records can be:
-    - Unlinked
-    - Link existing
-    - Link new
+    - Unlinked (The row does not refer to the record anymore, can be optionally deleted)
+    - Link new (Create a new record that refers to the detail)
 - In Indirect tab, records can be:
     - Unlinked ( remove the value in the linker table, but not delete the indirect record). 
         - Actually deleting the indirect record will need it to be opened in it's own main tab.
