@@ -42,6 +42,7 @@ Binary data detected as images would be rendered as such
 ### [Demo - Dota2 heroes](http://web01.jcesar.clh.no:8222/web/#/window/public.hero) using dota2 hero and abilities data
 
 ### Needed Dependencies
+- rust nightly
 - elm v0.18 ( elm installation needed npm or yarn)
 - rsync  ( for fast syncing files over and over )
 - google-closure-compiler (optional, for release build)
@@ -50,6 +51,7 @@ Binary data detected as images would be rendered as such
 
 ## Install Dependencies 
 ```sh
+curl https://sh.rustup.rs -sSf | sh
 sudo apt install rsync
 npm install -g elm@0.18
 npm install -g google-closure-compiler-js
