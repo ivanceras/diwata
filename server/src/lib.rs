@@ -1,7 +1,6 @@
 #![deny(warnings)]
 #![feature(plugin)]
 #![plugin(rocket_codegen)]
-#![feature(match_default_bindings)]
 
 extern crate diwata_intel as intel;
 #[macro_use]
@@ -18,7 +17,6 @@ extern crate structopt;
 use structopt::StructOpt;
 
 pub use error::ServiceError;
-use intel::Window;
 use intel::cache;
 use intel::data_container::Filter;
 use intel::data_container::Lookup;
@@ -30,20 +28,21 @@ use intel::tab;
 use intel::tab::Tab;
 use intel::table_intel;
 use intel::window::{self, GroupedWindow};
-use rocket::Config;
-use rocket::Rocket;
+use intel::Window;
 use rocket::config::ConfigError;
 use rocket::fairing::AdHoc;
 use rocket::http::hyper::header::AccessControlAllowOrigin;
 use rocket::response::NamedFile;
 use rocket::response::Redirect;
+use rocket::Config;
+use rocket::Rocket;
 use rocket_contrib::Json;
+use rustorm::pool;
 use rustorm::EntityManager;
 use rustorm::Pool;
 use rustorm::RecordManager;
 use rustorm::Rows;
 use rustorm::TableName;
-use rustorm::pool;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
@@ -288,13 +287,7 @@ pub fn get_data_with_page_filter_sort(
     match window {
         Some(window) => {
             let rows: Rows = data_read::get_maintable_data(
-                &dm,
-                &tables,
-                &window,
-                filter,
-                sort,
-                page,
-                PAGE_SIZE,
+                &dm, &tables, &window, filter, sort, page, PAGE_SIZE,
             )?;
             Ok(Some(Json(rows)))
         }
@@ -318,11 +311,7 @@ pub fn get_detailed_record(
     match window {
         Some(window) => {
             let dao: Option<RecordDetail> = data_read::get_selected_record_detail(
-                &dm,
-                &tables,
-                &window,
-                &record_id,
-                PAGE_SIZE,
+                &dm, &tables, &window, &record_id, PAGE_SIZE,
             )?;
             match dao {
                 Some(dao) => Ok(Some(Json(dao))),
@@ -610,14 +599,21 @@ pub fn rocket(address: Option<String>, port: Option<u16>) -> Result<Rocket, Conf
 #[derive(StructOpt, Debug)]
 #[structopt(name = "diwata", about = "A user friendly database interface")]
 struct Opt {
-    #[structopt(short = "u", long = "db-url",
-                help = "Database url to connect to, when set all data is exposed without login needed in the client side")]
+    #[structopt(
+        short = "u",
+        long = "db-url",
+        help = "Database url to connect to, when set all data is exposed without login needed in the client side"
+    )]
     db_url: Option<String>,
-    #[structopt(short = "a", long = "address",
-                help = "The address the server would listen, default is 0.0.0.0")]
+    #[structopt(
+        short = "a",
+        long = "address",
+        help = "The address the server would listen, default is 0.0.0.0"
+    )]
     address: Option<String>,
-    #[structopt(short = "p", long = "port",
-                help = "What port this server would listen to, default is 8000")]
+    #[structopt(
+        short = "p", long = "port", help = "What port this server would listen to, default is 8000"
+    )]
     port: Option<u16>,
 }
 
