@@ -12,6 +12,30 @@ pub struct RecordDetail {
     pub indirect: Vec<(TableName, TableName, Rows)>,
 }
 
+#[derive(Debug, Deserialize, Serialize)]
+pub enum RecordAction {
+    Unlink,
+    LinkExisting,
+    LinkNew,
+    Edited,
+    CreateNew,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct RecordChangeset {
+    pub record: Record,
+    pub action: RecordAction,
+    pub one_ones: Vec<(TableName, Option<Record>)>,
+    pub has_many: Vec<(TableName, RecordAction, Rows)>,
+    pub indirect: Vec<(TableName, TableName, RecordAction, Rows)>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct SaveContainer {
+    pub for_insert: (TableName, Rows),
+    pub for_update: (TableName, Rows),
+}
+
 /// the dropdown data and the description on
 /// how will it be displayed as defined in IdentifierDisplay
 #[derive(Debug, Serialize, Clone)]
@@ -135,4 +159,90 @@ impl Sort {
         }
         Sort { orders }
     }
+}
+
+#[test]
+fn test_record_changeset() {
+    extern crate serde_json;
+    use dao::Dao;
+
+    let input = r#"
+{
+  "record": {
+    "city": {
+      "Text": "Akishima"
+    },
+    "city_id": {
+      "Int": 10
+    },
+    "country_id": {
+      "Int": 50
+    },
+    "last_update": {
+      "Timestamp": "2006-02-15T17:45:25Z"
+    }
+  },
+  "action": "Edited",
+  "one_ones": [],
+  "has_many": [
+    [
+      {
+        "name": "address",
+        "schema": "public",
+        "alias": null
+      },
+      "Edited",
+      {
+        "columns": [
+          "address_id",
+          "address",
+          "address2",
+          "district",
+          "postal_code",
+          "phone",
+          "last_update",
+          "city_id"
+        ],
+        "data": []
+      }
+    ],
+    [
+      {
+        "name": "address",
+        "schema": "public",
+        "alias": null
+      },
+      "LinkNew",
+      {
+        "columns": [
+          "address_id",
+          "address",
+          "address2",
+          "district",
+          "postal_code",
+          "phone",
+          "last_update",
+          "city_id"
+        ],
+        "data": []
+      }
+    ]
+  ],
+  "indirect": []
+}
+    "#;
+    let mut dao = Dao::new();
+    dao.insert("city", "Akishima");
+    let changeset = RecordChangeset {
+        record: Record::from(&dao),
+        action: RecordAction::Edited,
+        one_ones: vec![],
+        has_many: vec![],
+        indirect: vec![],
+    };
+    let changeset_json = serde_json::to_string(&changeset).unwrap();
+    println!("changeset json: {}", changeset_json);
+    let result: Result<RecordChangeset, _> = serde_json::from_str(input);
+    println!("result: {:#?}", result);
+    assert!(result.is_ok());
 }

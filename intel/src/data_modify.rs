@@ -2,6 +2,7 @@
 //! using UPDATE and DELETE SQL
 
 use common;
+use data_container::SaveContainer;
 use error::IntelError;
 use rustorm::ColumnName;
 use rustorm::DbError;
@@ -10,6 +11,7 @@ use rustorm::RecordManager;
 use rustorm::Rows;
 use rustorm::Table;
 use rustorm::Value;
+use table_intel;
 
 /// delete the records with the following record_ids
 /// return the total number of records deleted
@@ -62,11 +64,30 @@ fn delete_records_from_single_primary_column(
     Ok(rows)
 }
 
+pub fn save_container(
+    dm: &RecordManager,
+    tables: &Vec<Table>,
+    container: &SaveContainer,
+) -> Result<Rows, IntelError> {
+    println!("container: {:#?}", container);
+    let &(ref table_name_for_insert, ref rows_insert) = &container.for_insert;
+    let &(ref table_name_for_update, ref rows_update) = &container.for_update;
+    let table_for_insert = table_intel::get_table(table_name_for_insert, tables).unwrap();
+    let table_for_update = table_intel::get_table(table_name_for_update, tables).unwrap();
+    let inserted_rows = if rows_insert.iter().count() > 0 {
+        insert_rows_to_table(dm, table_for_insert, rows_insert)?
+    } else {
+        Rows::empty()
+    };
+    update_records_in_main_table(dm, table_for_update, rows_update)?;
+    Ok(inserted_rows)
+}
+
 /// triggered by the main tab
 fn update_records_in_main_table(
     dm: &RecordManager,
     main_table: &Table,
-    rows: Rows,
+    rows: &Rows,
 ) -> Result<Vec<Record>, IntelError> {
     let mut records = vec![];
     for dao in rows.iter() {
@@ -84,7 +105,21 @@ fn update_record_in_main_table(
 ) -> Result<Record, DbError> {
     let table_name = &main_table.name;
     let mut params = vec![];
-    let mut sql = format!("UPDATE TABLE {} ", table_name.complete_name());
+    let mut sql = format!("UPDATE {} ", table_name.complete_name());
+    let columns = main_table.get_non_primary_columns();
+    sql += "SET ";
+    for (i, col) in columns.iter().enumerate() {
+        if i > 0 {
+            sql += ", ";
+        }
+        sql += &format!("{} = ${}", col.name.name, i + 1);
+        let value = record.get_value(&col.name.name);
+        assert!(value.is_some());
+        let value = value.unwrap();
+        params.push(value);
+    }
+    sql += " ";
+    let non_pk_columns_len = columns.len();
     let primary_columns = &main_table.get_primary_column_names();
     for (i, pk) in primary_columns.iter().enumerate() {
         if i == 0 {
@@ -92,21 +127,62 @@ fn update_record_in_main_table(
         } else {
             sql += "AND ";
         }
-        sql += &format!("{} = ${} ", pk.name, i + 1);
+        sql += &format!("{} = ${} ", pk.name, non_pk_columns_len + i + 1);
         let pk_value = record.get_value(&pk.name);
         assert!(pk_value.is_some());
         let pk_value = pk_value.unwrap();
         params.push(pk_value);
     }
     sql += "RETURNING *";
+
+    println!("sql: {}", sql);
+    println!("params: {:?}", params);
     dm.execute_sql_with_one_return(&sql, &params)
 }
 
-/// from the main tab
-fn insert_records_to_main_table(
+/// insert rows all at once in one query
+fn insert_rows_to_table(
+    dm: &RecordManager,
+    table: &Table,
+    rows: &Rows,
+) -> Result<Rows, IntelError> {
+    let table_name = &table.name;
+    let mut params = vec![];
+    let mut sql = format!("INSERT INTO {} ", table_name.complete_name());
+    let columns = &table.get_non_primary_columns();
+    sql += "(";
+    for (i, col) in columns.iter().enumerate() {
+        if i > 0 {
+            sql += ", ";
+        }
+        sql += &format!("{} ", col.name.name);
+    }
+    sql += ") ";
+    sql += "VALUES (";
+    for dao in rows.iter() {
+        for (i, col) in columns.iter().enumerate() {
+            if i > 0 {
+                sql += ", ";
+            }
+            sql += &format!("${} ", i + 1);
+            let value = dao.get_value(&col.name.name);
+            assert!(value.is_some());
+            let value = value.unwrap();
+            params.push(value.clone());
+        }
+    }
+    sql += ") RETURNING *";
+    println!("sql: {}", sql);
+    println!("params: {:?}", params);
+    let rows = dm.execute_sql_with_return(&sql, &*params)?;
+    Ok(rows)
+}
+
+/// insert rows 1 by 1
+fn insert_records_to_main_table1(
     dm: &RecordManager,
     main_table: &Table,
-    rows: Rows,
+    rows: &Rows,
 ) -> Result<Vec<Record>, IntelError> {
     let mut records = vec![];
     for dao in rows.iter() {
@@ -125,7 +201,7 @@ fn insert_record_to_main_table(
     let table_name = &main_table.name;
     let mut params = vec![];
     let mut sql = format!("INSERT INTO {} ", table_name.complete_name());
-    let columns = &main_table.columns;
+    let columns = &main_table.get_non_primary_columns();
     sql += "(";
     for (i, col) in columns.iter().enumerate() {
         if i > 0 {
@@ -136,6 +212,9 @@ fn insert_record_to_main_table(
     sql += ") ";
     sql += "VALUES (";
     for (i, col) in columns.iter().enumerate() {
+        if i > 0 {
+            sql += ", ";
+        }
         sql += &format!("${} ", i + 1);
         let value = record.get_value(&col.name.name);
         assert!(value.is_some());
@@ -143,5 +222,7 @@ fn insert_record_to_main_table(
         params.push(value);
     }
     sql += ") RETURNING *";
+    println!("sql: {}", sql);
+    println!("params: {:?}", params);
     dm.execute_sql_with_one_return(&sql, &params)
 }

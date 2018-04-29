@@ -21,6 +21,7 @@ use intel::cache;
 use intel::data_container::Filter;
 use intel::data_container::Lookup;
 use intel::data_container::Sort;
+use intel::data_container::{RecordChangeset, SaveContainer};
 use intel::data_modify;
 use intel::data_read;
 use intel::data_read::RecordDetail;
@@ -187,8 +188,9 @@ pub fn get_data_with_page(
     let tables = cache_pool.get_cached_tables(&em, db_url)?;
     match window {
         Some(window) => {
-            let rows: Rows =
-                data_read::get_maintable_data(&dm, &tables, &window, None, None, page, PAGE_SIZE)?;
+            let rows: Rows = data_read::get_maintable_data(
+                &em, &dm, &tables, &window, None, None, page, PAGE_SIZE,
+            )?;
             Ok(Some(Json(rows)))
         }
         None => Ok(None),
@@ -213,6 +215,7 @@ pub fn get_data_with_page_sort(
     match window {
         Some(window) => {
             let rows: Rows = data_read::get_maintable_data(
+                &em,
                 &dm,
                 &tables,
                 &window,
@@ -245,6 +248,7 @@ pub fn get_data_with_page_filter(
     match window {
         Some(window) => {
             let rows: Rows = data_read::get_maintable_data(
+                &em,
                 &dm,
                 &tables,
                 &window,
@@ -287,7 +291,7 @@ pub fn get_data_with_page_filter_sort(
     match window {
         Some(window) => {
             let rows: Rows = data_read::get_maintable_data(
-                &dm, &tables, &window, filter, sort, page, PAGE_SIZE,
+                &em, &dm, &tables, &window, filter, sort, page, PAGE_SIZE,
             )?;
             Ok(Some(Json(rows)))
         }
@@ -488,6 +492,28 @@ pub fn get_indirect_records_with_page_sort(
     }
 }
 
+#[post("/record/<table_name>", data = "<record>")]
+fn update_record_detail_changeset(table_name: String, record: Json<RecordChangeset>) {
+    println!("table_name: {:?}", table_name);
+    println!("record: {:#?}", record);
+}
+
+#[post("/tab/<table_name>", data = "<container>")]
+fn update_tab_changeset(
+    table_name: String,
+    container: Json<SaveContainer>,
+) -> Result<Json<Rows>, ServiceError> {
+    println!("table_name: {:?}", table_name);
+    println!("container: {:#?}", container);
+    let em = get_pool_em()?;
+    let dm = get_pool_dm()?;
+    let db_url = &get_db_url()?;
+    let mut cache_pool = cache::CACHE_POOL.lock().unwrap();
+    let tables = cache_pool.get_cached_tables(&em, db_url)?;
+    let rows = data_modify::save_container(&dm, &tables, &container.into_inner())?;
+    Ok(Json(rows))
+}
+
 #[get("/")]
 fn webclient_index() -> Option<NamedFile> {
     NamedFile::open(Path::new("./public/index.html")).ok()
@@ -587,6 +613,10 @@ pub fn rocket(address: Option<String>, port: Option<u16>) -> Result<Rocket, Conf
                 get_indirect_records_with_page_sort,
                 delete_records,
             ],
+        )
+        .mount(
+            "/changeset",
+            routes![update_record_detail_changeset, update_tab_changeset],
         )
         .mount("/lookup", routes![get_lookup_data])
         .mount("/lookup_all", routes![get_window_lookup_data])

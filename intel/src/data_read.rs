@@ -2,10 +2,12 @@ use common;
 use dao;
 use data_container::Filter;
 use data_container::Lookup;
+use data_container::Order;
 pub use data_container::RecordDetail;
 use data_container::{Direction, Sort};
 use error::IntelError;
 use query_builder::Query;
+use rustorm::types::SqlType;
 use rustorm::ColumnName;
 use rustorm::DbError;
 use rustorm::EntityManager;
@@ -16,7 +18,6 @@ use rustorm::Rows;
 use rustorm::Table;
 use rustorm::TableName;
 use rustorm::Value;
-use rustorm::types::SqlType;
 use std::collections::BTreeMap;
 use tab::Tab;
 use table_intel;
@@ -52,6 +53,7 @@ pub fn get_total_records(em: &EntityManager, table_name: &TableName) -> Result<u
 /// get data for the window
 /// retrieving the Lookup table display columns
 pub fn get_maintable_data(
+    em: &EntityManager,
     dm: &RecordManager,
     tables: &Vec<Table>,
     window: &Window,
@@ -63,6 +65,7 @@ pub fn get_maintable_data(
     let main_table = some!(get_main_table(window, tables));
 
     let main_tablename = &main_table.name;
+    let tab = &window.main_tab;
     let mut query = Query::new();
     query.select_all(&main_tablename);
 
@@ -95,27 +98,26 @@ pub fn get_maintable_data(
         None => (),
     }
     if let Some(sort) = sort {
-        /*
-        if sort.orders.len() > 0 {
-            query.append("ORDER BY ");
-            for (i, order) in sort.orders.iter().enumerate() {
-                if i > 0 {
-                    query.append(", ");
-                }
-                query.append(&format!("{} ", order.column_name.complete_name()));
-                if order.direction == Direction::Asc {
-                    query.append("ASC ");
-                }
-                if order.direction == Direction::Desc {
-                    query.append("DESC ");
-                }
-            }
-        }
-        */
         query.set_sort(sort);
+    } else {
+        // arrange by display name if there is
+        if let Some(ref display) = tab.display {
+            let mut orders = vec![];
+            for dc in display.columns.iter() {
+                let order = Order {
+                    column_name: dc.clone(),
+                    direction: Direction::Asc,
+                };
+                orders.push(order);
+            }
+            query.set_sort(Sort { orders });
+        }
     }
     query.set_page(page, page_size);
-    query.collect_rows(dm)
+    let mut rows = query.collect_rows(dm)?;
+    let count = get_total_records(em, main_tablename)?;
+    rows.count = Some(count);
+    Ok(rows)
 }
 
 /// get the detail of the selected record data
