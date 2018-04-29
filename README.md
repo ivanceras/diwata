@@ -97,8 +97,9 @@ Using heristic method, diwata is able to infer the content of a table.
 - [X] Meaningful dropdown lookup
 - [X] Seamless url-based navigation
 - [X] Delete records
-- [ ] Update records
-- [ ] Insert records
+- [X] Update records
+- [X] Insert records
+- [ ] Detail record update/insert
 - [ ] Undo update/delete records
 - [X] Search and filter data
 - [ ] Drag/Rearrange and resize columns
