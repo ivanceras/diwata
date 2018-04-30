@@ -12,33 +12,21 @@ use hyper::server::Service;
 use hyper::Headers;
 use hyper::StatusCode;
 
+use context::Context;
 use error::ServiceError;
 use hyper::server::Http;
+use intel::data_container::{Filter, Sort};
 use intel::data_read;
-use intel::error::IntelError;
 use intel::tab::{self, Tab};
 use intel::window;
-use rustorm::Pool;
+use rustorm::pool;
 use rustorm::TableName;
 use serde::Serialize;
 use serde_json;
-use std::error::Error;
-use std::fmt;
 use std::fs::File;
 use std::io::prelude::*;
-use std::path::{Path, PathBuf};
-use std::process::{self, Command};
-use std::str::FromStr;
-use std::sync::{atomic::{AtomicU32, Ordering},
-                Arc,
-                Mutex};
-use std::thread;
-
-use rustorm::pool;
-
-use intel::data_container::{Filter, Lookup, Sort};
-
-static PAGE_SIZE: u32 = 40;
+use std::path::PathBuf;
+use std::sync::{Arc, Mutex};
 
 /// An instance of the server. Runs a session of rustw.
 pub struct Server {}
@@ -81,7 +69,10 @@ impl Server {
         query: Option<&str>,
         req: Request,
     ) -> <Instance as Service>::Future {
-        ::set_db_url("postgres://postgres:p0stgr3s@localhost/sakila".to_string());
+        match ::set_db_url("postgres://postgres:p0stgr3s@localhost/sakila".to_string()) {
+            Ok(_) => println!("db url is set"),
+            Err(e) => panic!("unable to set db_url {:?}", e),
+        };
         trace!("route: path: {:?}, query: {:?}", path, query);
 
         path = path.trim_matches('/');
@@ -142,7 +133,7 @@ impl Server {
         self.handle_static(_req, &["index.html"])
     }
 
-    fn handle_static(&self, req: Request, path: &[&str]) -> Response {
+    fn handle_static(&self, _req: Request, path: &[&str]) -> Response {
         println!("handling static: {:?}", path);
         let mut path_buf = PathBuf::new();
         path_buf.push("public");
@@ -175,9 +166,6 @@ impl Server {
         let mut res = Response::new();
         res.headers_mut().set(content_type);
         return res.with_body(bytes);
-
-        trace!("404 {:?}", path_buf);
-        self.handle_error(req, StatusCode::NotFound, "Page not found".to_owned())
     }
     fn handle_error(&self, _req: Request, status: StatusCode, msg: String) -> Response {
         debug!("ERROR: {} ({})", msg, status);
@@ -194,13 +182,9 @@ impl Server {
 
     fn handle_window(&self, _req: Request, tail: &[&str]) -> Result<impl Serialize, ServiceError> {
         let table_name = &tail[0];
-        let em = ::get_pool_em()?;
-        let db_url = &::get_db_url()?;
-        let mut cache_pool = ::cache::CACHE_POOL.lock().unwrap();
-        println!("{:#?}", db_url);
-        let windows = cache_pool.get_cached_windows(&em, db_url)?;
+        let context = Context::create()?;
         let table_name = TableName::from(&table_name);
-        let window = window::get_window(&table_name, &windows);
+        let window = window::get_window(&table_name, &context.windows);
         match window {
             Some(window) => Ok(window.to_owned()),
             None => Err(ServiceError::NotFound),
@@ -230,21 +214,22 @@ impl Server {
                 sort_str = Some(v);
             }
         }
-
-        let em = ::get_pool_em()?;
-        let dm = ::get_pool_dm()?;
-        let db_url = &::get_db_url()?;
-        let mut cache_pool = ::cache::CACHE_POOL.lock().unwrap();
-        let windows = cache_pool.get_cached_windows(&em, db_url)?;
+        let context = Context::create()?;
         let table_name = TableName::from(&table_name);
-        let window = window::get_window(&table_name, &windows);
-        let tables = cache_pool.get_cached_tables(&em, db_url)?;
+        let window = window::get_window(&table_name, &context.windows);
         let filter = filter_str.map(|s| Filter::from_str(s));
         let sort = sort_str.map(|s| Sort::from_str(s));
         match window {
             Some(window) => {
                 let rows = data_read::get_maintable_data(
-                    &em, &dm, &tables, &window, filter, sort, page, PAGE_SIZE,
+                    &context.em,
+                    &context.dm,
+                    &context.tables,
+                    &window,
+                    filter,
+                    sort,
+                    page,
+                    ::PAGE_SIZE,
                 )?;
                 Ok(rows)
             }
@@ -258,18 +243,17 @@ impl Server {
     fn handle_select(&self, _req: Request, path: &[&str]) -> Result<impl Serialize, ServiceError> {
         let table_name = path[0];
         let record_id = path[1];
-        let dm = ::get_pool_dm()?;
-        let em = ::get_pool_em()?;
-        let db_url = &::get_db_url()?;
-        let mut cache_pool = ::cache::CACHE_POOL.lock().unwrap();
-        let windows = cache_pool.get_cached_windows(&em, db_url)?;
         let table_name = TableName::from(&table_name);
-        let window = window::get_window(&table_name, &windows);
-        let tables = cache_pool.get_cached_tables(&em, db_url)?;
+        let context = Context::create()?;
+        let window = window::get_window(&table_name, &context.windows);
         match window {
             Some(window) => {
                 let dao = data_read::get_selected_record_detail(
-                    &dm, &tables, &window, &record_id, PAGE_SIZE,
+                    &context.dm,
+                    &context.tables,
+                    &window,
+                    &record_id,
+                    ::PAGE_SIZE,
                 )?;
                 match dao {
                     Some(dao) => Ok(dao),
@@ -309,33 +293,27 @@ impl Server {
                 sort_str = Some(v);
             }
         }
-        let filter = filter_str.map(|s| Filter::from_str(s));
-        let sort = sort_str.map(|s| Sort::from_str(s));
-
-        let dm = ::get_pool_dm()?;
-        let em = ::get_pool_em()?;
-        let db_url = &::get_db_url()?;
-        let mut cache_pool = ::cache::CACHE_POOL.lock().unwrap();
-        let windows = cache_pool.get_cached_windows(&em, db_url)?;
+        let _filter = filter_str.map(|s| Filter::from_str(s));
+        let _sort = sort_str.map(|s| Sort::from_str(s));
+        let context = Context::create()?;
         let table_name = TableName::from(&table_name);
-        let window = window::get_window(&table_name, &windows);
-        let tables = cache_pool.get_cached_tables(&em, db_url)?;
+        let window = window::get_window(&table_name, &context.windows);
         let has_many_table_name = TableName::from(&has_many_table);
         match window {
             Some(window) => {
-                let main_table = data_read::get_main_table(window, &tables);
+                let main_table = data_read::get_main_table(window, &context.tables);
                 assert!(main_table.is_some());
                 let main_table = main_table.unwrap();
                 let has_many_tab = tab::find_tab(&window.has_many_tabs, &has_many_table_name);
                 match has_many_tab {
                     Some(has_many_tab) => {
                         let rows = data_read::get_has_many_records_service(
-                            &dm,
-                            &tables,
+                            &context.dm,
+                            &context.tables,
                             &main_table,
                             &record_id,
                             has_many_tab,
-                            PAGE_SIZE,
+                            ::PAGE_SIZE,
                             page,
                         )?;
                         Ok(rows)
@@ -376,21 +354,16 @@ impl Server {
                 sort_str = Some(v);
             }
         }
-        let filter = filter_str.map(|s| Filter::from_str(s));
-        let sort = sort_str.map(|s| Sort::from_str(s));
+        let _filter = filter_str.map(|s| Filter::from_str(s));
+        let _sort = sort_str.map(|s| Sort::from_str(s));
+        let context = Context::create()?;
 
-        let dm = ::get_pool_dm()?;
-        let em = ::get_pool_em()?;
-        let db_url = &::get_db_url()?;
-        let mut cache_pool = ::cache::CACHE_POOL.lock().unwrap();
-        let windows = cache_pool.get_cached_windows(&em, db_url)?;
         let table_name = TableName::from(&table_name);
-        let window = window::get_window(&table_name, &windows);
-        let tables = cache_pool.get_cached_tables(&em, db_url)?;
+        let window = window::get_window(&table_name, &context.windows);
         let indirect_table_name = TableName::from(&indirect_table);
         match window {
             Some(window) => {
-                let main_table = data_read::get_main_table(window, &tables);
+                let main_table = data_read::get_main_table(window, &context.tables);
                 assert!(main_table.is_some());
                 let main_table = main_table.unwrap();
 
@@ -402,13 +375,13 @@ impl Server {
                 match indirect_tab {
                     Some(&(ref linker_table, ref indirect_tab)) => {
                         let rows = data_read::get_indirect_records_service(
-                            &dm,
-                            &tables,
+                            &context.dm,
+                            &context.tables,
                             &main_table,
                             &record_id,
                             &indirect_tab,
                             &linker_table,
-                            PAGE_SIZE,
+                            ::PAGE_SIZE,
                             page,
                         )?;
                         Ok(rows)
@@ -420,26 +393,26 @@ impl Server {
         }
     }
 
+    /// retrieve the lookup data of this table at next page
+    /// Usually the first page of the lookup data is preloaded with the window that
+    /// may display them in order for the user to see something when clicking on the dropdown list.
+    /// When the user scrolls to the bottom of the dropdown, a http request is done to retrieve the
+    /// next page. All other lookup that points to the same table is also updated
     fn handle_lookup(&self, _req: Request, path: &[&str]) -> Result<impl Serialize, ServiceError> {
         println!("path:{:?}", path);
         let table_name = path[0];
         let page: u32 = path[1].parse().unwrap();
+        let context = Context::create()?;
 
-        let dm = ::get_pool_dm()?;
-        let em = ::get_pool_em()?;
-        let db_url = &::get_db_url()?;
-        let mut cache_pool = ::cache::CACHE_POOL.lock().unwrap();
-        let windows = cache_pool.get_cached_windows(&em, db_url)?;
         let table_name = TableName::from(&table_name);
-        let window = window::get_window(&table_name, &windows);
-        let tables = cache_pool.get_cached_tables(&em, db_url)?;
+        let window = window::get_window(&table_name, &context.windows);
         match window {
             Some(window) => {
                 let rows = data_read::get_lookup_data_of_tab(
-                    &dm,
-                    &tables,
+                    &context.dm,
+                    &context.tables,
                     &window.main_tab,
-                    PAGE_SIZE,
+                    ::PAGE_SIZE,
                     page,
                 )?;
                 Ok(rows)
@@ -447,24 +420,27 @@ impl Server {
             None => Err(ServiceError::NotFound),
         }
     }
+
+    /// retrieve the first page of all lookup data
+    /// used in this window
+    /// Note: window is identified by it's table name of the main tab
     fn handle_lookup_all(
         &self,
         _req: Request,
         path: &[&str],
     ) -> Result<impl Serialize, ServiceError> {
         let table_name = path[0];
-        let dm = ::get_pool_dm()?;
-        let em = ::get_pool_em()?;
-        let db_url = &::get_db_url()?;
-        let mut cache_pool = ::cache::CACHE_POOL.lock().unwrap();
-        let windows = cache_pool.get_cached_windows(&em, db_url)?;
+        let context = Context::create()?;
         let table_name = TableName::from(&table_name);
-        let window = window::get_window(&table_name, &windows);
-        let tables = cache_pool.get_cached_tables(&em, db_url)?;
+        let window = window::get_window(&table_name, &context.windows);
         match window {
             Some(window) => {
-                let lookup =
-                    data_read::get_all_lookup_for_window(&dm, &tables, &window, PAGE_SIZE)?;
+                let lookup = data_read::get_all_lookup_for_window(
+                    &context.dm,
+                    &context.tables,
+                    &window,
+                    ::PAGE_SIZE,
+                )?;
                 Ok(lookup)
             }
             None => Err(ServiceError::NotFound),
@@ -482,7 +458,10 @@ fn create_response<B: Serialize>(body: Result<B, ServiceError>) -> Response {
             let mut resp = Response::new().with_headers(headers).with_body(json);
             resp
         }
-        Err(e) => Response::new().with_status(StatusCode::BadRequest),
+        Err(e) => match e {
+            ServiceError::NotFound => Response::new().with_status(StatusCode::NotFound),
+            _ => Response::new().with_status(StatusCode::BadRequest),
+        },
     }
 }
 

@@ -258,6 +258,7 @@ fn get_one_one_record(
     query.collect_maybe_record(dm)
 }
 
+/// TODO: add filter and sort
 pub fn get_has_many_records_service(
     dm: &RecordManager,
     tables: &Vec<Table>,
@@ -331,6 +332,7 @@ fn get_has_many_records(
     query.collect_rows(dm)
 }
 
+/// TODO: add filter and sort
 pub fn get_indirect_records_service(
     dm: &RecordManager,
     tables: &Vec<Table>,
