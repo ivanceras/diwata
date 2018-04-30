@@ -1,11 +1,11 @@
 use cache;
 use error::IntelError;
+use rustorm::table::SchemaContent;
 use rustorm::ColumnName;
 use rustorm::DbError;
 use rustorm::EntityManager;
 use rustorm::Table;
 use rustorm::TableName;
-use rustorm::table::SchemaContent;
 use tab::Tab;
 use table_intel;
 use table_intel::IndirectTable;

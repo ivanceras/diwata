@@ -1,6 +1,8 @@
-#![deny(warnings)]
+//#![deny(warnings)]
 #![feature(plugin)]
 #![plugin(rocket_codegen)]
+#![feature(rustc_private)]
+#![feature(integer_atomics)]
 
 extern crate diwata_intel as intel;
 #[macro_use]
@@ -12,7 +14,12 @@ extern crate serde;
 extern crate serde_json;
 #[macro_use]
 extern crate structopt_derive;
+extern crate futures;
+extern crate hyper;
 extern crate structopt;
+
+#[macro_use]
+extern crate log;
 
 use structopt::StructOpt;
 
@@ -48,6 +55,7 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
 mod error;
+pub mod hyper_server;
 
 static PAGE_SIZE: u32 = 40;
 

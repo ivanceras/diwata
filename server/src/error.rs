@@ -8,6 +8,7 @@ pub enum ServiceError {
     IntelError(IntelError),
     DbError(DbError),
     NoDbUrlSpecified,
+    NotFound,
 }
 
 impl From<DbError> for ServiceError {

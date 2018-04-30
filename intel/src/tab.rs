@@ -1,6 +1,6 @@
+use rustorm::table::ForeignKey;
 use rustorm::ColumnName;
 use rustorm::TableName;
-use rustorm::table::ForeignKey;
 
 use data_container::DropdownInfo;
 use data_container::IdentifierDisplay;
