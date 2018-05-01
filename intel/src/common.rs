@@ -2,13 +2,13 @@
 use bigdecimal::BigDecimal;
 pub use data_container::RecordDetail;
 use error::IntelError;
+use rustorm::common;
+use rustorm::types::SqlType;
 use rustorm::ColumnName;
 use rustorm::DbError;
 use rustorm::Record;
 use rustorm::Rows;
 use rustorm::Value;
-use rustorm::common;
-use rustorm::types::SqlType;
 use std::collections::BTreeMap;
 use std::str::FromStr;
 use uuid::Uuid;

@@ -1,5 +1,6 @@
 use common;
 use data_container::{Direction, Sort};
+use rustorm::types::SqlType;
 use rustorm::DbError;
 use rustorm::Record;
 use rustorm::RecordManager;
@@ -7,7 +8,6 @@ use rustorm::Rows;
 use rustorm::Table;
 use rustorm::TableName;
 use rustorm::Value;
-use rustorm::types::SqlType;
 use std::collections::BTreeMap;
 use tab::Tab;
 use table_intel;

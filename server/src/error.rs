@@ -5,9 +5,11 @@ use rustorm::error::DbError;
 pub enum ServiceError {
     GenericError(String),
     PoolResourceError,
+    CacheLockError,
     IntelError(IntelError),
     DbError(DbError),
     NoDbUrlSpecified,
+    NotFound,
 }
 
 impl From<DbError> for ServiceError {
