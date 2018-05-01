@@ -4,7 +4,8 @@
 ///
 use futures;
 use futures::Future;
-use hyper::error::Error as HyperError;
+use futures::Stream;
+use hyper::error::Error;
 use hyper::header::ContentType;
 use hyper::server::Request;
 use hyper::server::Response;
@@ -15,11 +16,15 @@ use hyper::StatusCode;
 use context::Context;
 use error::ServiceError;
 use hyper::server::Http;
+use intel::data_container::SaveContainer;
 use intel::data_container::{Filter, Sort};
+use intel::data_modify;
 use intel::data_read;
-use intel::tab::{self, Tab};
+use intel::tab;
+use intel::tab::Tab;
 use intel::window;
 use rustorm::pool;
+use rustorm::Rows;
 use rustorm::TableName;
 use serde::Serialize;
 use serde_json;
@@ -47,7 +52,7 @@ impl Instance {
 impl Service for Instance {
     type Request = Request;
     type Response = Response;
-    type Error = HyperError;
+    type Error = Error;
     type Future = Box<Future<Item = Self::Response, Error = Self::Error>>;
 
     fn call(&self, req: Request) -> Self::Future {
@@ -69,11 +74,8 @@ impl Server {
         query: Option<&str>,
         req: Request,
     ) -> <Instance as Service>::Future {
-        match ::set_db_url("postgres://postgres:p0stgr3s@localhost/sakila".to_string()) {
-            Ok(_) => println!("db url is set"),
-            Err(e) => panic!("unable to set db_url {:?}", e),
-        };
         trace!("route: path: {:?}, query: {:?}", path, query);
+        println!("route: path: {:?}, query: {:?}", path, query);
 
         path = path.trim_matches('/');
         let path: Vec<_> = path.split('/').collect();
@@ -104,6 +106,10 @@ impl Server {
             create_response(self.handle_test(req))
         } else if head == "db_url" {
             create_response(self.handle_db_url(req))
+        } else if head == "delete" {
+            return self.handle_delete(req, tail);
+        } else if head == "tab_changeset" {
+            return self.handle_tab_changeset(req);
         } else {
             self.handle_error(req, StatusCode::NotFound, "Page not found".to_owned())
         };
@@ -446,6 +452,61 @@ impl Server {
             None => Err(ServiceError::NotFound),
         }
     }
+
+    // https://stackoverflow.com/questions/43419974/how-do-i-read-the-entire-body-of-a-tokio-based-hyper-request?rq=1
+    // https://hyper.rs/guides/server/echo/
+    fn handle_delete(
+        &self,
+        req: Request,
+        path: &[&str],
+    ) -> Box<Future<Item = Response, Error = Error>> {
+        let table_name = path[0].to_string();
+        let f = req.body().concat2().map(move |chunk| {
+            let body = chunk.into_iter().collect::<Vec<u8>>();
+            let body_str = String::from_utf8(body.clone()).unwrap();
+            let record_ids: Vec<String> = serde_json::from_str(&body_str).unwrap();
+            let result = delete_records(&table_name, &record_ids);
+            create_response(result)
+        });
+        Box::new(f)
+    }
+
+    fn handle_tab_changeset(&self, req: Request) -> Box<Future<Item = Response, Error = Error>> {
+        let f = req.body().concat2().map(move |chunk| {
+            let body = chunk.into_iter().collect::<Vec<u8>>();
+            let body_str = String::from_utf8(body.clone()).unwrap();
+            let container: SaveContainer = serde_json::from_str(&body_str).unwrap();
+            let result = update_tab_changeset(&container);
+            create_response(result)
+        });
+        Box::new(f)
+    }
+}
+
+fn delete_records(table_name: &str, record_ids: &Vec<String>) -> Result<Rows, ServiceError> {
+    let context = Context::create()?;
+    let table_name = TableName::from(&table_name);
+    let window = window::get_window(&table_name, &context.windows);
+    match window {
+        Some(window) => {
+            let main_table = data_read::get_main_table(window, &context.tables);
+            assert!(main_table.is_some());
+            let main_table = main_table.unwrap();
+            println!(
+                "delete these records: {:?} from table: {:?}",
+                record_ids, table_name
+            );
+            let rows = data_modify::delete_records(&context.dm, &main_table, &record_ids)?;
+            Ok(rows)
+        }
+        None => Err(ServiceError::NotFound),
+    }
+}
+
+fn update_tab_changeset(container: &SaveContainer) -> Result<Rows, ServiceError> {
+    let context = Context::create()?;
+    let rows = data_modify::save_container(&context.dm, &context.tables, &container)?;
+    Ok(rows)
 }
 
 fn create_response<B: Serialize>(body: Result<B, ServiceError>) -> Response {
@@ -465,9 +526,9 @@ fn create_response<B: Serialize>(body: Result<B, ServiceError>) -> Response {
     }
 }
 
-pub fn run() {
-    let ip = "0.0.0.0";
-    let port = 8001;
+pub fn run(address: Option<String>, port: Option<u16>) {
+    let ip = address.unwrap();
+    let port = port.unwrap();
     let addr = format!("{}:{}", ip, port).parse().unwrap();
     let server = Server::new();
     let instance = Instance::new(server);

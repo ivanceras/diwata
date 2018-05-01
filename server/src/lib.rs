@@ -1,14 +1,11 @@
 #![deny(warnings)]
 #![feature(plugin)]
-#![plugin(rocket_codegen)]
 #![feature(rustc_private)]
 #![feature(integer_atomics)]
 
 extern crate diwata_intel as intel;
 #[macro_use]
 extern crate lazy_static;
-extern crate rocket;
-extern crate rocket_contrib;
 extern crate rustorm;
 extern crate serde;
 extern crate serde_json;
@@ -25,21 +22,9 @@ use structopt::StructOpt;
 
 pub use error::ServiceError;
 use intel::cache;
-use intel::data_container::{RecordChangeset, SaveContainer};
-use intel::data_modify;
-use intel::data_read;
-use intel::window;
-use rocket::config::ConfigError;
-use rocket::fairing::AdHoc;
-use rocket::http::hyper::header::AccessControlAllowOrigin;
-use rocket::Config;
-use rocket::Rocket;
-use rocket_contrib::Json;
 use rustorm::EntityManager;
 use rustorm::Pool;
 use rustorm::RecordManager;
-use rustorm::Rows;
-use rustorm::TableName;
 use std::sync::{Arc, Mutex};
 
 mod context;
@@ -113,96 +98,6 @@ fn get_pool_dm() -> Result<RecordManager, ServiceError> {
     }
 }
 
-#[post("/record/<table_name>", data = "<record>")]
-fn update_record_detail_changeset(table_name: String, record: Json<RecordChangeset>) {
-    println!("table_name: {:?}", table_name);
-    println!("record: {:#?}", record);
-}
-
-#[post("/tab/<table_name>", data = "<container>")]
-fn update_tab_changeset(
-    table_name: String,
-    container: Json<SaveContainer>,
-) -> Result<Json<Rows>, ServiceError> {
-    println!("table_name: {:?}", table_name);
-    println!("container: {:#?}", container);
-    let em = get_pool_em()?;
-    let dm = get_pool_dm()?;
-    let db_url = &get_db_url()?;
-    let mut cache_pool = cache::CACHE_POOL.lock().unwrap();
-    let tables = cache_pool.get_cached_tables(&em, db_url)?;
-    let rows = data_modify::save_container(&dm, &tables, &container.into_inner())?;
-    Ok(Json(rows))
-}
-
-#[delete("/<table_name>", data = "<record_ids>")]
-pub fn delete_records(
-    table_name: String,
-    record_ids: Json<Vec<String>>,
-) -> Result<Option<Json<Rows>>, ServiceError> {
-    let dm = get_pool_dm()?;
-    let em = get_pool_em()?;
-    let db_url = &get_db_url()?;
-    let table_name = TableName::from(&table_name);
-    let mut cache_pool = cache::CACHE_POOL.lock().unwrap();
-    let windows = cache_pool.get_cached_windows(&em, db_url)?;
-    let window = window::get_window(&table_name, &windows);
-    let tables = cache_pool.get_cached_tables(&em, db_url)?;
-    match window {
-        Some(window) => {
-            let main_table = data_read::get_main_table(window, &tables);
-            assert!(main_table.is_some());
-            let main_table = main_table.unwrap();
-            println!(
-                "delete these records: {:?} from table: {:?}",
-                record_ids, table_name
-            );
-            let rows = data_modify::delete_records(&dm, &main_table, &*record_ids)?;
-            Ok(Some(Json(rows)))
-        }
-        None => Ok(None),
-    }
-}
-
-pub fn rocket(address: Option<String>, port: Option<u16>) -> Result<Rocket, ConfigError> {
-    let address = match address {
-        Some(address) => address,
-        None => "0.0.0.0".to_string(),
-    };
-    let port = match port {
-        Some(port) => port,
-        None => 8000,
-    };
-    println!("address: {:?}", address);
-    println!("port: {:?}", port);
-    let mut config = Config::development()?;
-    config.set_port(port);
-    config.set_address(address)?;
-    let server = rocket::custom(config, true)
-        .attach(AdHoc::on_response(|_req, resp| {
-            resp.set_header(AccessControlAllowOrigin::Any);
-        }))
-        .attach(AdHoc::on_request(|req, _resp| {
-            let db_urls: Vec<&str> = req.headers().get("db_url").collect();
-            println!("db_urls: {:?}", db_urls);
-            if db_urls.len() != 1 {
-                println!("no db_url specified, using the previous one");
-            } else {
-                let db_url = db_urls[0];
-                match set_db_url(db_url.to_string()) {
-                    Ok(_) => println!("db_url is set"),
-                    Err(e) => println!("error setting db_url: {:?}", e),
-                }
-            }
-        }))
-        .mount("/data", routes![delete_records,])
-        .mount(
-            "/changeset",
-            routes![update_record_detail_changeset, update_tab_changeset],
-        );
-    Ok(server)
-}
-
 #[derive(StructOpt, Debug)]
 #[structopt(name = "diwata", about = "A user friendly database interface")]
 struct Opt {
@@ -215,11 +110,15 @@ struct Opt {
     #[structopt(
         short = "a",
         long = "address",
-        help = "The address the server would listen, default is 0.0.0.0"
+        help = "The address the server would listen, default is 0.0.0.0",
+        default_value = "0.0.0.0"
     )]
     address: Option<String>,
     #[structopt(
-        short = "p", long = "port", help = "What port this server would listen to, default is 8000"
+        short = "p",
+        long = "port",
+        help = "What port this server would listen to, default is 8000",
+        default_value = "8000"
     )]
     port: Option<u16>,
 }
@@ -233,11 +132,5 @@ pub fn start() {
             Err(_) => println!("unable to set db_url"),
         }
     }
-    match rocket(opt.address, opt.port) {
-        Ok(server) => {
-            println!("Launching..");
-            server.launch();
-        }
-        Err(e) => panic!("unable to initialize server: {}", e),
-    }
+    hyper_server::run(opt.address, opt.port);
 }
