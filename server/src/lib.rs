@@ -21,6 +21,7 @@ extern crate log;
 use structopt::StructOpt;
 
 pub use error::ServiceError;
+pub use hyper_server::Server;
 use intel::cache;
 use rustorm::EntityManager;
 use rustorm::Pool;
@@ -29,7 +30,7 @@ use std::sync::{Arc, Mutex};
 
 mod context;
 mod error;
-pub mod hyper_server;
+mod hyper_server;
 
 static PAGE_SIZE: u32 = 40;
 
@@ -64,10 +65,10 @@ fn get_db_url() -> Result<String, ServiceError> {
     }
 }
 
-pub fn set_db_url(new_url: String) -> Result<(), ServiceError> {
+pub fn set_db_url(new_url: &str) -> Result<(), ServiceError> {
     match DB_URL.lock() {
         Ok(mut db_url) => {
-            *db_url = Some(new_url);
+            *db_url = Some(new_url.to_string());
             Ok(())
         }
         Err(e) => Err(ServiceError::GenericError(format!("{}", e))),
@@ -127,7 +128,7 @@ pub fn start() {
     let opt = Opt::from_args();
     println!("opt: {:?}", opt);
     if let Some(db_url) = opt.db_url {
-        match set_db_url(db_url) {
+        match set_db_url(&db_url) {
             Ok(_) => println!("url is set"),
             Err(_) => println!("unable to set db_url"),
         }

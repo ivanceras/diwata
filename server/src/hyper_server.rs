@@ -65,10 +65,11 @@ impl Service for Instance {
 }
 
 impl Server {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Server {}
     }
-    fn route(
+
+    pub fn route(
         &self,
         mut path: &str,
         query: Option<&str>,
@@ -118,6 +119,7 @@ impl Server {
     }
     fn handle_test(&self, _req: Request) -> Result<(), ServiceError> {
         let db_url = &::get_db_url()?;
+        println!("test db_url: {}", db_url);
         let ret = pool::test_connection(&db_url)?;
         Ok(ret)
     }
@@ -474,7 +476,7 @@ impl Server {
     fn handle_tab_changeset(&self, req: Request) -> Box<Future<Item = Response, Error = Error>> {
         let f = req.body().concat2().map(move |chunk| {
             let body = chunk.into_iter().collect::<Vec<u8>>();
-            let body_str = String::from_utf8(body.clone()).unwrap();
+            let body_str = String::from_utf8(body).unwrap();
             let container: SaveContainer = serde_json::from_str(&body_str).unwrap();
             let result = update_tab_changeset(&container);
             create_response(result)
