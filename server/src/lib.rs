@@ -114,14 +114,14 @@ pub struct Opt {
         help = "The address the server would listen, default is 0.0.0.0",
         default_value = "0.0.0.0"
     )]
-    pub address: Option<String>,
+    pub address: String,
     #[structopt(
         short = "p",
         long = "port",
         help = "What port this server would listen to, default is 8000",
         default_value = "8000"
     )]
-    pub port: Option<u16>,
+    pub port: u16,
 }
 
 pub fn start() {
@@ -133,5 +133,5 @@ pub fn start() {
             Err(_) => println!("unable to set db_url"),
         }
     }
-    hyper_server::run(opt.address, opt.port);
+    hyper_server::run(&opt.address, opt.port);
 }

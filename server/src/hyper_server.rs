@@ -519,9 +519,7 @@ fn create_response<B: Serialize>(body: Result<B, ServiceError>) -> Response {
     }
 }
 
-pub fn run(address: Option<String>, port: Option<u16>) {
-    let ip = address.unwrap();
-    let port = port.unwrap();
+pub fn run(ip: &str, port: u16) {
     let addr = format!("{}:{}", ip, port).parse().unwrap();
     let server = Server::new();
     let instance = Instance::new(server);
