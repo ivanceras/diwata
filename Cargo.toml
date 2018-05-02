@@ -5,10 +5,10 @@ members = [
     "rustorm",
     "rustorm/codegen",
     "rustorm/dao",
-    "diwata_cli"
+    "cli"
 ]
 
 [replace]
-"rustorm_dao:0.1.0" = { path = "rustorm/dao" }
-"rustorm_codegen:0.1.1" = { path = "rustorm/codegen" }
-"rustorm:0.10.1" = { path = "rustorm" }
+"rustorm_dao:0.1.1" = { path = "rustorm/dao" }
+"rustorm_codegen:0.1.2" = { path = "rustorm/codegen" }
+"rustorm:0.10.3" = { path = "rustorm" }
