@@ -4,7 +4,8 @@ members = [
     "server",
     "rustorm",
     "rustorm/codegen",
-    "rustorm/dao"
+    "rustorm/dao",
+    "diwata_cli"
 ]
 
 [replace]

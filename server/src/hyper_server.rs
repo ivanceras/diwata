@@ -125,16 +125,7 @@ impl Server {
     }
 
     fn handle_db_url(&self, _req: Request) -> Result<String, ServiceError> {
-        match ::get_db_url_value() {
-            Ok(db_url) => {
-                if let Some(ref db_url) = db_url {
-                    Ok(db_url.to_owned())
-                } else {
-                    Err(ServiceError::NoDbUrlSpecified)
-                }
-            }
-            Err(e) => Err(e),
-        }
+        ::get_db_url()
     }
 
     fn handle_index(&self, _req: Request) -> Response {

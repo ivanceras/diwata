@@ -28,11 +28,11 @@ use rustorm::Pool;
 use rustorm::RecordManager;
 use std::sync::{Arc, Mutex};
 
-mod context;
+pub mod context;
 mod error;
 mod hyper_server;
 
-static PAGE_SIZE: u32 = 40;
+pub static PAGE_SIZE: u32 = 40;
 
 lazy_static! {
     pub static ref DB_URL: Mutex<Option<String>> = Mutex::new(None);
@@ -52,7 +52,7 @@ fn get_db_url_value() -> Result<Option<String>, ServiceError> {
     }
 }
 
-fn get_db_url() -> Result<String, ServiceError> {
+pub fn get_db_url() -> Result<String, ServiceError> {
     match get_db_url_value() {
         Ok(db_url) => {
             if let Some(ref db_url) = db_url {
@@ -75,7 +75,7 @@ pub fn set_db_url(new_url: &str) -> Result<(), ServiceError> {
     }
 }
 
-fn get_pool_em() -> Result<EntityManager, ServiceError> {
+pub fn get_pool_em() -> Result<EntityManager, ServiceError> {
     let mut pool = match POOL.lock() {
         Ok(pool) => pool,
         Err(_e) => return Err(ServiceError::PoolResourceError),
@@ -87,7 +87,7 @@ fn get_pool_em() -> Result<EntityManager, ServiceError> {
     }
 }
 
-fn get_pool_dm() -> Result<RecordManager, ServiceError> {
+pub fn get_pool_dm() -> Result<RecordManager, ServiceError> {
     let mut pool = match POOL.lock() {
         Ok(pool) => pool,
         Err(_e) => return Err(ServiceError::PoolResourceError),
@@ -101,27 +101,27 @@ fn get_pool_dm() -> Result<RecordManager, ServiceError> {
 
 #[derive(StructOpt, Debug)]
 #[structopt(name = "diwata", about = "A user friendly database interface")]
-struct Opt {
+pub struct Opt {
     #[structopt(
         short = "u",
         long = "db-url",
         help = "Database url to connect to, when set all data is exposed without login needed in the client side"
     )]
-    db_url: Option<String>,
+    pub db_url: Option<String>,
     #[structopt(
         short = "a",
         long = "address",
         help = "The address the server would listen, default is 0.0.0.0",
         default_value = "0.0.0.0"
     )]
-    address: Option<String>,
+    pub address: Option<String>,
     #[structopt(
         short = "p",
         long = "port",
         help = "What port this server would listen to, default is 8000",
         default_value = "8000"
     )]
-    port: Option<u16>,
+    pub port: Option<u16>,
 }
 
 pub fn start() {
