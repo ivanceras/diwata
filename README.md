@@ -1,6 +1,6 @@
 # Diwata 
 Diwata is a database interface for PostgreSQL with the goal of being usable, user-friendly with its basic and advanced functionality be discoverable by the user.
-Goal of diwata is to be a replacement of back-end admin without explicitly writing the code for it.[1]
+Goal of diwata is to be a replacement of back-end admin without explicitly writing the code for it.
 It is content aware, and renders records as it sees fits.
 An attempt to create back-end to end all back-ends.
 
@@ -41,13 +41,30 @@ Binary data detected as images would be rendered as such
 ### [Demo - Sakila (films)](http://web01.jcesar.clh.no:8000/web/#/window/public.film) using the sakila database example
 ### [Demo - Dota2 heroes](http://web01.jcesar.clh.no:8222/web/#/window/public.hero) using dota2 hero and abilities data
 
+
+## Quickstart
+If you have an existing postgresql database, you can quickly open it using the app by:
+```sh
+curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain nightly
+cargo install diwata_cli
+diwata_cli --db-url postgres://user:passwd@localhost:5432/dbname -p 8000 --open
+```
+You can also open sqlite database.
+Download this [sqlite sample db](https://github.com/ivanceras/sakila/blob/master/sqlite-sakila-db/sakila.db)
+You can then open it by issuing the command
+```
+diwata_cli --db-url sqlite://sakila.db  -p 80001 --open
+```
+
+## Build from source
+
 ### Needed Dependencies
 - rust nightly
 - elm v0.18 ( elm installation needed npm or yarn)
 - rsync  ( for fast syncing files over and over )
 - google-closure-compiler (optional, for release build)
 - sed (search and replace `app.js` with `app.min.js` in `index.html`
-- sakila database (for demo and testing) [2]
+- sakila database (for demo and testing) [1]
 
 ## Install Dependencies 
 ```sh
@@ -76,7 +93,7 @@ Note: You need to use the latest nightly.
 ## Specify a database ( sakila database example )
 
 ```
-cargo run -p diwata -- --dburl postgres://postgres:passwd@localhost:5432/sakila
+cargo run -p diwata_server -- --dburl postgres://postgres:passwd@localhost:5432/sakila -p 8000
 ```
 see `run.sh` for the accurate content of command
 
@@ -100,7 +117,7 @@ Using heristic method, diwata is able to infer the content of a table.
 - [X] Update records
 - [X] Insert records
 - [ ] Detail record update/insert
-- [ ] Undo update/delete records
+- [ ] Undo update/delete records (upon deletion/modification, user have a grace period to undo the changes)
 - [X] Search and filter data
 - [ ] Drag/Rearrange and resize columns
 - [X] Multi column sorting
@@ -119,9 +136,7 @@ Using heristic method, diwata is able to infer the content of a table.
 
 Notes:
 
-[1]: This has been tried before (compiere, adempiere, openbravo, salesforce) etc.
-
-[2]: You can use sakila database dump as demo database https://github.com/ivanceras/sakila
+[1]: You can use sakila database dump as demo database https://github.com/ivanceras/sakila
 
 ## Patreon:
 Please support me on [patreon](https://www.patreon.com/ivanceras), so I can dedicate more time to the development of this project
