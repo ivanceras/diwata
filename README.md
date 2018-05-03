@@ -50,7 +50,7 @@ cargo install diwata_cli
 diwata_cli --db-url postgres://user:passwd@localhost:5432/dbname -p 8000 --open
 ```
 You can also open sqlite database.
-Download this [sqlite sample db](https://github.com/ivanceras/sakila/blob/master/sqlite-sakila-db/sakila.db)
+Download this [sqlite sample db](https://github.com/ivanceras/sakila/raw/master/sqlite-sakila-db/sakila.db)
 You can then open it by issuing the command
 ```
 diwata_cli --db-url sqlite://sakila.db  -p 80001 --open
