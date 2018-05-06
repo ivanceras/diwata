@@ -38,8 +38,8 @@ Binary data detected as images would be rendered as such
 ![](https://raw.githubusercontent.com/ivanceras/ivanceras.github.io/master/diwata/image-render.gif)
 
 
-### [Demo - Sakila (films)](http://web01.jcesar.clh.no:8000/web/#/window/public.film) using the sakila database example
-### [Demo - Dota2 heroes](http://web01.jcesar.clh.no:8222/web/#/window/public.hero) using dota2 hero and abilities data
+### [Demo - Sakila (films)](http://web01.jcesar.clh.no:8000/#/window/public.film) using the sakila database example
+### [Demo - Dota2 heroes](http://web01.jcesar.clh.no:8222/#/window/public.hero) using dota2 hero and abilities data
 
 
 ## Quickstart
