@@ -16,6 +16,7 @@ use hyper::StatusCode;
 use context::Context;
 use error::ServiceError;
 use hyper::server::Http;
+use intel::data_container::RecordChangeset;
 use intel::data_container::SaveContainer;
 use intel::data_container::{Filter, Sort};
 use intel::data_modify;
@@ -109,6 +110,8 @@ impl Server {
             create_response(self.handle_db_url(req))
         } else if head == "delete" {
             return self.handle_delete(req, tail);
+        } else if head == "record_changeset" {
+            return self.handle_record_changeset(req, tail);
         } else if head == "tab_changeset" {
             return self.handle_tab_changeset(req);
         } else {
@@ -464,6 +467,22 @@ impl Server {
         Box::new(f)
     }
 
+    fn handle_record_changeset(
+        &self,
+        req: Request,
+        path: &[&str],
+    ) -> Box<Future<Item = Response, Error = Error>> {
+        let table_name = path[0].to_string();
+        let f = req.body().concat2().map(move |chunk| {
+            let body = chunk.into_iter().collect::<Vec<u8>>();
+            let body_str = String::from_utf8(body).unwrap();
+            let changeset: RecordChangeset = serde_json::from_str(&body_str).unwrap();
+            let result = update_record_changeset(&table_name, &changeset);
+            create_response(result)
+        });
+        Box::new(f)
+    }
+
     fn handle_tab_changeset(&self, req: Request) -> Box<Future<Item = Response, Error = Error>> {
         let f = req.body().concat2().map(move |chunk| {
             let body = chunk.into_iter().collect::<Vec<u8>>();
@@ -502,6 +521,25 @@ fn update_tab_changeset(container: &SaveContainer) -> Result<Rows, ServiceError>
     Ok(rows)
 }
 
+fn update_record_changeset(
+    table_name: &str,
+    changeset: &RecordChangeset,
+) -> Result<(), ServiceError> {
+    let context = Context::create()?;
+    let table_name = TableName::from(&table_name);
+    let window = window::get_window(&table_name, &context.windows);
+    match window {
+        Some(window) => {
+            let table = data_read::get_main_table(window, &context.tables);
+            assert!(table.is_some());
+            let table = table.unwrap();
+            let detail = data_modify::save_changeset(&context.dm, window, &table, changeset)?;
+            Ok(detail)
+        }
+        None => Err(ServiceError::NotFound),
+    }
+}
+
 fn create_response<B: Serialize>(body: Result<B, ServiceError>) -> Response {
     match body {
         Ok(body) => {
@@ -512,10 +550,13 @@ fn create_response<B: Serialize>(body: Result<B, ServiceError>) -> Response {
             let mut resp = Response::new().with_headers(headers).with_body(json);
             resp
         }
-        Err(e) => match e {
-            ServiceError::NotFound => Response::new().with_status(StatusCode::NotFound),
-            _ => Response::new().with_status(StatusCode::BadRequest),
-        },
+        Err(e) => {
+            eprintln!("Warning an error response: {:?}", e);
+            match e {
+                ServiceError::NotFound => Response::new().with_status(StatusCode::NotFound),
+                _ => Response::new().with_status(StatusCode::BadRequest),
+            }
+        }
     }
 }
 

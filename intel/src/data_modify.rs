@@ -2,6 +2,8 @@
 //! using UPDATE and DELETE SQL
 
 use common;
+use data_container::RecordAction;
+use data_container::RecordChangeset;
 use data_container::SaveContainer;
 use error::IntelError;
 use rustorm;
@@ -11,8 +13,12 @@ use rustorm::Record;
 use rustorm::RecordManager;
 use rustorm::Rows;
 use rustorm::Table;
+use rustorm::TableName;
 use rustorm::Value;
+use tab;
+use tab::Tab;
 use table_intel;
+use window::Window;
 
 /// delete the records with the following record_ids
 /// return the total number of records deleted
@@ -81,12 +87,90 @@ pub fn save_container(
     } else {
         Rows::empty()
     };
-    update_records_in_main_table(dm, table_for_update, rows_update)?;
+    update_records_in_table(dm, table_for_update, rows_update)?;
     Ok(inserted_rows)
 }
 
+pub fn save_changeset(
+    dm: &RecordManager,
+    window: &Window,
+    table: &Table,
+    changeset: &RecordChangeset,
+) -> Result<(), IntelError> {
+    println!("saving changeset: {:#?}", changeset);
+    let updated_record = match &changeset.action {
+        RecordAction::CreateNew => insert_record_to_table(dm, table, &changeset.record)?,
+        RecordAction::Edited => update_record_in_table(dm, table, &changeset.record)?,
+        _ => panic!("unhandled case: {:?}", changeset.action),
+    };
+    println!("updated record: {:?}", updated_record);
+    save_one_ones(
+        table,
+        &updated_record,
+        &window.one_one_tabs,
+        &changeset.one_ones,
+    )?;
+    save_has_many(
+        table,
+        &updated_record,
+        &window.has_many_tabs,
+        &changeset.has_many,
+    )?;
+    save_indirect(
+        table,
+        &updated_record,
+        &window.indirect_tabs,
+        &changeset.indirect,
+    )?;
+    Ok(())
+}
+
+fn save_one_ones(
+    main_table: &Table,
+    record: &Record,
+    one_one_tabs: &Vec<Tab>,
+    one_one_records: &Vec<(TableName, Option<Record>)>,
+) -> Result<(), IntelError> {
+    println!("saving one ones: {:?}", one_one_records);
+    for (one_one_table, one_one_record) in one_one_records {
+        if let Some(one_one_tab) = tab::find_tab(one_one_tabs, one_one_table) {
+            save_one_one_table(main_table, record, one_one_tab, one_one_record);
+        }
+    }
+    Ok(())
+}
+
+fn save_one_one_table(
+    main_Table: &Table,
+    record: &Record,
+    one_one_tab: &Tab,
+    one_one_record: &Option<Record>,
+) {
+    println!("save one_one_record: {:#?}", one_one_record);
+}
+
+fn save_has_many(
+    main_table: &Table,
+    record: &Record,
+    has_many_tabs: &Vec<Tab>,
+    has_many_records: &Vec<(TableName, RecordAction, Rows)>,
+) -> Result<(), IntelError> {
+    println!("saving has_many : {:?}", has_many_records);
+    Ok(())
+}
+
+fn save_indirect(
+    main_table: &Table,
+    record: &Record,
+    indirect_tabs: &Vec<(TableName, Tab)>,
+    indirect_records: &Vec<(TableName, TableName, RecordAction, Rows)>,
+) -> Result<(), IntelError> {
+    println!("saving indirect: {:?}", indirect_records);
+    Ok(())
+}
+
 /// triggered by the main tab
-fn update_records_in_main_table(
+fn update_records_in_table(
     dm: &RecordManager,
     main_table: &Table,
     rows: &Rows,
@@ -96,14 +180,14 @@ fn update_records_in_main_table(
         println!("dao: {:?}", dao);
         let record = Record::from(&dao);
         println!("record: {:?}", record);
-        let updated_record = update_record_in_main_table(dm, main_table, &record)?;
+        let updated_record = update_record_in_table(dm, main_table, &record)?;
         println!("updated record: {:?}", updated_record);
         records.push(updated_record);
     }
     Ok(records)
 }
 
-fn update_record_in_main_table(
+fn update_record_in_table(
     dm: &RecordManager,
     main_table: &Table,
     record: &Record,
@@ -159,10 +243,14 @@ fn insert_rows_to_table(
     let columns = &table.get_non_primary_columns();
     sql += "(";
     for (i, col) in columns.iter().enumerate() {
-        if i > 0 {
-            sql += ", ";
+        if are_all_nil(&col.name.name, rows) && col.is_not_null() && col.has_generated_default() {
+            println!("skipping column: {}", col.name.name);
+        } else {
+            if i > 0 {
+                sql += ", ";
+            }
+            sql += &format!("{} ", col.name.name);
         }
-        sql += &format!("{} ", col.name.name);
     }
     sql += ") ";
     sql += "VALUES (";
@@ -190,8 +278,21 @@ fn insert_rows_to_table(
     Ok(rows)
 }
 
+/// check if all values in these columns are nill,
+/// so we can skip it when column is skippable
+fn are_all_nil(column: &str, rows: &Rows) -> bool {
+    for dao in rows.iter() {
+        if let Some(Value::Nil) = dao.get_value(column) {
+            ;
+        } else {
+            return false;
+        }
+    }
+    true
+}
+
 /// insert rows 1 by 1
-fn insert_records_to_main_table1(
+fn insert_records_to_table1(
     dm: &RecordManager,
     main_table: &Table,
     rows: &Rows,
@@ -199,13 +300,13 @@ fn insert_records_to_main_table1(
     let mut records = vec![];
     for dao in rows.iter() {
         let record = Record::from(&dao);
-        let updated_record = insert_record_to_main_table(dm, main_table, &record)?;
+        let updated_record = insert_record_to_table(dm, main_table, &record)?;
         records.push(updated_record);
     }
     Ok(records)
 }
 
-fn insert_record_to_main_table(
+fn insert_record_to_table(
     dm: &RecordManager,
     main_table: &Table,
     record: &Record,
@@ -216,10 +317,17 @@ fn insert_record_to_main_table(
     let columns = &main_table.get_non_primary_columns();
     sql += "(";
     for (i, col) in columns.iter().enumerate() {
-        if i > 0 {
-            sql += ", ";
+        let value = record.get_value(&col.name.name);
+        assert!(value.is_some());
+        let value = value.unwrap();
+        if value == Value::Nil && col.is_not_null() && col.has_generated_default() {
+            println!("skipping column: {}", col.name.name);
+        } else {
+            if i > 0 {
+                sql += ", ";
+            }
+            sql += &format!("{} ", col.name.name);
         }
-        sql += &format!("{} ", col.name.name);
     }
     sql += ") ";
     sql += "VALUES (";
