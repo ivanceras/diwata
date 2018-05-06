@@ -4,6 +4,7 @@
 use common;
 use data_container::SaveContainer;
 use error::IntelError;
+use rustorm;
 use rustorm::ColumnName;
 use rustorm::DbError;
 use rustorm::Record;
@@ -72,6 +73,7 @@ pub fn save_container(
     println!("container: {:#?}", container);
     let &(ref table_name_for_insert, ref rows_insert) = &container.for_insert;
     let &(ref table_name_for_update, ref rows_update) = &container.for_update;
+    println!("rows_update: {:?}", rows_update);
     let table_for_insert = table_intel::get_table(table_name_for_insert, tables).unwrap();
     let table_for_update = table_intel::get_table(table_name_for_update, tables).unwrap();
     let inserted_rows = if rows_insert.iter().count() > 0 {
@@ -91,8 +93,11 @@ fn update_records_in_main_table(
 ) -> Result<Vec<Record>, IntelError> {
     let mut records = vec![];
     for dao in rows.iter() {
+        println!("dao: {:?}", dao);
         let record = Record::from(&dao);
+        println!("record: {:?}", record);
         let updated_record = update_record_in_main_table(dm, main_table, &record)?;
+        println!("updated record: {:?}", updated_record);
         records.push(updated_record);
     }
     Ok(records)
@@ -116,22 +121,24 @@ fn update_record_in_main_table(
         let value = record.get_value(&col.name.name);
         assert!(value.is_some());
         let value = value.unwrap();
-        params.push(value);
+        let casted_value = rustorm::common::cast_type(&value, &col.get_sql_type());
+        params.push(casted_value);
     }
     sql += " ";
     let non_pk_columns_len = columns.len();
-    let primary_columns = &main_table.get_primary_column_names();
+    let primary_columns = &main_table.get_primary_columns();
     for (i, pk) in primary_columns.iter().enumerate() {
         if i == 0 {
             sql += "WHERE ";
         } else {
             sql += "AND ";
         }
-        sql += &format!("{} = ${} ", pk.name, non_pk_columns_len + i + 1);
-        let pk_value = record.get_value(&pk.name);
+        sql += &format!("{} = ${} ", pk.name.name, non_pk_columns_len + i + 1);
+        let pk_value = record.get_value(&pk.name.name);
         assert!(pk_value.is_some());
         let pk_value = pk_value.unwrap();
-        params.push(pk_value);
+        let casted_pk_value = rustorm::common::cast_type(&pk_value, &pk.get_sql_type());
+        params.push(casted_pk_value);
     }
     sql += "RETURNING *";
 
@@ -161,14 +168,19 @@ fn insert_rows_to_table(
     sql += "VALUES (";
     for dao in rows.iter() {
         for (i, col) in columns.iter().enumerate() {
-            if i > 0 {
-                sql += ", ";
-            }
-            sql += &format!("${} ", i + 1);
             let value = dao.get_value(&col.name.name);
             assert!(value.is_some());
             let value = value.unwrap();
-            params.push(value.clone());
+            if value == &Value::Nil && col.is_not_null() && col.has_generated_default() {
+                println!("skipping column: {}", col.name.name);
+            } else {
+                if i > 0 {
+                    sql += ", ";
+                }
+                sql += &format!("${} ", i + 1);
+                let casted_value = rustorm::common::cast_type(&value, &col.get_sql_type());
+                params.push(casted_value);
+            }
         }
     }
     sql += ") RETURNING *";
@@ -212,14 +224,19 @@ fn insert_record_to_main_table(
     sql += ") ";
     sql += "VALUES (";
     for (i, col) in columns.iter().enumerate() {
-        if i > 0 {
-            sql += ", ";
-        }
-        sql += &format!("${} ", i + 1);
         let value = record.get_value(&col.name.name);
         assert!(value.is_some());
         let value = value.unwrap();
-        params.push(value);
+        if value == Value::Nil && col.is_not_null() && col.has_generated_default() {
+            println!("skipping column: {}", col.name.name);
+        } else {
+            if i > 0 {
+                sql += ", ";
+            }
+            sql += &format!("${} ", i + 1);
+            let casted_value = rustorm::common::cast_type(&value, &col.get_sql_type());
+            params.push(casted_value);
+        }
     }
     sql += ") RETURNING *";
     println!("sql: {}", sql);
