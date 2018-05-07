@@ -122,6 +122,7 @@ pub fn get_maintable_data(
 
 /// get the detail of the selected record data
 pub fn get_selected_record_detail(
+    em: &EntityManager,
     dm: &RecordManager,
     tables: &Vec<Table>,
     window: &Window,
@@ -162,8 +163,15 @@ pub fn get_selected_record_detail(
             let mut one_one_records: Vec<(TableName, Option<Record>)> =
                 Vec::with_capacity(window.one_one_tabs.iter().count());
             for one_one_tab in window.one_one_tabs.iter() {
-                let one_record =
-                    get_one_one_record(dm, tables, main_table, one_one_tab, &record_id, page_size)?;
+                let one_record = get_one_one_record(
+                    em,
+                    dm,
+                    tables,
+                    main_table,
+                    one_one_tab,
+                    &record_id,
+                    page_size,
+                )?;
                 one_one_records.push((one_one_tab.table_name.clone(), one_record))
             }
             let mut has_many_records: Vec<(TableName, Rows)> =
@@ -171,6 +179,7 @@ pub fn get_selected_record_detail(
             for has_many_tab in window.has_many_tabs.iter() {
                 println!("Getting has many");
                 let many_record = get_has_many_records(
+                    em,
                     dm,
                     tables,
                     main_table,
@@ -188,6 +197,7 @@ pub fn get_selected_record_detail(
                 Vec::with_capacity(window.indirect_tabs.iter().count());
             for &(ref linker_table, ref indirect_tab) in window.indirect_tabs.iter() {
                 let ind_records = get_indirect_records(
+                    em,
                     dm,
                     tables,
                     main_table,
@@ -216,6 +226,7 @@ pub fn get_selected_record_detail(
 }
 
 fn get_one_one_record(
+    em: &EntityManager,
     dm: &RecordManager,
     tables: &Vec<Table>,
     main_table: &Table,
@@ -260,6 +271,7 @@ fn get_one_one_record(
 
 /// TODO: add filter and sort
 pub fn get_has_many_records_service(
+    em: &EntityManager,
     dm: &RecordManager,
     tables: &Vec<Table>,
     main_table: &Table,
@@ -272,6 +284,7 @@ pub fn get_has_many_records_service(
     let primary_columns = main_table.get_primary_column_names();
     let record_id = common::extract_record_id(record_id, &pk_types, &primary_columns)?;
     let rows = get_has_many_records(
+        em,
         dm,
         tables,
         main_table,
@@ -284,6 +297,7 @@ pub fn get_has_many_records_service(
 }
 
 fn get_has_many_records(
+    em: &EntityManager,
     dm: &RecordManager,
     tables: &Vec<Table>,
     main_table: &Table,
@@ -329,11 +343,14 @@ fn get_has_many_records(
     }
 
     query.set_page(page, page_size);
-    query.collect_rows(dm)
+    let mut rows = query.collect_rows(dm)?;
+    rows.count = Some(get_total_records(em, &has_many_table.name)?);
+    Ok(rows)
 }
 
 /// TODO: add filter and sort
 pub fn get_indirect_records_service(
+    em: &EntityManager,
     dm: &RecordManager,
     tables: &Vec<Table>,
     main_table: &Table,
@@ -347,6 +364,7 @@ pub fn get_indirect_records_service(
     let primary_columns = main_table.get_primary_column_names();
     let record_id = common::extract_record_id(record_id, &pk_types, &primary_columns)?;
     let rows = get_indirect_records(
+        em,
         dm,
         tables,
         main_table,
@@ -360,6 +378,7 @@ pub fn get_indirect_records_service(
 }
 
 fn get_indirect_records(
+    em: &EntityManager,
     dm: &RecordManager,
     tables: &Vec<Table>,
     main_table: &Table,
@@ -431,6 +450,7 @@ fn get_indirect_records(
 /// that has a dropdown, fetch the first page
 /// of the dropdown
 pub fn get_all_lookup_for_window(
+    em: &EntityManager,
     dm: &RecordManager,
     tables: &Vec<Table>,
     window: &Window,
@@ -464,6 +484,7 @@ pub fn get_all_lookup_for_window(
     let mut lookup_data = vec![];
     for (lookup_table_name, display_columns) in lookup_tables {
         let rows = get_lookup_data_of_table_with_display_columns(
+            em,
             dm,
             tables,
             lookup_table_name,
@@ -498,6 +519,7 @@ fn get_tab_lookup_tablenames(tab: &Tab) -> Vec<(&TableName, Vec<&ColumnName>)> {
 }
 
 pub fn get_lookup_data_of_tab(
+    em: &EntityManager,
     dm: &RecordManager,
     tables: &Vec<Table>,
     tab: &Tab,
@@ -507,6 +529,7 @@ pub fn get_lookup_data_of_tab(
     let table_name = &tab.table_name;
     let display_columns = tab.get_display_columns();
     get_lookup_data_of_table_with_display_columns(
+        em,
         dm,
         tables,
         table_name,
@@ -522,6 +545,7 @@ pub fn get_lookup_data_of_tab(
 /// ensure that the value is included in the first page
 /// this table must have it's own window too
 pub fn get_lookup_data_of_table_with_display_columns(
+    em: &EntityManager,
     dm: &RecordManager,
     tables: &Vec<Table>,
     table_name: &TableName,

@@ -39,6 +39,8 @@ impl Query {
         self.append(&format!("SELECT {}.*", table_name.name));
     }
 
+    /// add the data types of table columns that are not part of the main tables
+    /// ie. the data type of the look up tables
     pub fn add_table_datatypes(&mut self, table: &Table) {
         for column in table.columns.iter() {
             self.column_datatypes

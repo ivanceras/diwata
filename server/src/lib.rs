@@ -21,7 +21,7 @@ extern crate log;
 use structopt::StructOpt;
 
 pub use error::ServiceError;
-pub use hyper_server::Server;
+pub use handler::Server;
 use intel::cache;
 use rustorm::EntityManager;
 use rustorm::Pool;
@@ -30,7 +30,7 @@ use std::sync::{Arc, Mutex};
 
 pub mod context;
 mod error;
-mod hyper_server;
+pub mod handler;
 
 pub static PAGE_SIZE: u32 = 40;
 
@@ -133,5 +133,5 @@ pub fn start() {
             Err(_) => println!("unable to set db_url"),
         }
     }
-    hyper_server::run(&opt.address, opt.port);
+    handler::run(&opt.address, opt.port);
 }
