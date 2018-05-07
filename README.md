@@ -39,6 +39,7 @@ Binary data detected as images would be rendered as such
 
 
 ### [Demo - Sakila (films)](http://web01.jcesar.clh.no:8000/#/window/public.film) using the sakila database example
+### [Demo - airlines (russian)](http://web01.jcesar.clh.no:8001/#/window/bookings.airports_data) russian airlines booking database
 ### [Demo - Dota2 heroes](http://web01.jcesar.clh.no:8222/#/window/public.hero) using dota2 hero and abilities data
 
 
