@@ -14,11 +14,8 @@ extern crate structopt_derive;
 extern crate futures;
 extern crate hyper;
 extern crate structopt;
-
 #[macro_use]
 extern crate log;
-
-use structopt::StructOpt;
 
 pub use error::ServiceError;
 pub use handler::Server;
@@ -27,6 +24,7 @@ use rustorm::EntityManager;
 use rustorm::Pool;
 use rustorm::RecordManager;
 use std::sync::{Arc, Mutex};
+use structopt::StructOpt;
 
 pub mod context;
 mod error;
