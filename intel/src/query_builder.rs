@@ -81,8 +81,11 @@ impl Query {
         }
     }
 
-    // left join the table that is looked up by the fields, so as to be able to retrieve the
-    // identifiable column values
+    /// left join the table that is looked up by the fields, so as to be able to retrieve the
+    /// identifiable column values
+    /// BUG:
+    /// TODO: the left join order of pk, and fk is messed up, use the airlines_ru
+    /// bookings.boarding_pass to reveal the bug
     pub fn left_join_display_source(&mut self, tab: &Tab, tables: &Vec<Table>) {
         for field in &tab.fields {
             let dropdown_info = field.get_dropdown_info();
@@ -150,11 +153,15 @@ impl Query {
     }
 
     pub fn collect_rows(&self, dm: &RecordManager) -> Result<Rows, DbError> {
+        println!("SQL: {}", self.sql);
+        println!("params: {:?}", self.params);
         let result: Result<Rows, DbError> = dm.execute_sql_with_return(&self.sql, &self.params);
         result.map(|rows| common::cast_rows(rows, &self.column_datatypes))
     }
 
     pub fn collect_maybe_record(&self, dm: &RecordManager) -> Result<Option<Record>, DbError> {
+        println!("SQL: {}", self.sql);
+        println!("params: {:?}", self.params);
         let record = dm.execute_sql_with_maybe_one_return(&self.sql, &self.params);
         record.map(|r| r.map(|o| common::cast_record(o, &self.column_datatypes)))
     }
