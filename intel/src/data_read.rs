@@ -438,7 +438,8 @@ fn get_indirect_records(
             fc.name,
             i + 1
         ));
-        let required_type: &SqlType = linker_pk_data_types[i];
+        let fc_column = linker_table.get_column(&fc).expect("column should exist");
+        let required_type: &SqlType = &fc_column.get_sql_type();
         let rc = &linker_fc_referring_columns[i];
         common::find_value(rc, record_id, required_type).map(|v| query.add_param(v.clone()));
     }

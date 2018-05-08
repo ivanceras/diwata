@@ -206,16 +206,13 @@ fn handle_window(_req: Request, tail: &[&str]) -> Result<impl Serialize, Service
 /// /data/<table_name>/page/<page>/filter/<filter>/sort/<sort>/
 ///
 fn handle_data(_req: Request, path: &[&str]) -> Result<impl Serialize, ServiceError> {
-    println!("path:{:?}", path);
     let table_name = path[0];
     let tail = &path[1..];
-    println!("tail {:?}", tail);
     let key_value: Vec<(&str, &str)> = tail.chunks(2).map(|chunk| (chunk[0], chunk[1])).collect();
     let mut page = 1;
     let mut filter_str = None;
     let mut sort_str = None;
     for (k, v) in key_value {
-        println!("{} = {}", k, v);
         if k == "page" {
             page = v.parse().unwrap();
         } else if k == "filter" {
@@ -290,7 +287,6 @@ fn handle_has_many(_req: Request, path: &[&str]) -> Result<impl Serialize, Servi
     let mut filter_str = None;
     let mut sort_str = None;
     for (k, v) in key_value {
-        println!("{} = {}", k, v);
         if k == "page" {
             page = v.parse().unwrap();
         } else if k == "filter" {
@@ -347,7 +343,6 @@ fn handle_indirect(_req: Request, path: &[&str]) -> Result<impl Serialize, Servi
     let mut filter_str = None;
     let mut sort_str = None;
     for (k, v) in key_value {
-        println!("{} = {}", k, v);
         if k == "page" {
             page = v.parse().unwrap();
         } else if k == "filter" {
@@ -402,7 +397,6 @@ fn handle_indirect(_req: Request, path: &[&str]) -> Result<impl Serialize, Servi
 /// When the user scrolls to the bottom of the dropdown, a http request is done to retrieve the
 /// next page. All other lookup that points to the same table is also updated
 fn handle_lookup(_req: Request, path: &[&str]) -> Result<impl Serialize, ServiceError> {
-    println!("path:{:?}", path);
     let table_name = path[0];
     let page: u32 = path[1].parse().unwrap();
     let context = Context::create()?;
@@ -537,7 +531,6 @@ fn create_response<B: Serialize>(body: Result<B, ServiceError>) -> Response {
     match body {
         Ok(body) => {
             let json = serde_json::to_string(&body).unwrap();
-            println!("json:{}", json);
             let mut headers = Headers::new();
             headers.set(ContentType::json());
             let mut resp = Response::new().with_headers(headers).with_body(json);
