@@ -50,7 +50,7 @@ pub fn cast_record(record: Record, column_datatypes: &BTreeMap<String, SqlType>)
         let value = value.unwrap();
         if let Some(sql_type) = sql_type {
             let casted = common::cast_type(&value, sql_type);
-            new_rec.insert_value(column, casted);
+            new_rec.insert_value(&column, casted);
         }
     }
     new_rec

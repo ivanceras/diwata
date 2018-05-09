@@ -520,7 +520,13 @@ fn update_record_changeset(
             let table = data_read::get_main_table(window, &context.tables);
             assert!(table.is_some());
             let table = table.unwrap();
-            let detail = data_modify::save_changeset(&context.dm, window, &table, changeset)?;
+            let detail = data_modify::save_changeset(
+                &context.dm,
+                &context.tables,
+                window,
+                &table,
+                changeset,
+            )?;
             Ok(detail)
         }
         None => Err(ServiceError::NotFound),
@@ -537,7 +543,7 @@ fn create_response<B: Serialize>(body: Result<B, ServiceError>) -> Response {
             resp
         }
         Err(e) => {
-            eprintln!("Warning an error response: {:?}", e);
+            eprintln!("\n\nWarning an error response: {:?}", e);
             match e {
                 ServiceError::NotFound => Response::new().with_status(StatusCode::NotFound),
                 _ => Response::new().with_status(StatusCode::BadRequest),

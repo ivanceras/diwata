@@ -93,6 +93,7 @@ pub fn save_container(
 
 pub fn save_changeset(
     dm: &RecordManager,
+    tables: &Vec<Table>,
     window: &Window,
     table: &Table,
     changeset: &RecordChangeset,
@@ -105,18 +106,24 @@ pub fn save_changeset(
     };
     println!("updated record: {:?}", updated_record);
     save_one_ones(
+        dm,
+        tables,
         table,
         &updated_record,
         &window.one_one_tabs,
         &changeset.one_ones,
     )?;
     save_has_many(
+        dm,
+        tables,
         table,
         &updated_record,
         &window.has_many_tabs,
         &changeset.has_many,
     )?;
     save_indirect(
+        dm,
+        tables,
         table,
         &updated_record,
         &window.indirect_tabs,
@@ -126,40 +133,107 @@ pub fn save_changeset(
 }
 
 fn save_one_ones(
+    dm: &RecordManager,
+    tables: &Vec<Table>,
     main_table: &Table,
-    record: &Record,
+    main_record: &Record,
     one_one_tabs: &Vec<Tab>,
     one_one_records: &Vec<(TableName, Option<Record>)>,
 ) -> Result<(), IntelError> {
     println!("saving one ones: {:?}", one_one_records);
-    for (one_one_table, one_one_record) in one_one_records {
-        if let Some(one_one_tab) = tab::find_tab(one_one_tabs, one_one_table) {
-            save_one_one_table(main_table, record, one_one_tab, one_one_record);
+    for (one_one_table_name, one_one_record) in one_one_records {
+        if let Some(one_one_record) = one_one_record {
+            //TODO: verify that the one_one_table_name belongs to the one_one_tabs
+            if let Some(one_one_table) = table_intel::get_table(one_one_table_name, tables) {
+                save_one_one_table(
+                    dm,
+                    tables,
+                    main_table,
+                    main_record,
+                    one_one_table,
+                    one_one_record,
+                )?;
+            }
         }
     }
     Ok(())
 }
 
 fn save_one_one_table(
-    main_Table: &Table,
-    record: &Record,
-    one_one_tab: &Tab,
-    one_one_record: &Option<Record>,
-) {
+    dm: &RecordManager,
+    tables: &Vec<Table>,
+    main_table: &Table,
+    main_record: &Record,
+    one_one_table: &Table,
+    one_one_record: &Record,
+) -> Result<Record, DbError> {
     println!("save one_one_record: {:#?}", one_one_record);
+    upsert_one_one_record_to_table(dm, main_table, main_record, one_one_table, one_one_record)
 }
 
 fn save_has_many(
+    dm: &RecordManager,
+    tables: &Vec<Table>,
     main_table: &Table,
-    record: &Record,
+    main_record: &Record,
     has_many_tabs: &Vec<Tab>,
     has_many_records: &Vec<(TableName, RecordAction, Rows)>,
 ) -> Result<(), IntelError> {
     println!("saving has_many : {:?}", has_many_records);
+    for (has_many_table_name, record_action, has_many_rows) in has_many_records {
+        let has_many_tab = tab::find_tab(has_many_tabs, has_many_table_name)
+            .expect("table should belong to the tabs");
+        let has_many_table =
+            table_intel::get_table(has_many_table_name, tables).expect("table should exist");
+        save_has_many_table(
+            dm,
+            tables,
+            main_table,
+            main_record,
+            has_many_table,
+            record_action,
+            &has_many_rows,
+        )?;
+    }
+    Ok(())
+}
+
+fn save_has_many_table(
+    dm: &RecordManager,
+    tables: &Vec<Table>,
+    main_table: &Table,
+    main_record: &Record,
+    has_many_table: &Table,
+    record_action: &RecordAction,
+    has_many_rows: &Rows,
+) -> Result<(), IntelError> {
+    println!("record action: {:?}", record_action);
+    match record_action {
+        RecordAction::Unlink => {
+            println!("UnLink.. deleting records");
+            delete_from_table(dm, has_many_table, has_many_rows)?;
+        }
+        RecordAction::LinkNew => {
+            println!("LinkNew... adding records");
+            insert_rows_to_table(dm, has_many_table, has_many_rows)?;
+        }
+        RecordAction::Edited => {
+            println!("Editing in has many is ok?");
+            update_records_in_table(dm, has_many_table, has_many_rows)?;
+        }
+        _ => panic!("unexpected record action: {:?} in has_many", record_action),
+    }
+    Ok(())
+}
+
+fn delete_from_table(dm: &RecordManager, table: &Table, rows: &Rows) -> Result<(), IntelError> {
+    println!("delete_from_table : {:#?}", rows);
     Ok(())
 }
 
 fn save_indirect(
+    dm: &RecordManager,
+    tables: &Vec<Table>,
     main_table: &Table,
     record: &Record,
     indirect_tabs: &Vec<(TableName, Tab)>,
@@ -265,7 +339,7 @@ fn insert_rows_to_table(
                 if i > 0 {
                     sql += ", ";
                 }
-                sql += &format!("${} ", i + 1);
+                sql += &format!("${} ", params.len() + 1);
                 let casted_value = rustorm::common::cast_type(&value, &col.get_sql_type());
                 params.push(casted_value);
             }
@@ -347,6 +421,120 @@ fn insert_record_to_table(
         }
     }
     sql += ") RETURNING *";
+    println!("sql: {}", sql);
+    println!("params: {:?}", params);
+    dm.execute_sql_with_one_return(&sql, &params)
+}
+
+/// Warning: This only works for postgresql 9.5 and up
+/// TODO: make the database trait tell which version is in used
+/// use appropriate query for depending on which features are supported
+fn upsert_one_one_record_to_table(
+    dm: &RecordManager,
+    main_table: &Table,
+    main_record: &Record,
+    one_one_table: &Table,
+    one_one_record: &Record,
+) -> Result<Record, DbError> {
+    let local_referred_pair =
+        one_one_table.get_local_foreign_columns_pair_to_table(&main_table.name);
+
+    let mut one_one_record = one_one_record.clone();
+
+    for (one_one_pk, main_pk_name) in local_referred_pair.iter() {
+        let main_pk_value = main_record
+            .get_value(&main_pk_name.name)
+            .expect("should have value");
+        one_one_record.insert_value(&one_one_pk.name, main_pk_value);
+    }
+
+    let one_one_table_name = &one_one_table.name;
+    let mut params = vec![];
+    let mut sql = format!("INSERT INTO {} ", one_one_table_name.complete_name());
+    let one_one_columns = &one_one_table.columns;
+    sql += "(";
+
+    for (i, one_col) in one_one_columns.iter().enumerate() {
+        let value = one_one_record.get_value(&one_col.name.name);
+        assert!(value.is_some());
+        let value = value.unwrap();
+        if value == Value::Nil && one_col.is_not_null() && one_col.has_generated_default() {
+            println!("skipping column: {}", one_col.name.name);
+        } else {
+            if i > 0 {
+                sql += ", ";
+            }
+            sql += &format!("{} ", one_col.name.name);
+        }
+    }
+    sql += ") ";
+    sql += "VALUES (";
+    let one_one_columns_len = one_one_columns.len();
+
+    for (i, one_col) in one_one_columns.iter().enumerate() {
+        let value = one_one_record.get_value(&one_col.name.name);
+        assert!(value.is_some());
+        let value = value.unwrap();
+        if value == Value::Nil && one_col.is_not_null() && one_col.has_generated_default() {
+            println!("skipping column: {}", one_col.name.name);
+        } else {
+            if i > 0 {
+                sql += ", ";
+            }
+            sql += &format!("${} ", params.len() + 1);
+            let casted_value = rustorm::common::cast_type(&value, &one_col.get_sql_type());
+            params.push(casted_value);
+        }
+    }
+    sql += ") ";
+    let one_one_primary_columns = &one_one_table.get_primary_columns();
+    sql += "ON CONFLICT (";
+
+    for (i, one_one_pk) in one_one_primary_columns.iter().enumerate() {
+        if i == 0 {
+            ;
+        } else {
+            sql += ", ";
+        }
+        sql += &format!("{} ", one_one_pk.name.name);
+    }
+    sql += ") ";
+    sql += "DO UPDATE ";
+    sql += "SET ";
+
+    for (i, one_col) in one_one_columns.iter().enumerate() {
+        if i > 0 {
+            sql += ", ";
+        }
+        sql += &format!("{} = ${}", one_col.name.name, params.len() + 1);
+        let value = one_one_record
+            .get_value(&one_col.name.name)
+            .expect("must have value");
+        let casted_value = rustorm::common::cast_type(&value, &one_col.get_sql_type());
+        params.push(casted_value);
+    }
+    sql += " ";
+
+    for (i, (one_one_pk, main_pk_name)) in local_referred_pair.iter().enumerate() {
+        if i == 0 {
+            sql += "WHERE ";
+        } else {
+            sql += "AND ";
+        }
+        sql += &format!(
+            "{}.{} = ${} ",
+            one_one_table.name.name,
+            one_one_pk.name,
+            params.len() + 1
+        );
+        let main_pk = main_table.get_column(main_pk_name).expect("should exist");
+        let pk_value = main_record.get_value(&main_pk.name.name);
+        assert!(pk_value.is_some());
+        let pk_value = pk_value.unwrap();
+        let casted_pk_value = rustorm::common::cast_type(&pk_value, &main_pk.get_sql_type());
+        params.push(casted_pk_value);
+    }
+    sql += "RETURNING *";
     println!("sql: {}", sql);
     println!("params: {:?}", params);
     dm.execute_sql_with_one_return(&sql, &params)

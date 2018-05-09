@@ -17,8 +17,8 @@ pub enum RecordAction {
     Unlink,
     LinkExisting,
     LinkNew,
-    Edited,
-    CreateNew,
+    Edited,    // only used in the main record
+    CreateNew, // only used in the main record
 }
 
 #[derive(Debug, Deserialize, Serialize)]
