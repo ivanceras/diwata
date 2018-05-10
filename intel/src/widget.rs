@@ -8,6 +8,8 @@ use tab::Tab;
 #[derive(Debug, Serialize, Clone)]
 pub enum Widget {
     Textbox,
+    IntegerTextbox,
+    DecimalTextbox,
     UuidTextbox,
     Password,
     TagSelection,
@@ -136,6 +138,10 @@ impl ControlWidget {
                 Widget::DatePicker
             } else if *sql_type == SqlType::Uuid {
                 Widget::UuidTextbox
+            } else if sql_type.is_integer_type() {
+                Widget::IntegerTextbox
+            } else if sql_type.is_decimal_type() {
+                Widget::DecimalTextbox
             } else if width > 100 {
                 Widget::MultilineText
             } else {
