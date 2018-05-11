@@ -19,21 +19,24 @@ futures = "0.1.14"
 
 
 [dependencies.diwata_intel]
-path = "../intel"
-version = "0.1"
+version = "0.1.0"
 
 [dependencies.rustorm]
-#path = "../rustorm"
-version = "0.10"
+version = "0.10.3"
 features = ["with-postgres", "with-sqlite"]
 
 [dependencies.rustorm_codegen]
-#path = "../rustorm/codegen"
-version = "0.1"
+version = "0.1.2"
 
 [dependencies.rustorm_dao]
-#path = "../rustorm/dao"
-version = "0.1"
+version = "0.1.1"
+
+[replace]
+"rustorm_dao:0.1.1" = { path = "../rustorm/dao" }
+"rustorm_codegen:0.1.2" = { path = "../rustorm/codegen" }
+"rustorm:0.10.3" = { path = "../rustorm" }
+"diwata_intel:0.1.0" = { path = "../intel" }
+
 
 
 [package.metadata.deb]
