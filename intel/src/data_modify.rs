@@ -75,20 +75,18 @@ pub fn save_container(
     dm: &RecordManager,
     tables: &Vec<Table>,
     container: &SaveContainer,
-) -> Result<Rows, IntelError> {
+) -> Result<(), IntelError> {
     println!("container: {:#?}", container);
     let &(ref table_name_for_insert, ref rows_insert) = &container.for_insert;
     let &(ref table_name_for_update, ref rows_update) = &container.for_update;
     println!("rows_update: {:?}", rows_update);
     let table_for_insert = table_intel::get_table(table_name_for_insert, tables).unwrap();
     let table_for_update = table_intel::get_table(table_name_for_update, tables).unwrap();
-    let inserted_rows = if rows_insert.iter().count() > 0 {
-        insert_rows_to_table(dm, table_for_insert, rows_insert)?
-    } else {
-        Rows::empty()
-    };
+    if rows_insert.iter().count() > 0 {
+        insert_rows_to_table(dm, table_for_insert, rows_insert)?;
+    }
     update_records_in_table(dm, table_for_update, rows_update)?;
-    Ok(inserted_rows)
+    Ok(())
 }
 
 pub fn save_changeset(
@@ -215,7 +213,9 @@ fn save_has_many_table(
         }
         RecordAction::LinkNew => {
             println!("LinkNew... adding records");
-            insert_rows_to_table(dm, has_many_table, has_many_rows)?;
+            if has_many_rows.iter().count() > 0 {
+                insert_rows_to_table(dm, has_many_table, has_many_rows)?;
+            }
         }
         RecordAction::Edited => {
             println!("Editing in has many is ok?");
@@ -228,6 +228,33 @@ fn save_has_many_table(
 
 fn delete_from_table(dm: &RecordManager, table: &Table, rows: &Rows) -> Result<(), IntelError> {
     println!("delete_from_table : {:#?}", rows);
+    for dao in rows.iter() {
+        let record = Record::from(&dao);
+        delete_from_record_from_table(dm, table, &record)?;
+    }
+    Ok(())
+}
+
+fn delete_from_record_from_table(
+    dm: &RecordManager,
+    table: &Table,
+    record: &Record,
+) -> Result<(), IntelError> {
+    let mut params = vec![];
+    let mut sql = String::from("DELETE FROM ");
+    sql += &format!("{} ", table.complete_name());
+    sql += "WHERE ";
+    let pk = table.get_primary_column_names();
+    for (i, col) in pk.iter().enumerate() {
+        let pk_value = record
+            .get_value(&col.name)
+            .expect("must have primary column values");
+        sql += &format!("{} = ${}", col.name, i + 1);
+        params.push(pk_value);
+    }
+    println!("sql: {}", sql);
+    println!("params: {:?}", params);
+    dm.execute_sql_with_return(&sql, &params)?;
     Ok(())
 }
 
@@ -235,11 +262,114 @@ fn save_indirect(
     dm: &RecordManager,
     tables: &Vec<Table>,
     main_table: &Table,
-    record: &Record,
+    main_record: &Record,
     indirect_tabs: &Vec<(TableName, Tab)>,
     indirect_records: &Vec<(TableName, TableName, RecordAction, Rows)>,
 ) -> Result<(), IntelError> {
     println!("saving indirect: {:?}", indirect_records);
+    for (indirect_tablename, via_tablename, record_action, rows) in indirect_records {
+        let indirect_table = table_intel::get_table(indirect_tablename, tables)
+            .expect("indirect table should exist");
+        let linker_table =
+            table_intel::get_table(via_tablename, tables).expect("via table should exists");
+        match record_action {
+            RecordAction::Unlink => {
+                println!("deleting indirect_records");
+                unlink_from_indirect_table(
+                    dm,
+                    tables,
+                    main_table,
+                    main_record,
+                    indirect_table,
+                    linker_table,
+                    rows,
+                );
+            }
+            RecordAction::LinkNew => {
+                link_new_for_indirect_table(
+                    dm,
+                    tables,
+                    main_table,
+                    main_record,
+                    indirect_table,
+                    linker_table,
+                    rows,
+                );
+            }
+            RecordAction::LinkExisting => {
+                link_existing_for_indirect_table(
+                    dm,
+                    tables,
+                    main_table,
+                    main_record,
+                    indirect_table,
+                    linker_table,
+                    rows,
+                );
+            }
+            _ => {
+                println!("unexpected action {:?}", record_action);
+            }
+        }
+    }
+    Ok(())
+}
+
+/// delete the entry from the linker table
+fn unlink_from_indirect_table(
+    dm: &RecordManager,
+    tables: &Vec<Table>,
+    main_table: &Table,
+    main_record: &Record,
+    indirect_table: &Table,
+    linker_table: &Table,
+    rows: &Rows,
+) -> Result<(), IntelError> {
+    println!("unlinking records in table");
+    Ok(())
+}
+
+/// create an entry to the indirect table
+/// and create an entry into the linker table
+fn link_new_for_indirect_table(
+    dm: &RecordManager,
+    tables: &Vec<Table>,
+    main_table: &Table,
+    main_record: &Record,
+    indirect_table: &Table,
+    linker_table: &Table,
+    rows: &Rows,
+) -> Result<(), IntelError> {
+    println!("link new for indirect table");
+    for dao in rows.iter() {
+        let indirect_record = Record::from(&dao);
+        create_link_in_linker_table(main_table, main_record, indirect_table, &indirect_record)?;
+    }
+    Ok(())
+}
+
+fn create_link_in_linker_table(
+    main_table: &Table,
+    main_record: &Record,
+    indirect_table: &Table,
+    indirect_record: &Record,
+) -> Result<(), IntelError> {
+    println!("creating a record in linker table");
+    Ok(())
+}
+
+/// create an entry to the linker table
+/// linking existing record from the indirect table
+fn link_existing_for_indirect_table(
+    dm: &RecordManager,
+    tables: &Vec<Table>,
+    main_table: &Table,
+    main_record: &Record,
+    indirect_table: &Table,
+    linker_table: &Table,
+    rows: &Rows,
+) -> Result<(), IntelError> {
+    println!("link new for indirect table");
     Ok(())
 }
 

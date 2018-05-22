@@ -23,14 +23,6 @@ use tab::Tab;
 use table_intel;
 use window::Window;
 
-macro_rules! some {
-    ($expr:expr) => {{
-        let value = $expr;
-        assert!(value.is_some());
-        value.unwrap()
-    }};
-}
-
 pub fn get_main_table<'a>(window: &Window, tables: &'a Vec<Table>) -> Option<&'a Table> {
     let main_tablename = &window.main_tab.table_name;
     let main_table = table_intel::get_table(main_tablename, tables);
@@ -62,7 +54,7 @@ pub fn get_maintable_data(
     page: u32,
     page_size: u32,
 ) -> Result<Rows, DbError> {
-    let main_table = some!(get_main_table(window, tables));
+    let main_table = get_main_table(window, tables).expect("main table should exist!");
 
     let main_tablename = &main_table.name;
     let tab = &window.main_tab;
@@ -129,7 +121,7 @@ pub fn get_selected_record_detail(
     record_id: &str,
     page_size: u32,
 ) -> Result<Option<RecordDetail>, IntelError> {
-    let main_table = some!(get_main_table(window, tables));
+    let main_table = get_main_table(window, tables).expect("table should exist");
     let pk_types = main_table.get_primary_column_types();
     let primary_columns = main_table.get_primary_column_names();
     let record_id = common::extract_record_id(record_id, &pk_types, &primary_columns)?;
@@ -234,7 +226,8 @@ fn get_one_one_record(
     record_id: &Vec<(&ColumnName, Value)>,
     page_size: u32,
 ) -> Result<Option<Record>, DbError> {
-    let one_one_table = some!(table_intel::get_table(&one_one_tab.table_name, tables));
+    let one_one_table =
+        table_intel::get_table(&one_one_tab.table_name, tables).expect("table should exist");
 
     let mut query = Query::new();
     query.add_table_datatypes(&one_one_table);
@@ -306,7 +299,8 @@ fn get_has_many_records(
     page_size: u32,
     page: u32,
 ) -> Result<Rows, DbError> {
-    let has_many_table = some!(table_intel::get_table(&has_many_tab.table_name, tables));
+    let has_many_table =
+        table_intel::get_table(&has_many_tab.table_name, tables).expect("table should exist");
     let mut query = Query::new();
     query.select_all(&has_many_table.name);
 
@@ -388,11 +382,13 @@ fn get_indirect_records(
     page_size: u32,
     page: u32,
 ) -> Result<Rows, DbError> {
-    let indirect_table = some!(table_intel::get_table(&indirect_tab.table_name, tables));
+    let indirect_table =
+        table_intel::get_table(&indirect_tab.table_name, tables).expect("table should exist");
     let mut query = Query::new();
     query.add_table_datatypes(&indirect_table);
 
-    let linker_table = some!(table_intel::get_table(linker_table_name, tables));
+    let linker_table =
+        table_intel::get_table(linker_table_name, tables).expect("table should exist");
     let linker_pk_data_types = linker_table.get_primary_column_types();
 
     let indirect_tablename = &indirect_table.name;
@@ -405,7 +401,9 @@ fn get_indirect_records(
         linker_table.get_referred_columns_to_table(indirect_tablename);
     assert!(linker_rc_to_indirect_table.is_some());
 
-    let linker_fc = some!(linker_table.get_foreign_key_to_table(indirect_tablename));
+    let linker_fc = linker_table
+        .get_foreign_key_to_table(indirect_tablename)
+        .expect("table should exist");
     let foreign_columns = &linker_fc.columns;
     let referring_columns = &linker_fc.referred_columns;
     for (i, fc) in foreign_columns.iter().enumerate() {
@@ -423,7 +421,9 @@ fn get_indirect_records(
         ));
     }
     query.left_join_display_source(indirect_tab, tables);
-    let linker_fc_to_main_table = some!(linker_table.get_foreign_key_to_table(&main_table.name));
+    let linker_fc_to_main_table = linker_table
+        .get_foreign_key_to_table(&main_table.name)
+        .expect("table should exist");
     let linker_fc_foreign_columns = &linker_fc_to_main_table.columns;
     let linker_fc_referring_columns = &linker_fc_to_main_table.referred_columns;
     for (i, fc) in linker_fc_foreign_columns.iter().enumerate() {
@@ -493,7 +493,8 @@ pub fn get_all_lookup_for_window(
             page_size,
             1,
         )?;
-        let lookup_table = some!(table_intel::get_table(lookup_table_name, tables));
+        let lookup_table =
+            table_intel::get_table(lookup_table_name, tables).expect("table should exist");
         let mut column_datatypes: BTreeMap<String, SqlType> = BTreeMap::new();
         for column in lookup_table.columns.iter() {
             column_datatypes.insert(column.name.name.clone(), column.get_sql_type());
@@ -554,7 +555,7 @@ pub fn get_lookup_data_of_table_with_display_columns(
     page_size: u32,
     page: u32,
 ) -> Result<Rows, IntelError> {
-    let table = some!(table_intel::get_table(table_name, tables));
+    let table = table_intel::get_table(table_name, tables).expect("table should exist");
 
     let primary_columns = table.get_primary_column_names();
     //assert!(primary_columns.len() > 0);

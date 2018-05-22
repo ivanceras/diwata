@@ -27,6 +27,7 @@ pub struct RecordChangeset {
     pub action: RecordAction,
     pub one_ones: Vec<(TableName, Option<Record>)>,
     pub has_many: Vec<(TableName, RecordAction, Rows)>,
+    // vec ( table, via linker, action, rows )
     pub indirect: Vec<(TableName, TableName, RecordAction, Rows)>,
 }
 

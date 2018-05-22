@@ -502,10 +502,10 @@ fn delete_records(table_name: &str, record_ids: &Vec<String>) -> Result<Rows, Se
     }
 }
 
-fn update_tab_changeset(container: &SaveContainer) -> Result<Rows, ServiceError> {
+fn update_tab_changeset(container: &SaveContainer) -> Result<(), ServiceError> {
     let context = Context::create()?;
-    let rows = data_modify::save_container(&context.dm, &context.tables, &container)?;
-    Ok(rows)
+    data_modify::save_container(&context.dm, &context.tables, &container)?;
+    Ok(())
 }
 
 fn update_record_changeset(
