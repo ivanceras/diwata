@@ -348,6 +348,7 @@ fn link_new_for_indirect_table(
     Ok(())
 }
 
+/// create a record in linker table using the primary key of main and indirect record
 fn create_link_in_linker_table(
     main_table: &Table,
     main_record: &Record,
