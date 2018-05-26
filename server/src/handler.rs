@@ -464,7 +464,10 @@ fn handle_record_changeset(
     let f = req.body().concat2().map(move |chunk| {
         let body = chunk.into_iter().collect::<Vec<u8>>();
         let body_str = String::from_utf8(body).unwrap();
-        let changeset: RecordChangeset = serde_json::from_str(&body_str).unwrap();
+        println!("body_str: {}", body_str);
+        let changeset: Result<RecordChangeset, _> = serde_json::from_str(&body_str);
+        println!("changeset: {:#?}", changeset);
+        let changeset = changeset.unwrap();
         let result = update_record_changeset(&table_name, &changeset);
         create_response(result)
     });

@@ -283,7 +283,7 @@ fn save_indirect(
                     indirect_table,
                     linker_table,
                     rows,
-                );
+                )?;
             }
             RecordAction::LinkNew => {
                 link_new_for_indirect_table(
@@ -294,7 +294,7 @@ fn save_indirect(
                     indirect_table,
                     linker_table,
                     rows,
-                );
+                )?;
             }
             RecordAction::LinkExisting => {
                 link_existing_for_indirect_table(
@@ -305,7 +305,7 @@ fn save_indirect(
                     indirect_table,
                     linker_table,
                     rows,
-                );
+                )?;
             }
             _ => {
                 println!("unexpected action {:?}", record_action);
@@ -343,19 +343,50 @@ fn link_new_for_indirect_table(
     println!("link new for indirect table");
     for dao in rows.iter() {
         let indirect_record = Record::from(&dao);
-        create_link_in_linker_table(main_table, main_record, indirect_table, &indirect_record)?;
+        let indirect_record = insert_record_to_table(dm, indirect_table, &indirect_record)?;
+        create_link_in_linker_table(
+            dm,
+            main_table,
+            main_record,
+            linker_table,
+            indirect_table,
+            &indirect_record,
+        )?;
     }
     Ok(())
 }
 
 /// create a record in linker table using the primary key of main and indirect record
 fn create_link_in_linker_table(
+    dm: &RecordManager,
     main_table: &Table,
     main_record: &Record,
+    linker_table: &Table,
     indirect_table: &Table,
     indirect_record: &Record,
 ) -> Result<(), IntelError> {
     println!("creating a record in linker table");
+    let main_fk_pair = linker_table.get_local_foreign_columns_pair_to_table(&main_table.name);
+    let indirect_fk_pair =
+        linker_table.get_local_foreign_columns_pair_to_table(&indirect_table.name);
+    println!("main_fk_pair: {:?}", main_fk_pair);
+    println!("indirect_fk_pair: {:?}", indirect_fk_pair);
+    assert_eq!(main_fk_pair.len(), 1);
+    assert_eq!(indirect_fk_pair.len(), 1);
+    let (main_linker_local, main_linker_refferred) = main_fk_pair[0];
+    let (indirect_linker_local, indirect_linker_refferred) = indirect_fk_pair[0];
+    let main_pk_value = main_record
+        .get_value(&main_linker_refferred.name)
+        .expect("must have a value");
+    let indirect_pk_value = indirect_record
+        .get_value(&indirect_linker_refferred.name)
+        .expect("must have a value");
+    let mut linker_record = Record::new();
+    linker_record.insert_value(&main_linker_local.name, main_pk_value);
+    linker_record.insert_value(&indirect_linker_local.name, indirect_pk_value);
+    println!("linker table: {:#?}", linker_table);
+    println!("linker_record: {:#?}", linker_record);
+    insert_record_to_linker_table(dm, linker_table, &linker_record);
     Ok(())
 }
 
@@ -370,7 +401,22 @@ fn link_existing_for_indirect_table(
     linker_table: &Table,
     rows: &Rows,
 ) -> Result<(), IntelError> {
-    println!("link new for indirect table");
+    println!("link existing for indirect table");
+    println!("HERE.... <------");
+    println!("rows: {:#?}", rows);
+    for dao in rows.iter() {
+        println!("dao: {:?}", dao);
+        let indirect_record = Record::from(&dao);
+        println!("indirect existing record: {:?}", indirect_record);
+        create_link_in_linker_table(
+            dm,
+            main_table,
+            main_record,
+            linker_table,
+            indirect_table,
+            &indirect_record,
+        )?;
+    }
     Ok(())
 }
 
@@ -523,32 +569,86 @@ fn insert_record_to_table(
     sql += "(";
     for (i, col) in columns.iter().enumerate() {
         let value = record.get_value(&col.name.name);
-        assert!(value.is_some());
-        let value = value.unwrap();
-        if value == Value::Nil && col.is_not_null() && col.has_generated_default() {
-            println!("skipping column: {}", col.name.name);
-        } else {
-            if i > 0 {
-                sql += ", ";
+        if let Some(value) = value {
+            if value == Value::Nil && col.is_not_null() && col.has_generated_default() {
+                println!("skipping column: {}", col.name.name);
+            } else {
+                if i > 0 {
+                    sql += ", ";
+                }
+                sql += &format!("{} ", col.name.name);
             }
-            sql += &format!("{} ", col.name.name);
+        } else {
+            println!("skipping {} ", col.name.name);
         }
     }
     sql += ") ";
     sql += "VALUES (";
     for (i, col) in columns.iter().enumerate() {
         let value = record.get_value(&col.name.name);
-        assert!(value.is_some());
-        let value = value.unwrap();
-        if value == Value::Nil && col.is_not_null() && col.has_generated_default() {
-            println!("skipping column: {}", col.name.name);
-        } else {
-            if i > 0 {
-                sql += ", ";
+        if let Some(value) = value {
+            if value == Value::Nil && col.is_not_null() && col.has_generated_default() {
+                println!("skipping column: {}", col.name.name);
+            } else {
+                if i > 0 {
+                    sql += ", ";
+                }
+                sql += &format!("${} ", params.len() + 1);
+                let casted_value = rustorm::common::cast_type(&value, &col.get_sql_type());
+                params.push(casted_value);
             }
-            sql += &format!("${} ", i + 1);
-            let casted_value = rustorm::common::cast_type(&value, &col.get_sql_type());
-            params.push(casted_value);
+        } else {
+            println!("skipping {} ", col.name.name);
+        }
+    }
+    sql += ") RETURNING *";
+    println!("sql: {}", sql);
+    println!("params: {:?}", params);
+    dm.execute_sql_with_one_return(&sql, &params)
+}
+
+fn insert_record_to_linker_table(
+    dm: &RecordManager,
+    linker_table: &Table,
+    record: &Record,
+) -> Result<Record, DbError> {
+    let table_name = &linker_table.name;
+    let mut params = vec![];
+    let mut sql = format!("INSERT INTO {} ", table_name.complete_name());
+    let columns = &linker_table.get_primary_columns();
+    sql += "(";
+    for (i, col) in columns.iter().enumerate() {
+        let value = record.get_value(&col.name.name);
+        if let Some(value) = value {
+            if value == Value::Nil && col.is_not_null() && col.has_generated_default() {
+                println!("skipping column: {}", col.name.name);
+            } else {
+                if i > 0 {
+                    sql += ", ";
+                }
+                sql += &format!("{} ", col.name.name);
+            }
+        } else {
+            println!("skipping {} ", col.name.name);
+        }
+    }
+    sql += ") ";
+    sql += "VALUES (";
+    for (i, col) in columns.iter().enumerate() {
+        let value = record.get_value(&col.name.name);
+        if let Some(value) = value {
+            if value == Value::Nil && col.is_not_null() && col.has_generated_default() {
+                println!("skipping column: {}", col.name.name);
+            } else {
+                if i > 0 {
+                    sql += ", ";
+                }
+                sql += &format!("${} ", params.len() + 1);
+                let casted_value = rustorm::common::cast_type(&value, &col.get_sql_type());
+                params.push(casted_value);
+            }
+        } else {
+            println!("skipping {} ", col.name.name);
         }
     }
     sql += ") RETURNING *";
