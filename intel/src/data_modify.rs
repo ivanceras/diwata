@@ -230,12 +230,12 @@ fn delete_from_table(dm: &RecordManager, table: &Table, rows: &Rows) -> Result<(
     println!("delete_from_table : {:#?}", rows);
     for dao in rows.iter() {
         let record = Record::from(&dao);
-        delete_from_record_from_table(dm, table, &record)?;
+        delete_record_from_table(dm, table, &record)?;
     }
     Ok(())
 }
 
-fn delete_from_record_from_table(
+fn delete_record_from_table(
     dm: &RecordManager,
     table: &Table,
     record: &Record,
@@ -246,6 +246,9 @@ fn delete_from_record_from_table(
     sql += "WHERE ";
     let pk = table.get_primary_column_names();
     for (i, col) in pk.iter().enumerate() {
+        if i > 0 {
+            sql += "AND ";
+        }
         let pk_value = record
             .get_value(&col.name)
             .expect("must have primary column values");
@@ -326,6 +329,18 @@ fn unlink_from_indirect_table(
     rows: &Rows,
 ) -> Result<(), IntelError> {
     println!("unlinking records in table");
+    for dao in rows.iter() {
+        let indirect_record = Record::from(&dao);
+        let linker_record = create_linker_record(
+            dm,
+            main_table,
+            main_record,
+            linker_table,
+            indirect_table,
+            &indirect_record,
+        )?;
+        delete_record_from_table(dm, linker_table, &linker_record)?;
+    }
     Ok(())
 }
 
@@ -344,7 +359,7 @@ fn link_new_for_indirect_table(
     for dao in rows.iter() {
         let indirect_record = Record::from(&dao);
         let indirect_record = insert_record_to_table(dm, indirect_table, &indirect_record)?;
-        create_link_in_linker_table(
+        let linker_record = create_linker_record(
             dm,
             main_table,
             main_record,
@@ -352,19 +367,20 @@ fn link_new_for_indirect_table(
             indirect_table,
             &indirect_record,
         )?;
+        insert_record_to_linker_table(dm, linker_table, &linker_record)?;
     }
     Ok(())
 }
 
 /// create a record in linker table using the primary key of main and indirect record
-fn create_link_in_linker_table(
+fn create_linker_record(
     dm: &RecordManager,
     main_table: &Table,
     main_record: &Record,
     linker_table: &Table,
     indirect_table: &Table,
     indirect_record: &Record,
-) -> Result<(), IntelError> {
+) -> Result<Record, IntelError> {
     println!("creating a record in linker table");
     let main_fk_pair = linker_table.get_local_foreign_columns_pair_to_table(&main_table.name);
     let indirect_fk_pair =
@@ -386,8 +402,7 @@ fn create_link_in_linker_table(
     linker_record.insert_value(&indirect_linker_local.name, indirect_pk_value);
     println!("linker table: {:#?}", linker_table);
     println!("linker_record: {:#?}", linker_record);
-    insert_record_to_linker_table(dm, linker_table, &linker_record);
-    Ok(())
+    Ok(linker_record)
 }
 
 /// create an entry to the linker table
@@ -408,7 +423,7 @@ fn link_existing_for_indirect_table(
         println!("dao: {:?}", dao);
         let indirect_record = Record::from(&dao);
         println!("indirect existing record: {:?}", indirect_record);
-        create_link_in_linker_table(
+        let linker_record = create_linker_record(
             dm,
             main_table,
             main_record,
@@ -416,6 +431,7 @@ fn link_existing_for_indirect_table(
             indirect_table,
             &indirect_record,
         )?;
+        insert_record_to_linker_table(dm, linker_table, &linker_record)?;
     }
     Ok(())
 }
