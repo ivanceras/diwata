@@ -1,6 +1,6 @@
 [package]
 name = "diwata_server"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Jovansonlee Cesar <ivanceras@gmail.com>"]
 license = "MIT"
 description = "Decides the routing of url request"
@@ -19,23 +19,23 @@ futures = "0.1.14"
 
 
 [dependencies.diwata_intel]
-version = "0.1.0"
+version = "0.1"
 
 [dependencies.rustorm]
-version = "0.10.3"
+version = "0.10"
 features = ["with-postgres", "with-sqlite"]
 
 [dependencies.rustorm_codegen]
-version = "0.1.2"
+version = "0.1"
 
 [dependencies.rustorm_dao]
-version = "0.1.1"
+version = "0.1"
 
 [replace]
 "rustorm_dao:0.1.1" = { path = "../rustorm/dao" }
 "rustorm_codegen:0.1.2" = { path = "../rustorm/codegen" }
 "rustorm:0.10.3" = { path = "../rustorm" }
-"diwata_intel:0.1.0" = { path = "../intel" }
+"diwata_intel:0.1.1" = { path = "../intel" }
 
 
 
