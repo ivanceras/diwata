@@ -135,7 +135,7 @@ fn save_one_ones(
     tables: &Vec<Table>,
     main_table: &Table,
     main_record: &Record,
-    one_one_tabs: &Vec<Tab>,
+    _one_one_tabs: &Vec<Tab>,
     one_one_records: &Vec<(TableName, Option<Record>)>,
 ) -> Result<(), IntelError> {
     println!("saving one ones: {:?}", one_one_records);
@@ -159,7 +159,7 @@ fn save_one_ones(
 
 fn save_one_one_table(
     dm: &RecordManager,
-    tables: &Vec<Table>,
+    _tables: &Vec<Table>,
     main_table: &Table,
     main_record: &Record,
     one_one_table: &Table,
@@ -179,7 +179,7 @@ fn save_has_many(
 ) -> Result<(), IntelError> {
     println!("saving has_many : {:?}", has_many_records);
     for (has_many_table_name, record_action, has_many_rows) in has_many_records {
-        let has_many_tab = tab::find_tab(has_many_tabs, has_many_table_name)
+        let _has_many_tab = tab::find_tab(has_many_tabs, has_many_table_name)
             .expect("table should belong to the tabs");
         let has_many_table =
             table_intel::get_table(has_many_table_name, tables).expect("table should exist");
@@ -198,9 +198,9 @@ fn save_has_many(
 
 fn save_has_many_table(
     dm: &RecordManager,
-    tables: &Vec<Table>,
-    main_table: &Table,
-    main_record: &Record,
+    _tables: &Vec<Table>,
+    _main_table: &Table,
+    _main_record: &Record,
     has_many_table: &Table,
     record_action: &RecordAction,
     has_many_rows: &Rows,
@@ -266,7 +266,7 @@ fn save_indirect(
     tables: &Vec<Table>,
     main_table: &Table,
     main_record: &Record,
-    indirect_tabs: &Vec<(TableName, Tab)>,
+    _indirect_tabs: &Vec<(TableName, Tab)>,
     indirect_records: &Vec<(TableName, TableName, RecordAction, Rows)>,
 ) -> Result<(), IntelError> {
     println!("saving indirect: {:?}", indirect_records);
@@ -321,7 +321,7 @@ fn save_indirect(
 /// delete the entry from the linker table
 fn unlink_from_indirect_table(
     dm: &RecordManager,
-    tables: &Vec<Table>,
+    _tables: &Vec<Table>,
     main_table: &Table,
     main_record: &Record,
     indirect_table: &Table,
@@ -332,7 +332,6 @@ fn unlink_from_indirect_table(
     for dao in rows.iter() {
         let indirect_record = Record::from(&dao);
         let linker_record = create_linker_record(
-            dm,
             main_table,
             main_record,
             linker_table,
@@ -348,7 +347,7 @@ fn unlink_from_indirect_table(
 /// and create an entry into the linker table
 fn link_new_for_indirect_table(
     dm: &RecordManager,
-    tables: &Vec<Table>,
+    _tables: &Vec<Table>,
     main_table: &Table,
     main_record: &Record,
     indirect_table: &Table,
@@ -360,7 +359,6 @@ fn link_new_for_indirect_table(
         let indirect_record = Record::from(&dao);
         let indirect_record = insert_record_to_table(dm, indirect_table, &indirect_record)?;
         let linker_record = create_linker_record(
-            dm,
             main_table,
             main_record,
             linker_table,
@@ -374,7 +372,6 @@ fn link_new_for_indirect_table(
 
 /// create a record in linker table using the primary key of main and indirect record
 fn create_linker_record(
-    dm: &RecordManager,
     main_table: &Table,
     main_record: &Record,
     linker_table: &Table,
@@ -409,7 +406,7 @@ fn create_linker_record(
 /// linking existing record from the indirect table
 fn link_existing_for_indirect_table(
     dm: &RecordManager,
-    tables: &Vec<Table>,
+    _tables: &Vec<Table>,
     main_table: &Table,
     main_record: &Record,
     indirect_table: &Table,
@@ -424,7 +421,6 @@ fn link_existing_for_indirect_table(
         let indirect_record = Record::from(&dao);
         println!("indirect existing record: {:?}", indirect_record);
         let linker_record = create_linker_record(
-            dm,
             main_table,
             main_record,
             linker_table,
@@ -716,7 +712,6 @@ fn upsert_one_one_record_to_table(
     }
     sql += ") ";
     sql += "VALUES (";
-    let one_one_columns_len = one_one_columns.len();
 
     for (i, one_col) in one_one_columns.iter().enumerate() {
         let value = one_one_record.get_value(&one_col.name.name);

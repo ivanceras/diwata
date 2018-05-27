@@ -218,7 +218,7 @@ pub fn get_selected_record_detail(
 }
 
 fn get_one_one_record(
-    em: &EntityManager,
+    _em: &EntityManager,
     dm: &RecordManager,
     tables: &Vec<Table>,
     main_table: &Table,
@@ -372,7 +372,7 @@ pub fn get_indirect_records_service(
 }
 
 fn get_indirect_records(
-    em: &EntityManager,
+    _em: &EntityManager,
     dm: &RecordManager,
     tables: &Vec<Table>,
     main_table: &Table,
@@ -389,7 +389,6 @@ fn get_indirect_records(
 
     let linker_table =
         table_intel::get_table(linker_table_name, tables).expect("table should exist");
-    let linker_pk_data_types = linker_table.get_primary_column_types();
 
     let indirect_tablename = &indirect_table.name;
 
@@ -547,7 +546,7 @@ pub fn get_lookup_data_of_tab(
 /// ensure that the value is included in the first page
 /// this table must have it's own window too
 pub fn get_lookup_data_of_table_with_display_columns(
-    em: &EntityManager,
+    _em: &EntityManager,
     dm: &RecordManager,
     tables: &Vec<Table>,
     table_name: &TableName,
