@@ -36,7 +36,6 @@ pub struct SaveContainer {
     pub for_insert: (TableName, Rows),
     pub for_update: (TableName, Rows),
 }
-
 /// the dropdown data and the description on
 /// how will it be displayed as defined in IdentifierDisplay
 #[derive(Debug, Serialize, Clone)]
@@ -230,6 +229,515 @@ fn test_record_changeset() {
     ]
   ],
   "indirect": []
+}
+    "#;
+    let mut dao = Dao::new();
+    dao.insert("city", "Akishima");
+    let changeset = RecordChangeset {
+        record: Record::from(&dao),
+        action: RecordAction::Edited,
+        one_ones: vec![],
+        has_many: vec![],
+        indirect: vec![],
+    };
+    let changeset_json = serde_json::to_string(&changeset).unwrap();
+    println!("changeset json: {}", changeset_json);
+    let result: Result<RecordChangeset, _> = serde_json::from_str(input);
+    println!("result: {:#?}", result);
+    assert!(result.is_ok());
+}
+
+#[test]
+fn test_record_changeset2() {
+    extern crate serde_json;
+    use dao::Dao;
+
+    let input = r#"
+{
+  "record": {
+    "description": {
+      "Text": "A Fanciful Documentary of a Frisbee And a Lumberjack who must Chase a Monkey in A Shark Tank"
+    },
+    "film_id": {
+      "Int": 4
+    },
+    "fulltext": {
+      "Text": "'affair':1 'chase':14 'documentari':5 'fanci':4 'frisbe':8 'lumberjack':11 'monkey':16 'must':13 'prejudic':2 'shark':19 'tank':20"
+    },
+    "language_id": {
+      "Int": 1
+    },
+    "last_update": {
+      "Timestamp": "2007-09-11T01:46:03Z"
+    },
+    "length": {
+      "Smallint": 117
+    },
+    "original_language_id": "Nil",
+    "rating": {
+      "Text": "G"
+    },
+    "release_year": {
+      "Smallint": 2006
+    },
+    "rental_duration": {
+      "Smallint": 5
+    },
+    "rental_rate": {
+      "BigDecimal": "2.99"
+    },
+    "replacement_cost": {
+      "BigDecimal": "26.99"
+    },
+    "title": {
+      "Text": "AFFAIR PREJUDICE"
+    }
+  },
+  "action": "Edited",
+  "one_ones": [],
+  "has_many": [
+    [
+      {
+        "name": "inventory",
+        "schema": "public"
+      },
+      "Edited",
+      {
+        "columns": [
+          "inventory_id",
+          "last_update",
+          "film_id",
+          "store_id"
+        ],
+        "data": []
+      }
+    ],
+    [
+      {
+        "name": "inventory",
+        "schema": "public"
+      },
+      "LinkNew",
+      {
+        "columns": [
+          "inventory_id",
+          "last_update",
+          "film_id",
+          "store_id"
+        ],
+        "data": []
+      }
+    ],
+    [
+      {
+        "name": "inventory",
+        "schema": "public",
+        "alias": null
+      },
+      "Unlink",
+      {
+        "columns": [
+          "inventory_id",
+          "last_update",
+          "film_id",
+          "store_id"
+        ],
+        "data": []
+      }
+    ]
+  ],
+  "indirect": [
+    [
+      {
+        "name": "actor",
+        "schema": "public",
+        "alias": null
+      },
+      {
+        "name": "film_actor",
+        "schema": "public",
+        "alias": null
+      },
+      "LinkNew",
+      {
+        "columns": [
+          "actor_id",
+          "first_name",
+          "last_name",
+          "last_update"
+        ],
+        "data": []
+      }
+    ],
+    [
+      {
+        "name": "category",
+        "schema": "public",
+        "alias": null
+      },
+      {
+        "name": "film_category",
+        "schema": "public",
+        "alias": null
+      },
+      "LinkNew",
+      {
+        "columns": [
+          "category_id",
+          "name",
+          "last_update"
+        ],
+        "data": []
+      }
+    ],
+    [
+      {
+        "name": "actor",
+        "schema": "public",
+        "alias": null
+      },
+      {
+        "name": "film_actor",
+        "schema": "public",
+        "alias": null
+      },
+      "LinkExisting",
+      {
+        "columns": [
+          "actor_id"
+        ],
+        "data": []
+      }
+    ],
+    [
+      {
+        "name": "category",
+        "schema": "public",
+        "alias": null
+      },
+      {
+        "name": "film_category",
+        "schema": "public"
+      },
+      "LinkExisting",
+      {
+        "columns": [
+          "category_id"
+        ],
+        "data": [
+          [
+            {
+              "Int": 3
+            }
+          ]
+        ]
+      }
+    ],
+    [
+      {
+        "name": "actor",
+        "schema": "public",
+        "alias": null
+      },
+      {
+        "name": "film_actor",
+        "schema": "public"
+      },
+      "Unlink",
+      {
+        "columns": [
+          "actor_id",
+          "first_name",
+          "last_name",
+          "last_update"
+        ],
+        "data": []
+      }
+    ],
+    [
+      {
+        "name": "category",
+        "schema": "public",
+        "alias": null
+      },
+      {
+        "name": "film_category",
+        "schema": "public",
+        "alias": null
+      },
+      "Unlink",
+      {
+        "columns": [
+          "category_id",
+          "name",
+          "last_update"
+        ],
+        "data": []
+      }
+    ]
+  ]
+}
+    "#;
+    let mut dao = Dao::new();
+    dao.insert("city", "Akishima");
+    let changeset = RecordChangeset {
+        record: Record::from(&dao),
+        action: RecordAction::Edited,
+        one_ones: vec![],
+        has_many: vec![],
+        indirect: vec![],
+    };
+    let changeset_json = serde_json::to_string(&changeset).unwrap();
+    println!("changeset json: {}", changeset_json);
+    let result: Result<RecordChangeset, _> = serde_json::from_str(input);
+    println!("result: {:#?}", result);
+    assert!(result.is_ok());
+}
+
+#[test]
+fn test_record_changeset3() {
+    extern crate serde_json;
+    use dao::Dao;
+
+    let input = r#"
+{
+  "record": {
+    "description": {
+      "Text": "A Fanciful Documentary of a Frisbee And a Lumberjack who must Chase a Monkey in A Shark Tank"
+    },
+    "film_id": {
+      "Int": 4
+    },
+    "fulltext": {
+      "Text": "'affair':1 'chase':14 'documentari':5 'fanci':4 'frisbe':8 'lumberjack':11 'monkey':16 'must':13 'prejudic':2 'shark':19 'tank':20"
+    },
+    "language_id": {
+      "Int": 1
+    },
+    "last_update": {
+      "Timestamp": "2007-09-11T01:46:03Z"
+    },
+    "length": {
+      "Smallint": 117
+    },
+    "original_language_id": "Nil",
+    "rating": {
+      "Text": "G"
+    },
+    "release_year": {
+      "Smallint": 2006
+    },
+    "rental_duration": {
+      "Smallint": 5
+    },
+    "rental_rate": {
+      "BigDecimal": "2.99"
+    },
+    "replacement_cost": {
+      "BigDecimal": "26.99"
+    },
+    "title": {
+      "Text": "AFFAIR PREJUDICE"
+    }
+  },
+  "action": "Edited",
+  "one_ones": [],
+  "has_many": [
+    [
+      {
+        "name": "inventory",
+        "schema": "public",
+        "alias": null
+      },
+      "Edited",
+      {
+        "columns": [
+          "inventory_id",
+          "last_update",
+          "film_id",
+          "store_id"
+        ],
+        "data": [],
+        "count": null
+      }
+    ],
+    [
+      {
+        "name": "inventory",
+        "schema": "public",
+        "alias": null
+      },
+      "LinkNew",
+      {
+        "columns": [
+          "inventory_id",
+          "last_update",
+          "film_id",
+          "store_id"
+        ],
+        "data": [],
+        "count": null
+      }
+    ],
+    [
+      {
+        "name": "inventory",
+        "schema": "public",
+        "alias": null
+      },
+      "Unlink",
+      {
+        "columns": [
+          "inventory_id",
+          "last_update",
+          "film_id",
+          "store_id"
+        ],
+        "data": [],
+        "count": null
+      }
+    ]
+  ],
+  "indirect": [
+    [
+      {
+        "name": "actor",
+        "schema": "public",
+        "alias": null
+      },
+      {
+        "name": "film_actor",
+        "schema": "public",
+        "alias": null
+      },
+      "LinkNew",
+      {
+        "columns": [
+          "actor_id",
+          "first_name",
+          "last_name",
+          "last_update"
+        ],
+        "data": [],
+        "count": null
+      }
+    ],
+    [
+      {
+        "name": "category",
+        "schema": "public",
+        "alias": null
+      },
+      {
+        "name": "film_category",
+        "schema": "public",
+        "alias": null
+      },
+      "LinkNew",
+      {
+        "columns": [
+          "category_id",
+          "name",
+          "last_update"
+        ],
+        "data": [],
+        "count": null
+      }
+    ],
+    [
+      {
+        "name": "actor",
+        "schema": "public",
+        "alias": null
+      },
+      {
+        "name": "film_actor",
+        "schema": "public",
+        "alias": null
+      },
+      "LinkExisting",
+      {
+        "columns": [
+          "actor_id"
+        ],
+        "data": [
+          []
+        ],
+        "count": null
+      }
+    ],
+    [
+      {
+        "name": "category",
+        "schema": "public",
+        "alias": null
+      },
+      {
+        "name": "film_category",
+        "schema": "public",
+        "alias": null
+      },
+      "LinkExisting",
+      {
+        "columns": [
+          "category_id"
+        ],
+        "data": [
+          [
+            {
+              "Int": 3
+            }
+          ]
+        ],
+        "count": null
+      }
+    ],
+    [
+      {
+        "name": "actor",
+        "schema": "public",
+        "alias": null
+      },
+      {
+        "name": "film_actor",
+        "schema": "public",
+        "alias": null
+      },
+      "Unlink",
+      {
+        "columns": [
+          "actor_id",
+          "first_name",
+          "last_name",
+          "last_update"
+        ],
+        "data": [],
+        "count": null
+      }
+    ],
+    [
+      {
+        "name": "category",
+        "schema": "public",
+        "alias": null
+      },
+      {
+        "name": "film_category",
+        "schema": "public",
+        "alias": null
+      },
+      "Unlink",
+      {
+        "columns": [
+          "category_id",
+          "name",
+          "last_update"
+        ],
+        "data": [],
+        "count": null
+      }
+    ]
+  ]
 }
     "#;
     let mut dao = Dao::new();

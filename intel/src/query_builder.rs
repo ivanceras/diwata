@@ -34,9 +34,26 @@ impl Query {
     pub fn add_param(&mut self, p: Value) {
         self.params.push(p);
     }
+    pub fn select(&mut self) {
+        self.append("SELECT ");
+    }
 
     pub fn select_all(&mut self, table_name: &TableName) {
         self.append(&format!("SELECT {}.*", table_name.name));
+    }
+
+    /// enumerate all column including the rename to each specific data types
+    pub fn enumerate_columns(&mut self, table: &Table) {
+        let columns = &table.columns;
+        for (i, column) in columns.iter().enumerate() {
+            if i > 0 {
+                self.append(", ")
+            }
+            self.append(&format!("{}.{}", table.name.name, column.name.name));
+            if let Some(cast) = column.cast_as() {
+                self.append(&format!("::{} ", cast.name()));
+            }
+        }
     }
 
     /// add the data types of table columns that are not part of the main tables
@@ -83,9 +100,6 @@ impl Query {
 
     /// left join the table that is looked up by the fields, so as to be able to retrieve the
     /// identifiable column values
-    /// BUG:
-    /// TODO: the left join order of pk, and fk is messed up, use the airlines_ru
-    /// bookings.boarding_pass to reveal the bug
     pub fn left_join_display_source(&mut self, tab: &Tab, tables: &Vec<Table>) {
         let main_table = table_intel::get_table(&tab.table_name, tables).expect("must have table");
         for field in &tab.fields {

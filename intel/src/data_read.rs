@@ -59,7 +59,8 @@ pub fn get_maintable_data(
     let main_tablename = &main_table.name;
     let tab = &window.main_tab;
     let mut query = Query::new();
-    query.select_all(&main_tablename);
+    query.select();
+    query.enumerate_columns(&main_table);
 
     query.add_table_datatypes(&main_table);
 
@@ -128,7 +129,8 @@ pub fn get_selected_record_detail(
     println!("arg record_id: {:#?}", record_id);
     let mut query = Query::new();
     query.add_table_datatypes(&main_table);
-    query.select_all(&main_table.name);
+    query.select();
+    query.enumerate_columns(&main_table);
     query.enumerate_display_columns(&window.main_tab, tables);
     query.from(&main_table.name);
     query.left_join_display_source(&window.main_tab, tables);
@@ -231,7 +233,8 @@ fn get_one_one_record(
 
     let mut query = Query::new();
     query.add_table_datatypes(&one_one_table);
-    query.select_all(&one_one_table.name);
+    query.select();
+    query.enumerate_columns(&one_one_table);
 
     query.enumerate_display_columns(one_one_tab, tables);
     query.from(&one_one_table.name);
@@ -302,7 +305,8 @@ fn get_has_many_records(
     let has_many_table =
         table_intel::get_table(&has_many_tab.table_name, tables).expect("table should exist");
     let mut query = Query::new();
-    query.select_all(&has_many_table.name);
+    query.select();
+    query.enumerate_columns(&has_many_table);
 
     query.add_table_datatypes(&has_many_table);
     query.enumerate_display_columns(has_many_tab, tables);
@@ -392,7 +396,8 @@ fn get_indirect_records(
 
     let indirect_tablename = &indirect_table.name;
 
-    query.select_all(&indirect_tablename);
+    query.select();
+    query.enumerate_columns(&indirect_table);
     query.enumerate_display_columns(indirect_tab, tables);
     query.from(&linker_table.name);
     query.append(&format!("\nLEFT JOIN {} ", indirect_table.complete_name()));

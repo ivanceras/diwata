@@ -432,10 +432,21 @@ fn update_record_in_table(
     let columns = main_table.get_non_primary_columns();
     sql += "SET ";
     for (i, col) in columns.iter().enumerate() {
+        let col_sql_type = col.get_sql_type();
         if i > 0 {
             sql += ", ";
         }
         sql += &format!("{} = ${}", col.name.name, i + 1);
+        // casting for ts_vector example: film.fulltext tsvector
+        // when retrieving: film.fulltext::text
+        // when writing data: film.fulltext = $1::ts_vector
+        // the _cast is not used however, since we need to cast back to its original type
+        if let Some(_cast) = col.cast_as() {
+            sql += &format!("::{}", col_sql_type.name());
+        }
+        if col_sql_type.is_array_type() {
+            sql += &format!("::{}", col_sql_type.name());
+        }
         let value = record.get_value(&col.name.name);
         assert!(value.is_some());
         let value = value.unwrap();
