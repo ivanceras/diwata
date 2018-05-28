@@ -2,3 +2,5 @@
 - [ ] db_url is saved in webstorage and retrieved on start
 - [x] insert, update records
 - [ ] linker fields of indirect records that has extra fields will be displayed together with the indirect records
+- [ ] search/filter for dates
+- [ ] text representation of ts_vector types

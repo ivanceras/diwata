@@ -464,10 +464,8 @@ fn handle_record_changeset(
     let f = req.body().concat2().map(move |chunk| {
         let body = chunk.into_iter().collect::<Vec<u8>>();
         let body_str = String::from_utf8(body).unwrap();
-        println!("body_str: {}", body_str);
         let changeset: Result<RecordChangeset, _> = serde_json::from_str(&body_str);
-        println!("changeset: {:#?}", changeset);
-        let changeset = changeset.unwrap();
+        let changeset = changeset.expect(&format!("unable to serialize from json {}", body_str));
         let result = update_record_changeset(&table_name, &changeset);
         create_response(result)
     });

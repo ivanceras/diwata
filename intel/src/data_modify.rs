@@ -76,10 +76,8 @@ pub fn save_container(
     tables: &Vec<Table>,
     container: &SaveContainer,
 ) -> Result<(), IntelError> {
-    println!("container: {:#?}", container);
     let &(ref table_name_for_insert, ref rows_insert) = &container.for_insert;
     let &(ref table_name_for_update, ref rows_update) = &container.for_update;
-    println!("rows_update: {:?}", rows_update);
     let table_for_insert = table_intel::get_table(table_name_for_insert, tables).unwrap();
     let table_for_update = table_intel::get_table(table_name_for_update, tables).unwrap();
     if rows_insert.iter().count() > 0 {
@@ -96,13 +94,11 @@ pub fn save_changeset(
     table: &Table,
     changeset: &RecordChangeset,
 ) -> Result<(), IntelError> {
-    println!("saving changeset: {:#?}", changeset);
     let updated_record = match &changeset.action {
         RecordAction::CreateNew => insert_record_to_table(dm, table, &changeset.record)?,
         RecordAction::Edited => update_record_in_table(dm, table, &changeset.record)?,
         _ => panic!("unhandled case: {:?}", changeset.action),
     };
-    println!("updated record: {:?}", updated_record);
     save_one_ones(
         dm,
         tables,
@@ -138,7 +134,6 @@ fn save_one_ones(
     _one_one_tabs: &Vec<Tab>,
     one_one_records: &Vec<(TableName, Option<Record>)>,
 ) -> Result<(), IntelError> {
-    println!("saving one ones: {:?}", one_one_records);
     for (one_one_table_name, one_one_record) in one_one_records {
         if let Some(one_one_record) = one_one_record {
             //TODO: verify that the one_one_table_name belongs to the one_one_tabs
@@ -165,7 +160,6 @@ fn save_one_one_table(
     one_one_table: &Table,
     one_one_record: &Record,
 ) -> Result<Record, DbError> {
-    println!("save one_one_record: {:#?}", one_one_record);
     upsert_one_one_record_to_table(dm, main_table, main_record, one_one_table, one_one_record)
 }
 
@@ -177,7 +171,6 @@ fn save_has_many(
     has_many_tabs: &Vec<Tab>,
     has_many_records: &Vec<(TableName, RecordAction, Rows)>,
 ) -> Result<(), IntelError> {
-    println!("saving has_many : {:?}", has_many_records);
     for (has_many_table_name, record_action, has_many_rows) in has_many_records {
         let _has_many_tab = tab::find_tab(has_many_tabs, has_many_table_name)
             .expect("table should belong to the tabs");
@@ -205,20 +198,16 @@ fn save_has_many_table(
     record_action: &RecordAction,
     has_many_rows: &Rows,
 ) -> Result<(), IntelError> {
-    println!("record action: {:?}", record_action);
     match record_action {
         RecordAction::Unlink => {
-            println!("UnLink.. deleting records");
             delete_from_table(dm, has_many_table, has_many_rows)?;
         }
         RecordAction::LinkNew => {
-            println!("LinkNew... adding records");
             if has_many_rows.iter().count() > 0 {
                 insert_rows_to_table(dm, has_many_table, has_many_rows)?;
             }
         }
         RecordAction::Edited => {
-            println!("Editing in has many is ok?");
             update_records_in_table(dm, has_many_table, has_many_rows)?;
         }
         _ => panic!("unexpected record action: {:?} in has_many", record_action),
@@ -227,7 +216,6 @@ fn save_has_many_table(
 }
 
 fn delete_from_table(dm: &RecordManager, table: &Table, rows: &Rows) -> Result<(), IntelError> {
-    println!("delete_from_table : {:#?}", rows);
     for dao in rows.iter() {
         let record = Record::from(&dao);
         delete_record_from_table(dm, table, &record)?;
@@ -269,7 +257,6 @@ fn save_indirect(
     _indirect_tabs: &Vec<(TableName, Tab)>,
     indirect_records: &Vec<(TableName, TableName, RecordAction, Rows)>,
 ) -> Result<(), IntelError> {
-    println!("saving indirect: {:?}", indirect_records);
     for (indirect_tablename, via_tablename, record_action, rows) in indirect_records {
         let indirect_table = table_intel::get_table(indirect_tablename, tables)
             .expect("indirect table should exist");
@@ -277,7 +264,6 @@ fn save_indirect(
             table_intel::get_table(via_tablename, tables).expect("via table should exists");
         match record_action {
             RecordAction::Unlink => {
-                println!("deleting indirect_records");
                 unlink_from_indirect_table(
                     dm,
                     tables,
@@ -328,7 +314,6 @@ fn unlink_from_indirect_table(
     linker_table: &Table,
     rows: &Rows,
 ) -> Result<(), IntelError> {
-    println!("unlinking records in table");
     for dao in rows.iter() {
         let indirect_record = Record::from(&dao);
         let linker_record = create_linker_record(
@@ -354,7 +339,6 @@ fn link_new_for_indirect_table(
     linker_table: &Table,
     rows: &Rows,
 ) -> Result<(), IntelError> {
-    println!("link new for indirect table");
     for dao in rows.iter() {
         let indirect_record = Record::from(&dao);
         let indirect_record = insert_record_to_table(dm, indirect_table, &indirect_record)?;
@@ -378,12 +362,9 @@ fn create_linker_record(
     indirect_table: &Table,
     indirect_record: &Record,
 ) -> Result<Record, IntelError> {
-    println!("creating a record in linker table");
     let main_fk_pair = linker_table.get_local_foreign_columns_pair_to_table(&main_table.name);
     let indirect_fk_pair =
         linker_table.get_local_foreign_columns_pair_to_table(&indirect_table.name);
-    println!("main_fk_pair: {:?}", main_fk_pair);
-    println!("indirect_fk_pair: {:?}", indirect_fk_pair);
     assert_eq!(main_fk_pair.len(), 1);
     assert_eq!(indirect_fk_pair.len(), 1);
     let (main_linker_local, main_linker_refferred) = main_fk_pair[0];
@@ -397,8 +378,6 @@ fn create_linker_record(
     let mut linker_record = Record::new();
     linker_record.insert_value(&main_linker_local.name, main_pk_value);
     linker_record.insert_value(&indirect_linker_local.name, indirect_pk_value);
-    println!("linker table: {:#?}", linker_table);
-    println!("linker_record: {:#?}", linker_record);
     Ok(linker_record)
 }
 
@@ -413,13 +392,8 @@ fn link_existing_for_indirect_table(
     linker_table: &Table,
     rows: &Rows,
 ) -> Result<(), IntelError> {
-    println!("link existing for indirect table");
-    println!("HERE.... <------");
-    println!("rows: {:#?}", rows);
     for dao in rows.iter() {
-        println!("dao: {:?}", dao);
         let indirect_record = Record::from(&dao);
-        println!("indirect existing record: {:?}", indirect_record);
         let linker_record = create_linker_record(
             main_table,
             main_record,
@@ -440,11 +414,8 @@ fn update_records_in_table(
 ) -> Result<Vec<Record>, IntelError> {
     let mut records = vec![];
     for dao in rows.iter() {
-        println!("dao: {:?}", dao);
         let record = Record::from(&dao);
-        println!("record: {:?}", record);
         let updated_record = update_record_in_table(dm, main_table, &record)?;
-        println!("updated record: {:?}", updated_record);
         records.push(updated_record);
     }
     Ok(records)
@@ -507,7 +478,6 @@ fn insert_rows_to_table(
     sql += "(";
     for (i, col) in columns.iter().enumerate() {
         if are_all_nil(&col.name.name, rows) && col.is_not_null() && col.has_generated_default() {
-            println!("skipping column: {}", col.name.name);
         } else {
             if i > 0 {
                 sql += ", ";
@@ -523,7 +493,6 @@ fn insert_rows_to_table(
             assert!(value.is_some());
             let value = value.unwrap();
             if value == &Value::Nil && col.is_not_null() && col.has_generated_default() {
-                println!("skipping column: {}", col.name.name);
             } else {
                 if i > 0 {
                     sql += ", ";
@@ -583,15 +552,12 @@ fn insert_record_to_table(
         let value = record.get_value(&col.name.name);
         if let Some(value) = value {
             if value == Value::Nil && col.is_not_null() && col.has_generated_default() {
-                println!("skipping column: {}", col.name.name);
             } else {
                 if i > 0 {
                     sql += ", ";
                 }
                 sql += &format!("{} ", col.name.name);
             }
-        } else {
-            println!("skipping {} ", col.name.name);
         }
     }
     sql += ") ";
@@ -600,7 +566,6 @@ fn insert_record_to_table(
         let value = record.get_value(&col.name.name);
         if let Some(value) = value {
             if value == Value::Nil && col.is_not_null() && col.has_generated_default() {
-                println!("skipping column: {}", col.name.name);
             } else {
                 if i > 0 {
                     sql += ", ";
@@ -609,8 +574,6 @@ fn insert_record_to_table(
                 let casted_value = rustorm::common::cast_type(&value, &col.get_sql_type());
                 params.push(casted_value);
             }
-        } else {
-            println!("skipping {} ", col.name.name);
         }
     }
     sql += ") RETURNING *";
@@ -633,15 +596,12 @@ fn insert_record_to_linker_table(
         let value = record.get_value(&col.name.name);
         if let Some(value) = value {
             if value == Value::Nil && col.is_not_null() && col.has_generated_default() {
-                println!("skipping column: {}", col.name.name);
             } else {
                 if i > 0 {
                     sql += ", ";
                 }
                 sql += &format!("{} ", col.name.name);
             }
-        } else {
-            println!("skipping {} ", col.name.name);
         }
     }
     sql += ") ";
@@ -650,7 +610,6 @@ fn insert_record_to_linker_table(
         let value = record.get_value(&col.name.name);
         if let Some(value) = value {
             if value == Value::Nil && col.is_not_null() && col.has_generated_default() {
-                println!("skipping column: {}", col.name.name);
             } else {
                 if i > 0 {
                     sql += ", ";
@@ -659,8 +618,6 @@ fn insert_record_to_linker_table(
                 let casted_value = rustorm::common::cast_type(&value, &col.get_sql_type());
                 params.push(casted_value);
             }
-        } else {
-            println!("skipping {} ", col.name.name);
         }
     }
     sql += ") RETURNING *";
@@ -702,7 +659,6 @@ fn upsert_one_one_record_to_table(
         assert!(value.is_some());
         let value = value.unwrap();
         if value == Value::Nil && one_col.is_not_null() && one_col.has_generated_default() {
-            println!("skipping column: {}", one_col.name.name);
         } else {
             if i > 0 {
                 sql += ", ";
@@ -718,7 +674,6 @@ fn upsert_one_one_record_to_table(
         assert!(value.is_some());
         let value = value.unwrap();
         if value == Value::Nil && one_col.is_not_null() && one_col.has_generated_default() {
-            println!("skipping column: {}", one_col.name.name);
         } else {
             if i > 0 {
                 sql += ", ";
