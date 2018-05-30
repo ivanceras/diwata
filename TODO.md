@@ -3,4 +3,6 @@
 - [x] insert, update records
 - [ ] linker fields of indirect records that has extra fields will be displayed together with the indirect records
 - [ ] search/filter for dates
-- [ ] text representation of ts_vector types
+- [x] text representation of tsvector types
+- [ ] display the database name on the page title
+- [x] implement search/filter in has_many and indirect records
