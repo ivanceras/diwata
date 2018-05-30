@@ -163,7 +163,10 @@ fn handle_static(_req: Request, path: &[&str]) -> Response {
     };
     println!("content type: {:?}", content_type);
     let bytes = {
-        let mut file = File::open(&path_buf).unwrap();
+        let mut file = match File::open(&path_buf){
+            Ok(file) => file,
+            Err(_e) =>  {return handle_not_found(_req);}
+        };
         let mut contents = vec![];
         file.read_to_end(&mut contents).unwrap();
         contents
@@ -177,6 +180,11 @@ fn handle_static(_req: Request, path: &[&str]) -> Response {
     let mut res = Response::new();
     res.headers_mut().set(content_type);
     return res.with_body(bytes);
+}
+
+fn handle_not_found(_req: Request) -> Response {
+    debug!("NOT FOUND");
+    Response::new().with_status(StatusCode::NotFound).with_body("Not Found")
 }
 fn handle_error(_req: Request, status: StatusCode, msg: String) -> Response {
     debug!("ERROR: {} ({})", msg, status);
