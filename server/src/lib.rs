@@ -63,6 +63,19 @@ pub fn get_db_url() -> Result<String, ServiceError> {
     }
 }
 
+/// precache the processing of tables, and window in advance
+pub fn precache()-> Result<(), ServiceError> {
+    match ::cache::CACHE_POOL.lock(){
+        Ok(mut cache_pool) => {
+            let em = get_pool_em()?;
+            let db_url = get_db_url()?;
+            cache_pool.precache(&em, &db_url)?;
+            Ok(())
+        }
+        Err(e) => Err(ServiceError::GenericError(format!("{}", e)))
+    }
+}
+
 pub fn set_db_url(new_url: &str) -> Result<(), ServiceError> {
     match DB_URL.lock() {
         Ok(mut db_url) => {
@@ -106,6 +119,7 @@ pub struct Opt {
         help = "Database url to connect to, when set all data is exposed without login needed in the client side"
     )]
     pub db_url: Option<String>,
+
     #[structopt(
         short = "a",
         long = "address",
@@ -113,6 +127,7 @@ pub struct Opt {
         default_value = "0.0.0.0"
     )]
     pub address: String,
+
     #[structopt(
         short = "p",
         long = "port",
@@ -120,16 +135,28 @@ pub struct Opt {
         default_value = "8000"
     )]
     pub port: u16,
+    #[structopt(
+        short = "c",
+        long = "cache",
+        help = "precache the tables and windows so the first web request loads instantly, this requires the db-url to be set in order to work",
+        default_value = "true"
+    )]
+    pub precache: bool,
 }
 
-pub fn start() {
+pub fn start()-> Result<(),ServiceError> {
     let opt = Opt::from_args();
     println!("opt: {:?}", opt);
     if let Some(db_url) = opt.db_url {
-        match set_db_url(&db_url) {
-            Ok(_) => println!("url is set"),
-            Err(_) => println!("unable to set db_url"),
+        set_db_url(&db_url)?;
+        println!("url is set");
+        if opt.precache{
+            println!("precaching..");
+            precache()?;
+            println!("precaching complete!");
         }
     }
-    handler::run(&opt.address, opt.port);
+    handler::run(&opt.address, opt.port)?;
+    println!("server ready...");
+    Ok(())
 }

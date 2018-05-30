@@ -553,13 +553,23 @@ fn create_response<B: Serialize>(body: Result<B, ServiceError>) -> Response {
     }
 }
 
-pub fn run(ip: &str, port: u16) {
-    let addr = format!("{}:{}", ip, port).parse().unwrap();
+pub fn run(ip: &str, port: u16) -> Result<(), ServiceError> {
+    let addr = match format!("{}:{}", ip, port).parse(){
+        Ok(addr) => Ok(addr),
+        Err(e) => Err(ServiceError::GenericError(format!("{}",e)))
+    };
     let server = Server::new();
     let instance = Instance::new(server);
-    Http::new()
-        .bind(&addr, move || Ok(instance.clone()))
-        .unwrap()
-        .run()
-        .unwrap();
+    let http = Http::new()
+        .bind(&addr?, move || Ok(instance.clone()));
+
+    let bind = match http{
+        Ok(http) => http,
+        Err(e) => {return Err(ServiceError::GenericError(format!("{}",e)));}
+    };
+    match bind.run(){
+        Ok(bind) => bind,
+        Err(e) => {return Err(ServiceError::GenericError(format!("{}", e)));}
+    };
+    Ok(())
 }

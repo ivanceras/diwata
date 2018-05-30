@@ -1,7 +1,8 @@
 #![deny(warnings)]
 extern crate diwata_server as server;
 extern crate structopt;
+use server::ServiceError;
 
-fn main() {
-    server::start();
+fn main() -> Result<(),ServiceError> {
+    server::start()
 }
