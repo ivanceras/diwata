@@ -137,11 +137,6 @@ impl Field {
         referred_table: &Table,
     ) -> Self {
         let control_widget = ControlWidget::from_has_one_table(columns, referred_table);
-        println!(
-            "control widget of {} on referred_table: {} is widget: {:?}",
-            table.name.name, referred_table.name.name, control_widget
-        );
-        println!("referring columns: {:#?}", columns);
         let mut columns_comment = String::new();
         for column in columns {
             if let Some(ref comment) = column.comment {
@@ -272,7 +267,7 @@ impl Field {
                 SqlType::ArrayType(ArrayType::Text) => Some(Reference::Tag),
                 SqlType::ArrayType(ArrayType::Enum(_, _)) => Some(Reference::Tag),
                 _ => {
-                    println!("column '{}' is not yet dealt with", column_name);
+                    //println!("column '{}' is not yet dealt with", column_name);
                     None
                 }
             }
@@ -285,7 +280,7 @@ impl Field {
         let sql_type = &column.specification.sql_type;
         let capacity = &column.specification.capacity;
         let limit = column.specification.get_limit();
-        println!("sql type: {:?}", sql_type);
+        //println!("sql type: {:?}", sql_type);
         if sql_type == &SqlType::Char || (sql_type == &SqlType::Varchar && limit == Some(1)) {
             Some(Reference::Symbol)
         } else if sql_type == &SqlType::Numeric && match *capacity {
@@ -308,7 +303,7 @@ impl Field {
         {
             Some(Reference::Price)
         } else {
-            println!("column '{}' is not yet dealt with", column_name);
+            //println!("column '{}' is not yet dealt with", column_name);
             None
         }
     }

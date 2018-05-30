@@ -81,8 +81,9 @@ pub fn get_maintable_data(
                 let value = Value::Text(value_str);
                 common::validate_column(&column_name, window)?;
                 query.append(&format!(
-                    "{} ILIKE ${} ",
-                    column_name.complete_name(),
+                    "{}.{} ILIKE ${} ",
+                    main_tablename.name,
+                    column_name.name,
                     i + 1
                 ));
                 query.add_param(value);
@@ -98,7 +99,11 @@ pub fn get_maintable_data(
             let mut orders = vec![];
             for dc in display.columns.iter() {
                 let order = Order {
-                    column_name: dc.clone(),
+                    column_name: ColumnName{
+                        name: dc.name.to_owned(),
+                        table: Some(main_tablename.name.to_owned()),
+                        alias: None,
+                    },
                     direction: Direction::Asc,
                 };
                 orders.push(order);

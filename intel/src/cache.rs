@@ -51,6 +51,12 @@ impl CachePool {
         }
     }
 
+    pub fn precache(&mut self, em: &EntityManager, db_url: &str) -> Result<(), IntelError >{
+        self.ensure_cache(db_url);
+        self.perform_window_caching(em, db_url)?;
+        Ok(())
+    }
+
     pub fn get_cached_tables(
         &mut self,
         em: &EntityManager,
