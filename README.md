@@ -118,6 +118,7 @@ Using heristic method, diwata is able to infer the content of a table.
 - [X] Update records
 - [X] Insert records
 - [X] Detail record update/insert, delete link detail records
+     [ ] Filtering and searching on has_many and indirect records for detailed record
 - [ ] Undo update/delete records (upon deletion/modification, user have a grace period to undo the changes)
 - [X] Search and filter data
 - [ ] Drag/Rearrange and resize columns
@@ -129,7 +130,12 @@ Using heristic method, diwata is able to infer the content of a table.
 - [X] Interactive/dynamic record count indicator for toolbar buttons
 - [X] Loading indicators
 - [ ] Page transition animation
-- [X] Search table/windows
+- [X] Search/filter on tables
+- [ ] Table/Columns filtering based on privilege system.
+    - [X] Display only tables that the user has privilege
+    - [X] Display only columns that the user has privilege
+    - [ ] An interface for superusers to set user privileges for each tables
+- [ ] Row level security
 
 ## Next iteration development
 - [ ] Plugin and module system
