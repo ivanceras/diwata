@@ -22,11 +22,16 @@ use std::collections::BTreeMap;
 use tab::Tab;
 use table_intel;
 use window::Window;
+use rustorm::DatabaseName;
 
 pub fn get_main_table<'a>(window: &Window, tables: &'a Vec<Table>) -> Option<&'a Table> {
     let main_tablename = &window.main_tab.table_name;
     let main_table = table_intel::get_table(main_tablename, tables);
     main_table
+}
+
+pub fn get_database_name(em: &EntityManager) -> Result<Option<DatabaseName>, DbError> {
+    em.get_database_name()
 }
 
 pub fn get_total_records(em: &EntityManager, table_name: &TableName) -> Result<u64, DbError> {

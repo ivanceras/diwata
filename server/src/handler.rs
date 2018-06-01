@@ -117,6 +117,8 @@ pub fn handle_route(
         create_response(handle_test(req))
     } else if head == "db_url" {
         create_response(handle_db_url(req))
+    } else if head == "database_name" {
+        create_response(handle_database_name(req))
     } else if head == "delete" {
         return handle_delete(req, tail);
     } else if head == "record_changeset" {
@@ -129,6 +131,12 @@ pub fn handle_route(
 
     Box::new(futures::future::ok(result))
 }
+
+fn handle_database_name(_req: Request) -> Result<impl Serialize, ServiceError>{
+    let ret = data_read::get_database_name(&::get_pool_em()?)?;
+    Ok(ret)
+}
+
 fn handle_test(_req: Request) -> Result<(), ServiceError> {
     let db_url = &::get_db_url()?;
     println!("test db_url: {}", db_url);

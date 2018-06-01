@@ -4,5 +4,5 @@
 - [ ] linker fields of indirect records that has extra fields will be displayed together with the indirect records
 - [ ] search/filter for dates
 - [x] text representation of tsvector types
-- [ ] display the database name on the page title
+- [x] display the database name and its comment on the page title and in the description
 - [x] implement search/filter in has_many and indirect records
