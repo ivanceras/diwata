@@ -6,6 +6,9 @@ language: rust
 rust:
   - nightly
 
+addons:
+  postgresql: "9.5"
+
 services:
   - postgresql
 
