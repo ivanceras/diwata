@@ -118,7 +118,7 @@ Using heristic method, diwata is able to infer the content of a table.
 - [X] Update records
 - [X] Insert records
 - [X] Detail record update/insert, delete link detail records
-     [ ] Filtering and searching on has_many and indirect records for detailed record
+     [X] Filtering and searching on has_many and indirect records for detailed record
 - [ ] Undo update/delete records (upon deletion/modification, user have a grace period to undo the changes)
 - [X] Search and filter data
 - [ ] Drag/Rearrange and resize columns
@@ -149,4 +149,7 @@ Notes:
 
 ## Patreon:
 Please support me on [patreon](https://www.patreon.com/ivanceras), so I can dedicate more time to the development of this project
+
+## Contact me:
+ivanceras [a t] gmail.com
 

@@ -1,6 +1,6 @@
 [package]
 name = "diwata_intel"
-version = "0.1.1"
+version = "0.1.2"
 authors = [ "Jovansonlee Cesar <ivanceras@gmail.com>" ]
 license = "MIT"
 description = "Contains algorithmns and heuristics to interpret data"

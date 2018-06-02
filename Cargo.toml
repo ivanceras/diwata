@@ -9,8 +9,8 @@ members = [
 ]
 
 [replace]
-"rustorm_dao:0.1.2" = { path = "rustorm/dao" }
+"rustorm_dao:0.1.3" = { path = "rustorm/dao" }
 "rustorm_codegen:0.1.2" = { path = "rustorm/codegen" }
-"rustorm:0.10.4" = { path = "rustorm" }
-"diwata_intel:0.1.1" = { path = "intel" }
-"diwata_server:0.1.1" = { path = "server" }
+"rustorm:0.10.5" = { path = "rustorm" }
+"diwata_intel:0.1.2" = { path = "intel" }
+"diwata_server:0.1.2" = { path = "server" }
