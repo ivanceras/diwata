@@ -58,3 +58,10 @@ select has_any_column_privilege('lee', 'public.film', 'select')
 select has_column_privilege('lee', 'public.film', 'rental_rate', 'select')
 select has_column_privilege('lee', 'public.film', 'title', 'select')
 
+
+## Database roles:
+ - read_only can read only on tables
+ - app_user normal access: insert, update,
+ - app_admin: insert, update, delete
+ - database_admin: inser, update, delete, create, drop, truncate
+

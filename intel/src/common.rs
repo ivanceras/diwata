@@ -13,6 +13,7 @@ use std::collections::BTreeMap;
 use std::str::FromStr;
 use uuid::Uuid;
 use window::Window;
+use tab::Tab;
 
 pub fn calc_offset(page: u32, page_size: u32) -> u32 {
     (page - 1) * page_size
@@ -59,6 +60,17 @@ pub fn cast_record(record: Record, column_datatypes: &BTreeMap<String, SqlType>)
 //that belong to this window, otherwise raise a SQL injection attempt error
 pub fn validate_column(column_name: &ColumnName, window: &Window) -> Result<(), DbError> {
     if window.has_column_name(column_name) {
+        Ok(())
+    } else {
+        Err(DbError::SqlInjectionAttempt(format!(
+            "Column:'{}' does not exist",
+            column_name.complete_name()
+        )))
+    }
+}
+
+pub fn validate_tab_column(column_name: &ColumnName, tab: &Tab) -> Result<(), DbError> {
+    if tab.has_column_name(column_name) {
         Ok(())
     } else {
         Err(DbError::SqlInjectionAttempt(format!(

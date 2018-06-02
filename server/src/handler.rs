@@ -311,8 +311,8 @@ fn handle_has_many(_req: Request, path: &[&str]) -> Result<impl Serialize, Servi
             sort_str = Some(v);
         }
     }
-    let _filter = filter_str.map(|s| Filter::from_str(s));
-    let _sort = sort_str.map(|s| Sort::from_str(s));
+    let filter = filter_str.map(|s| Filter::from_str(s));
+    let sort = sort_str.map(|s| Sort::from_str(s));
     let context = Context::create()?;
     let table_name = TableName::from(&table_name);
     let window = window::get_window(&table_name, &context.windows);
@@ -332,6 +332,8 @@ fn handle_has_many(_req: Request, path: &[&str]) -> Result<impl Serialize, Servi
                         &main_table,
                         &record_id,
                         has_many_tab,
+                        filter,
+                        sort,
                         ::PAGE_SIZE,
                         page,
                     )?;
@@ -367,8 +369,8 @@ fn handle_indirect(_req: Request, path: &[&str]) -> Result<impl Serialize, Servi
             sort_str = Some(v);
         }
     }
-    let _filter = filter_str.map(|s| Filter::from_str(s));
-    let _sort = sort_str.map(|s| Sort::from_str(s));
+    let filter = filter_str.map(|s| Filter::from_str(s));
+    let sort = sort_str.map(|s| Sort::from_str(s));
     let context = Context::create()?;
 
     let table_name = TableName::from(&table_name);
@@ -395,6 +397,8 @@ fn handle_indirect(_req: Request, path: &[&str]) -> Result<impl Serialize, Servi
                         &record_id,
                         &indirect_tab,
                         &linker_table,
+                        filter,
+                        sort,
                         ::PAGE_SIZE,
                         page,
                     )?;

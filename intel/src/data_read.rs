@@ -86,10 +86,9 @@ pub fn get_maintable_data(
                 let value = Value::Text(value_str);
                 common::validate_column(&column_name, window)?;
                 query.append(&format!(
-                    "{}.{} ILIKE ${} ",
+                    "{}.{} ILIKE ",
                     main_tablename.name,
                     column_name.name,
-                    i + 1
                 ));
                 query.add_param(value);
             }
@@ -151,10 +150,9 @@ pub fn get_selected_record_detail(
             query.append("\nAND ");
         }
         query.append(&format!(
-            "{}.{} = ${} ",
+            "{}.{} = ",
             main_table.name.name,
             pk.complete_name(),
-            i + 1
         ));
         query.add_param(value.clone());
     }
@@ -189,6 +187,8 @@ pub fn get_selected_record_detail(
                     main_table,
                     has_many_tab,
                     &record_id,
+                    None,
+                    None,
                     page_size,
                     1,
                 )?;
@@ -208,6 +208,8 @@ pub fn get_selected_record_detail(
                     indirect_tab,
                     linker_table,
                     &record_id,
+                    None,
+                    None,
                     page_size,
                     1,
                 )?;
@@ -262,10 +264,9 @@ fn get_one_one_record(
                 query.append("\nAND ");
             }
             query.append(&format!(
-                " {}.{} = ${} ",
+                " {}.{} = ",
                 one_one_table.name.name,
                 one_one_pk[i].complete_name(),
-                i + 1
             ));
             let required_type = one_one_pk_data_types[i];
             common::find_value(rc, record_id, required_type).map(|v| query.add_param(v.clone()));
@@ -283,6 +284,8 @@ pub fn get_has_many_records_service(
     main_table: &Table,
     record_id: &str,
     has_many_tab: &Tab,
+    filter: Option<Filter>,
+    sort: Option<Sort>,
     page_size: u32,
     page: u32,
 ) -> Result<Rows, IntelError> {
@@ -296,6 +299,8 @@ pub fn get_has_many_records_service(
         main_table,
         has_many_tab,
         &record_id,
+        filter,
+        sort,
         page_size,
         page,
     )?;
@@ -309,6 +314,8 @@ fn get_has_many_records(
     main_table: &Table,
     has_many_tab: &Tab,
     main_record_id: &Vec<(&ColumnName, Value)>,
+    filter: Option<Filter>,
+    sort: Option<Sort>,
     page_size: u32,
     page: u32,
 ) -> Result<Rows, DbError> {
@@ -340,14 +347,56 @@ fn get_has_many_records(
             query.append("\nAND ");
         }
         query.append(&format!(
-            " {}.{} = ${} ",
+            " {}.{} = ",
             has_many_table.name.name,
             has_many_fk[i].complete_name(),
-            i + 1
         ));
         let required_type = has_many_fk_data_types[i];
         common::find_value(referred_column, main_record_id, required_type)
             .map(|v| query.add_param(v.clone()));
+    }
+
+    // TODO: unify this into the query builder
+    match filter {
+        Some(filter) => {
+            query.append("AND ");
+            for (i, cond) in filter.conditions.iter().enumerate() {
+                if i > 0 {
+                    query.append("AND ");
+                }
+                let column_name = &cond.left;
+                let value_str = format!("{}%", cond.right.to_string());
+                let value = Value::Text(value_str);
+                common::validate_tab_column(&column_name, has_many_tab)?;
+                query.append(&format!(
+                    "{}.{} ILIKE ",
+                    has_many_tab.table_name.name,
+                    column_name.name,
+                ));
+                query.add_param(value);
+            }
+        }
+        None => (),
+    }
+    if let Some(sort) = sort {
+        query.set_sort(sort);
+    } else {
+        // arrange by display name if there is
+        if let Some(ref display) = has_many_tab.display {
+            let mut orders = vec![];
+            for dc in display.columns.iter() {
+                let order = Order {
+                    column_name: ColumnName{
+                        name: dc.name.to_owned(),
+                        table: Some(has_many_tab.table_name.name.to_owned()),
+                        alias: None,
+                    },
+                    direction: Direction::Asc,
+                };
+                orders.push(order);
+            }
+            query.set_sort(Sort { orders });
+        }
     }
 
     query.set_page(page, page_size);
@@ -365,6 +414,8 @@ pub fn get_indirect_records_service(
     record_id: &str,
     indirect_tab: &Tab,
     linker_table_name: &TableName,
+    filter: Option<Filter>,
+    sort: Option<Sort>,
     page_size: u32,
     page: u32,
 ) -> Result<Rows, IntelError> {
@@ -379,6 +430,8 @@ pub fn get_indirect_records_service(
         indirect_tab,
         linker_table_name,
         &record_id,
+        filter,
+        sort,
         page_size,
         page,
     )?;
@@ -393,6 +446,8 @@ fn get_indirect_records(
     indirect_tab: &Tab,
     linker_table_name: &TableName,
     record_id: &Vec<(&ColumnName, Value)>,
+    filter: Option<Filter>,
+    sort: Option<Sort>,
     page_size: u32,
     page: u32,
 ) -> Result<Rows, DbError> {
@@ -447,15 +502,56 @@ fn get_indirect_records(
             query.append("\nAND ");
         }
         query.append(&format!(
-            "{}.{} = ${} ",
+            "{}.{} = ",
             linker_table.name.name,
             fc.name,
-            i + 1
         ));
         let fc_column = linker_table.get_column(&fc).expect("column should exist");
         let required_type: &SqlType = &fc_column.get_sql_type();
         let rc = &linker_fc_referring_columns[i];
         common::find_value(rc, record_id, required_type).map(|v| query.add_param(v.clone()));
+    }
+    // TODO: unify this into the query builder
+    match filter {
+        Some(filter) => {
+            query.append("AND ");
+            for (i, cond) in filter.conditions.iter().enumerate() {
+                if i > 0 {
+                    query.append("AND ");
+                }
+                let column_name = &cond.left;
+                let value_str = format!("{}%", cond.right.to_string());
+                let value = Value::Text(value_str);
+                common::validate_tab_column(&column_name, indirect_tab)?;
+                query.append(&format!(
+                    "{}.{} ILIKE ",
+                    indirect_tab.table_name.name,
+                    column_name.name,
+                ));
+                query.add_param(value);
+            }
+        }
+        None => (),
+    }
+    if let Some(sort) = sort {
+        query.set_sort(sort);
+    } else {
+        // arrange by display name if there is
+        if let Some(ref display) = indirect_tab.display {
+            let mut orders = vec![];
+            for dc in display.columns.iter() {
+                let order = Order {
+                    column_name: ColumnName{
+                        name: dc.name.to_owned(),
+                        table: Some(indirect_tab.table_name.name.to_owned()),
+                        alias: None,
+                    },
+                    direction: Direction::Asc,
+                };
+                orders.push(order);
+            }
+            query.set_sort(Sort { orders });
+        }
     }
     query.set_page(page, page_size);
     query.collect_rows(dm)

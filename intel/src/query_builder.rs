@@ -14,7 +14,7 @@ use table_intel;
 
 pub struct Query {
     sql: String,
-    params: Vec<Value>,
+    pub params: Vec<Value>,
     column_datatypes: BTreeMap<String, SqlType>,
 }
 
@@ -30,8 +30,11 @@ impl Query {
     pub fn append(&mut self, s: &str) {
         self.sql += s;
     }
+    
 
     pub fn add_param(&mut self, p: Value) {
+        let params_len = self.params.len();
+        self.append(&format!("${} ", params_len + 1));
         self.params.push(p);
     }
     pub fn select(&mut self) {
