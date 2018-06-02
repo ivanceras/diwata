@@ -23,7 +23,7 @@ use intel::cache;
 use rustorm::EntityManager;
 use rustorm::Pool;
 use rustorm::RecordManager;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, RwLock};
 use structopt::StructOpt;
 
 pub mod context;
@@ -33,12 +33,12 @@ pub mod handler;
 pub static PAGE_SIZE: u32 = 40;
 
 lazy_static! {
-    pub static ref DB_URL: Mutex<Option<String>> = Mutex::new(None);
-    pub static ref POOL: Arc<Mutex<Pool>> = { Arc::new(Mutex::new(Pool::new())) };
+    pub static ref DB_URL: RwLock<Option<String>> = RwLock::new(None);
+    pub static ref POOL: Arc<RwLock<Pool>> = { Arc::new(RwLock::new(Pool::new())) };
 }
 
 fn get_db_url_value() -> Result<Option<String>, ServiceError> {
-    match DB_URL.lock() {
+    match DB_URL.read() {
         Ok(db_url) => {
             if let Some(ref db_url) = *db_url {
                 Ok(Some(db_url.to_owned()))
@@ -77,7 +77,7 @@ pub fn precache()-> Result<(), ServiceError> {
 }
 
 pub fn set_db_url(new_url: &str) -> Result<(), ServiceError> {
-    match DB_URL.lock() {
+    match DB_URL.write() {
         Ok(mut db_url) => {
             *db_url = Some(new_url.to_string());
             Ok(())
@@ -87,7 +87,7 @@ pub fn set_db_url(new_url: &str) -> Result<(), ServiceError> {
 }
 
 pub fn get_pool_em() -> Result<EntityManager, ServiceError> {
-    let mut pool = match POOL.lock() {
+    let mut pool = match POOL.write() {
         Ok(pool) => pool,
         Err(_e) => return Err(ServiceError::PoolResourceError),
     };
@@ -99,7 +99,7 @@ pub fn get_pool_em() -> Result<EntityManager, ServiceError> {
 }
 
 pub fn get_pool_dm() -> Result<RecordManager, ServiceError> {
-    let mut pool = match POOL.lock() {
+    let mut pool = match POOL.write() {
         Ok(pool) => pool,
         Err(_e) => return Err(ServiceError::PoolResourceError),
     };
