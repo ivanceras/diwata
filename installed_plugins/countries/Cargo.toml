@@ -1,0 +1,7 @@
+[package]
+name = "diwata_countries"
+version = "0.1.0"
+authors = ["Jovansonlee Cesar <ivanceras@gmail.com>"]
+license = "MIT"
+description = "A diwata plugin which deals with countries dropdown display"
+

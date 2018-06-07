@@ -13,7 +13,6 @@ extern crate uuid;
 
 mod reference;
 mod widget;
-mod users;
 
 pub mod cache;
 mod common;

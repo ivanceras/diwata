@@ -1,0 +1,12 @@
+[package]
+name = "plugin_processor"
+version = "0.1.0"
+description = "Process the plugins installed in the system"
+
+
+[dependencies]
+toml = "0.4"
+serde = "1.0"
+serde_derive = "1.0"
+hyper = "0.11"
+diwata_user_role = {path = "../installed_plugins/user_role"}

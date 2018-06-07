@@ -1,0 +1,15 @@
+[package]
+name = "diwata_user_role"
+version = "0.1.0"
+authors = ["Jovansonlee Cesar <ivanceras@gmail.com>"]
+license = "MIT"
+description = "A diwata plugin which deals with user and roles"
+
+
+[dependencies]
+diwata_server = "0.1"
+hyper = "0.11"
+
+[dependencies.rustorm]
+version = "0.10"
+features = ["with-postgres", "with-sqlite"]

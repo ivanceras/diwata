@@ -1,0 +1,7 @@
+[package]
+name = "plugin"
+version = "0.1.0"
+description = "a template for the plugin where more files will be generated"
+
+[dependencies]
+

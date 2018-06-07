@@ -17,7 +17,6 @@ hyper = "0.11"
 env_logger = "0.3"
 futures = "0.1.14"
 
-
 [dependencies.diwata_intel]
 version = "0.1"
 

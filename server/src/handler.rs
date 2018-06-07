@@ -125,11 +125,17 @@ pub fn handle_route(
         return handle_record_changeset(req, tail);
     } else if head == "tab_changeset" {
         return handle_tab_changeset(req);
+    } else if head == "plugin" {
+        create_response(handle_plugin(req, tail))
     } else {
         handle_error(req, StatusCode::NotFound, "Page not found".to_owned())
     };
 
     Box::new(futures::future::ok(result))
+}
+
+fn handle_plugin(_req: Request, _tail: &[&str]) -> Result<impl Serialize, ServiceError> {
+    Ok(())    
 }
 
 fn handle_database_name(_req: Request) -> Result<impl Serialize, ServiceError>{

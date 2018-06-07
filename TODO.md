@@ -6,3 +6,6 @@
 - [x] text representation of tsvector types
 - [x] display the database name and its comment on the page title and in the description
 - [x] implement search/filter in has_many and indirect records
+- [ ] rewrite server to have context contained in
+- [ ] have browser resize in elm webclient resonated down to the fields
+- [ ] window arena, window, tab, detailed record, row and field, dropdown display will have an allocated size
