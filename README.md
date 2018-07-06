@@ -158,7 +158,7 @@ ivanceras [a t] gmail.com
 ## Contributors
 
 This project exists thanks to all the people who contribute.
-<a href="graphs/contributors"><img src="https://opencollective.com/diwata/contributors.svg?width=890&button=false" /></a>
+<a href="https://github.com/ivanceras/diwata/graphs/contributors"><img src="https://opencollective.com/diwata/contributors.svg?width=890&button=false" /></a>
 
 
 ## Backers
