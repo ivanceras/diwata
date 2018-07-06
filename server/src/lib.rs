@@ -1,4 +1,4 @@
-#![deny(warnings)]
+//#![deny(warnings)]
 #![feature(plugin)]
 #![feature(rustc_private)]
 #![feature(integer_atomics)]
@@ -16,99 +16,18 @@ extern crate hyper;
 extern crate structopt;
 #[macro_use]
 extern crate log;
+extern crate url;
 
-pub use error::ServiceError;
-pub use handler::Server;
-use intel::cache;
-use rustorm::EntityManager;
-use rustorm::Pool;
-use rustorm::RecordManager;
-use std::sync::{Arc, RwLock};
 use structopt::StructOpt;
 
+
+pub use error::ServiceError;
+
 pub mod context;
-mod error;
+pub mod error;
 pub mod handler;
+mod global;
 
-pub static PAGE_SIZE: u32 = 40;
-
-lazy_static! {
-    pub static ref DB_URL: RwLock<Option<String>> = RwLock::new(None);
-    pub static ref POOL: Arc<RwLock<Pool>> = { Arc::new(RwLock::new(Pool::new())) };
-}
-
-fn get_db_url_value() -> Result<Option<String>, ServiceError> {
-    match DB_URL.read() {
-        Ok(db_url) => {
-            if let Some(ref db_url) = *db_url {
-                Ok(Some(db_url.to_owned()))
-            } else {
-                Ok(None)
-            }
-        }
-        Err(e) => Err(ServiceError::GenericError(format!("{}", e))),
-    }
-}
-
-pub fn get_db_url() -> Result<String, ServiceError> {
-    match get_db_url_value() {
-        Ok(db_url) => {
-            if let Some(ref db_url) = db_url {
-                Ok(db_url.to_owned())
-            } else {
-                Err(ServiceError::NoDbUrlSpecified)
-            }
-        }
-        Err(e) => Err(e),
-    }
-}
-
-/// precache the processing of tables, and window in advance
-pub fn precache()-> Result<(), ServiceError> {
-    match ::cache::CACHE_POOL.lock(){
-        Ok(mut cache_pool) => {
-            let em = get_pool_em()?;
-            let db_url = get_db_url()?;
-            cache_pool.precache(&em, &db_url)?;
-            Ok(())
-        }
-        Err(e) => Err(ServiceError::GenericError(format!("{}", e)))
-    }
-}
-
-pub fn set_db_url(new_url: &str) -> Result<(), ServiceError> {
-    match DB_URL.write() {
-        Ok(mut db_url) => {
-            *db_url = Some(new_url.to_string());
-            Ok(())
-        }
-        Err(e) => Err(ServiceError::GenericError(format!("{}", e))),
-    }
-}
-
-pub fn get_pool_em() -> Result<EntityManager, ServiceError> {
-    let mut pool = match POOL.write() {
-        Ok(pool) => pool,
-        Err(_e) => return Err(ServiceError::PoolResourceError),
-    };
-    let db_url = &get_db_url()?;
-    match pool.em(db_url) {
-        Ok(em) => Ok(em),
-        Err(e) => return Err(ServiceError::DbError(e)),
-    }
-}
-
-pub fn get_pool_dm() -> Result<RecordManager, ServiceError> {
-    let mut pool = match POOL.write() {
-        Ok(pool) => pool,
-        Err(_e) => return Err(ServiceError::PoolResourceError),
-    };
-    let db_url = &get_db_url()?;
-    match pool.dm(db_url) {
-        Ok(em) => Ok(em),
-        Err(e) => return Err(ServiceError::DbError(e)),
-    }
-}
 
 #[derive(StructOpt, Debug)]
 #[structopt(name = "diwata", about = "A user friendly database interface")]
@@ -142,20 +61,29 @@ pub struct Opt {
         default_value = "true"
     )]
     pub precache: bool,
+
+    #[structopt(
+        short = "l",
+        long = "login-required",
+        help = "If enabled, then the user must supply username and password in all of the API calls",
+        default_value = "true"
+    )]
+    pub require_login: bool,
 }
 
 pub fn start()-> Result<(),ServiceError> {
     let opt = Opt::from_args();
     println!("opt: {:?}", opt);
     if let Some(db_url) = opt.db_url {
-        set_db_url(&db_url)?;
+        global::set_db_url(&db_url)?;
         println!("url is set");
         if opt.precache{
             println!("precaching..");
-            precache()?;
+            global::precache()?;
             println!("precaching complete!");
         }
     }
+    global::set_login_required(opt.require_login)?;
     handler::run(&opt.address, opt.port)?;
     println!("server ready...");
     Ok(())

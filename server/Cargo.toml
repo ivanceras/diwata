@@ -16,6 +16,7 @@ structopt-derive = "0.1"
 hyper = "0.11"
 env_logger = "0.3"
 futures = "0.1.14"
+url = "1.5"
 
 
 [dependencies.diwata_intel]

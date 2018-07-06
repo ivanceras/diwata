@@ -7,7 +7,7 @@ use futures::Future;
 use futures::Stream;
 use hyper::error::Error;
 use hyper::header::ContentType;
-use hyper::server::Request;
+use hyper::Request;
 use hyper::server::Response;
 use hyper::server::Service;
 use hyper::Headers;
@@ -33,6 +33,7 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
+use global;
 
 /// An instance of the server. Runs a session of rustw.
 pub struct Server {}
@@ -115,8 +116,8 @@ pub fn handle_route(
         create_response(handle_lookup_all(req, tail))
     } else if head == "test" {
         create_response(handle_test(req))
-    } else if head == "db_url" {
-        create_response(handle_db_url(req))
+    } else if head == "is_login_required" {
+        create_response(handle_login_required(req))
     } else if head == "database_name" {
         create_response(handle_database_name(req))
     } else if head == "delete" {
@@ -133,19 +134,19 @@ pub fn handle_route(
 }
 
 fn handle_database_name(_req: Request) -> Result<impl Serialize, ServiceError>{
-    let ret = data_read::get_database_name(&::get_pool_em()?)?;
+    let ret = data_read::get_database_name(&global::get_pool_em()?)?;
     Ok(ret)
 }
 
 fn handle_test(_req: Request) -> Result<(), ServiceError> {
-    let db_url = &::get_db_url()?;
+    let db_url = &global::get_db_url()?;
     println!("test db_url: {}", db_url);
     let ret = pool::test_connection(&db_url)?;
     Ok(ret)
 }
 
-fn handle_db_url(_req: Request) -> Result<String, ServiceError> {
-    ::get_db_url()
+fn handle_login_required(_req: Request) -> Result<bool, ServiceError> {
+    global::is_login_required()
 }
 
 fn handle_index(_req: Request) -> Response {
@@ -196,13 +197,12 @@ fn handle_not_found(_req: Request) -> Response {
 }
 fn handle_error(_req: Request, status: StatusCode, msg: String) -> Response {
     debug!("ERROR: {} ({})", msg, status);
-
     Response::new().with_status(status).with_body(msg)
 }
 
 fn handle_windows(_req: Request) -> Result<impl Serialize, ServiceError> {
-    let em = ::get_pool_em()?;
-    let db_url = &::get_db_url()?;
+    let em = global::get_pool_em()?;
+    let db_url = &global::get_db_url()?;
     let ret = window::get_grouped_windows_using_cache(&em, db_url)?;
     Ok(ret)
 }
@@ -252,7 +252,7 @@ fn handle_data(_req: Request, path: &[&str]) -> Result<impl Serialize, ServiceEr
                 filter,
                 sort,
                 page,
-                ::PAGE_SIZE,
+                global::PAGE_SIZE,
             )?;
             Ok(rows)
         }
@@ -277,7 +277,7 @@ fn handle_select(_req: Request, path: &[&str]) -> Result<impl Serialize, Service
                 &context.tables,
                 &window,
                 &record_id,
-                ::PAGE_SIZE,
+                global::PAGE_SIZE,
             )?;
             match dao {
                 Some(dao) => Ok(dao),
@@ -334,7 +334,7 @@ fn handle_has_many(_req: Request, path: &[&str]) -> Result<impl Serialize, Servi
                         has_many_tab,
                         filter,
                         sort,
-                        ::PAGE_SIZE,
+                        global::PAGE_SIZE,
                         page,
                     )?;
                     Ok(rows)
@@ -399,7 +399,7 @@ fn handle_indirect(_req: Request, path: &[&str]) -> Result<impl Serialize, Servi
                         &linker_table,
                         filter,
                         sort,
-                        ::PAGE_SIZE,
+                        global::PAGE_SIZE,
                         page,
                     )?;
                     Ok(rows)
@@ -430,7 +430,7 @@ fn handle_lookup(_req: Request, path: &[&str]) -> Result<impl Serialize, Service
                 &context.dm,
                 &context.tables,
                 &window.main_tab,
-                ::PAGE_SIZE,
+                global::PAGE_SIZE,
                 page,
             )?;
             Ok(rows)
@@ -454,7 +454,7 @@ fn handle_lookup_all(_req: Request, path: &[&str]) -> Result<impl Serialize, Ser
                 &context.dm,
                 &context.tables,
                 &window,
-                ::PAGE_SIZE,
+                global::PAGE_SIZE,
             )?;
             Ok(lookup)
         }
