@@ -67,11 +67,12 @@ diwata_cli --db-url sqlite://sakila.db  -p 80001 --open
 - google-closure-compiler (optional, for release build)
 - sed (search and replace `app.js` with `app.min.js` in `index.html`
 - sakila database (for demo and testing) [1]
+- build-essential (for compiling c based dependencies such as sqlite-src)
 
 ## Install Dependencies 
 ```sh
 curl https://sh.rustup.rs -sSf | sh
-sudo apt install rsync
+sudo apt install rsync build-essential pkg-config
 npm install -g elm@0.18
 npm install -g google-closure-compiler-js
 
