@@ -10,6 +10,7 @@ pub enum ServiceError {
     DbError(DbError),
     NoDbUrlSpecified,
     NotFound,
+    RequiredCredentialsNotFound,
 }
 
 impl From<DbError> for ServiceError {

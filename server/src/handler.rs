@@ -34,6 +34,7 @@ use std::io::prelude::*;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use global;
+use credentials::{Username, Password};
 
 /// An instance of the server. Runs a session of rustw.
 pub struct Server {}
@@ -93,7 +94,6 @@ pub fn handle_route(
     let path: Vec<_> = path.split('/').collect();
     let head = path[0];
     let tail = &path[1..];
-
     let result = if head == "" {
         handle_index(req)
     } else if head == "static" {
@@ -133,7 +133,39 @@ pub fn handle_route(
     Box::new(futures::future::ok(result))
 }
 
-fn handle_database_name(_req: Request) -> Result<impl Serialize, ServiceError>{
+
+fn require_credentials(req: &Request) -> Result<(), ServiceError>{
+    let is_required = global::is_login_required()?;
+
+    if is_required{
+        let headers = req.headers();
+        for header in headers.iter(){
+            println!("header: {:?}", header);
+        }
+        let username = headers.get::<Username>();
+        let password = headers.get::<Password>();
+        println!("username: {:?}", username);
+        println!("password: {:?}", password);
+        if let Some(username) = username{
+            if let Some(password) = password{
+                println!("username: {}, password: {}", username.0, password.0);
+                Ok(())
+            }
+            else{
+                Err(ServiceError::RequiredCredentialsNotFound)
+            }
+        }
+        else{
+            Err(ServiceError::RequiredCredentialsNotFound)
+        }
+    }
+    else{
+        Ok(())
+    }
+}
+
+fn handle_database_name(req: Request) -> Result<impl Serialize, ServiceError>{
+    require_credentials(&req)?;
     let ret = data_read::get_database_name(&global::get_pool_em()?)?;
     Ok(ret)
 }
@@ -200,14 +232,16 @@ fn handle_error(_req: Request, status: StatusCode, msg: String) -> Response {
     Response::new().with_status(status).with_body(msg)
 }
 
-fn handle_windows(_req: Request) -> Result<impl Serialize, ServiceError> {
+fn handle_windows(req: Request) -> Result<impl Serialize, ServiceError> {
+    require_credentials(&req)?;
     let em = global::get_pool_em()?;
     let db_url = &global::get_db_url()?;
     let ret = window::get_grouped_windows_using_cache(&em, db_url)?;
     Ok(ret)
 }
 
-fn handle_window(_req: Request, tail: &[&str]) -> Result<impl Serialize, ServiceError> {
+fn handle_window(req: Request, tail: &[&str]) -> Result<impl Serialize, ServiceError> {
+    require_credentials(&req)?;
     let table_name = &tail[0];
     let context = Context::create()?;
     let table_name = TableName::from(&table_name);
@@ -221,7 +255,8 @@ fn handle_window(_req: Request, tail: &[&str]) -> Result<impl Serialize, Service
 ///
 /// /data/<table_name>/page/<page>/filter/<filter>/sort/<sort>/
 ///
-fn handle_data(_req: Request, path: &[&str]) -> Result<impl Serialize, ServiceError> {
+fn handle_data(req: Request, path: &[&str]) -> Result<impl Serialize, ServiceError> {
+    require_credentials(&req)?;
     let table_name = path[0];
     let tail = &path[1..];
     let key_value: Vec<(&str, &str)> = tail.chunks(2).map(|chunk| (chunk[0], chunk[1])).collect();
@@ -263,7 +298,8 @@ fn handle_data(_req: Request, path: &[&str]) -> Result<impl Serialize, ServiceEr
 ///
 /// /select/<table_name>/<record_id>
 ///
-fn handle_select(_req: Request, path: &[&str]) -> Result<impl Serialize, ServiceError> {
+fn handle_select(req: Request, path: &[&str]) -> Result<impl Serialize, ServiceError> {
+    require_credentials(&req)?;
     let table_name = path[0];
     let record_id = path[1];
     let table_name = TableName::from(&table_name);
@@ -293,7 +329,8 @@ fn handle_select(_req: Request, path: &[&str]) -> Result<impl Serialize, Service
 ///  /has_many_select/<table_name>/<record_id>/<has_many_table>/page/<page>/filter/<filter>/sort/<sort>
 ///
 ///
-fn handle_has_many(_req: Request, path: &[&str]) -> Result<impl Serialize, ServiceError> {
+fn handle_has_many(req: Request, path: &[&str]) -> Result<impl Serialize, ServiceError> {
+    require_credentials(&req)?;
     let table_name = path[0];
     let record_id = path[1];
     let has_many_table = path[2];
@@ -351,7 +388,8 @@ fn handle_has_many(_req: Request, path: &[&str]) -> Result<impl Serialize, Servi
 ///  /indirect_select/<table_name>/<record_id>/<indirect_table>/page/<page>/filter/<filter>/sort/<sort>
 ///
 ///
-fn handle_indirect(_req: Request, path: &[&str]) -> Result<impl Serialize, ServiceError> {
+fn handle_indirect(req: Request, path: &[&str]) -> Result<impl Serialize, ServiceError> {
+    require_credentials(&req)?;
     let table_name = path[0];
     let record_id = path[1];
     let indirect_table = path[2];
@@ -416,7 +454,8 @@ fn handle_indirect(_req: Request, path: &[&str]) -> Result<impl Serialize, Servi
 /// may display them in order for the user to see something when clicking on the dropdown list.
 /// When the user scrolls to the bottom of the dropdown, a http request is done to retrieve the
 /// next page. All other lookup that points to the same table is also updated
-fn handle_lookup(_req: Request, path: &[&str]) -> Result<impl Serialize, ServiceError> {
+fn handle_lookup(req: Request, path: &[&str]) -> Result<impl Serialize, ServiceError> {
+    require_credentials(&req)?;
     let table_name = path[0];
     let page: u32 = path[1].parse().unwrap();
     let context = Context::create()?;
@@ -442,7 +481,8 @@ fn handle_lookup(_req: Request, path: &[&str]) -> Result<impl Serialize, Service
 /// retrieve the first page of all lookup data
 /// used in this window
 /// Note: window is identified by it's table name of the main tab
-fn handle_lookup_all(_req: Request, path: &[&str]) -> Result<impl Serialize, ServiceError> {
+fn handle_lookup_all(req: Request, path: &[&str]) -> Result<impl Serialize, ServiceError> {
+    require_credentials(&req)?;
     let table_name = path[0];
     let context = Context::create()?;
     let table_name = TableName::from(&table_name);
@@ -465,12 +505,17 @@ fn handle_lookup_all(_req: Request, path: &[&str]) -> Result<impl Serialize, Ser
 // https://stackoverflow.com/questions/43419974/how-do-i-read-the-entire-body-of-a-tokio-based-hyper-request?rq=1
 // https://hyper.rs/guides/server/echo/
 fn handle_delete(req: Request, path: &[&str]) -> Box<Future<Item = Response, Error = Error>> {
+    let is_cred_ok = is_credentials_ok(&req);
     let table_name = path[0].to_string();
     let f = req.body().concat2().map(move |chunk| {
+        let result = if is_cred_ok{
         let body = chunk.into_iter().collect::<Vec<u8>>();
         let body_str = String::from_utf8(body.clone()).unwrap();
         let record_ids: Vec<String> = serde_json::from_str(&body_str).unwrap();
-        let result = delete_records(&table_name, &record_ids);
+            delete_records(&table_name, &record_ids)
+        }else{
+            Err(ServiceError::RequiredCredentialsNotFound)
+        };
         create_response(result)
     });
     Box::new(f)
@@ -480,25 +525,44 @@ fn handle_record_changeset(
     req: Request,
     path: &[&str],
 ) -> Box<Future<Item = Response, Error = Error>> {
+    let is_cred_ok = is_credentials_ok(&req);
     let table_name = path[0].to_string();
     let f = req.body().concat2().map(move |chunk| {
-        let body = chunk.into_iter().collect::<Vec<u8>>();
-        let body_str = String::from_utf8(body).unwrap();
-        let changeset: Result<RecordChangeset, _> = serde_json::from_str(&body_str);
-        let changeset = changeset.expect(&format!("unable to serialize from json {}", body_str));
-        let result = update_record_changeset(&table_name, &changeset);
+        let result = if is_cred_ok{
+            let body = chunk.into_iter().collect::<Vec<u8>>();
+            let body_str = String::from_utf8(body).unwrap();
+            let changeset: Result<RecordChangeset, _> = serde_json::from_str(&body_str);
+            let changeset = changeset.expect(&format!("unable to serialize from json {}", body_str));
+            update_record_changeset(&table_name, &changeset)
+        } 
+        else{
+            Err(ServiceError::RequiredCredentialsNotFound)
+        };
         create_response(result)
     });
     Box::new(f)
 }
 
+fn is_credentials_ok(req: &Request) -> bool {
+    match require_credentials(&req){
+        Ok(()) => true,
+        Err(_) => false,
+    }
+}
+
 fn handle_tab_changeset(req: Request) -> Box<Future<Item = Response, Error = Error>> {
+    let is_cred_ok = is_credentials_ok(&req);
     let f = req.body().concat2().map(move |chunk| {
-        let body = chunk.into_iter().collect::<Vec<u8>>();
-        let body_str = String::from_utf8(body).unwrap();
-        let container: SaveContainer = serde_json::from_str(&body_str).unwrap();
-        let result = update_tab_changeset(&container);
-        create_response(result)
+            let result = if is_cred_ok{
+                let body = chunk.into_iter().collect::<Vec<u8>>();
+                let body_str = String::from_utf8(body).unwrap();
+                let container: SaveContainer = serde_json::from_str(&body_str).unwrap();
+                update_tab_changeset(&container)
+            }
+            else{
+                Err(ServiceError::RequiredCredentialsNotFound)
+            };
+            create_response(result)
     });
     Box::new(f)
 }

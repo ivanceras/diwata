@@ -22,11 +22,13 @@ use structopt::StructOpt;
 
 
 pub use error::ServiceError;
+pub use global::set_db_url;
 
 pub mod context;
 pub mod error;
 pub mod handler;
 mod global;
+mod credentials;
 
 
 #[derive(StructOpt, Debug)]
@@ -66,9 +68,8 @@ pub struct Opt {
         short = "l",
         long = "login-required",
         help = "If enabled, then the user must supply username and password in all of the API calls",
-        default_value = "true"
     )]
-    pub require_login: bool,
+    pub login_required: bool,
 }
 
 pub fn start()-> Result<(),ServiceError> {
@@ -83,7 +84,7 @@ pub fn start()-> Result<(),ServiceError> {
             println!("precaching complete!");
         }
     }
-    global::set_login_required(opt.require_login)?;
+    global::set_login_required(opt.login_required)?;
     handler::run(&opt.address, opt.port)?;
     println!("server ready...");
     Ok(())
