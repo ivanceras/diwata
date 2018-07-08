@@ -149,6 +149,7 @@ fn require_credentials(req: &Request) -> Result<(), ServiceError>{
         if let Some(username) = username{
             if let Some(password) = password{
                 println!("username: {}, password: {}", username.0, password.0);
+                global::set_user(&username.0, &password.0)?;
                 Ok(())
             }
             else{
@@ -170,11 +171,9 @@ fn handle_database_name(req: Request) -> Result<impl Serialize, ServiceError>{
     Ok(ret)
 }
 
-fn handle_test(_req: Request) -> Result<(), ServiceError> {
-    let db_url = &global::get_db_url()?;
-    println!("test db_url: {}", db_url);
-    let ret = pool::test_connection(&db_url)?;
-    Ok(ret)
+fn handle_test(req: Request) -> Result<(), ServiceError> {
+    require_credentials(&req)?;
+    Ok(())
 }
 
 fn handle_login_required(_req: Request) -> Result<bool, ServiceError> {
@@ -630,7 +629,8 @@ fn create_response<B: Serialize>(body: Result<B, ServiceError>) -> Response {
         Err(e) => {
             eprintln!("\n\nWarning an error response: {:?}", e);
             match e {
-                ServiceError::NotFound => Response::new().with_status(StatusCode::NotFound),
+                ServiceError::NotFound => Response::new().with_status(StatusCode::NotFound).with_body("Not Found"),
+                ServiceError::DbError(_) => Response::new().with_status(StatusCode::BadRequest).with_body("Wrong credentials"),
                 _ => Response::new().with_status(StatusCode::BadRequest),
             }
         }

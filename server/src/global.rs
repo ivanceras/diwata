@@ -87,7 +87,7 @@ pub fn set_user(user: &str, pwd: &str) -> Result<(), ServiceError> {
             };
             // reconstructed db_url
             // postgres://user:pwd@host:port/db
-            let cons_url = format!("{}://{}:{}@{}{}/{}",scheme, user, pwd, host, port_str, path);
+            let cons_url = format!("{}://{}:{}@{}{}{}",scheme, user, pwd, host, port_str, path);
             pool::test_connection(&cons_url)?;
             Ok(())
         }
