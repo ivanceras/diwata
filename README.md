@@ -138,6 +138,7 @@ Using heristic method, diwata is able to infer the content of a table.
     - [X] Display only columns that the user has privilege
     - [ ] An interface for superusers to set user privileges for each tables
 - [ ] Row level security
+    - [X] When the server is configured to require user login, the user will be forced to login
 
 ## Next iteration development
 - [ ] Plugin and module system
