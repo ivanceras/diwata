@@ -60,8 +60,9 @@ select has_column_privilege('lee', 'public.film', 'title', 'select')
 
 
 ## Database roles:
- - read_only can read only on tables
- - app_user normal access: insert, update,
- - app_admin: insert, update, delete
- - database_admin: inser, update, delete, create, drop, truncate
+ - app_read, can read only on tables
+ - app_user, normal access: select insert, update,
+ - app_admin: select, insert, update, delete
+ - app_superuser: select, insert, update, delete, create tables, drop, truncate
+            create roles
 
