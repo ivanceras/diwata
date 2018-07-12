@@ -42,7 +42,7 @@ impl Query {
     }
 
     pub fn select_all(&mut self, table_name: &TableName) {
-        self.append(&format!("SELECT {}.*", table_name.name));
+        self.append(&format!("SELECT {}.*", table_name.safe_name()));
     }
 
     /// enumerate all column including the rename to each specific data types
@@ -52,7 +52,7 @@ impl Query {
             if i > 0 {
                 self.append(", ")
             }
-            self.append(&format!("{}.{}", table.name.name, column.name.name));
+            self.append(&format!("{}.{}", &table.safe_name(), column.name.name));
             if let Some(cast) = column.cast_as() {
                 self.append(&format!("::{} ", cast.name()));
             }
@@ -123,7 +123,7 @@ impl Query {
                     assert_eq!(source_pk.len(), field_column_names.len());
                     self.append(&format!(
                         "\nLEFT JOIN {} AS {} ",
-                        source_table.complete_name(),
+                        &source_table.safe_complete_name(),
                         source_table_rename
                     ));
                     for (i, (local_column, source_column)) in local_foreign_pair.iter().enumerate()
@@ -148,7 +148,7 @@ impl Query {
     }
 
     pub fn from(&mut self, table_name: &TableName) {
-        self.append(&format!("\nFROM {} \n", table_name.complete_name()));
+        self.append(&format!("\nFROM {} \n", table_name.safe_complete_name()));
     }
 
     pub fn set_sort(&mut self, sort: Sort) {
@@ -158,7 +158,7 @@ impl Query {
                 if i > 0 {
                     self.append(", ");
                 }
-                self.append(&format!("{} ", order.column_name.complete_name()));
+                self.append(&format!("{} ", order.column_name.safe_complete_name()));
                 if order.direction == Direction::Asc {
                     self.append("ASC ");
                 }
