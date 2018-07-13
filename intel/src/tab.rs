@@ -56,43 +56,69 @@ impl Tab {
         }
     }
 
+    /// an identifier column alone by itself
+    fn is_identifier_column(table: &Table, column: &Column) -> bool {
+        let table_name = &table.name.name;
+        let column_name = &column.name.name;
+        if column_name == "name" {
+            true
+        }
+        else if column_name == table_name{
+            true
+        }
+        else if *column_name == format!("{}_name", table_name) {
+            true
+        }
+        else if column_name == "title"{
+            true
+        }
+        else if table_name == "user" || table_name == "users" {
+            if column_name == "name" || column_name == "username"
+                || column_name == "email" {
+                true
+            }
+            else{
+                false
+            }
+        }
+        else{
+            false
+        }
+    }
+
     // TODO: also make a function to do derive_image_display to detect
     // images that are displayeable
     fn derive_display(table: &Table) -> Option<IdentifierDisplay> {
-        let table_name = &table.name.name;
         let columns = &table.columns;
         let pk: Vec<ColumnName> = table
             .get_primary_column_names()
             .iter()
             .map(|ref column| (**column).to_owned())
             .collect();
-        // match for users table common structure
-        let display = if table_name == "user" || table_name == "users" {
-            let found_column = columns.iter().find(|column| {
-                let column_name = &column.name.name;
-                *column_name == "username" || *column_name == "email"
-            });
-            found_column.map(|column| IdentifierDisplay {
-                columns: vec![column.name.clone()],
+
+        let non_pk_columns:Vec<ColumnName> = table.get_non_primary_columns()
+                .iter().map(|column| column.name.to_owned()).collect();
+
+        let single_identifier = columns.iter().find(|column| {
+            Self::is_identifier_column(&table, column)
+        });
+        if let Some(single_identifier) = single_identifier {
+            return Some(IdentifierDisplay{
+                columns: vec![single_identifier.name.clone()],
                 separator: None,
-                pk: pk.clone(),
-            })
+                pk: pk.clone()
+            });
+        }
+        // if there is only 1 non primary column use it as the identifier column
+        else if non_pk_columns.len() == 1 {
+            return Some(IdentifierDisplay{
+                columns: non_pk_columns,
+                separator: None,
+                pk: pk.clone()
+            });
         }
         // match the column name regardless of the table name
         else {
-            let found_column = columns.iter().find(|column| {
-                let column_name = &column.name.name;
-                *column_name == "name" || *column_name == "title"
-            });
-            found_column.map(|column| IdentifierDisplay {
-                columns: vec![column.name.clone()],
-                separator: None,
-                pk: pk.clone(),
-            })
-        };
-
-        // match for person common columns
-        display.or_else(|| {
             let maybe_firstname = columns.iter().find(|column| {
                 let column_name = &column.name.name;
                 *column_name == "first_name" || *column_name == "firstname"
@@ -104,36 +130,20 @@ impl Tab {
             });
             if let Some(lastname) = maybe_lastname {
                 if let Some(firstname) = maybe_firstname {
-                    Some(IdentifierDisplay {
+                    return Some(IdentifierDisplay {
                         columns: vec![lastname.name.clone(), firstname.name.clone()],
                         separator: Some(", ".into()),
                         pk: pk.clone(),
-                    })
-                } else {
-                    None
-                }
-            } else {
-                let same_name = columns.iter().find(|column| {
-                    let column_name = &column.name.name;
-                    column_name == table_name
-                });
-
-                match same_name {
-                    Some(column) => Some(IdentifierDisplay {
-                        columns: vec![column.name.clone()],
-                        separator: None,
-                        pk: pk.clone(),
-                    }),
-                    None => {
-                        // empty display columns
-                        Some(IdentifierDisplay {
-                            columns: vec![],
-                            separator: None,
-                            pk: pk.clone(),
-                        })
-                    }
-                }
+                    });
+                } 
             }
+        }
+
+        // always have idenfier display
+        Some(IdentifierDisplay {
+            columns: vec![],
+            separator: None,
+            pk: pk.clone(),
         })
     }
 

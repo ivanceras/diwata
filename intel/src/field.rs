@@ -188,6 +188,8 @@ impl Field {
             Some(Reference::Password)
         } else if sql_type == &SqlType::Varchar && column_name == "name" {
             Some(Reference::Name)
+        } else if sql_type == &SqlType::Varchar && column_name == &format!("{}_name",table_name) {
+            Some(Reference::Name)
         } else if (sql_type == &SqlType::Varchar || sql_type == &SqlType::Tinytext
             || sql_type == &SqlType::Mediumtext || sql_type == &SqlType::Text)
             && column_name == "description"
