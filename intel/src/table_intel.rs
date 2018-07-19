@@ -151,10 +151,12 @@ impl<'a> TableIntel<'a> {
                     // there should only be 2 has_one tables of the linker
                     // the other one that is not equal to this table in context
                     // is the indirect table
-                    //assert_eq!(has_one_tables.len(), 2);
+                    assert_eq!(has_one_tables.len(), 2);
                     let other_table = if has_one_tables[0] != self.0 {
+                        assert!(has_one_tables.len() > 0);
                         has_one_tables[0]
                     } else {
+                        assert!(has_one_tables.len() > 1);
                         has_one_tables[1] //this way, if the second 1 is equal to the table in context assign it anyway
                     };
 

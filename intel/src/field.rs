@@ -32,10 +32,17 @@ pub enum ColumnDetail {
 }
 
 impl ColumnDetail {
-    fn first_column_name(&self) -> &ColumnName {
+    fn first_column_name(&self) -> Option<&ColumnName> {
         match *self {
-            ColumnDetail::Simple(ref column_name, _) => &column_name,
-            ColumnDetail::Compound(ref column_names_types) => &column_names_types[0].0,
+            ColumnDetail::Simple(ref column_name, _) => Some(&column_name),
+            ColumnDetail::Compound(ref column_names_types) => {
+                if column_names_types.len() > 0 {
+                    Some(&column_names_types[0].0)
+                }
+                else{
+                    None
+                }
+            }
         }
     }
 
@@ -121,7 +128,7 @@ impl Field {
         self.column_detail.column_names()
     }
 
-    pub fn first_column_name(&self) -> &ColumnName {
+    pub fn first_column_name(&self) -> Option<&ColumnName> {
         self.column_detail.first_column_name()
     }
 

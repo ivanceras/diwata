@@ -2,6 +2,7 @@
 #![feature(plugin)]
 #![feature(rustc_private)]
 #![feature(integer_atomics)]
+#![feature(try_from)]
 
 extern crate diwata_intel as intel;
 #[macro_use]
@@ -61,8 +62,7 @@ pub struct Opt {
     #[structopt(
         short = "c",
         long = "cache",
-        help = "precache the tables and windows so the first web request loads instantly, this requires the db-url to be set in order to work",
-        default_value = "true"
+        help = "precache the tables and windows so the first web request loads instantly, this requires the db-url to be set and login_required disabled, in order to work",
     )]
     pub precache: bool,
 
@@ -80,7 +80,7 @@ pub fn start()-> Result<(),ServiceError> {
     if let Some(db_url) = opt.db_url {
         global::set_db_url(&db_url)?;
         println!("url is set");
-        if opt.precache{
+        if opt.precache && !opt.login_required{
             println!("precaching..");
             global::precache()?;
             println!("precaching complete!");

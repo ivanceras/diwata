@@ -35,6 +35,9 @@ use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use global;
 use credentials::{Username, Password};
+use std::convert::TryFrom;
+use credentials::Credentials;
+use rustorm::EntityManager;
 
 /// An instance of the server. Runs a session of rustw.
 pub struct Server {}
@@ -134,36 +137,27 @@ pub fn handle_route(
 }
 
 
+
 fn require_credentials(req: &Request) -> Result<(), ServiceError>{
     let is_required = global::is_login_required()?;
 
     if is_required{
         let headers = req.headers();
-        for header in headers.iter(){
-            println!("header: {:?}", header);
-        }
-        let username = headers.get::<Username>();
-        let password = headers.get::<Password>();
-        println!("username: {:?}", username);
-        println!("password: {:?}", password);
-        if let Some(username) = username{
-            if let Some(password) = password{
-                println!("username: {}, password: {}", username.0, password.0);
-                global::set_user(&username.0, &password.0)?;
+        let credentials:Result<Credentials, ServiceError> = TryFrom::try_from(req);
+        match credentials{
+            Ok(credentials) => {
+                global::test_credentials(&credentials.username, &credentials.password)?;
                 Ok(())
             }
-            else{
-                Err(ServiceError::RequiredCredentialsNotFound)
-            }
-        }
-        else{
-            Err(ServiceError::RequiredCredentialsNotFound)
+            Err(_e)=> Err(ServiceError::RequiredCredentialsNotFound)
         }
     }
     else{
         Ok(())
     }
 }
+
+
 
 fn handle_database_name(req: Request) -> Result<impl Serialize, ServiceError>{
     require_credentials(&req)?;
@@ -233,16 +227,18 @@ fn handle_error(_req: Request, status: StatusCode, msg: String) -> Response {
 
 fn handle_windows(req: Request) -> Result<impl Serialize, ServiceError> {
     require_credentials(&req)?;
-    let em = global::get_pool_em()?;
-    let db_url = &global::get_db_url()?;
-    let ret = window::get_grouped_windows_using_cache(&em, db_url)?;
+    let credentials:Result<Credentials, ServiceError> = TryFrom::try_from(&req);
+    let context = Context::create(&credentials?)?;
+    let db_url = &global::get_role_db_url()?;
+    let ret = window::get_grouped_windows_using_cache(&context.em, db_url)?;
     Ok(ret)
 }
 
 fn handle_window(req: Request, tail: &[&str]) -> Result<impl Serialize, ServiceError> {
     require_credentials(&req)?;
     let table_name = &tail[0];
-    let context = Context::create()?;
+    let credentials:Result<Credentials, ServiceError> = TryFrom::try_from(&req);
+    let context = Context::create(&credentials?)?;
     let table_name = TableName::from(&table_name);
     let window = window::get_window(&table_name, &context.windows);
     match window {
@@ -271,7 +267,8 @@ fn handle_data(req: Request, path: &[&str]) -> Result<impl Serialize, ServiceErr
             sort_str = Some(v);
         }
     }
-    let context = Context::create()?;
+    let credentials:Result<Credentials, ServiceError> = TryFrom::try_from(&req);
+    let context = Context::create(&credentials?)?;
     let table_name = TableName::from(&table_name);
     let window = window::get_window(&table_name, &context.windows);
     let filter = filter_str.map(|s| Filter::from_str(s));
@@ -302,7 +299,8 @@ fn handle_select(req: Request, path: &[&str]) -> Result<impl Serialize, ServiceE
     let table_name = path[0];
     let record_id = path[1];
     let table_name = TableName::from(&table_name);
-    let context = Context::create()?;
+    let credentials:Result<Credentials, ServiceError> = TryFrom::try_from(&req);
+    let context = Context::create(&credentials?)?;
     let window = window::get_window(&table_name, &context.windows);
     match window {
         Some(window) => {
@@ -349,7 +347,8 @@ fn handle_has_many(req: Request, path: &[&str]) -> Result<impl Serialize, Servic
     }
     let filter = filter_str.map(|s| Filter::from_str(s));
     let sort = sort_str.map(|s| Sort::from_str(s));
-    let context = Context::create()?;
+    let credentials:Result<Credentials, ServiceError> = TryFrom::try_from(&req);
+    let context = Context::create(&credentials?)?;
     let table_name = TableName::from(&table_name);
     let window = window::get_window(&table_name, &context.windows);
     let has_many_table_name = TableName::from(&has_many_table);
@@ -408,8 +407,8 @@ fn handle_indirect(req: Request, path: &[&str]) -> Result<impl Serialize, Servic
     }
     let filter = filter_str.map(|s| Filter::from_str(s));
     let sort = sort_str.map(|s| Sort::from_str(s));
-    let context = Context::create()?;
-
+    let credentials:Result<Credentials, ServiceError> = TryFrom::try_from(&req);
+    let context = Context::create(&credentials?)?;
     let table_name = TableName::from(&table_name);
     let window = window::get_window(&table_name, &context.windows);
     let indirect_table_name = TableName::from(&indirect_table);
@@ -457,7 +456,8 @@ fn handle_lookup(req: Request, path: &[&str]) -> Result<impl Serialize, ServiceE
     require_credentials(&req)?;
     let table_name = path[0];
     let page: u32 = path[1].parse().unwrap();
-    let context = Context::create()?;
+    let credentials:Result<Credentials, ServiceError> = TryFrom::try_from(&req);
+    let context = Context::create(&credentials?)?;
 
     let table_name = TableName::from(&table_name);
     let window = window::get_window(&table_name, &context.windows);
@@ -483,7 +483,8 @@ fn handle_lookup(req: Request, path: &[&str]) -> Result<impl Serialize, ServiceE
 fn handle_lookup_all(req: Request, path: &[&str]) -> Result<impl Serialize, ServiceError> {
     require_credentials(&req)?;
     let table_name = path[0];
-    let context = Context::create()?;
+    let credentials:Result<Credentials, ServiceError> = TryFrom::try_from(&req);
+    let context = Context::create(&credentials?)?;
     let table_name = TableName::from(&table_name);
     let window = window::get_window(&table_name, &context.windows);
     match window {
@@ -505,13 +506,17 @@ fn handle_lookup_all(req: Request, path: &[&str]) -> Result<impl Serialize, Serv
 // https://hyper.rs/guides/server/echo/
 fn handle_delete(req: Request, path: &[&str]) -> Box<Future<Item = Response, Error = Error>> {
     let is_cred_ok = is_credentials_ok(&req);
+
+    let credentials:Result<Credentials, ServiceError> = TryFrom::try_from(&req);
+    let context = Context::create(&credentials.unwrap()).unwrap();
+
     let table_name = path[0].to_string();
     let f = req.body().concat2().map(move |chunk| {
         let result = if is_cred_ok{
         let body = chunk.into_iter().collect::<Vec<u8>>();
         let body_str = String::from_utf8(body.clone()).unwrap();
         let record_ids: Vec<String> = serde_json::from_str(&body_str).unwrap();
-            delete_records(&table_name, &record_ids)
+            delete_records(&context, &table_name, &record_ids)
         }else{
             Err(ServiceError::RequiredCredentialsNotFound)
         };
@@ -525,6 +530,10 @@ fn handle_record_changeset(
     path: &[&str],
 ) -> Box<Future<Item = Response, Error = Error>> {
     let is_cred_ok = is_credentials_ok(&req);
+    
+    let credentials:Result<Credentials, ServiceError> = TryFrom::try_from(&req);
+    let context = Context::create(&credentials.unwrap()).unwrap();
+
     let table_name = path[0].to_string();
     let f = req.body().concat2().map(move |chunk| {
         let result = if is_cred_ok{
@@ -532,7 +541,7 @@ fn handle_record_changeset(
             let body_str = String::from_utf8(body).unwrap();
             let changeset: Result<RecordChangeset, _> = serde_json::from_str(&body_str);
             let changeset = changeset.expect(&format!("unable to serialize from json {}", body_str));
-            update_record_changeset(&table_name, &changeset)
+            update_record_changeset(&context, &table_name, &changeset)
         } 
         else{
             Err(ServiceError::RequiredCredentialsNotFound)
@@ -551,12 +560,15 @@ fn is_credentials_ok(req: &Request) -> bool {
 
 fn handle_tab_changeset(req: Request) -> Box<Future<Item = Response, Error = Error>> {
     let is_cred_ok = is_credentials_ok(&req);
+    let credentials:Result<Credentials, ServiceError> = TryFrom::try_from(&req);
+    let context = Context::create(&credentials.unwrap()).unwrap();
+
     let f = req.body().concat2().map(move |chunk| {
             let result = if is_cred_ok{
                 let body = chunk.into_iter().collect::<Vec<u8>>();
                 let body_str = String::from_utf8(body).unwrap();
                 let container: SaveContainer = serde_json::from_str(&body_str).unwrap();
-                update_tab_changeset(&container)
+                update_tab_changeset(&context, &container)
             }
             else{
                 Err(ServiceError::RequiredCredentialsNotFound)
@@ -566,8 +578,7 @@ fn handle_tab_changeset(req: Request) -> Box<Future<Item = Response, Error = Err
     Box::new(f)
 }
 
-fn delete_records(table_name: &str, record_ids: &Vec<String>) -> Result<Rows, ServiceError> {
-    let context = Context::create()?;
+fn delete_records(context: &Context, table_name: &str, record_ids: &Vec<String>) -> Result<Rows, ServiceError> {
     let table_name = TableName::from(&table_name);
     let window = window::get_window(&table_name, &context.windows);
     match window {
@@ -586,17 +597,16 @@ fn delete_records(table_name: &str, record_ids: &Vec<String>) -> Result<Rows, Se
     }
 }
 
-fn update_tab_changeset(container: &SaveContainer) -> Result<(), ServiceError> {
-    let context = Context::create()?;
+fn update_tab_changeset(context: &Context, container: &SaveContainer) -> Result<(), ServiceError> {
     data_modify::save_container(&context.dm, &context.tables, &container)?;
     Ok(())
 }
 
 fn update_record_changeset(
+    context: &Context,
     table_name: &str,
     changeset: &RecordChangeset,
 ) -> Result<(), ServiceError> {
-    let context = Context::create()?;
     let table_name = TableName::from(&table_name);
     let window = window::get_window(&table_name, &context.windows);
     match window {

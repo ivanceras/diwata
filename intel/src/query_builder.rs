@@ -81,19 +81,20 @@ impl Query {
                     assert!(source_table.is_some());
                     let source_table = source_table.unwrap();
                     self.add_table_datatypes(source_table);
-
-                    let field_column_name = &field.first_column_name().name;
-                    let source_table_rename = format!("{}_{}", field_column_name, source_tablename);
-                    for display_column in &dropdown_info.display.columns {
-                        let display_column_name = &display_column.name;
-                        let rename = format!(
-                            "{}.{}.{}",
-                            field_column_name, source_tablename, display_column_name
-                        );
-                        self.append(&format!(
-                            ", {}.{} as \"{}\" ",
-                            source_table_rename, display_column_name, rename
-                        ));
+                    if let Some(field_first_column) = &field.first_column_name(){
+                        let field_column_name = &field_first_column.name;
+                        let source_table_rename = format!("{}_{}", field_column_name, source_tablename);
+                        for display_column in &dropdown_info.display.columns {
+                            let display_column_name = &display_column.name;
+                            let rename = format!(
+                                "{}.{}.{}",
+                                field_column_name, source_tablename, display_column_name
+                            );
+                            self.append(&format!(
+                                ", {}.{} as \"{}\" ",
+                                source_table_rename, display_column_name, rename
+                            ));
+                        }
                     }
                 }
                 None => (),
@@ -114,32 +115,34 @@ impl Query {
                     assert!(source_table.is_some());
                     let source_table = source_table.unwrap();
                     let source_pk = source_table.get_primary_column_names();
-                    let field_column_name = &field.first_column_name().name;
-                    let field_column_names = field.column_names();
-                    let source_table_rename = format!("{}_{}", field_column_name, source_tablename);
-                    let local_foreign_pair =
-                        main_table.get_local_foreign_columns_pair_to_table(&source_table.name);
-                    println!("local foreign pair: {:?}", local_foreign_pair);
-                    assert_eq!(source_pk.len(), field_column_names.len());
-                    self.append(&format!(
-                        "\nLEFT JOIN {} AS {} ",
-                        &source_table.safe_complete_name(),
-                        source_table_rename
-                    ));
-                    for (i, (local_column, source_column)) in local_foreign_pair.iter().enumerate()
-                    {
-                        if i == 0 {
-                            self.append("\nON ");
-                        } else {
-                            self.append("\nAND ");
-                        }
+                    if let Some(field_first_column) = field.first_column_name(){
+                        let field_column_name = &field_first_column.name;
+                        let field_column_names = field.column_names();
+                        let source_table_rename = format!("{}_{}", field_column_name, source_tablename);
+                        let local_foreign_pair =
+                            main_table.get_local_foreign_columns_pair_to_table(&source_table.name);
+                        println!("local foreign pair: {:?}", local_foreign_pair);
+                        assert_eq!(source_pk.len(), field_column_names.len());
                         self.append(&format!(
-                            "{}.{} = {}.{} ",
-                            source_table_rename,
-                            source_column.name,
-                            main_table.name.name,
-                            local_column.name
+                            "\nLEFT JOIN {} AS {} ",
+                            &source_table.safe_complete_name(),
+                            source_table_rename
                         ));
+                        for (i, (local_column, source_column)) in local_foreign_pair.iter().enumerate()
+                        {
+                            if i == 0 {
+                                self.append("\nON ");
+                            } else {
+                                self.append("\nAND ");
+                            }
+                            self.append(&format!(
+                                "{}.{} = {}.{} ",
+                                source_table_rename,
+                                source_column.name,
+                                main_table.name.name,
+                                local_column.name
+                            ));
+                        }
                     }
                 }
                 None => (),

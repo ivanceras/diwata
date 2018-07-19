@@ -162,6 +162,8 @@ impl Tab {
         fields
     }
 
+    /// derive the foreign field based on the referring column to the foreign table
+    /// if no local column of this table has privilege then it is not included
     fn derive_foreign_fields(table: &Table, all_tables: &Vec<Table>) -> Vec<Field> {
         let foreign_keys: Vec<&ForeignKey> = table.get_foreign_keys();
         let mut fields: Vec<Field> = Vec::with_capacity(foreign_keys.len());
@@ -174,8 +176,10 @@ impl Tab {
             }
             let foreign_table = table_intel::get_table(&fk.foreign_table, all_tables);
             if let Some(foreign_table) = foreign_table {
-                let field = Field::from_has_one_table(table, &columns, foreign_table);
-                fields.push(field);
+                if columns.len() > 0 { // don't add the foreign field if there is no referring local column to the table: ie revoked privilege
+                    let field = Field::from_has_one_table(table, &columns, foreign_table);
+                    fields.push(field);
+                }
             }
         }
         fields

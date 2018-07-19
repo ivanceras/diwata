@@ -1,6 +1,34 @@
 use hyper::header::{self, Header, Raw};
 use std::fmt;
+use hyper::Request;
 use hyper;
+use error::ServiceError;
+use std::convert::TryFrom;
+
+
+pub struct Credentials{
+    pub username: String,
+    pub password: String
+}
+
+impl <'a>TryFrom<&'a Request> for Credentials{
+    type Error = ServiceError;
+
+    fn try_from(req: &'a Request) -> Result<Credentials, Self::Error> {
+        let headers = req.headers();
+        let username = headers.get::<Username>();
+        let password = headers.get::<Password>();
+        if let Some(username) = username{
+            if let Some(password) = password {
+                return Ok(Credentials{
+                    username: username.0.to_owned(),
+                    password: password.0.to_owned()
+                });
+            }
+        }
+        Err(ServiceError::NotFound)
+    }
+}
 
 #[derive(Clone,Debug)]
 pub struct Username(pub String);
