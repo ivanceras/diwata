@@ -228,9 +228,17 @@ fn handle_error(_req: Request, status: StatusCode, msg: String) -> Response {
 fn handle_windows(req: Request) -> Result<impl Serialize, ServiceError> {
     require_credentials(&req)?;
     let credentials:Result<Credentials, ServiceError> = TryFrom::try_from(&req);
-    let context = Context::create(&credentials?)?;
-    let db_url = &global::get_role_db_url()?;
-    let ret = window::get_grouped_windows_using_cache(&context.em, db_url)?;
+    let context = Context::create(credentials)?;
+    let is_login_required = global::is_login_required()?;
+    let db_url = if is_login_required {
+        global::get_role_db_url()?
+    }else{
+        global::get_db_url()?
+    };
+
+    // TODO: incorporate this into the context, such that
+    // the logic for getting the db_url is unified
+    let ret = window::get_grouped_windows_using_cache(&context.em, &db_url)?;
     Ok(ret)
 }
 
@@ -238,7 +246,7 @@ fn handle_window(req: Request, tail: &[&str]) -> Result<impl Serialize, ServiceE
     require_credentials(&req)?;
     let table_name = &tail[0];
     let credentials:Result<Credentials, ServiceError> = TryFrom::try_from(&req);
-    let context = Context::create(&credentials?)?;
+    let context = Context::create(credentials)?;
     let table_name = TableName::from(&table_name);
     let window = window::get_window(&table_name, &context.windows);
     match window {
@@ -268,7 +276,7 @@ fn handle_data(req: Request, path: &[&str]) -> Result<impl Serialize, ServiceErr
         }
     }
     let credentials:Result<Credentials, ServiceError> = TryFrom::try_from(&req);
-    let context = Context::create(&credentials?)?;
+    let context = Context::create(credentials)?;
     let table_name = TableName::from(&table_name);
     let window = window::get_window(&table_name, &context.windows);
     let filter = filter_str.map(|s| Filter::from_str(s));
@@ -300,7 +308,7 @@ fn handle_select(req: Request, path: &[&str]) -> Result<impl Serialize, ServiceE
     let record_id = path[1];
     let table_name = TableName::from(&table_name);
     let credentials:Result<Credentials, ServiceError> = TryFrom::try_from(&req);
-    let context = Context::create(&credentials?)?;
+    let context = Context::create(credentials)?;
     let window = window::get_window(&table_name, &context.windows);
     match window {
         Some(window) => {
@@ -348,7 +356,7 @@ fn handle_has_many(req: Request, path: &[&str]) -> Result<impl Serialize, Servic
     let filter = filter_str.map(|s| Filter::from_str(s));
     let sort = sort_str.map(|s| Sort::from_str(s));
     let credentials:Result<Credentials, ServiceError> = TryFrom::try_from(&req);
-    let context = Context::create(&credentials?)?;
+    let context = Context::create(credentials)?;
     let table_name = TableName::from(&table_name);
     let window = window::get_window(&table_name, &context.windows);
     let has_many_table_name = TableName::from(&has_many_table);
@@ -408,7 +416,7 @@ fn handle_indirect(req: Request, path: &[&str]) -> Result<impl Serialize, Servic
     let filter = filter_str.map(|s| Filter::from_str(s));
     let sort = sort_str.map(|s| Sort::from_str(s));
     let credentials:Result<Credentials, ServiceError> = TryFrom::try_from(&req);
-    let context = Context::create(&credentials?)?;
+    let context = Context::create(credentials)?;
     let table_name = TableName::from(&table_name);
     let window = window::get_window(&table_name, &context.windows);
     let indirect_table_name = TableName::from(&indirect_table);
@@ -457,7 +465,7 @@ fn handle_lookup(req: Request, path: &[&str]) -> Result<impl Serialize, ServiceE
     let table_name = path[0];
     let page: u32 = path[1].parse().unwrap();
     let credentials:Result<Credentials, ServiceError> = TryFrom::try_from(&req);
-    let context = Context::create(&credentials?)?;
+    let context = Context::create(credentials)?;
 
     let table_name = TableName::from(&table_name);
     let window = window::get_window(&table_name, &context.windows);
@@ -484,7 +492,7 @@ fn handle_lookup_all(req: Request, path: &[&str]) -> Result<impl Serialize, Serv
     require_credentials(&req)?;
     let table_name = path[0];
     let credentials:Result<Credentials, ServiceError> = TryFrom::try_from(&req);
-    let context = Context::create(&credentials?)?;
+    let context = Context::create(credentials)?;
     let table_name = TableName::from(&table_name);
     let window = window::get_window(&table_name, &context.windows);
     match window {
@@ -508,7 +516,7 @@ fn handle_delete(req: Request, path: &[&str]) -> Box<Future<Item = Response, Err
     let is_cred_ok = is_credentials_ok(&req);
 
     let credentials:Result<Credentials, ServiceError> = TryFrom::try_from(&req);
-    let context = Context::create(&credentials.unwrap()).unwrap();
+    let context = Context::create(credentials).unwrap();
 
     let table_name = path[0].to_string();
     let f = req.body().concat2().map(move |chunk| {
@@ -532,7 +540,7 @@ fn handle_record_changeset(
     let is_cred_ok = is_credentials_ok(&req);
     
     let credentials:Result<Credentials, ServiceError> = TryFrom::try_from(&req);
-    let context = Context::create(&credentials.unwrap()).unwrap();
+    let context = Context::create(credentials).unwrap();
 
     let table_name = path[0].to_string();
     let f = req.body().concat2().map(move |chunk| {
@@ -561,7 +569,7 @@ fn is_credentials_ok(req: &Request) -> bool {
 fn handle_tab_changeset(req: Request) -> Box<Future<Item = Response, Error = Error>> {
     let is_cred_ok = is_credentials_ok(&req);
     let credentials:Result<Credentials, ServiceError> = TryFrom::try_from(&req);
-    let context = Context::create(&credentials.unwrap()).unwrap();
+    let context = Context::create(credentials).unwrap();
 
     let f = req.body().concat2().map(move |chunk| {
             let result = if is_cred_ok{
