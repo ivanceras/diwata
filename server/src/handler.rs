@@ -24,7 +24,6 @@ use intel::data_read;
 use intel::tab;
 use intel::tab::Tab;
 use intel::window;
-use rustorm::pool;
 use rustorm::Rows;
 use rustorm::TableName;
 use serde::Serialize;
@@ -34,10 +33,13 @@ use std::io::prelude::*;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use global;
-use credentials::{Username, Password};
 use std::convert::TryFrom;
 use credentials::Credentials;
-use rustorm::EntityManager;
+
+
+use include_dir::Dir;
+use std::path::Path;
+static STATIC_DIR: Dir = include_dir!("../public/static");
 
 /// An instance of the server. Runs a session of rustw.
 pub struct Server {}
@@ -160,7 +162,7 @@ fn require_credentials(req: &Request) -> Result<(), ServiceError>{
 
 
 fn handle_database_name(req: Request) -> Result<impl Serialize, ServiceError>{
-    require_credentials(&req)?;
+    //require_credentials(&req)?;
     let ret = data_read::get_database_name(&global::get_pool_em()?)?;
     Ok(ret)
 }
@@ -181,8 +183,6 @@ fn handle_index(_req: Request) -> Response {
 fn handle_static(_req: Request, path: &[&str]) -> Response {
     println!("handling static: {:?}", path);
     let mut path_buf = PathBuf::new();
-    path_buf.push("public");
-    path_buf.push("static");
     for p in path {
         path_buf.push(p);
     }
@@ -197,13 +197,12 @@ fn handle_static(_req: Request, path: &[&str]) -> Response {
     };
     println!("content type: {:?}", content_type);
     let bytes = {
-        let mut file = match File::open(&path_buf){
-            Ok(file) => file,
-            Err(_e) =>  {return handle_not_found(_req);}
-        };
-        let mut contents = vec![];
-        file.read_to_end(&mut contents).unwrap();
-        contents
+        {
+            println!("in pack static feature");
+            let static_file = STATIC_DIR.get_file(&path_buf).unwrap();
+            let content = static_file.contents_utf8().unwrap();
+            content
+        }
     };
     trace!(
         "handle_static: serving `{}`. {} bytes, {}",

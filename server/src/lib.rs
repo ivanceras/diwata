@@ -18,10 +18,12 @@ extern crate structopt;
 #[macro_use]
 extern crate log;
 extern crate url;
+#[macro_use]
+extern crate cfg_if;
+#[macro_use]
+extern crate include_dir;
 
 use structopt::StructOpt;
-
-
 pub use error::ServiceError;
 pub use global::set_db_url;
 pub use global::set_login_required;
