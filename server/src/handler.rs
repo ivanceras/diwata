@@ -196,23 +196,25 @@ fn handle_static(_req: Request, path: &[&str]) -> Response {
         _ => ContentType("application/octet-stream".parse().unwrap()),
     };
     println!("content type: {:?}", content_type);
-    let bytes = {
-        {
-            println!("in pack static feature");
-            let static_file = STATIC_DIR.get_file(&path_buf).unwrap();
-            let content = static_file.contents_utf8().unwrap();
-            content
+    println!("in pack static feature");
+    if let Some(static_file) = STATIC_DIR.get_file(&path_buf){
+        if let Some(bytes) = static_file.contents_utf8(){
+            trace!(
+                "handle_static: serving `{}`. {} bytes, {}",
+                path_buf.to_str().unwrap(),
+                bytes.len(),
+                content_type
+            );
+            let mut res = Response::new();
+            res.headers_mut().set(content_type);
+            res.with_body(bytes)
+        }else{
+            handle_not_found(_req)
         }
-    };
-    trace!(
-        "handle_static: serving `{}`. {} bytes, {}",
-        path_buf.to_str().unwrap(),
-        bytes.len(),
-        content_type
-    );
-    let mut res = Response::new();
-    res.headers_mut().set(content_type);
-    return res.with_body(bytes);
+    }
+    else{
+        handle_not_found(_req)
+    }
 }
 
 fn handle_not_found(_req: Request) -> Response {
