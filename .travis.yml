@@ -20,6 +20,7 @@ before_script:
   - cd bazaar/scripts && sh setup.sh && cd .. && cd ..
   - cd dota-sql/data && sh reimport.sh && cd .. && cd ..
   - cd diwata
+  - mkdir -p public/static
   - cd intel && cargo update && cd ..
   - cd server && cargo update && cd ..
 
