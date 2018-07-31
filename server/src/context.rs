@@ -70,7 +70,7 @@ fn set_session_credentials(credentials: &Credentials, em: &EntityManager) -> Res
             Ok(())
         }
         None => {
-            panic!("No role for {}", credentials.username);
+           Err(ServiceError::GenericError(format!("no role for {}", credentials.username))) 
         }
     }
 }
