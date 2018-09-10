@@ -35,6 +35,7 @@ use std::sync::{Arc, Mutex};
 use global;
 use std::convert::TryFrom;
 use credentials::Credentials;
+use structopt::StructOpt;
 
 
 use include_dir::Dir;
@@ -42,7 +43,9 @@ use std::path::Path;
 static STATIC_DIR: Dir = include_dir!("../public/static");
 
 /// An instance of the server. Runs a session of rustw.
-pub struct Server {}
+pub struct Server {
+    db_url: String,
+}
 
 #[derive(Clone)]
 pub struct Instance {
@@ -73,9 +76,6 @@ impl Service for Instance {
 }
 
 impl Server {
-    pub fn new() -> Self {
-        Server {}
-    }
 
     pub fn route(
         &self,
@@ -656,12 +656,64 @@ fn create_response<B: Serialize>(body: Result<B, ServiceError>) -> Response {
     }
 }
 
-pub fn run(ip: &str, port: u16) -> Result<(), ServiceError> {
-    let addr = match format!("{}:{}", ip, port).parse(){
+#[derive(StructOpt, Debug)]
+#[structopt(name = "diwata", about = "A user friendly database interface")]
+pub struct Opt {
+    #[structopt(
+        short = "u",
+        long = "db-url",
+        help = "Database url to connect to, when set all data is exposed without login needed in the client side"
+    )]
+    pub db_url: String,
+
+    #[structopt(
+        short = "a",
+        long = "address",
+        help = "The address the server would listen, default is 0.0.0.0",
+        default_value = "0.0.0.0"
+    )]
+    pub address: String,
+
+    #[structopt(
+        short = "p",
+        long = "port",
+        help = "What port this server would listen to, default is 8000",
+        default_value = "8000"
+    )]
+    pub port: u16,
+    #[structopt(
+        short = "c",
+        long = "cache",
+        help = "precache the tables and windows so the first web request loads instantly, this requires the db-url to be set and login_required disabled, in order to work",
+    )]
+    pub precache: bool,
+
+    #[structopt(
+        short = "l",
+        long = "login-required",
+        help = "If enabled, then the user must supply username and password in all of the API calls",
+    )]
+    pub login_required: bool,
+}
+
+pub fn run() -> Result<(), ServiceError> {
+    let opt = Opt::from_args();
+    println!("opt: {:?}", opt);
+    global::set_db_url(&opt.db_url)?;
+    println!("url is set");
+    if opt.precache && !opt.login_required{
+        println!("precaching..");
+        global::precache()?;
+        println!("precaching complete!");
+    }
+    global::set_login_required(opt.login_required)?;
+    let addr = match format!("{}:{}", opt.address, opt.port).parse(){
         Ok(addr) => Ok(addr),
         Err(e) => Err(ServiceError::GenericError(format!("{}",e)))
     };
-    let server = Server::new();
+    let server = Server{
+        db_url: opt.db_url.to_owned(),
+    };
     let instance = Instance::new(server);
     let http = Http::new()
         .bind(&addr?, move || Ok(instance.clone()));
