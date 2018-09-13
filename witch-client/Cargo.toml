@@ -1,0 +1,6 @@
+[package]
+name = "witch-client"
+version = "0.1.0"
+authors = ["Jovansonlee Cesar <ivanceras@gmail.com>"]
+
+[dependencies]
