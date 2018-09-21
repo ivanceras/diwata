@@ -6,7 +6,7 @@ use rustorm::common;
 use rustorm::types::SqlType;
 use rustorm::ColumnName;
 use rustorm::DbError;
-use rustorm::Record;
+use rustorm::Dao;
 use rustorm::Rows;
 use rustorm::Value;
 use std::collections::BTreeMap;
@@ -41,8 +41,8 @@ pub fn cast_rows(rows: Rows, column_datatypes: &BTreeMap<String, SqlType>) -> Ro
     casted_rows
 }
 
-pub fn cast_record(record: Record, column_datatypes: &BTreeMap<String, SqlType>) -> Record {
-    let mut new_rec = Record::new();
+pub fn cast_record(record: Dao, column_datatypes: &BTreeMap<String, SqlType>) -> Dao {
+    let mut new_rec = Dao::new();
     for (k, _v) in record.0.iter() {
         let column = k.to_string();
         let sql_type = column_datatypes.get(&column);
@@ -51,7 +51,7 @@ pub fn cast_record(record: Record, column_datatypes: &BTreeMap<String, SqlType>)
         let value = value.unwrap();
         if let Some(sql_type) = sql_type {
             let casted = common::cast_type(&value, sql_type);
-            new_rec.insert_value(&column, casted);
+            new_rec.insert_value(&column, &casted);
         }
     }
     new_rec
@@ -166,16 +166,14 @@ pub fn find_value<'a>(
         .map(|&(_, ref value)| common::cast_type(value, required_type))
 }
 
-/// convert Vec<Record> to Rows
-pub fn records_to_rows(columns: &Vec<String>, records: Vec<Record>) -> Rows {
+/// convert Vec<Dao> to Rows
+pub fn records_to_rows(columns: &Vec<String>, records: Vec<Dao>) -> Rows {
     let mut rows = Rows::new(columns.clone());
     for record in records {
         let mut values = vec![];
         for col in columns.iter() {
-            let value = record.get_value(&col);
-            assert!(value.is_some());
-            let value = value.unwrap();
-            values.push(value);
+            let value = record.get_value(&col).expect("Expecting value here");
+            values.push(value.clone());
         }
         rows.push(values);
     }

@@ -2,8 +2,8 @@ use common;
 use data_container::{Direction, Sort};
 use rustorm::types::SqlType;
 use rustorm::DbError;
-use rustorm::Record;
-use rustorm::RecordManager;
+use rustorm::Dao;
+use rustorm::DaoManager;
 use rustorm::Rows;
 use rustorm::Table;
 use rustorm::TableName;
@@ -177,17 +177,19 @@ impl Query {
         self.append(&format!("OFFSET {} ", common::calc_offset(page, page_size)));
     }
 
-    pub fn collect_rows(&self, dm: &RecordManager) -> Result<Rows, DbError> {
+    pub fn collect_rows(&self, dm: &DaoManager) -> Result<Rows, DbError> {
         println!("SQL: {}", self.sql);
         println!("params: {:?}", self.params);
-        let result: Result<Rows, DbError> = dm.execute_sql_with_return(&self.sql, &self.params);
+        let bparams:Vec<&Value> = self.params.iter().collect();
+        let result: Result<Rows, DbError> = dm.execute_sql_with_return(&self.sql, &bparams);
         result.map(|rows| common::cast_rows(rows, &self.column_datatypes))
     }
 
-    pub fn collect_maybe_record(&self, dm: &RecordManager) -> Result<Option<Record>, DbError> {
+    pub fn collect_maybe_record(&self, dm: &DaoManager) -> Result<Option<Dao>, DbError> {
         println!("SQL: {}", self.sql);
         println!("params: {:?}", self.params);
-        let record = dm.execute_sql_with_maybe_one_return(&self.sql, &self.params);
+        let bparams:Vec<&Value> = self.params.iter().collect();
+        let record = dm.execute_sql_with_maybe_one_return(&self.sql, &bparams);
         record.map(|r| r.map(|o| common::cast_record(o, &self.column_datatypes)))
     }
 }

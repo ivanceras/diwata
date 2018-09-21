@@ -1,3 +1,4 @@
+set -v
 reset
 cd elm-webclient && ./compile.sh
 cd ..

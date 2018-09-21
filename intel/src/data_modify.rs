@@ -9,8 +9,8 @@ use error::IntelError;
 use rustorm;
 use rustorm::ColumnName;
 use rustorm::DbError;
-use rustorm::Record;
-use rustorm::RecordManager;
+use rustorm::Dao;
+use rustorm::DaoManager;
 use rustorm::Rows;
 use rustorm::Table;
 use rustorm::TableName;
@@ -23,7 +23,7 @@ use window::Window;
 /// delete the records with the following record_ids
 /// return the total number of records deleted
 pub fn delete_records(
-    dm: &RecordManager,
+    dm: &DaoManager,
     main_table: &Table,
     record_ids: &Vec<String>,
 ) -> Result<Rows, IntelError> {
@@ -44,7 +44,7 @@ pub fn delete_records(
 }
 
 fn delete_records_from_single_primary_column(
-    dm: &RecordManager,
+    dm: &DaoManager,
     main_table: &Table,
     record_ids: &Vec<Vec<(&ColumnName, Value)>>,
 ) -> Result<Rows, DbError> {
@@ -54,7 +54,7 @@ fn delete_records_from_single_primary_column(
     let pk_column = primary_columns[0];
     let mut sql = format!("DELETE FROM {} ", table_name.complete_name());
     sql += &format!("WHERE {} IN (", pk_column.name);
-    let mut pk_values = Vec::with_capacity(record_ids.len());
+    let mut pk_values:Vec<Value> = Vec::with_capacity(record_ids.len());
     for (i, record_id) in record_ids.iter().enumerate() {
         assert_eq!(record_id.len(), 1);
         let pk_record_id = &record_id[0];
@@ -67,12 +67,13 @@ fn delete_records_from_single_primary_column(
     }
     sql += ") ";
     sql += "RETURNING *";
-    let rows = dm.execute_sql_with_return(&sql, &pk_values)?;
+    let bpk_values:Vec<&Value> = pk_values.iter().collect();
+    let rows = dm.execute_sql_with_return(&sql, &bpk_values)?;
     Ok(rows)
 }
 
 pub fn save_container(
-    dm: &RecordManager,
+    dm: &DaoManager,
     tables: &Vec<Table>,
     container: &SaveContainer,
 ) -> Result<(), IntelError> {
@@ -88,7 +89,7 @@ pub fn save_container(
 }
 
 pub fn save_changeset(
-    dm: &RecordManager,
+    dm: &DaoManager,
     tables: &Vec<Table>,
     window: &Window,
     table: &Table,
@@ -127,12 +128,12 @@ pub fn save_changeset(
 }
 
 fn save_one_ones(
-    dm: &RecordManager,
+    dm: &DaoManager,
     tables: &Vec<Table>,
     main_table: &Table,
-    main_record: &Record,
+    main_record: &Dao,
     _one_one_tabs: &Vec<Tab>,
-    one_one_records: &Vec<(TableName, Option<Record>)>,
+    one_one_records: &Vec<(TableName, Option<Dao>)>,
 ) -> Result<(), IntelError> {
     for (one_one_table_name, one_one_record) in one_one_records {
         if let Some(one_one_record) = one_one_record {
@@ -153,21 +154,21 @@ fn save_one_ones(
 }
 
 fn save_one_one_table(
-    dm: &RecordManager,
+    dm: &DaoManager,
     _tables: &Vec<Table>,
     main_table: &Table,
-    main_record: &Record,
+    main_record: &Dao,
     one_one_table: &Table,
-    one_one_record: &Record,
-) -> Result<Record, DbError> {
+    one_one_record: &Dao,
+) -> Result<Dao, DbError> {
     upsert_one_one_record_to_table(dm, main_table, main_record, one_one_table, one_one_record)
 }
 
 fn save_has_many(
-    dm: &RecordManager,
+    dm: &DaoManager,
     tables: &Vec<Table>,
     main_table: &Table,
-    main_record: &Record,
+    main_record: &Dao,
     has_many_tabs: &Vec<Tab>,
     has_many_records: &Vec<(TableName, RecordAction, Rows)>,
 ) -> Result<(), IntelError> {
@@ -190,10 +191,10 @@ fn save_has_many(
 }
 
 fn save_has_many_table(
-    dm: &RecordManager,
+    dm: &DaoManager,
     _tables: &Vec<Table>,
     _main_table: &Table,
-    _main_record: &Record,
+    _main_record: &Dao,
     has_many_table: &Table,
     record_action: &RecordAction,
     has_many_rows: &Rows,
@@ -215,20 +216,19 @@ fn save_has_many_table(
     Ok(())
 }
 
-fn delete_from_table(dm: &RecordManager, table: &Table, rows: &Rows) -> Result<(), IntelError> {
+fn delete_from_table(dm: &DaoManager, table: &Table, rows: &Rows) -> Result<(), IntelError> {
     for dao in rows.iter() {
-        let record = Record::from(&dao);
-        delete_record_from_table(dm, table, &record)?;
+        delete_record_from_table(dm, table, &dao)?;
     }
     Ok(())
 }
 
 fn delete_record_from_table(
-    dm: &RecordManager,
+    dm: &DaoManager,
     table: &Table,
-    record: &Record,
+    record: &Dao,
 ) -> Result<(), IntelError> {
-    let mut params = vec![];
+    let mut params:Vec<&Value> = vec![];
     let mut sql = String::from("DELETE FROM ");
     sql += &format!("{} ", table.complete_name());
     sql += "WHERE ";
@@ -250,10 +250,10 @@ fn delete_record_from_table(
 }
 
 fn save_indirect(
-    dm: &RecordManager,
+    dm: &DaoManager,
     tables: &Vec<Table>,
     main_table: &Table,
-    main_record: &Record,
+    main_record: &Dao,
     _indirect_tabs: &Vec<(TableName, Tab)>,
     indirect_records: &Vec<(TableName, TableName, RecordAction, Rows)>,
 ) -> Result<(), IntelError> {
@@ -306,16 +306,15 @@ fn save_indirect(
 
 /// delete the entry from the linker table
 fn unlink_from_indirect_table(
-    dm: &RecordManager,
+    dm: &DaoManager,
     _tables: &Vec<Table>,
     main_table: &Table,
-    main_record: &Record,
+    main_record: &Dao,
     indirect_table: &Table,
     linker_table: &Table,
     rows: &Rows,
 ) -> Result<(), IntelError> {
-    for dao in rows.iter() {
-        let indirect_record = Record::from(&dao);
+    for indirect_record in rows.iter() {
         let linker_record = create_linker_record(
             main_table,
             main_record,
@@ -331,16 +330,15 @@ fn unlink_from_indirect_table(
 /// create an entry to the indirect table
 /// and create an entry into the linker table
 fn link_new_for_indirect_table(
-    dm: &RecordManager,
+    dm: &DaoManager,
     _tables: &Vec<Table>,
     main_table: &Table,
-    main_record: &Record,
+    main_record: &Dao,
     indirect_table: &Table,
     linker_table: &Table,
     rows: &Rows,
 ) -> Result<(), IntelError> {
-    for dao in rows.iter() {
-        let indirect_record = Record::from(&dao);
+    for indirect_record in rows.iter() {
         let indirect_record = insert_record_to_table(dm, indirect_table, &indirect_record)?;
         let linker_record = create_linker_record(
             main_table,
@@ -357,11 +355,11 @@ fn link_new_for_indirect_table(
 /// create a record in linker table using the primary key of main and indirect record
 fn create_linker_record(
     main_table: &Table,
-    main_record: &Record,
+    main_record: &Dao,
     linker_table: &Table,
     indirect_table: &Table,
-    indirect_record: &Record,
-) -> Result<Record, IntelError> {
+    indirect_record: &Dao,
+) -> Result<Dao, IntelError> {
     let main_fk_pair = linker_table.get_local_foreign_columns_pair_to_table(&main_table.name);
     let indirect_fk_pair =
         linker_table.get_local_foreign_columns_pair_to_table(&indirect_table.name);
@@ -375,7 +373,7 @@ fn create_linker_record(
     let indirect_pk_value = indirect_record
         .get_value(&indirect_linker_refferred.name)
         .expect("must have a value");
-    let mut linker_record = Record::new();
+    let mut linker_record = Dao::new();
     linker_record.insert_value(&main_linker_local.name, main_pk_value);
     linker_record.insert_value(&indirect_linker_local.name, indirect_pk_value);
     Ok(linker_record)
@@ -384,16 +382,15 @@ fn create_linker_record(
 /// create an entry to the linker table
 /// linking existing record from the indirect table
 fn link_existing_for_indirect_table(
-    dm: &RecordManager,
+    dm: &DaoManager,
     _tables: &Vec<Table>,
     main_table: &Table,
-    main_record: &Record,
+    main_record: &Dao,
     indirect_table: &Table,
     linker_table: &Table,
     rows: &Rows,
 ) -> Result<(), IntelError> {
-    for dao in rows.iter() {
-        let indirect_record = Record::from(&dao);
+    for indirect_record in rows.iter() {
         let linker_record = create_linker_record(
             main_table,
             main_record,
@@ -408,13 +405,12 @@ fn link_existing_for_indirect_table(
 
 /// triggered by the main tab
 fn update_records_in_table(
-    dm: &RecordManager,
+    dm: &DaoManager,
     main_table: &Table,
     rows: &Rows,
-) -> Result<Vec<Record>, IntelError> {
+) -> Result<Vec<Dao>, IntelError> {
     let mut records = vec![];
-    for dao in rows.iter() {
-        let record = Record::from(&dao);
+    for record in rows.iter() {
         let updated_record = update_record_in_table(dm, main_table, &record)?;
         records.push(updated_record);
     }
@@ -422,10 +418,10 @@ fn update_records_in_table(
 }
 
 fn update_record_in_table(
-    dm: &RecordManager,
+    dm: &DaoManager,
     main_table: &Table,
-    record: &Record,
-) -> Result<Record, DbError> {
+    record: &Dao,
+) -> Result<Dao, DbError> {
     let table_name = &main_table.name;
     let mut params = vec![];
     let mut sql = format!("UPDATE {} ", table_name.complete_name());
@@ -473,12 +469,13 @@ fn update_record_in_table(
 
     println!("sql: {}", sql);
     println!("params: {:?}", params);
-    dm.execute_sql_with_one_return(&sql, &params)
+    let bparams:Vec<&Value> = params.iter().collect();
+    dm.execute_sql_with_one_return(&sql, &bparams)
 }
 
 /// insert rows all at once in one query
 fn insert_rows_to_table(
-    dm: &RecordManager,
+    dm: &DaoManager,
     table: &Table,
     rows: &Rows,
 ) -> Result<Rows, IntelError> {
@@ -517,7 +514,8 @@ fn insert_rows_to_table(
     sql += ") RETURNING *";
     println!("sql: {}", sql);
     println!("params: {:?}", params);
-    let rows = dm.execute_sql_with_return(&sql, &*params)?;
+    let bparams:Vec<&Value> = params.iter().collect();
+    let rows = dm.execute_sql_with_return(&sql, &bparams)?;
     Ok(rows)
 }
 
@@ -536,33 +534,32 @@ fn are_all_nil(column: &str, rows: &Rows) -> bool {
 
 /// insert rows 1 by 1
 fn insert_records_to_table1(
-    dm: &RecordManager,
+    dm: &DaoManager,
     main_table: &Table,
     rows: &Rows,
-) -> Result<Vec<Record>, IntelError> {
+) -> Result<Vec<Dao>, IntelError> {
     let mut records = vec![];
     for dao in rows.iter() {
-        let record = Record::from(&dao);
-        let updated_record = insert_record_to_table(dm, main_table, &record)?;
+        let updated_record = insert_record_to_table(dm, main_table, &dao)?;
         records.push(updated_record);
     }
     Ok(records)
 }
 
 fn insert_record_to_table(
-    dm: &RecordManager,
+    dm: &DaoManager,
     main_table: &Table,
-    record: &Record,
-) -> Result<Record, DbError> {
+    record: &Dao,
+) -> Result<Dao, DbError> {
     let table_name = &main_table.name;
     let mut params = vec![];
     let mut sql = format!("INSERT INTO {} ", table_name.complete_name());
     let columns = &main_table.get_non_primary_columns();
     sql += "(";
     for (i, col) in columns.iter().enumerate() {
-        let value = record.get_value(&col.name.name);
-        if let Some(value) = value {
-            if value == Value::Nil && col.is_not_null() && col.has_generated_default() {
+        let value: Option<&Value> = record.get_value(&col.name.name);
+        if let Some(ref value) = value {
+            if value.is_nil() && col.is_not_null() && col.has_generated_default() {
             } else {
                 if i > 0 {
                     sql += ", ";
@@ -575,8 +572,8 @@ fn insert_record_to_table(
     sql += "VALUES (";
     for (i, col) in columns.iter().enumerate() {
         let value = record.get_value(&col.name.name);
-        if let Some(value) = value {
-            if value == Value::Nil && col.is_not_null() && col.has_generated_default() {
+        if let Some(ref value) = value {
+            if value.is_nil()  && col.is_not_null() && col.has_generated_default() {
             } else {
                 if i > 0 {
                     sql += ", ";
@@ -590,14 +587,15 @@ fn insert_record_to_table(
     sql += ") RETURNING *";
     println!("sql: {}", sql);
     println!("params: {:?}", params);
-    dm.execute_sql_with_one_return(&sql, &params)
+    let bparams:Vec<&Value> = params.iter().collect();
+    dm.execute_sql_with_one_return(&sql, &bparams)
 }
 
 fn insert_record_to_linker_table(
-    dm: &RecordManager,
+    dm: &DaoManager,
     linker_table: &Table,
-    record: &Record,
-) -> Result<Record, DbError> {
+    record: &Dao,
+) -> Result<Dao, DbError> {
     let table_name = &linker_table.name;
     let mut params = vec![];
     let mut sql = format!("INSERT INTO {} ", table_name.complete_name());
@@ -606,7 +604,7 @@ fn insert_record_to_linker_table(
     for (i, col) in columns.iter().enumerate() {
         let value = record.get_value(&col.name.name);
         if let Some(value) = value {
-            if value == Value::Nil && col.is_not_null() && col.has_generated_default() {
+            if value.is_nil() && col.is_not_null() && col.has_generated_default() {
             } else {
                 if i > 0 {
                     sql += ", ";
@@ -620,7 +618,7 @@ fn insert_record_to_linker_table(
     for (i, col) in columns.iter().enumerate() {
         let value = record.get_value(&col.name.name);
         if let Some(value) = value {
-            if value == Value::Nil && col.is_not_null() && col.has_generated_default() {
+            if value.is_nil() && col.is_not_null() && col.has_generated_default() {
             } else {
                 if i > 0 {
                     sql += ", ";
@@ -634,19 +632,20 @@ fn insert_record_to_linker_table(
     sql += ") RETURNING *";
     println!("sql: {}", sql);
     println!("params: {:?}", params);
-    dm.execute_sql_with_one_return(&sql, &params)
+    let bparams: Vec<&Value> = params.iter().collect();
+    dm.execute_sql_with_one_return(&sql, &bparams)
 }
 
 /// Warning: This only works for postgresql 9.5 and up
 /// TODO: make the database trait tell which version is in used
 /// use appropriate query for depending on which features are supported
 fn upsert_one_one_record_to_table(
-    dm: &RecordManager,
+    dm: &DaoManager,
     main_table: &Table,
-    main_record: &Record,
+    main_record: &Dao,
     one_one_table: &Table,
-    one_one_record: &Record,
-) -> Result<Record, DbError> {
+    one_one_record: &Dao,
+) -> Result<Dao, DbError> {
     let local_referred_pair =
         one_one_table.get_local_foreign_columns_pair_to_table(&main_table.name);
 
@@ -669,7 +668,7 @@ fn upsert_one_one_record_to_table(
         let value = one_one_record.get_value(&one_col.name.name);
         assert!(value.is_some());
         let value = value.unwrap();
-        if value == Value::Nil && one_col.is_not_null() && one_col.has_generated_default() {
+        if value.is_nil() && one_col.is_not_null() && one_col.has_generated_default() {
         } else {
             if i > 0 {
                 sql += ", ";
@@ -684,7 +683,7 @@ fn upsert_one_one_record_to_table(
         let value = one_one_record.get_value(&one_col.name.name);
         assert!(value.is_some());
         let value = value.unwrap();
-        if value == Value::Nil && one_col.is_not_null() && one_col.has_generated_default() {
+        if value.is_nil() && one_col.is_not_null() && one_col.has_generated_default() {
         } else {
             if i > 0 {
                 sql += ", ";
@@ -745,5 +744,6 @@ fn upsert_one_one_record_to_table(
     sql += "RETURNING *";
     println!("sql: {}", sql);
     println!("params: {:?}", params);
-    dm.execute_sql_with_one_return(&sql, &params)
+    let bparams:Vec<&Value> = params.iter().collect();
+    dm.execute_sql_with_one_return(&sql, &bparams)
 }

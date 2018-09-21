@@ -12,8 +12,8 @@ use rustorm::ColumnName;
 use rustorm::DbError;
 use rustorm::EntityManager;
 use rustorm::FromDao;
-use rustorm::Record;
-use rustorm::RecordManager;
+use rustorm::Dao;
+use rustorm::DaoManager;
 use rustorm::Rows;
 use rustorm::Table;
 use rustorm::TableName;
@@ -51,7 +51,7 @@ pub fn get_total_records(em: &EntityManager, table_name: &TableName) -> Result<u
 /// retrieving the Lookup table display columns
 pub fn get_maintable_data(
     em: &EntityManager,
-    dm: &RecordManager,
+    dm: &DaoManager,
     tables: &Vec<Table>,
     window: &Window,
     filter: Option<Filter>,
@@ -125,7 +125,7 @@ pub fn get_maintable_data(
 /// get the detail of the selected record data
 pub fn get_selected_record_detail(
     em: &EntityManager,
-    dm: &RecordManager,
+    dm: &DaoManager,
     tables: &Vec<Table>,
     window: &Window,
     record_id: &str,
@@ -157,12 +157,12 @@ pub fn get_selected_record_detail(
         query.add_param(value.clone());
     }
 
-    let record: Option<Record> = query.collect_maybe_record(dm)?;
+    let record: Option<Dao> = query.collect_maybe_record(dm)?;
 
     match record {
         Some(record) => {
             println!("Getting one ones");
-            let mut one_one_records: Vec<(TableName, Option<Record>)> =
+            let mut one_one_records: Vec<(TableName, Option<Dao>)> =
                 Vec::with_capacity(window.one_one_tabs.iter().count());
             for one_one_tab in window.one_one_tabs.iter() {
                 let one_record = get_one_one_record(
@@ -233,13 +233,13 @@ pub fn get_selected_record_detail(
 
 fn get_one_one_record(
     _em: &EntityManager,
-    dm: &RecordManager,
+    dm: &DaoManager,
     tables: &Vec<Table>,
     main_table: &Table,
     one_one_tab: &Tab,
     record_id: &Vec<(&ColumnName, Value)>,
     page_size: u32,
-) -> Result<Option<Record>, DbError> {
+) -> Result<Option<Dao>, DbError> {
     let one_one_table =
         table_intel::get_table(&one_one_tab.table_name, tables).expect("table should exist");
 
@@ -279,7 +279,7 @@ fn get_one_one_record(
 /// TODO: add filter and sort
 pub fn get_has_many_records_service(
     em: &EntityManager,
-    dm: &RecordManager,
+    dm: &DaoManager,
     tables: &Vec<Table>,
     main_table: &Table,
     record_id: &str,
@@ -309,7 +309,7 @@ pub fn get_has_many_records_service(
 
 fn get_has_many_records(
     em: &EntityManager,
-    dm: &RecordManager,
+    dm: &DaoManager,
     tables: &Vec<Table>,
     main_table: &Table,
     has_many_tab: &Tab,
@@ -408,7 +408,7 @@ fn get_has_many_records(
 /// TODO: add filter and sort
 pub fn get_indirect_records_service(
     em: &EntityManager,
-    dm: &RecordManager,
+    dm: &DaoManager,
     tables: &Vec<Table>,
     main_table: &Table,
     record_id: &str,
@@ -440,7 +440,7 @@ pub fn get_indirect_records_service(
 
 fn get_indirect_records(
     _em: &EntityManager,
-    dm: &RecordManager,
+    dm: &DaoManager,
     tables: &Vec<Table>,
     main_table: &Table,
     indirect_tab: &Tab,
@@ -562,7 +562,7 @@ fn get_indirect_records(
 /// of the dropdown
 pub fn get_all_lookup_for_window(
     em: &EntityManager,
-    dm: &RecordManager,
+    dm: &DaoManager,
     tables: &Vec<Table>,
     window: &Window,
     page_size: u32,
@@ -632,7 +632,7 @@ fn get_tab_lookup_tablenames(tab: &Tab) -> Vec<(&TableName, Vec<&ColumnName>)> {
 
 pub fn get_lookup_data_of_tab(
     em: &EntityManager,
-    dm: &RecordManager,
+    dm: &DaoManager,
     tables: &Vec<Table>,
     tab: &Tab,
     page_size: u32,
@@ -658,7 +658,7 @@ pub fn get_lookup_data_of_tab(
 /// this table must have it's own window too
 pub fn get_lookup_data_of_table_with_display_columns(
     _em: &EntityManager,
-    dm: &RecordManager,
+    dm: &DaoManager,
     tables: &Vec<Table>,
     table_name: &TableName,
     display_columns: &Vec<&ColumnName>,

@@ -6,7 +6,7 @@ use intel::cache;
 use rustorm::EntityManager;
 use rustorm::Pool;
 use rustorm::pool;
-use rustorm::RecordManager;
+use rustorm::DaoManager;
 use std::sync::{Arc, RwLock};
 use credentials::Credentials;
 
@@ -212,7 +212,7 @@ pub fn get_pool_session_em() -> Result<EntityManager, ServiceError> {
     }
 }
 
-pub fn get_pool_dm() -> Result<RecordManager, ServiceError> {
+pub fn get_pool_dm() -> Result<DaoManager, ServiceError> {
     let mut pool = match POOL.write() {
         Ok(pool) => pool,
         Err(_e) => return Err(ServiceError::PoolResourceError),
@@ -224,7 +224,7 @@ pub fn get_pool_dm() -> Result<RecordManager, ServiceError> {
     }
 }
 
-pub fn get_pool_session_dm() -> Result<RecordManager, ServiceError> {
+pub fn get_pool_session_dm() -> Result<DaoManager, ServiceError> {
     let mut pool = match POOL.write() {
         Ok(pool) => pool,
         Err(_e) => return Err(ServiceError::PoolResourceError),

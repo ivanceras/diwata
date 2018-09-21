@@ -2,14 +2,14 @@ use error::ServiceError;
 use intel::Window;
 use intel::cache;
 use rustorm::EntityManager;
-use rustorm::RecordManager;
+use rustorm::DaoManager;
 use rustorm::Table;
 use global;
 use credentials::Credentials;
 
 pub struct Context {
     pub em: EntityManager,
-    pub dm: RecordManager,
+    pub dm: DaoManager,
     pub tables: Vec<Table>,
     pub windows: Vec<Window>,
 }

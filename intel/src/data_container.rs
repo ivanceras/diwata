@@ -1,12 +1,12 @@
 use rustorm::ColumnName;
-use rustorm::Record;
+use rustorm::Dao;
 use rustorm::Rows;
 use rustorm::TableName;
 
 #[derive(Debug, Serialize)]
 pub struct RecordDetail {
-    pub record: Record,
-    pub one_ones: Vec<(TableName, Option<Record>)>,
+    pub record: Dao,
+    pub one_ones: Vec<(TableName, Option<Dao>)>,
     pub has_many: Vec<(TableName, Rows)>,
     // (linker_tablename, indirect_tablename, records)
     pub indirect: Vec<(TableName, TableName, Rows)>,
@@ -23,9 +23,9 @@ pub enum RecordAction {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct RecordChangeset {
-    pub record: Record,
+    pub record: Dao,
     pub action: RecordAction,
-    pub one_ones: Vec<(TableName, Option<Record>)>,
+    pub one_ones: Vec<(TableName, Option<Dao>)>,
     pub has_many: Vec<(TableName, RecordAction, Rows)>,
     // vec ( table, via linker, action, rows )
     pub indirect: Vec<(TableName, TableName, RecordAction, Rows)>,
@@ -234,7 +234,7 @@ fn test_record_changeset() {
     let mut dao = Dao::new();
     dao.insert("city", "Akishima");
     let changeset = RecordChangeset {
-        record: Record::from(&dao),
+        record: Dao::from(&dao),
         action: RecordAction::Edited,
         one_ones: vec![],
         has_many: vec![],
@@ -481,7 +481,7 @@ fn test_record_changeset2() {
     let mut dao = Dao::new();
     dao.insert("city", "Akishima");
     let changeset = RecordChangeset {
-        record: Record::from(&dao),
+        record: Dao::from(&dao),
         action: RecordAction::Edited,
         one_ones: vec![],
         has_many: vec![],
@@ -743,7 +743,7 @@ fn test_record_changeset3() {
     let mut dao = Dao::new();
     dao.insert("city", "Akishima");
     let changeset = RecordChangeset {
-        record: Record::from(&dao),
+        record: Dao::from(&dao),
         action: RecordAction::Edited,
         one_ones: vec![],
         has_many: vec![],
