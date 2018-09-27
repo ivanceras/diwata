@@ -6,7 +6,8 @@ members = [
     "rustorm/codegen",
     "rustorm/dao",
     "cli",
-    "witch",
+    "witch-client",
+    "witch-client/witch",
 ]
 
 [replace]
