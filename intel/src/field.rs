@@ -3,7 +3,6 @@ use rustorm::Column;
 use data_container::DropdownInfo;
 use reference::Reference;
 use rustorm::column::Capacity;
-use rustorm::types::ArrayType;
 use rustorm::types::SqlType;
 use rustorm::ColumnName;
 use rustorm::Table;
@@ -202,7 +201,7 @@ impl Field {
             && column_name == "description"
         {
             Some(Reference::Description)
-        } else if sql_type == &SqlType::ArrayType(ArrayType::Text)
+        } else if sql_type == &SqlType::Array(Box::new(SqlType::Text))
             && (column_name == "tag" || column_name == "tags")
         {
             Some(Reference::Tag)
@@ -268,18 +267,12 @@ impl Field {
             && (column_name == "is_active" || column_name == "active")
         {
             Some(Reference::IsActive)
+        } else if let SqlType::Enum(ref name, ref choices) = sql_type {
+            Some(Reference::Enum(name.to_string(), choices.to_vec()))
+        } else if let SqlType::Array(_) = sql_type {
+            Some(Reference::Tag)
         } else {
-            match *sql_type {
-                SqlType::Enum(ref name, ref choices) => {
-                    Some(Reference::Enum(name.to_string(), choices.to_vec()))
-                }
-                SqlType::ArrayType(ArrayType::Text) => Some(Reference::Tag),
-                SqlType::ArrayType(ArrayType::Enum(_, _)) => Some(Reference::Tag),
-                _ => {
-                    //println!("column '{}' is not yet dealt with", column_name);
-                    None
-                }
-            }
+            None
         }
     }
 
