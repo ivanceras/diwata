@@ -15,4 +15,3 @@ members = [
 "rustorm_codegen:0.1.2" = { path = "rustorm/codegen" }
 "rustorm:0.10.7" = { path = "rustorm" }
 "diwata_intel:0.1.2" = { path = "intel" }
-"term-table:0.1.5" = {path = "../../term-table-rs"}
