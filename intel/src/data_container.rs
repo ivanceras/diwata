@@ -234,7 +234,7 @@ fn test_record_changeset() {
     let mut dao = Dao::new();
     dao.insert("city", "Akishima");
     let changeset = RecordChangeset {
-        record: Dao::from(&dao),
+        record: dao,
         action: RecordAction::Edited,
         one_ones: vec![],
         has_many: vec![],
@@ -481,7 +481,7 @@ fn test_record_changeset2() {
     let mut dao = Dao::new();
     dao.insert("city", "Akishima");
     let changeset = RecordChangeset {
-        record: Dao::from(&dao),
+        record: dao,
         action: RecordAction::Edited,
         one_ones: vec![],
         has_many: vec![],
@@ -743,7 +743,7 @@ fn test_record_changeset3() {
     let mut dao = Dao::new();
     dao.insert("city", "Akishima");
     let changeset = RecordChangeset {
-        record: Dao::from(&dao),
+        record: dao,
         action: RecordAction::Edited,
         one_ones: vec![],
         has_many: vec![],
