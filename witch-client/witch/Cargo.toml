@@ -8,3 +8,4 @@ edition = "2018"
 sqlparser = "0.1.8"
 rustorm = {path = "../../rustorm"}
 csv = "1.0.2"
+stdweb = "0.4.10"

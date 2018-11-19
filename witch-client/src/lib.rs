@@ -30,13 +30,21 @@ impl Component<Context> for Model {
 
     fn create(_: Self::Properties, _: &mut Env<Context, Self>) -> Self {
         let csv = r#"
-pl,speed,vm,size,compiler
-rust,fast,false,small,rustc
-haskel,fast,false,small,ghc
-c,fast,false,small,clang
-java,medium,true,large,jdk
+pl,version,speed,vm,size,compiler
+rust,1,fast,false,small,rustc
+haskel,1,fast,false,small,ghc
+c,99,fast,false,small,clang
+java,8,medium,true,large,jdk
         "#;
         let fields = vec![
+            Field{
+                name: "pl".into(),
+                sql_type: SqlType::Text,
+            },
+            Field{
+                name: "compiler".into(),
+                sql_type: SqlType::Text,
+            },
             Field{
                 name: "speed".into(),
                 sql_type: SqlType::Text,
@@ -50,12 +58,8 @@ java,medium,true,large,jdk
                 sql_type: SqlType::Text,
             },
             Field{
-                name: "pl".into(),
-                sql_type: SqlType::Text,
-            },
-            Field{
-                name: "compiler".into(),
-                sql_type: SqlType::Text,
+                name: "version".into(),
+                sql_type: SqlType::Int,
             },
         ];
         let dataview = DataView::new_from_csv(fields, csv);

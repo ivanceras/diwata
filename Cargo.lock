@@ -2050,6 +2050,7 @@ dependencies = [
  "csv 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "rustorm 0.10.8",
  "sqlparser 0.1.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "stdweb 0.4.10 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
