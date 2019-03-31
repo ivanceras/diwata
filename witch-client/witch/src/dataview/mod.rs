@@ -19,6 +19,8 @@ pub struct DataView{
 #[derive(Debug)]
 pub struct Field{
     pub name: String,
+    pub description: Option<String>,
+    pub tags: Vec<String>,
     pub sql_type: SqlType,
 }
 

@@ -40,26 +40,38 @@ java,8,medium,true,large,jdk
             Field{
                 name: "pl".into(),
                 sql_type: SqlType::Text,
+                description: None,
+                tags: vec![],
             },
             Field{
                 name: "compiler".into(),
                 sql_type: SqlType::Text,
+                description: None,
+                tags: vec![],
             },
             Field{
                 name: "speed".into(),
                 sql_type: SqlType::Text,
+                description: None,
+                tags: vec![],
             },
             Field{
                 name: "vm".into(),
                 sql_type: SqlType::Text,
+                description: None,
+                tags: vec![],
             },
             Field{
                 name: "size".into(),
                 sql_type: SqlType::Text,
+                description: None,
+                tags: vec![],
             },
             Field{
                 name: "version".into(),
                 sql_type: SqlType::Int,
+                description: None,
+                tags: vec![],
             },
         ];
         let dataview = DataView::new_from_csv(fields, csv);
