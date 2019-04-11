@@ -15,13 +15,17 @@ services:
 before_script:
   - git clone https://github.com/ivanceras/bazaar
   - git clone https://github.com/ivanceras/dota-sql
+  - pwd
   - sh ./dbscripts/setup.sh
   - cd ../dota-sql/data/ && sh reimport.sh && cd -
   - cd ../bazaar/scripts && sh setup.sh && cd -
   - cd ../dota-sql/data && sh reimport.sh && cd -
+  - pwd
   - mkdir -p public/static
   - cd intel && cargo update && cd -
+  - pwd
   - cd server && cargo update && cd -
+  - pwd
 
 
   
