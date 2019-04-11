@@ -13,8 +13,9 @@ services:
   - postgresql
 
 before_script:
+  - pwd
+  - ls -la
   - git clone https://github.com/ivanceras/bazaar
-  - git clone https://github.com/ivanceras/sakila
   - git clone https://github.com/ivanceras/dota-sql
   - pwd
   - ls -la
