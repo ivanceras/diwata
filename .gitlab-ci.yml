@@ -2,7 +2,6 @@ image: rustlang/rust:nightly
 
 services:
   - postgres:latest
-  - sqlite3:latest
 
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
@@ -32,8 +31,8 @@ stages:
 
 test:
   script:
-    - cargo test --all-features
-    - cargo test --all
+    - cd rustorm && sh ./test.sh && cd -
+    - cargo test --all --all-features
     - cargo test -p rustorm --all-features
     - cargo test -p rustorm --features "with-postgres with-sqlite"
     - cargo test -p rustorm --features "with-postgres"
