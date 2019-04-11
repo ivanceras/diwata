@@ -33,6 +33,12 @@ stages:
 test:
   script:
     - cargo test --all-features
+    - cargo test --all
+    - cargo test --all --all-features
+    - cargo test --all --features "with-postgresql with-mysql with-sqlite"
+    - cargo test --all --features "with-postgresql"
+    - cargo test --all --features "with-mysql"
+    - cargo test --all --features "with-sqlite"
 
 build:
   script:

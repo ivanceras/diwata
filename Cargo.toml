@@ -3,15 +3,15 @@ members = [
     "intel",
     "server",
     "rustorm",
-    "rustorm/codegen",
-    "rustorm/dao",
+    "rustorm/crates/codegen",
+    "rustorm/crates/dao",
     "witch-client",
     "witch-client/witch",
     "text-client",
 ]
 
 [replace]
-"rustorm_dao:0.1.8" = { path = "rustorm/dao" }
-"rustorm_codegen:0.1.8" = { path = "rustorm/codegen" }
+"rustorm_dao:0.1.8" = { path = "rustorm/crates/dao" }
+"rustorm_codegen:0.1.8" = { path = "rustorm/crates/codegen" }
 "rustorm:0.10.8" = { path = "rustorm" }
 "diwata_intel:0.1.2" = { path = "intel" }
