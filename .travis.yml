@@ -14,8 +14,10 @@ services:
 
 before_script:
   - git clone https://github.com/ivanceras/bazaar
+  - git clone https://github.com/ivanceras/sakila
   - git clone https://github.com/ivanceras/dota-sql
   - pwd
+  - ls -la
   - sh ./dbscripts/setup.sh
   - cd ../dota-sql/data/ && sh reimport.sh && cd -
   - cd ../bazaar/scripts && sh setup.sh && cd -
