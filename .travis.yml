@@ -15,8 +15,8 @@ services:
 before_script:
   - pwd
   - ls -la
-  - git clone https://github.com/ivanceras/bazaar
-  - git clone https://github.com/ivanceras/dota-sql
+  - cd .. && git clone https://github.com/ivanceras/bazaar && cd -
+  - cd .. && git clone https://github.com/ivanceras/dota-sql && cd -
   - pwd
   - ls -la
   - sh ./dbscripts/setup.sh

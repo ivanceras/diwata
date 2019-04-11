@@ -7,9 +7,8 @@ variables:
   GIT_SUBMODULE_STRATEGY: recursive
 
 before_script:
-  - git clone https://github.com/ivanceras/bazaar
-  - git clone https://github.com/ivanceras/sakila
-  - git clone https://github.com/ivanceras/dota-sql
+  - cd .. && git clone https://github.com/ivanceras/bazaar && cd -
+  - cd .. && git clone https://github.com/ivanceras/dota-sql && cd -
   - apt update
   - apt install -y postgresql-client
   - find . -name '*.sh' -type f -exec sed -i 's/localhost/postgres/g' {} +
