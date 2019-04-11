@@ -16,10 +16,9 @@ before_script:
   - git clone https://github.com/ivanceras/bazaar
   - git clone https://github.com/ivanceras/dota-sql
   - sh ./dbscripts/setup.sh
-  - cd ..
-  - cd bazaar/scripts && sh setup.sh && cd -
-  - cd dota-sql/data && sh reimport.sh && cd -
-  - cd diwata
+  - cd ../dota-sql/data/ && sh reimport.sh && cd -
+  - cd ../bazaar/scripts && sh setup.sh && cd -
+  - cd ../dota-sql/data && sh reimport.sh && cd -
   - mkdir -p public/static
   - cd intel && cargo update && cd -
   - cd server && cargo update && cd -
@@ -30,4 +29,4 @@ script:
   - cargo update
   - cargo build -p diwata_server --release
   - cargo test --all-features
-  - cd diwata/rustorm && sh ./test.sh && cd -
+  - cd rustorm && sh ./test.sh && cd -
