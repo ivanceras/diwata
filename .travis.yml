@@ -13,19 +13,21 @@ services:
   - postgresql
 
 before_script:
-  - sh ./dbscripts/setup.sh
-  - cd ..
   - git clone https://github.com/ivanceras/bazaar
   - git clone https://github.com/ivanceras/dota-sql
-  - cd bazaar/scripts && sh setup.sh && cd .. && cd ..
-  - cd dota-sql/data && sh reimport.sh && cd .. && cd ..
+  - sh ./dbscripts/setup.sh
+  - cd ..
+  - cd bazaar/scripts && sh setup.sh && cd -
+  - cd dota-sql/data && sh reimport.sh && cd -
   - cd diwata
   - mkdir -p public/static
-  - cd intel && cargo update && cd ..
-  - cd server && cargo update && cd ..
+  - cd intel && cargo update && cd -
+  - cd server && cargo update && cd -
+
 
   
 script:
   - cargo update
   - cargo build -p diwata_server --release
   - cargo test --all-features
+  - cd diwata/rustorm && sh ./test.sh && cd -

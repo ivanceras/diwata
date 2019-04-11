@@ -2,6 +2,7 @@ image: rust
 
 services:
   - postgres:latest
+  - sqlite3:latest
 
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
@@ -10,11 +11,11 @@ before_script:
   - apt update
   - apt install -y postgresql-client
   - find . -name '*.sh' -type f -exec sed -i 's/localhost/postgres/g' {} +
+  - git clone https://github.com/ivanceras/bazaar
+  - git clone https://github.com/ivanceras/dota-sql
   - sh ./dbscripts/setup.sh
   - pwd && ls -la
   - cd .. 
-  - git clone https://github.com/ivanceras/bazaar
-  - git clone https://github.com/ivanceras/dota-sql
   - find . -name '*.sh' -type f -exec sed -i 's/localhost/postgres/g' {} +
   - cd  bazaar/scripts && sh setup.sh
   - pwd && ls -la
@@ -34,11 +35,10 @@ test:
   script:
     - cargo test --all-features
     - cargo test --all
-    - cargo test --all --all-features
-    - cargo test --all --features "with-postgres with-mysql with-sqlite"
-    - cargo test --all --features "with-postgres"
-    - cargo test --all --features "with-mysql"
-    - cargo test --all --features "with-sqlite"
+    - cargo test -p rustorm --all-features
+    - cargo test -p rustorm --features "with-postgres with-sqlite"
+    - cargo test -p rustorm --features "with-postgres"
+    - cargo test -p rustorm --features "with-sqlite"
 
 build:
   script:
