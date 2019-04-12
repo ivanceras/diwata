@@ -1,11 +1,11 @@
-use crate::error::ServiceError;
-use diwata_intel::Window;
-use diwata_intel::cache;
-use rustorm::EntityManager;
-use rustorm::DaoManager;
-use rustorm::Table;
-use crate::global;
 use crate::credentials::Credentials;
+use crate::error::ServiceError;
+use crate::global;
+use diwata_intel::cache;
+use diwata_intel::Window;
+use rustorm::DaoManager;
+use rustorm::EntityManager;
+use rustorm::Table;
 
 pub struct Context {
     pub em: EntityManager,
@@ -25,17 +25,17 @@ impl Context {
 
         let active_em = if is_login_required {
             global::get_pool_session_em()?
-        }else{
+        } else {
             em
         };
         let active_dm = if is_login_required {
             global::get_pool_session_dm()?
-        }else{
+        } else {
             dm
         };
-        let db_url = if is_login_required{
+        let db_url = if is_login_required {
             global::get_role_db_url()?
-        }else{
+        } else {
             global::get_db_url()?
         };
         let mut cache_pool = cache::CACHE_POOL.lock().unwrap();
@@ -53,15 +53,22 @@ impl Context {
 /// set the session user for the database connection
 /// call this in every data request to ensure appropriate
 /// database previlege is imposed for the next database queries
-fn set_session_credentials(credentials: &Credentials, em: &EntityManager) -> Result<(), ServiceError> {
+fn set_session_credentials(
+    credentials: &Credentials,
+    em: &EntityManager,
+) -> Result<(), ServiceError> {
     println!("------------->>>> SETTING SESSION CREDENTIALS");
     em.set_session_user(&credentials.username)?;
     let role = em.get_role(&credentials.username)?;
-    match role{
+    match role {
         Some(role) => {
             let current_db_url = global::get_db_url()?;
             println!("current_db_url {}", current_db_url);
-            let session_db_url = global::recreate_db_url(&credentials.username, Some(&credentials.password), &current_db_url)?;
+            let session_db_url = global::recreate_db_url(
+                &credentials.username,
+                Some(&credentials.password),
+                &current_db_url,
+            )?;
             global::set_session_db_url(&session_db_url)?;
             println!("session_db_url: {}", session_db_url);
             let role_db_url = global::recreate_db_url(&role.role_name, None, &current_db_url)?;
@@ -69,8 +76,9 @@ fn set_session_credentials(credentials: &Credentials, em: &EntityManager) -> Res
             global::set_role_db_url(&role_db_url)?;
             Ok(())
         }
-        None => {
-           Err(ServiceError::GenericError(format!("no role for {}", credentials.username))) 
-        }
+        None => Err(ServiceError::GenericError(format!(
+            "no role for {}",
+            credentials.username
+        ))),
     }
 }

@@ -1,15 +1,14 @@
-
-use url::Url;
+use crate::credentials::Credentials;
 use crate::error::ServiceError;
 use crate::handler::Server;
 use diwata_intel::cache;
-use rustorm::EntityManager;
-use rustorm::Pool;
+use lazy_static::lazy_static;
 use rustorm::pool;
 use rustorm::DaoManager;
+use rustorm::EntityManager;
+use rustorm::Pool;
 use std::sync::{Arc, RwLock};
-use crate::credentials::Credentials;
-use lazy_static::lazy_static;
+use url::Url;
 
 pub static PAGE_SIZE: u32 = 40;
 
@@ -104,15 +103,15 @@ pub fn get_session_db_url() -> Result<String, ServiceError> {
 }
 
 /// precache the processing of tables, and window in advance
-pub fn precache()-> Result<(), ServiceError> {
-    match cache::CACHE_POOL.lock(){
+pub fn precache() -> Result<(), ServiceError> {
+    match cache::CACHE_POOL.lock() {
         Ok(mut cache_pool) => {
             let em = get_pool_em()?;
             let db_url = get_db_url()?;
             cache_pool.precache(&em, &db_url)?;
             Ok(())
         }
-        Err(e) => Err(ServiceError::GenericError(format!("{}", e)))
+        Err(e) => Err(ServiceError::GenericError(format!("{}", e))),
     }
 }
 
@@ -147,7 +146,6 @@ pub fn set_session_db_url(new_url: &str) -> Result<(), ServiceError> {
     }
 }
 
-
 /// sets the session user to the database, this adds restrictions to RLS and security imposed to
 /// the database user
 /// the user and password combination is tested first if it can connect to the database
@@ -160,9 +158,13 @@ pub fn test_credentials(user: &str, pwd: &str) -> Result<(), ServiceError> {
 }
 
 /// recreate the db_url substituting the username and password
-pub fn recreate_db_url(user: &str, pwd: Option<&str>, db_url: &str) -> Result<String, ServiceError> {
+pub fn recreate_db_url(
+    user: &str,
+    pwd: Option<&str>,
+    db_url: &str,
+) -> Result<String, ServiceError> {
     let url = Url::parse(db_url);
-    match url{
+    match url {
         Ok(url) => {
             let scheme = url.scheme();
             let host = url.host_str().unwrap();
@@ -170,22 +172,23 @@ pub fn recreate_db_url(user: &str, pwd: Option<&str>, db_url: &str) -> Result<St
             let path = url.path();
             let port_str = if let Some(port) = port {
                 format!(":{}", port)
-            }else{
+            } else {
                 "".to_string()
             };
             let pwd_str = if let Some(pwd) = pwd {
-                format!(":{}",pwd)
-            }else{
+                format!(":{}", pwd)
+            } else {
                 "".to_string()
             };
             // reconstructed db_url
             // postgres://user:pwd@host:port/db
-            let cons_url = format!("{}://{}{}@{}{}{}",scheme, user, pwd_str, host, port_str, path);
+            let cons_url = format!(
+                "{}://{}{}@{}{}{}",
+                scheme, user, pwd_str, host, port_str, path
+            );
             Ok(cons_url)
         }
-        Err(_e) => {
-            Err(ServiceError::GenericError("Error parsing db_url".into()))
-        }
+        Err(_e) => Err(ServiceError::GenericError("Error parsing db_url".into())),
     }
 }
 

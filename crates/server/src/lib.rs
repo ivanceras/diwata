@@ -15,14 +15,12 @@ pub use global::set_login_required;
 pub use handler::Server;
 
 pub mod context;
-pub mod error;
-pub mod handler;
-mod global;
 mod credentials;
+pub mod error;
+mod global;
+pub mod handler;
 
-
-
-pub fn start()-> Result<(),ServiceError> {
+pub fn start() -> Result<(), ServiceError> {
     handler::run()?;
     Ok(())
 }

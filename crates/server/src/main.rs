@@ -4,6 +4,6 @@ extern crate structopt;
 
 use server::ServiceError;
 
-fn main() -> Result<(),ServiceError> {
+fn main() -> Result<(), ServiceError> {
     server::start()
 }
