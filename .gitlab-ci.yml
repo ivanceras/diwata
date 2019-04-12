@@ -1,6 +1,10 @@
 stages:
   - build
 
+	
+	
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
 
 rust-nightly:
   stage: build
