@@ -6,6 +6,7 @@ members = [
     "crates/intel",
     "crates/server",
     "crates/text-client",
+    "crates/dataview",
 ]
 
 exclude = [
