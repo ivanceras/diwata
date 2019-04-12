@@ -1,4 +1,3 @@
-
 #[macro_use]
 extern crate yew;
 #[macro_use]
@@ -6,11 +5,7 @@ extern crate stdweb;
 use yew::prelude::*;
 
 use rustorm::types::SqlType;
-use witch::dataview::{
-    DataView,
-    Field,
-};
-
+use witch::dataview::{DataView, Field};
 
 type Context = ();
 
@@ -37,37 +32,37 @@ c,99,fast,false,small,clang
 java,8,medium,true,large,jdk
         "#;
         let fields = vec![
-            Field{
+            Field {
                 name: "pl".into(),
                 sql_type: SqlType::Text,
                 description: None,
                 tags: vec![],
             },
-            Field{
+            Field {
                 name: "compiler".into(),
                 sql_type: SqlType::Text,
                 description: None,
                 tags: vec![],
             },
-            Field{
+            Field {
                 name: "speed".into(),
                 sql_type: SqlType::Text,
                 description: None,
                 tags: vec![],
             },
-            Field{
+            Field {
                 name: "vm".into(),
                 sql_type: SqlType::Text,
                 description: None,
                 tags: vec![],
             },
-            Field{
+            Field {
                 name: "size".into(),
                 sql_type: SqlType::Text,
                 description: None,
                 tags: vec![],
             },
-            Field{
+            Field {
                 name: "version".into(),
                 sql_type: SqlType::Int,
                 description: None,
@@ -97,4 +92,3 @@ impl Renderable<Context, Model> for Model {
         }
     }
 }
-

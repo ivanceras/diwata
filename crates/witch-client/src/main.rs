@@ -1,6 +1,5 @@
-
-use yew::prelude::*;
 use witch_client::Model;
+use yew::prelude::*;
 
 fn main() {
     yew::initialize();

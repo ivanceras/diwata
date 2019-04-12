@@ -2,12 +2,14 @@ extern crate term_table;
 #[macro_use]
 extern crate structopt;
 
-#[macro_use] extern crate quicli;
+#[macro_use]
+extern crate quicli;
 use quicli::prelude::*;
-use term_table::{Table,TableStyle};
-use term_table::{row::Row,
-    cell::{Alignment,Cell},
+use term_table::{
+    cell::{Alignment, Cell},
+    row::Row,
 };
+use term_table::{Table, TableStyle};
 
 // Add cool slogan for your app here, e.g.:
 /// Get first n lines of a file
@@ -30,7 +32,7 @@ struct Cli {
 
 main!(|args: Cli, log_level: verbosity| {
     println!("Executing {}", args.sql);
-    if let Some(ref file) = args.file{
+    if let Some(ref file) = args.file {
         let content = read_file(file)?;
         let content_lines = content.lines();
         let first_n_lines = content_lines.take(args.count);
@@ -39,29 +41,31 @@ main!(|args: Cli, log_level: verbosity| {
             println!("{}", line);
         }
     }
-    if !args.sql.is_empty(){
+    if !args.sql.is_empty() {
         exec(&args.sql);
     }
 });
 
-fn exec(sql: &str){
+fn exec(sql: &str) {
     let mut table = Table::new();
     table.max_column_width = 40;
 
     table.style = TableStyle::elegant();
 
+    table.add_row(Row::new(vec![Cell::new_with_alignment(
+        "This is some centered text",
+        2,
+        Alignment::Center,
+    )]));
+
     table.add_row(Row::new(vec![
-        Cell::new_with_alignment("This is some centered text", 2, Alignment::Center)
+        Cell::new("This is left aligned text", 1),
+        Cell::new_with_alignment("This is right aligned text", 1, Alignment::Right),
     ]));
 
     table.add_row(Row::new(vec![
         Cell::new("This is left aligned text", 1),
-        Cell::new_with_alignment("This is right aligned text", 1, Alignment::Right)
-    ]));
-
-    table.add_row(Row::new(vec![
-        Cell::new("This is left aligned text", 1),
-        Cell::new_with_alignment("This is right aligned text", 1, Alignment::Right)
+        Cell::new_with_alignment("This is right aligned text", 1, Alignment::Right),
     ]));
 
     table.add_row(Row::new(vec![

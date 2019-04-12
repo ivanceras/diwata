@@ -1,61 +1,52 @@
-use rustorm::{
-    Value,
-    types::SqlType,
-    common,
-};
+use rustorm::{common, types::SqlType, Value};
 use sqlparser::sqlast::ASTNode;
-
 
 pub type Row = Vec<Value>;
 
-
 #[derive(Debug)]
-pub struct DataView{
-   fields: Vec<Field>, 
-   data: Vec<Row>,
+pub struct DataView {
+    fields: Vec<Field>,
+    data: Vec<Row>,
 }
 
 /// the name of field and the type
 #[derive(Debug)]
-pub struct Field{
+pub struct Field {
     pub name: String,
     pub description: Option<String>,
     pub tags: Vec<String>,
     pub sql_type: SqlType,
 }
 
-impl Field{
-
+impl Field {
     fn convert(&self, value: &Value) -> Value {
         common::cast_type(value, &self.sql_type)
     }
 }
 
-impl DataView{
-
+impl DataView {
     pub fn new_from_csv(fields: Vec<Field>, csv: &str) -> Self {
-
         let mut rdr = csv::Reader::from_reader(csv.as_bytes());
         let mut columns = vec![];
         if let Ok(header) = rdr.headers() {
             for h in header {
                 columns.push(h)
             }
-        }else{
+        } else {
             panic!("error reading header in csv");
         }
         let mut field_record_pos = vec![];
-        for field in &fields{
-            if let Some(pos) = columns.iter().position(|column| field.name == *column){
+        for field in &fields {
+            if let Some(pos) = columns.iter().position(|column| field.name == *column) {
                 field_record_pos.push(pos);
-            }else{
+            } else {
                 panic!("data does not have this field: {}", field.name);
             }
         }
-        let mut tmp_rows:Vec<Row> = vec![];
+        let mut tmp_rows: Vec<Row> = vec![];
         for record in rdr.records() {
             if let Ok(record) = record {
-                let mut tmp_row:Row = Vec::with_capacity(fields.len());
+                let mut tmp_row: Row = Vec::with_capacity(fields.len());
                 for value in record.iter() {
                     tmp_row.push(Value::Text(value.to_string()));
                 }
@@ -63,48 +54,44 @@ impl DataView{
             }
         }
         println!("field record pos: {:?}", field_record_pos);
-        let mut data:Vec<Row> = vec![];
-        for tmp_row in tmp_rows{
+        let mut data: Vec<Row> = vec![];
+        for tmp_row in tmp_rows {
             let mut row: Row = vec![];
-            for (i,field) in fields.iter().enumerate(){
+            for (i, field) in fields.iter().enumerate() {
                 let index = field_record_pos[i];
                 println!("index: {}", index);
                 println!("field: {:?}", field);
-                let tmp_value:&Value = &tmp_row[index];
+                let tmp_value: &Value = &tmp_row[index];
                 println!("tmp_value: {:?}", tmp_value);
-                let value:Value = field.convert(tmp_value);
+                let value: Value = field.convert(tmp_value);
                 println!("value: {:?}", value);
                 row.push(value);
             }
             data.push(row);
         }
-        DataView{
-           fields,
-           data,
-        }
+        DataView { fields, data }
     }
-
 
     /// add more data into this view
     fn add_page(&mut self, page: Vec<Row>) {
-        for row in page{
+        for row in page {
             self.data.push(row);
         }
     }
 
     /// derive a view based on the sql ast
-    fn get_views(&self, view_sql: &ASTNode) -> Vec<DataView>{
+    fn get_views(&self, view_sql: &ASTNode) -> Vec<DataView> {
         vec![]
     }
 }
 
 #[cfg(test)]
-mod test{
+mod test {
 
     use super::*;
-    
+
     #[test]
-    fn test_from_csv(){
+    fn test_from_csv() {
         let csv = r#"
 pl,version,speed,vm,size,compiler
 rust,1,fast,false,small,rustc
@@ -113,37 +100,37 @@ c,99,fast,false,small,clang
 java,8,medium,true,large,jdk
         "#;
         let fields = vec![
-            Field{
+            Field {
                 name: "pl".into(),
                 sql_type: SqlType::Text,
                 description: None,
                 tags: vec![],
             },
-            Field{
+            Field {
                 name: "compiler".into(),
                 sql_type: SqlType::Text,
                 description: None,
                 tags: vec![],
             },
-            Field{
+            Field {
                 name: "speed".into(),
                 sql_type: SqlType::Text,
                 description: None,
                 tags: vec![],
             },
-            Field{
+            Field {
                 name: "vm".into(),
                 sql_type: SqlType::Text,
                 description: None,
                 tags: vec![],
             },
-            Field{
+            Field {
                 name: "size".into(),
                 sql_type: SqlType::Text,
                 description: None,
                 tags: vec![],
             },
-            Field{
+            Field {
                 name: "version".into(),
                 sql_type: SqlType::Int,
                 description: None,
@@ -161,4 +148,3 @@ java,8,medium,true,large,jdk
         assert_eq!(dataview.data[1][2], Value::Text("fast".to_string()));
     }
 }
-
