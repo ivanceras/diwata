@@ -6,8 +6,7 @@ edition = "2018"
 
 [dependencies]
 yew = "0.4.0"
-witch = { path = "witch" }
+dataview = { path = "../dataview" }
 sqlparser = "0.1.8"
-rustorm = {path = "../rustorm"}
 csv = "1.0.2"
 stdweb = "0.4.10"

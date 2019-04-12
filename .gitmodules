@@ -4,9 +4,6 @@
 [submodule "rustorm"]
 	path = crates/rustorm
 	url = https://ivanceras@github.com/ivanceras/rustorm
-[submodule "elm-webclient"]
-	path = elm-webclient
-	url = https://ivanceras@github.com/ivanceras/elm-webclient.git
 [submodule "cli"]
 	path = cli
 	url = https://ivanceras@github.com/ivanceras/diwata_cli.git
