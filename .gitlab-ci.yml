@@ -1,16 +1,14 @@
 stages:
   - build
-
 	
-	
-variables:
-  GIT_SUBMODULE_STRATEGY: recursive
 
 rust-nightly:
   stage: build
   image: rustlang/rust:nightly
   services:
       - postgres:latest
+  variables:
+     GIT_SUBMODULE_STRATEGY: recursive
 
   before_script:
       - cd rustorm 
