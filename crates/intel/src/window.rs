@@ -1,15 +1,17 @@
-use cache;
-use error::IntelError;
+use crate::cache;
+use crate::error::IntelError;
+use crate::tab::Tab;
+use crate::table_intel;
+use crate::table_intel::IndirectTable;
+use crate::table_intel::TableIntel;
 use rustorm::table::SchemaContent;
 use rustorm::ColumnName;
 use rustorm::DbError;
 use rustorm::EntityManager;
 use rustorm::Table;
 use rustorm::TableName;
-use tab::Tab;
-use table_intel;
-use table_intel::IndirectTable;
-use table_intel::TableIntel;
+use serde_derive::Deserialize;
+use serde_derive::Serialize;
 
 #[derive(Debug, Serialize, Clone)]
 pub struct Window {
@@ -104,10 +106,12 @@ impl Window {
 
     pub fn has_column_name(&self, column_name: &ColumnName) -> bool {
         self.main_tab.has_column_name(column_name)
-            || self.has_many_tabs
+            || self
+                .has_many_tabs
                 .iter()
                 .any(|tab| tab.has_column_name(column_name))
-            || self.indirect_tabs
+            || self
+                .indirect_tabs
                 .iter()
                 .any(|&(_, ref tab)| tab.has_column_name(column_name))
     }

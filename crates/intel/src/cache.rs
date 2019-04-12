@@ -1,10 +1,11 @@
-use error::IntelError;
+use crate::error::IntelError;
+use crate::window;
+use crate::window::Window;
+use lazy_static::lazy_static;
 use rustorm::EntityManager;
 use rustorm::Table;
 use std::collections::BTreeMap;
 use std::sync::{Arc, Mutex};
-use window;
-use window::Window;
 
 lazy_static! {
     pub static ref CACHE_POOL: Arc<Mutex<CachePool>> = { Arc::new(Mutex::new(CachePool::new())) };
@@ -51,7 +52,7 @@ impl CachePool {
         }
     }
 
-    pub fn precache(&mut self, em: &EntityManager, db_url: &str) -> Result<(), IntelError >{
+    pub fn precache(&mut self, em: &EntityManager, db_url: &str) -> Result<(), IntelError> {
         self.ensure_cache(db_url);
         self.perform_window_caching(em, db_url)?;
         Ok(())

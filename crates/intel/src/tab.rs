@@ -2,12 +2,14 @@ use rustorm::table::ForeignKey;
 use rustorm::ColumnName;
 use rustorm::TableName;
 
-use data_container::DropdownInfo;
-use data_container::IdentifierDisplay;
-use field::Field;
+use crate::data_container::DropdownInfo;
+use crate::data_container::IdentifierDisplay;
+use crate::field::Field;
+use crate::table_intel;
 use rustorm::Column;
 use rustorm::Table;
-use table_intel;
+use serde_derive::Deserialize;
+use serde_derive::Serialize;
 
 #[derive(Debug, Serialize, Clone)]
 pub struct Tab {
@@ -62,26 +64,19 @@ impl Tab {
         let column_name = &column.name.name;
         if column_name == "name" {
             true
-        }
-        else if column_name == table_name{
+        } else if column_name == table_name {
             true
-        }
-        else if *column_name == format!("{}_name", table_name) {
+        } else if *column_name == format!("{}_name", table_name) {
             true
-        }
-        else if column_name == "title"{
+        } else if column_name == "title" {
             true
-        }
-        else if table_name == "user" || table_name == "users" {
-            if column_name == "name" || column_name == "username"
-                || column_name == "email" {
+        } else if table_name == "user" || table_name == "users" {
+            if column_name == "name" || column_name == "username" || column_name == "email" {
                 true
-            }
-            else{
+            } else {
                 false
             }
-        }
-        else{
+        } else {
             false
         }
     }
@@ -96,25 +91,28 @@ impl Tab {
             .map(|ref column| (**column).to_owned())
             .collect();
 
-        let non_pk_columns:Vec<ColumnName> = table.get_non_primary_columns()
-                .iter().map(|column| column.name.to_owned()).collect();
+        let non_pk_columns: Vec<ColumnName> = table
+            .get_non_primary_columns()
+            .iter()
+            .map(|column| column.name.to_owned())
+            .collect();
 
-        let single_identifier = columns.iter().find(|column| {
-            Self::is_identifier_column(&table, column)
-        });
+        let single_identifier = columns
+            .iter()
+            .find(|column| Self::is_identifier_column(&table, column));
         if let Some(single_identifier) = single_identifier {
-            return Some(IdentifierDisplay{
+            return Some(IdentifierDisplay {
                 columns: vec![single_identifier.name.clone()],
                 separator: None,
-                pk: pk.clone()
+                pk: pk.clone(),
             });
         }
         // if there is only 1 non primary column use it as the identifier column
         else if non_pk_columns.len() == 1 {
-            return Some(IdentifierDisplay{
+            return Some(IdentifierDisplay {
                 columns: non_pk_columns,
                 separator: None,
-                pk: pk.clone()
+                pk: pk.clone(),
             });
         }
         // match the column name regardless of the table name
@@ -135,7 +133,7 @@ impl Tab {
                         separator: Some(", ".into()),
                         pk: pk.clone(),
                     });
-                } 
+                }
             }
         }
 
@@ -176,7 +174,8 @@ impl Tab {
             }
             let foreign_table = table_intel::get_table(&fk.foreign_table, all_tables);
             if let Some(foreign_table) = foreign_table {
-                if columns.len() > 0 { // don't add the foreign field if there is no referring local column to the table: ie revoked privilege
+                if columns.len() > 0 {
+                    // don't add the foreign field if there is no referring local column to the table: ie revoked privilege
                     let field = Field::from_has_one_table(table, &columns, foreign_table);
                     fields.push(field);
                 }

@@ -1,16 +1,16 @@
-use common;
-use data_container::{Direction, Sort};
+use crate::common;
+use crate::data_container::{Direction, Sort};
+use crate::tab::Tab;
+use crate::table_intel;
 use rustorm::types::SqlType;
-use rustorm::DbError;
 use rustorm::Dao;
 use rustorm::DaoManager;
+use rustorm::DbError;
 use rustorm::Rows;
 use rustorm::Table;
 use rustorm::TableName;
 use rustorm::Value;
 use std::collections::BTreeMap;
-use tab::Tab;
-use table_intel;
 
 pub struct Query {
     sql: String,
@@ -30,7 +30,6 @@ impl Query {
     pub fn append(&mut self, s: &str) {
         self.sql += s;
     }
-    
 
     pub fn add_param(&mut self, p: Value) {
         let params_len = self.params.len();
@@ -81,9 +80,10 @@ impl Query {
                     assert!(source_table.is_some());
                     let source_table = source_table.unwrap();
                     self.add_table_datatypes(source_table);
-                    if let Some(field_first_column) = &field.first_column_name(){
+                    if let Some(field_first_column) = &field.first_column_name() {
                         let field_column_name = &field_first_column.name;
-                        let source_table_rename = format!("{}_{}", field_column_name, source_tablename);
+                        let source_table_rename =
+                            format!("{}_{}", field_column_name, source_tablename);
                         for display_column in &dropdown_info.display.columns {
                             let display_column_name = &display_column.name;
                             let rename = format!(
@@ -115,10 +115,11 @@ impl Query {
                     assert!(source_table.is_some());
                     let source_table = source_table.unwrap();
                     let source_pk = source_table.get_primary_column_names();
-                    if let Some(field_first_column) = field.first_column_name(){
+                    if let Some(field_first_column) = field.first_column_name() {
                         let field_column_name = &field_first_column.name;
                         let field_column_names = field.column_names();
-                        let source_table_rename = format!("{}_{}", field_column_name, source_tablename);
+                        let source_table_rename =
+                            format!("{}_{}", field_column_name, source_tablename);
                         let local_foreign_pair =
                             main_table.get_local_foreign_columns_pair_to_table(&source_table.name);
                         println!("local foreign pair: {:?}", local_foreign_pair);
@@ -128,7 +129,8 @@ impl Query {
                             &source_table.safe_complete_name(),
                             source_table_rename
                         ));
-                        for (i, (local_column, source_column)) in local_foreign_pair.iter().enumerate()
+                        for (i, (local_column, source_column)) in
+                            local_foreign_pair.iter().enumerate()
                         {
                             if i == 0 {
                                 self.append("\nON ");
@@ -180,7 +182,7 @@ impl Query {
     pub fn collect_rows(&self, dm: &DaoManager) -> Result<Rows, DbError> {
         println!("SQL: {}", self.sql);
         println!("params: {:?}", self.params);
-        let bparams:Vec<&Value> = self.params.iter().collect();
+        let bparams: Vec<&Value> = self.params.iter().collect();
         let result: Result<Rows, DbError> = dm.execute_sql_with_return(&self.sql, &bparams);
         result.map(|rows| common::cast_rows(rows, &self.column_datatypes))
     }
@@ -188,7 +190,7 @@ impl Query {
     pub fn collect_maybe_record(&self, dm: &DaoManager) -> Result<Option<Dao>, DbError> {
         println!("SQL: {}", self.sql);
         println!("params: {:?}", self.params);
-        let bparams:Vec<&Value> = self.params.iter().collect();
+        let bparams: Vec<&Value> = self.params.iter().collect();
         let record = dm.execute_sql_with_maybe_one_return(&self.sql, &bparams);
         record.map(|r| r.map(|o| common::cast_record(o, &self.column_datatypes)))
     }

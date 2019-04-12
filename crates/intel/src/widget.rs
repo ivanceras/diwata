@@ -1,9 +1,11 @@
-use data_container::DropdownInfo;
-use reference::Reference;
+use crate::data_container::DropdownInfo;
+use crate::reference::Reference;
+use crate::tab::Tab;
 use rustorm::types::SqlType;
 use rustorm::Column;
 use rustorm::Table;
-use tab::Tab;
+use serde_derive::Deserialize;
+use serde_derive::Serialize;
 
 #[derive(Debug, Serialize, Clone)]
 pub enum Widget {

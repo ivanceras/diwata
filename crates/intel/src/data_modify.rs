@@ -1,24 +1,24 @@
 //! collection of functions that modify the database
 //! using UPDATE and DELETE SQL
 
-use common;
-use data_container::RecordAction;
-use data_container::RecordChangeset;
-use data_container::SaveContainer;
-use error::IntelError;
+use crate::common;
+use crate::data_container::RecordAction;
+use crate::data_container::RecordChangeset;
+use crate::data_container::SaveContainer;
+use crate::error::IntelError;
+use crate::tab;
+use crate::tab::Tab;
+use crate::table_intel;
+use crate::window::Window;
 use rustorm;
 use rustorm::ColumnName;
-use rustorm::DbError;
 use rustorm::Dao;
 use rustorm::DaoManager;
+use rustorm::DbError;
 use rustorm::Rows;
 use rustorm::Table;
 use rustorm::TableName;
 use rustorm::Value;
-use tab;
-use tab::Tab;
-use table_intel;
-use window::Window;
 
 /// delete the records with the following record_ids
 /// return the total number of records deleted
@@ -54,7 +54,7 @@ fn delete_records_from_single_primary_column(
     let pk_column = primary_columns[0];
     let mut sql = format!("DELETE FROM {} ", table_name.complete_name());
     sql += &format!("WHERE {} IN (", pk_column.name);
-    let mut pk_values:Vec<Value> = Vec::with_capacity(record_ids.len());
+    let mut pk_values: Vec<Value> = Vec::with_capacity(record_ids.len());
     for (i, record_id) in record_ids.iter().enumerate() {
         assert_eq!(record_id.len(), 1);
         let pk_record_id = &record_id[0];
@@ -67,7 +67,7 @@ fn delete_records_from_single_primary_column(
     }
     sql += ") ";
     sql += "RETURNING *";
-    let bpk_values:Vec<&Value> = pk_values.iter().collect();
+    let bpk_values: Vec<&Value> = pk_values.iter().collect();
     let rows = dm.execute_sql_with_return(&sql, &bpk_values)?;
     Ok(rows)
 }
@@ -228,7 +228,7 @@ fn delete_record_from_table(
     table: &Table,
     record: &Dao,
 ) -> Result<(), IntelError> {
-    let mut params:Vec<&Value> = vec![];
+    let mut params: Vec<&Value> = vec![];
     let mut sql = String::from("DELETE FROM ");
     sql += &format!("{} ", table.complete_name());
     sql += "WHERE ";
@@ -469,16 +469,12 @@ fn update_record_in_table(
 
     println!("sql: {}", sql);
     println!("params: {:?}", params);
-    let bparams:Vec<&Value> = params.iter().collect();
+    let bparams: Vec<&Value> = params.iter().collect();
     dm.execute_sql_with_one_return(&sql, &bparams)
 }
 
 /// insert rows all at once in one query
-fn insert_rows_to_table(
-    dm: &DaoManager,
-    table: &Table,
-    rows: &Rows,
-) -> Result<Rows, IntelError> {
+fn insert_rows_to_table(dm: &DaoManager, table: &Table, rows: &Rows) -> Result<Rows, IntelError> {
     let table_name = &table.name;
     let mut params = vec![];
     let mut sql = format!("INSERT INTO {} ", table_name.complete_name());
@@ -514,7 +510,7 @@ fn insert_rows_to_table(
     sql += ") RETURNING *";
     println!("sql: {}", sql);
     println!("params: {:?}", params);
-    let bparams:Vec<&Value> = params.iter().collect();
+    let bparams: Vec<&Value> = params.iter().collect();
     let rows = dm.execute_sql_with_return(&sql, &bparams)?;
     Ok(rows)
 }
@@ -573,7 +569,7 @@ fn insert_record_to_table(
     for (i, col) in columns.iter().enumerate() {
         let value = record.get_value(&col.name.name);
         if let Some(ref value) = value {
-            if value.is_nil()  && col.is_not_null() && col.has_generated_default() {
+            if value.is_nil() && col.is_not_null() && col.has_generated_default() {
             } else {
                 if i > 0 {
                     sql += ", ";
@@ -587,7 +583,7 @@ fn insert_record_to_table(
     sql += ") RETURNING *";
     println!("sql: {}", sql);
     println!("params: {:?}", params);
-    let bparams:Vec<&Value> = params.iter().collect();
+    let bparams: Vec<&Value> = params.iter().collect();
     dm.execute_sql_with_one_return(&sql, &bparams)
 }
 
@@ -744,6 +740,6 @@ fn upsert_one_one_record_to_table(
     sql += "RETURNING *";
     println!("sql: {}", sql);
     println!("params: {:?}", params);
-    let bparams:Vec<&Value> = params.iter().collect();
+    let bparams: Vec<&Value> = params.iter().collect();
     dm.execute_sql_with_one_return(&sql, &bparams)
 }

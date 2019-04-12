@@ -132,7 +132,8 @@ impl<'a> TableIntel<'a> {
         let mut has_many_tables: Vec<&Table> = vec![];
         for table in tables {
             let table_intel = TableIntel(&table);
-            if self.is_referred_by(table) && !table_intel.is_owned_table()
+            if self.is_referred_by(table)
+                && !table_intel.is_owned_table()
                 && !table_intel.is_linker_table()
             {
                 has_many_tables.push(table)

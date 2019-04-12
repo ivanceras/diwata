@@ -2,6 +2,8 @@ use rustorm::ColumnName;
 use rustorm::Dao;
 use rustorm::Rows;
 use rustorm::TableName;
+use serde_derive::Deserialize;
+use serde_derive::Serialize;
 
 #[derive(Debug, Serialize)]
 pub struct RecordDetail {
@@ -163,8 +165,7 @@ impl Sort {
 
 #[test]
 fn test_record_changeset() {
-    extern crate serde_json;
-    use dao::Dao;
+    use rustorm::Dao;
 
     let input = r#"
 {
@@ -250,7 +251,7 @@ fn test_record_changeset() {
 #[test]
 fn test_record_changeset2() {
     extern crate serde_json;
-    use dao::Dao;
+    use rustorm::Dao;
 
     let input = r#"
 {
@@ -496,8 +497,7 @@ fn test_record_changeset2() {
 
 #[test]
 fn test_record_changeset3() {
-    extern crate serde_json;
-    use dao::Dao;
+    use rustorm::Dao;
 
     let input = r#"
 {

@@ -1,27 +1,28 @@
-use common;
-use data_container::Filter;
-use data_container::Lookup;
-use data_container::Order;
-pub use data_container::RecordDetail;
-use data_container::{Direction, Sort};
-use error::IntelError;
-use query_builder::Query;
+use crate::common;
+use crate::data_container::Filter;
+use crate::data_container::Lookup;
+use crate::data_container::Order;
+use crate::data_container::RecordDetail;
+use crate::data_container::{Direction, Sort};
+use crate::error::IntelError;
+use crate::query_builder::Query;
+use crate::tab::Tab;
+use crate::table_intel;
+use crate::window::Window;
 use rustorm::types::SqlType;
 use rustorm::ColumnName;
+use rustorm::Dao;
+use rustorm::DaoManager;
+use rustorm::DatabaseName;
 use rustorm::DbError;
 use rustorm::EntityManager;
 use rustorm::FromDao;
-use rustorm::Dao;
-use rustorm::DaoManager;
 use rustorm::Rows;
 use rustorm::Table;
 use rustorm::TableName;
 use rustorm::Value;
+use rustorm_dao;
 use std::collections::BTreeMap;
-use tab::Tab;
-use table_intel;
-use window::Window;
-use rustorm::DatabaseName;
 
 pub fn get_main_table<'a>(window: &Window, tables: &'a Vec<Table>) -> Option<&'a Table> {
     let main_tablename = &window.main_tab.table_name;
@@ -34,7 +35,8 @@ pub fn get_database_name(em: &EntityManager) -> Result<Option<DatabaseName>, DbE
 }
 
 pub fn get_total_records(em: &EntityManager, table_name: &TableName) -> Result<u64, DbError> {
-    #[derive(FromDao)]
+    /// TODO this should be move to rustorm
+    #[derive(rustorm::FromDao)]
     struct Count {
         count: i64,
     }
@@ -86,8 +88,7 @@ pub fn get_maintable_data(
                 common::validate_column(&column_name, window)?;
                 query.append(&format!(
                     "{}.{} ILIKE ",
-                    main_tablename.name,
-                    column_name.name,
+                    main_tablename.name, column_name.name,
                 ));
                 query.add_param(value);
             }
@@ -102,7 +103,7 @@ pub fn get_maintable_data(
             let mut orders = vec![];
             for dc in display.columns.iter() {
                 let order = Order {
-                    column_name: ColumnName{
+                    column_name: ColumnName {
                         name: dc.name.to_owned(),
                         table: Some(main_tablename.name.to_owned()),
                         alias: None,
@@ -369,8 +370,7 @@ fn get_has_many_records(
                 common::validate_tab_column(&column_name, has_many_tab)?;
                 query.append(&format!(
                     "{}.{} ILIKE ",
-                    has_many_tab.table_name.name,
-                    column_name.name,
+                    has_many_tab.table_name.name, column_name.name,
                 ));
                 query.add_param(value);
             }
@@ -385,7 +385,7 @@ fn get_has_many_records(
             let mut orders = vec![];
             for dc in display.columns.iter() {
                 let order = Order {
-                    column_name: ColumnName{
+                    column_name: ColumnName {
                         name: dc.name.to_owned(),
                         table: Some(has_many_tab.table_name.name.to_owned()),
                         alias: None,
@@ -500,11 +500,7 @@ fn get_indirect_records(
         } else {
             query.append("\nAND ");
         }
-        query.append(&format!(
-            "{}.{} = ",
-            linker_table.name.name,
-            fc.name,
-        ));
+        query.append(&format!("{}.{} = ", linker_table.name.name, fc.name,));
         let fc_column = linker_table.get_column(&fc).expect("column should exist");
         let required_type: &SqlType = &fc_column.get_sql_type();
         let rc = &linker_fc_referring_columns[i];
@@ -524,8 +520,7 @@ fn get_indirect_records(
                 common::validate_tab_column(&column_name, indirect_tab)?;
                 query.append(&format!(
                     "{}.{} ILIKE ",
-                    indirect_tab.table_name.name,
-                    column_name.name,
+                    indirect_tab.table_name.name, column_name.name,
                 ));
                 query.add_param(value);
             }
@@ -540,7 +535,7 @@ fn get_indirect_records(
             let mut orders = vec![];
             for dc in display.columns.iter() {
                 let order = Order {
-                    column_name: ColumnName{
+                    column_name: ColumnName {
                         name: dc.name.to_owned(),
                         table: Some(indirect_tab.table_name.name.to_owned()),
                         alias: None,
@@ -704,8 +699,8 @@ pub fn get_lookup_data_of_table_with_display_columns(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::window;
     use rustorm::Pool;
-    use window;
 
     #[test]
     fn first_page() {

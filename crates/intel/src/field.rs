@@ -1,13 +1,15 @@
 use rustorm::Column;
 
-use data_container::DropdownInfo;
-use reference::Reference;
+use crate::data_container::DropdownInfo;
+use crate::reference::Reference;
+use crate::widget::ControlWidget;
+use crate::widget::Dropdown;
 use rustorm::column::Capacity;
 use rustorm::types::SqlType;
 use rustorm::ColumnName;
 use rustorm::Table;
-use widget::ControlWidget;
-use widget::Dropdown;
+use serde_derive::Deserialize;
+use serde_derive::Serialize;
 
 #[derive(Debug, Serialize, Clone)]
 pub struct Field {
@@ -37,8 +39,7 @@ impl ColumnDetail {
             ColumnDetail::Compound(ref column_names_types) => {
                 if column_names_types.len() > 0 {
                     Some(&column_names_types[0].0)
-                }
-                else{
+                } else {
                     None
                 }
             }
@@ -194,10 +195,12 @@ impl Field {
             Some(Reference::Password)
         } else if sql_type == &SqlType::Varchar && column_name == "name" {
             Some(Reference::Name)
-        } else if sql_type == &SqlType::Varchar && column_name == &format!("{}_name",table_name) {
+        } else if sql_type == &SqlType::Varchar && column_name == &format!("{}_name", table_name) {
             Some(Reference::Name)
-        } else if (sql_type == &SqlType::Varchar || sql_type == &SqlType::Tinytext
-            || sql_type == &SqlType::Mediumtext || sql_type == &SqlType::Text)
+        } else if (sql_type == &SqlType::Varchar
+            || sql_type == &SqlType::Tinytext
+            || sql_type == &SqlType::Mediumtext
+            || sql_type == &SqlType::Text)
             && column_name == "description"
         {
             Some(Reference::Description)
@@ -210,12 +213,14 @@ impl Field {
             && (table_name == "users" || table_name == "user")
         {
             Some(Reference::PrimaryUserId)
-        } else if sql_type == &SqlType::Uuid && default_is_generated_uuid
+        } else if sql_type == &SqlType::Uuid
+            && default_is_generated_uuid
             && column_name == "user_id"
             && (table_name == "users" || table_name == "user")
         {
             Some(Reference::PrimaryUserUuid)
-        } else if sql_type == &SqlType::Uuid && default_is_generated_uuid
+        } else if sql_type == &SqlType::Uuid
+            && default_is_generated_uuid
             && table.get_primary_column_names().contains(&&column.name)
         {
             Some(Reference::PrimaryUuid)
@@ -223,28 +228,35 @@ impl Field {
             Some(Reference::PrimaryField)
         }
         // if numeric range with 2 precision on decimal
-        else if sql_type == &SqlType::Numeric && match *capacity {
-            Some(ref capacity) => match *capacity {
-                Capacity::Limit(_limit) => false,
-                Capacity::Range(_whole, decimal) => decimal == 2,
-            },
-            None => false,
-        } && (column_name == "price" || column_name == "cost")
+        else if sql_type == &SqlType::Numeric
+            && match *capacity {
+                Some(ref capacity) => match *capacity {
+                    Capacity::Limit(_limit) => false,
+                    Capacity::Range(_whole, decimal) => decimal == 2,
+                },
+                None => false,
+            }
+            && (column_name == "price" || column_name == "cost")
         {
             Some(Reference::Price)
         }
         // country name lookup only if
         // it does not belong to a country table
-        else if sql_type == &SqlType::Varchar && table_name != "country"
+        else if sql_type == &SqlType::Varchar
+            && table_name != "country"
             && (column_name == "country" || column_name == "country_name")
         {
             Some(Reference::CountryNameLookup)
-        } else if sql_type == &SqlType::Varchar && table_name != "country" && Some(2) == limit
+        } else if sql_type == &SqlType::Varchar
+            && table_name != "country"
+            && Some(2) == limit
             && column_name == "country_code"
         {
             Some(Reference::CountryNameLookup)
-        } else if sql_type == &SqlType::Blob || sql_type == &SqlType::Tinyblob
-            || sql_type == &SqlType::Mediumblob || sql_type == &SqlType::Varbinary
+        } else if sql_type == &SqlType::Blob
+            || sql_type == &SqlType::Tinyblob
+            || sql_type == &SqlType::Mediumblob
+            || sql_type == &SqlType::Varbinary
         {
             Some(Reference::GenericBlob)
         } else if (sql_type == &SqlType::TimestampTz || sql_type == &SqlType::Timestamp)
@@ -285,21 +297,25 @@ impl Field {
         //println!("sql type: {:?}", sql_type);
         if sql_type == &SqlType::Char || (sql_type == &SqlType::Varchar && limit == Some(1)) {
             Some(Reference::Symbol)
-        } else if sql_type == &SqlType::Numeric && match *capacity {
-            Some(ref capacity) => match *capacity {
-                Capacity::Limit(_limit) => false,
-                Capacity::Range(_whole, decimal) => decimal == 2,
-            },
-            None => false,
-        } && (column_name.ends_with("_price") || column_name.ends_with("_cost"))
+        } else if sql_type == &SqlType::Numeric
+            && match *capacity {
+                Some(ref capacity) => match *capacity {
+                    Capacity::Limit(_limit) => false,
+                    Capacity::Range(_whole, decimal) => decimal == 2,
+                },
+                None => false,
+            }
+            && (column_name.ends_with("_price") || column_name.ends_with("_cost"))
         {
             Some(Reference::Price)
-        } else if (sql_type == &SqlType::Numeric || sql_type == &SqlType::Double
+        } else if (sql_type == &SqlType::Numeric
+            || sql_type == &SqlType::Double
             || sql_type == &SqlType::Float)
             && (column_name == "price" || column_name == "cost")
         {
             Some(Reference::Price)
-        } else if (sql_type == &SqlType::Numeric || sql_type == &SqlType::Double
+        } else if (sql_type == &SqlType::Numeric
+            || sql_type == &SqlType::Double
             || sql_type == &SqlType::Float)
             && (column_name.ends_with("price") || column_name.ends_with("cost"))
         {

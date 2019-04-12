@@ -1,4 +1,6 @@
-use widget::Widget;
+use crate::widget::Widget;
+use serde_derive::Deserialize;
+use serde_derive::Serialize;
 
 /// Intellisense module for the models
 /// hints the client side renderer on which controls/widget appropriate to use
