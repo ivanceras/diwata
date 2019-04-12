@@ -2,7 +2,7 @@
 use sqlparser::sqlast::ASTNode;
 use crate::Value;
 use rustorm::common;
-use rustorm::types::SqlType;
+use crate::Type;
 
 pub type Row = Vec<Value>;
 
@@ -19,7 +19,7 @@ pub struct Field {
     pub name: String,
     pub description: Option<String>,
     pub tags: Vec<String>,
-    pub sql_type: SqlType,
+    pub sql_type: Type,
 }
 
 impl Field {
@@ -93,7 +93,8 @@ impl DataView {
 mod test {
 
     use super::*;
-    use rustorm::{common, types::SqlType, Value};
+    use crate::Type;
+    use crate::Value;
 
     #[test]
     fn test_from_csv() {
@@ -107,37 +108,37 @@ java,8,medium,true,large,jdk
         let fields = vec![
             Field {
                 name: "pl".into(),
-                sql_type: SqlType::Text,
+                sql_type: Type::Text,
                 description: None,
                 tags: vec![],
             },
             Field {
                 name: "compiler".into(),
-                sql_type: SqlType::Text,
+                sql_type: Type::Text,
                 description: None,
                 tags: vec![],
             },
             Field {
                 name: "speed".into(),
-                sql_type: SqlType::Text,
+                sql_type: Type::Text,
                 description: None,
                 tags: vec![],
             },
             Field {
                 name: "vm".into(),
-                sql_type: SqlType::Text,
+                sql_type: Type::Text,
                 description: None,
                 tags: vec![],
             },
             Field {
                 name: "size".into(),
-                sql_type: SqlType::Text,
+                sql_type: Type::Text,
                 description: None,
                 tags: vec![],
             },
             Field {
                 name: "version".into(),
-                sql_type: SqlType::Int,
+                sql_type: Type::Int,
                 description: None,
                 tags: vec![],
             },
