@@ -12,6 +12,7 @@ pub struct DataView {
     data: Vec<Row>,
 }
 
+
 /// the name of field and the type
 #[derive(Debug)]
 pub struct Field {
@@ -28,7 +29,7 @@ impl Field {
 }
 
 impl DataView {
-    pub fn new_from_csv(fields: Vec<Field>, csv: &str) -> Self {
+    pub fn from_csv(fields: Vec<Field>, csv: &str) -> Self {
         let mut rdr = csv::Reader::from_reader(csv.as_bytes());
         let mut columns = vec![];
         if let Ok(header) = rdr.headers() {
@@ -76,14 +77,14 @@ impl DataView {
     }
 
     /// add more data into this view
-    fn add_page(&mut self, page: Vec<Row>) {
+    pub fn add_page(&mut self, page: Vec<Row>) {
         for row in page {
             self.data.push(row);
         }
     }
 
     /// derive a view based on the sql ast
-    fn get_views(&self, view_sql: &ASTNode) -> Vec<DataView> {
+    pub fn get_views(&self, _view_sql: &ASTNode) -> Vec<DataView> {
         vec![]
     }
 }
@@ -141,7 +142,7 @@ java,8,medium,true,large,jdk
                 tags: vec![],
             },
         ];
-        let dataview = DataView::new_from_csv(fields, csv);
+        let dataview = DataView::from_csv(fields, csv);
         assert_eq!(dataview.fields.len(), 6);
         assert_eq!(dataview.fields[0].name, "pl");
         assert_eq!(dataview.data[0][0], Value::Text("rust".to_string()));

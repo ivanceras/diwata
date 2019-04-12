@@ -1,5 +1,5 @@
 [submodule "sakila"]
-	path = sakila
+	path = crates/sakila
 	url = https://ivanceras@github.com/ivanceras/sakila
 [submodule "rustorm"]
 	path = crates/rustorm
@@ -7,3 +7,9 @@
 [submodule "cli"]
 	path = cli
 	url = https://ivanceras@github.com/ivanceras/diwata_cli.git
+[submodule "crates/bazaar"]
+	path = crates/bazaar
+	url = https://ivanceras@github.com/ivanceras/bazaar.git
+[submodule "crates/dota-sql"]
+	path = crates/dota-sql
+	url = https://ivanceras@github.com/ivanceras/dota-sql.git
