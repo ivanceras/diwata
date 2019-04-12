@@ -13,31 +13,15 @@ services:
   - postgresql
 
 before_script:
-  - pwd
-  - ls -la
-  - cd .. && git clone https://github.com/ivanceras/bazaar && cd -
-  - cd .. && git clone https://github.com/ivanceras/dota-sql && cd -
-  - pwd
-  - ls -la
-  - sh ./dbscripts/setup.sh
-  - cd ../dota-sql/data/ && sh reimport.sh && cd -
-  - cd ../bazaar/scripts && sh setup.sh && cd -
-  - cd ../dota-sql/data && sh reimport.sh && cd -
-  - pwd
-  - mkdir -p public/static
-  - cd intel && cargo update && cd -
-  - pwd
-  - cd server && cargo update && cd -
-  - pwd
+  - find . -name '*.rs' -type f -exec sed -i 's/localhost/postgres/g' {} +
+  - cd crates/rustorm
+  - ./install-postgresql-client.sh
+  - ./execute-data-import.sh
+  - cd -
 
 
   
 script:
-  - cargo update
-  - cargo build -p diwata_server --release
-  - cargo test --all
-  - cargo test --all --all-features
   - cargo test -p rustorm --all-features
-  - cargo test -p rustorm --features "with-postgres with-sqlite"
-  - cargo test -p rustorm --features "with-postgres"
-  - cargo test -p rustorm --features "with-sqlite"
+  - cargo test -p diwata_intel
+  - cargo test -p dataview
