@@ -1,10 +1,16 @@
 [workspace]
 members = [
-    "crates/rustorm/",
-    "crates/witch-client",
+    "crates/rustorm",
+    "crates/rustorm/crates/dao",
+    "crates/rustorm/crates/codegen",
     "crates/intel",
     "crates/server",
     "crates/text-client",
+    "crates/dataview",
+]
+
+exclude = [
+    "crates/webclient",
 ]
 
 [replace]

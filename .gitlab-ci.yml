@@ -1,43 +1,25 @@
-image: rustlang/rust:nightly
-
-services:
-  - postgres:latest
-
-variables:
-  GIT_SUBMODULE_STRATEGY: recursive
-
-before_script:
-  - cd .. && git clone https://github.com/ivanceras/bazaar && cd -
-  - cd .. && git clone https://github.com/ivanceras/dota-sql && cd -
-  - apt update
-  - apt install -y postgresql-client
-  - find . -name '*.sh' -type f -exec sed -i 's/localhost/postgres/g' {} +
-  - sh ./dbscripts/setup.sh
-  - pwd && ls -la
-  - cd .. 
-  - find . -name '*.sh' -type f -exec sed -i 's/localhost/postgres/g' {} +
-  - cd  bazaar/scripts && sh setup.sh
-  - pwd && ls -la
-  - cd .. && cd ..
-  - cd dota-sql/data && sh reimport.sh
-  - pwd && ls -la
-  - cd .. && cd ..
-  - cd diwata
-  - find . -name '*.rs' -type f -exec sed -i 's/localhost/postgres/g' {} +
-
 stages:
   - build
-  - test
 
-test:
-  script:
-    - cd rustorm && sh ./test.sh && cd -
-    - cargo test --all --all-features
-    - cargo test -p rustorm --all-features
-    - cargo test -p rustorm --features "with-postgres with-sqlite"
-    - cargo test -p rustorm --features "with-postgres"
-    - cargo test -p rustorm --features "with-sqlite"
 
-build:
+rust-nightly:
+  stage: build
+  image: rustlang/rust:nightly
+  services:
+      - postgres:latest
+  variables:
+     GIT_SUBMODULE_STRATEGY: recursive
+
+  before_script:
+      # search and replace localhost to postgresl in .rs files in this project
+      - find . -name '*.rs' -type f -exec sed -i 's/localhost/postgres/g' {} +
+      - cd crates/rustorm
+      - ./install-postgresql-client.sh
+      - ./rename-database-host.sh
+      - ./execute-data-import.sh
+      - cd -
+
   script:
-    - cargo build -p diwata_server --release
+      - cargo test -p rustorm --all-features
+      - cargo test -p diwata_intel
+      - cargo test -p dataview

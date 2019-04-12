@@ -1,5 +1,8 @@
-use rustorm::{common, types::SqlType, Value};
+
 use sqlparser::sqlast::ASTNode;
+use crate::Value;
+use rustorm::common;
+use crate::Type;
 
 pub type Row = Vec<Value>;
 
@@ -9,13 +12,14 @@ pub struct DataView {
     data: Vec<Row>,
 }
 
+
 /// the name of field and the type
 #[derive(Debug)]
 pub struct Field {
     pub name: String,
     pub description: Option<String>,
     pub tags: Vec<String>,
-    pub sql_type: SqlType,
+    pub sql_type: Type,
 }
 
 impl Field {
@@ -25,7 +29,7 @@ impl Field {
 }
 
 impl DataView {
-    pub fn new_from_csv(fields: Vec<Field>, csv: &str) -> Self {
+    pub fn from_csv(fields: Vec<Field>, csv: &str) -> Self {
         let mut rdr = csv::Reader::from_reader(csv.as_bytes());
         let mut columns = vec![];
         if let Ok(header) = rdr.headers() {
@@ -73,14 +77,14 @@ impl DataView {
     }
 
     /// add more data into this view
-    fn add_page(&mut self, page: Vec<Row>) {
+    pub fn add_page(&mut self, page: Vec<Row>) {
         for row in page {
             self.data.push(row);
         }
     }
 
     /// derive a view based on the sql ast
-    fn get_views(&self, view_sql: &ASTNode) -> Vec<DataView> {
+    pub fn get_views(&self, _view_sql: &ASTNode) -> Vec<DataView> {
         vec![]
     }
 }
@@ -89,6 +93,8 @@ impl DataView {
 mod test {
 
     use super::*;
+    use crate::Type;
+    use crate::Value;
 
     #[test]
     fn test_from_csv() {
@@ -102,42 +108,42 @@ java,8,medium,true,large,jdk
         let fields = vec![
             Field {
                 name: "pl".into(),
-                sql_type: SqlType::Text,
+                sql_type: Type::Text,
                 description: None,
                 tags: vec![],
             },
             Field {
                 name: "compiler".into(),
-                sql_type: SqlType::Text,
+                sql_type: Type::Text,
                 description: None,
                 tags: vec![],
             },
             Field {
                 name: "speed".into(),
-                sql_type: SqlType::Text,
+                sql_type: Type::Text,
                 description: None,
                 tags: vec![],
             },
             Field {
                 name: "vm".into(),
-                sql_type: SqlType::Text,
+                sql_type: Type::Text,
                 description: None,
                 tags: vec![],
             },
             Field {
                 name: "size".into(),
-                sql_type: SqlType::Text,
+                sql_type: Type::Text,
                 description: None,
                 tags: vec![],
             },
             Field {
                 name: "version".into(),
-                sql_type: SqlType::Int,
+                sql_type: Type::Int,
                 description: None,
                 tags: vec![],
             },
         ];
-        let dataview = DataView::new_from_csv(fields, csv);
+        let dataview = DataView::from_csv(fields, csv);
         assert_eq!(dataview.fields.len(), 6);
         assert_eq!(dataview.fields[0].name, "pl");
         assert_eq!(dataview.data[0][0], Value::Text("rust".to_string()));
