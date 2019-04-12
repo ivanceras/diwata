@@ -35,5 +35,9 @@ before_script:
 script:
   - cargo update
   - cargo build -p diwata_server --release
-  - cargo test --all-features
-  - cd rustorm && sh ./test.sh && cd -
+  - cargo test --all
+  - cargo test --all --all-features
+  - cargo test -p rustorm --all-features
+  - cargo test -p rustorm --features "with-postgres with-sqlite"
+  - cargo test -p rustorm --features "with-postgres"
+  - cargo test -p rustorm --features "with-sqlite"

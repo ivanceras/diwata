@@ -40,7 +40,7 @@ use structopt::StructOpt;
 
 use include_dir::Dir;
 use std::path::Path;
-static STATIC_DIR: Dir = include_dir!("../public/static");
+static STATIC_DIR: Dir = include_dir!("../../public/static");
 
 /// An instance of the server. Runs a session of rustw.
 pub struct Server {

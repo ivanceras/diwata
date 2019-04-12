@@ -2,7 +2,7 @@
 	path = sakila
 	url = https://ivanceras@github.com/ivanceras/sakila
 [submodule "rustorm"]
-	path = rustorm
+	path = crates/rustorm
 	url = https://ivanceras@github.com/ivanceras/rustorm
 [submodule "elm-webclient"]
 	path = elm-webclient

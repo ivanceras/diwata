@@ -1,17 +1,14 @@
 [workspace]
 members = [
-    "intel",
-    "server",
-    "rustorm",
-    "rustorm/crates/codegen",
-    "rustorm/crates/dao",
-    "witch-client",
-    "witch-client/witch",
-    "text-client",
+    "crates/rustorm/",
+    "crates/witch-client",
+    "crates/intel",
+    "crates/server",
+    "crates/text-client",
 ]
 
 [replace]
-"rustorm_dao:0.2.0" = { path = "rustorm/crates/dao" }
-"rustorm_codegen:0.2.0" = { path = "rustorm/crates/codegen" }
-"rustorm:0.11.0" = { path = "rustorm" }
-"diwata_intel:0.1.2" = { path = "intel" }
+"rustorm_dao:0.2.0" = { path = "crates/rustorm/crates/dao" }
+"rustorm_codegen:0.2.0" = { path = "crates/rustorm/crates/codegen" }
+"rustorm:0.11.0" = { path = "crates/rustorm" }
+"diwata_intel:0.1.2" = { path = "crates/intel" }
