@@ -18,4 +18,7 @@ rust-nightly:
       - cd -
 
   script:
-      - cargo test --all
+      - cargo test -p rustorm --all-features
+        cargo test -p diwata_intel
+        cargo test -p diwata_server
+        cargo test -p dataview
