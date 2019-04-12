@@ -13,9 +13,7 @@ services:
   - postgresql
 
 before_script:
-  - find . -name '*.rs' -type f -exec sed -i 's/localhost/postgres/g' {} +
   - cd crates/rustorm
-  - ./install-postgresql-client.sh
   - ./execute-data-import.sh
   - cd -
 
