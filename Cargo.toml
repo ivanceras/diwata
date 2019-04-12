@@ -3,10 +3,13 @@ members = [
     "crates/rustorm",
     "crates/rustorm/crates/dao",
     "crates/rustorm/crates/codegen",
-    "crates/webclient",
     "crates/intel",
     "crates/server",
     "crates/text-client",
+]
+
+exclude = [
+    "crates/webclient",
 ]
 
 [replace]
