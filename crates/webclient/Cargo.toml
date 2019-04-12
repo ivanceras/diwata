@@ -9,16 +9,11 @@ crate-type = ["cdylib"]
 [dependencies]
 vdom = { path = "../../../caesar/crates/vdom" }
 browser = { path = "../../../caesar/crates/browser" }
+dataview = { path = "../dataview" }
 console_error_panic_hook = "0.1"
 js-sys = "0.3"
 lazy_static = "1.0"
 nalgebra = "0.18.0"
-
-# `wee_alloc` is a tiny allocator for wasm that is only ~1K in code size
-# compared to the default allocator's ~10K. It is slower than the default
-# allocator, however.
-#
-# Unfortunately, `wee_alloc` requires nightly Rust when targeting wasm for now.
 wee_alloc = { version = "0.4.3", optional = true }
 
 [dependencies.wasm-bindgen]

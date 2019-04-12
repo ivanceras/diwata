@@ -1,3 +1,7 @@
+use dataview::DataView;
+use dataview::Field;
+use dataview::Type;
+
 #[derive(Debug)]
 pub enum Msg {
     Click,
@@ -5,6 +9,7 @@ pub enum Msg {
 }
 
 pub struct Store {
+    dataview: DataView,
     click_count: u32,
     ticks: u32,
     listeners: Vec<Box<(Fn() -> () + 'static)>>,
@@ -12,10 +17,60 @@ pub struct Store {
 
 impl Store {
     pub fn new(count: u32) -> Store {
+        browser::log("creating a store");
+
+        let fields = vec![
+            Field {
+                name: "pl".into(),
+                sql_type: Type::Text,
+                description: None,
+                tags: vec![],
+            },
+            Field {
+                name: "compiler".into(),
+                sql_type: Type::Text,
+                description: None,
+                tags: vec![],
+            },
+            Field {
+                name: "speed".into(),
+                sql_type: Type::Text,
+                description: None,
+                tags: vec![],
+            },
+            Field {
+                name: "vm".into(),
+                sql_type: Type::Text,
+                description: None,
+                tags: vec![],
+            },
+            Field {
+                name: "size".into(),
+                sql_type: Type::Text,
+                description: None,
+                tags: vec![],
+            },
+            Field {
+                name: "version".into(),
+                sql_type: Type::Int,
+                description: None,
+                tags: vec![],
+            },
+        ];
+        let csv = r#"
+pl,version,speed,vm,size,compiler
+rust,1,fast,false,small,rustc
+haskel,1,fast,false,small,ghc
+c,99,fast,false,small,clang
+java,8,medium,true,large,jdk
+            "#;
+        let dataview = DataView::from_csv(fields, csv);
+        browser::log(format!("{:?}", dataview));
         Store {
             click_count: count,
             ticks: 0,
             listeners: vec![],
+            dataview,
         }
     }
 
