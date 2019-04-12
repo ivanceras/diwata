@@ -1,11 +1,11 @@
-use error::ServiceError;
-use intel::Window;
-use intel::cache;
+use crate::error::ServiceError;
+use diwata_intel::Window;
+use diwata_intel::cache;
 use rustorm::EntityManager;
 use rustorm::DaoManager;
 use rustorm::Table;
-use global;
-use credentials::Credentials;
+use crate::global;
+use crate::credentials::Credentials;
 
 pub struct Context {
     pub em: EntityManager,

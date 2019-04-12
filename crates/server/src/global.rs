@@ -1,14 +1,15 @@
 
 use url::Url;
-pub use error::ServiceError;
-pub use handler::Server;
-use intel::cache;
+use crate::error::ServiceError;
+use crate::handler::Server;
+use diwata_intel::cache;
 use rustorm::EntityManager;
 use rustorm::Pool;
 use rustorm::pool;
 use rustorm::DaoManager;
 use std::sync::{Arc, RwLock};
-use credentials::Credentials;
+use crate::credentials::Credentials;
+use lazy_static::lazy_static;
 
 pub static PAGE_SIZE: u32 = 40;
 

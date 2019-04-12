@@ -2,7 +2,7 @@ use hyper::header::{self, Header, Raw};
 use std::fmt;
 use hyper::Request;
 use hyper;
-use error::ServiceError;
+use crate::error::ServiceError;
 use std::convert::TryFrom;
 
 

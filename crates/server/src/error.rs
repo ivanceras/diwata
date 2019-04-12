@@ -1,4 +1,4 @@
-use intel::error::IntelError;
+use diwata_intel::error::IntelError;
 use rustorm::error::DbError;
 
 #[derive(Debug)]

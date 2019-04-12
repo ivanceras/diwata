@@ -4,8 +4,10 @@ version = "0.1.2"
 authors = ["Jovansonlee Cesar <ivanceras@gmail.com>"]
 license = "MIT"
 description = "Decides the routing of url request"
+edition = "2018"
 
 [dependencies]
+log = "0.4"
 chrono = "0.4.0"
 serde = "1.0"
 serde_derive = "1.0"
@@ -25,14 +27,9 @@ cfg-if = "0.1.2"
 version = "0.1"
 
 [dependencies.rustorm]
-version = "0.10"
+version = "0.11"
 features = ["with-postgres", "with-sqlite"]
 
-[dependencies.rustorm_codegen]
-version = "0.1"
-
-[dependencies.rustorm_dao]
-version = "0.1"
 
 
 

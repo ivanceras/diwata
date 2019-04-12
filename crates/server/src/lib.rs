@@ -4,22 +4,8 @@
 #![feature(integer_atomics)]
 #![feature(try_from)]
 
-extern crate diwata_intel as intel;
-#[macro_use]
-extern crate lazy_static;
-extern crate rustorm;
-extern crate serde;
-extern crate serde_json;
 #[macro_use]
 extern crate structopt_derive;
-extern crate futures;
-extern crate hyper;
-extern crate structopt;
-#[macro_use]
-extern crate log;
-extern crate url;
-#[macro_use]
-extern crate cfg_if;
 #[macro_use]
 extern crate include_dir;
 
