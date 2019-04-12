@@ -1,6 +1,8 @@
 
-use rustorm::{common, types::SqlType, Value};
 use sqlparser::sqlast::ASTNode;
+use crate::Value;
+use rustorm::common;
+use rustorm::types::SqlType;
 
 pub type Row = Vec<Value>;
 
@@ -90,6 +92,7 @@ impl DataView {
 mod test {
 
     use super::*;
+    use rustorm::{common, types::SqlType, Value};
 
     #[test]
     fn test_from_csv() {

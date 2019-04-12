@@ -1,11 +1,6 @@
-#[macro_use]
-extern crate yew;
-#[macro_use]
-extern crate stdweb;
-use yew::prelude::*;
 
 use rustorm::types::SqlType;
-use witch::dataview::{DataView, Field};
+use dataview::{DataView, Field};
 
 type Context = ();
 
@@ -70,7 +65,7 @@ java,8,medium,true,large,jdk
             },
         ];
         let dataview = DataView::new_from_csv(fields, csv);
-        console!(log, format!("dataview: {:#?}", dataview));
+        browser::log(format!("dataview: {:#?}", dataview));
         Model { dataview }
     }
 

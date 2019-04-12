@@ -7,3 +7,4 @@ edition = "2018"
 [dependencies]
 sqlparser = "0.1.8"
 csv = "1.0.2"
+rustorm = "0.11"

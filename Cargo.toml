@@ -1,7 +1,7 @@
 [workspace]
 members = [
     "crates/rustorm/",
-    "crates/witch-client",
+    "crates/web-client",
     "crates/intel",
     "crates/server",
     "crates/text-client",
