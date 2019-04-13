@@ -7,7 +7,6 @@ edition = "2018"
 [dependencies]
 term-table = "0.1.5"
 sqlparser = "0.1"
-rustorm = "0.10.7"
 quicli = "0.3"
 structopt = { version = "0.2", default-features = false }
 
