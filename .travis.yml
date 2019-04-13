@@ -23,3 +23,4 @@ script:
   - cargo test -p rustorm --all-features
   - cargo test -p diwata_intel
   - cargo test -p dataview
+  - cargo clippy
