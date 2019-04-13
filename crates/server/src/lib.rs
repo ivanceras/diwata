@@ -6,8 +6,6 @@
 
 #[macro_use]
 extern crate structopt_derive;
-#[macro_use]
-extern crate include_dir;
 
 pub use error::ServiceError;
 pub use global::set_db_url;

@@ -32,12 +32,8 @@ use rustorm::TableName;
 use serde::Serialize;
 use serde_json;
 use std::convert::TryFrom;
-use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use structopt::StructOpt;
-
-use include_dir::Dir;
-static STATIC_DIR: Dir = include_dir!("./static");
 
 /// An instance of the server. Runs a session of rustw.
 pub struct Server {
@@ -170,48 +166,11 @@ fn handle_index(_req: Request) -> Response {
     handle_static(_req, &["index.html"])
 }
 
-fn handle_static(_req: Request, path: &[&str]) -> Response {
-    println!("handling static: {:?}", path);
-    let mut path_buf = PathBuf::new();
-    for p in path {
-        path_buf.push(p);
-    }
-    trace!("handle_static: requesting `{}`", path_buf.to_str().unwrap());
-    println!("handle_static: requesting `{}`", path_buf.to_str().unwrap());
-
-    let content_type = match path_buf.extension() {
-        Some(s) if s.to_str().unwrap() == "html" => ContentType::html(),
-        Some(s) if s.to_str().unwrap() == "css" => ContentType("text/css".parse().unwrap()),
-        Some(s) if s.to_str().unwrap() == "json" => ContentType::json(),
-        _ => ContentType("application/octet-stream".parse().unwrap()),
-    };
-    println!("content type: {:?}", content_type);
-    println!("in pack static feature");
-    if let Some(static_file) = STATIC_DIR.get_file(&path_buf) {
-        if let Some(bytes) = static_file.contents_utf8() {
-            trace!(
-                "handle_static: serving `{}`. {} bytes, {}",
-                path_buf.to_str().unwrap(),
-                bytes.len(),
-                content_type
-            );
-            let mut res = Response::new();
-            res.headers_mut().set(content_type);
-            res.with_body(bytes)
-        } else {
-            handle_not_found(_req)
-        }
-    } else {
-        handle_not_found(_req)
-    }
-}
-
-fn handle_not_found(_req: Request) -> Response {
-    debug!("NOT FOUND");
+fn handle_static(_req: Request, _path: &[&str]) -> Response {
     Response::new()
-        .with_status(StatusCode::NotFound)
-        .with_body("Not Found")
+        .with_body("Soon")
 }
+
 fn handle_error(_req: Request, status: StatusCode, msg: String) -> Response {
     debug!("ERROR: {} ({})", msg, status);
     Response::new().with_status(status).with_body(msg)
