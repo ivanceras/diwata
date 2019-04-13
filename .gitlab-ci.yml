@@ -3,7 +3,7 @@ stages:
 
 rust-latest:
   stage: build
-  image: rust/rust:latest
+  image: rust:latest
   services:
       - postgres:latest
   variables:
