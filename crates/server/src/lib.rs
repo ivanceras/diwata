@@ -1,8 +1,6 @@
 #![deny(warnings)]
 #![deny(clippy::all)]
-#![feature(plugin)]
-#![feature(rustc_private)]
-#![feature(integer_atomics)]
+
 
 #[macro_use]
 extern crate structopt_derive;
