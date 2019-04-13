@@ -10,7 +10,6 @@ use rustorm::DbError;
 use rustorm::EntityManager;
 use rustorm::Table;
 use rustorm::TableName;
-use serde_derive::Deserialize;
 use serde_derive::Serialize;
 
 #[derive(Debug, Serialize, Clone)]
@@ -52,11 +51,11 @@ pub struct Window {
 impl Window {
     fn from_tables(
         main_table: &Table,
-        one_one: &Vec<&Table>,
-        has_one: &Vec<&Table>,
-        has_many: &Vec<&Table>,
-        indirect: &Vec<IndirectTable>,
-        all_tables: &Vec<Table>,
+        one_one: &[&Table],
+        has_one: &[&Table],
+        has_many: &[&Table],
+        indirect: &[IndirectTable],
+        all_tables: &[Table],
     ) -> Self {
         let main_tab: Tab = Tab::from_table(main_table, None, all_tables);
         let one_one_tabs: Vec<Tab> = one_one
@@ -117,18 +116,14 @@ impl Window {
     }
 }
 
-fn has_repeating_tab(table_name: &TableName, indirect: &Vec<IndirectTable>) -> bool {
+fn has_repeating_tab(table_name: &TableName, indirect: &[IndirectTable]) -> bool {
     let mut matched = 0;
     for ind in indirect.iter() {
         if ind.indirect_table.name == *table_name {
             matched += 1;
         }
     }
-    if matched > 1 {
-        true
-    } else {
-        false
-    }
+    matched > 1
 }
 
 #[derive(Debug, Serialize)]
@@ -159,7 +154,7 @@ pub fn get_grouped_windows_using_cache(
 /// filter out tablenames that are not window
 fn get_grouped_windows(
     em: &EntityManager,
-    tables: &Vec<Table>,
+    tables: &[Table],
 ) -> Result<Vec<GroupedWindow>, DbError> {
     let schema_content: Vec<SchemaContent> = em.get_grouped_tables()?;
     let mut grouped_windows: Vec<GroupedWindow> = Vec::with_capacity(schema_content.len());
@@ -180,7 +175,7 @@ fn get_grouped_windows(
         }
         grouped_windows.push(GroupedWindow {
             group: sc.schema.to_string(),
-            window_names: window_names,
+            window_names,
         });
     }
     Ok(grouped_windows)
@@ -189,7 +184,7 @@ fn get_grouped_windows(
 /// extract all the tables and create a window object for each that can
 /// be a window, cache them for later use, so as not to keeping redoing
 /// analytical and calculations
-pub fn derive_all_windows(tables: &Vec<Table>) -> Vec<Window> {
+pub fn derive_all_windows(tables: &[Table]) -> Vec<Window> {
     let mut all_windows = Vec::with_capacity(tables.len());
     for table in tables {
         let table_intel = TableIntel(table);
@@ -213,7 +208,7 @@ pub fn derive_all_windows(tables: &Vec<Table>) -> Vec<Window> {
     all_windows
 }
 
-pub fn get_window<'t>(table_name: &TableName, windows: &'t Vec<Window>) -> Option<&'t Window> {
+pub fn get_window<'t>(table_name: &TableName, windows: &'t [Window]) -> Option<&'t Window> {
     windows
         .iter()
         .find(|w| w.main_tab.table_name == *table_name)

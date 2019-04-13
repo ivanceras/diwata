@@ -1,5 +1,4 @@
 //! provides data service for window
-use crate::data_container::RecordDetail;
 use crate::error::IntelError;
 use crate::tab::Tab;
 use crate::window::Window;
@@ -20,7 +19,7 @@ pub fn calc_offset(page: u32, page_size: u32) -> u32 {
 }
 
 pub fn cast_rows(rows: Rows, column_datatypes: &BTreeMap<String, SqlType>) -> Rows {
-    let new_columns: Vec<String> = rows.columns.iter().map(|c| c.to_owned()).collect();
+    let new_columns: Vec<String> = rows.columns.iter().map(ToString::to_string).collect();
     let mut casted_rows = Rows::new(new_columns);
     for dao in rows.iter() {
         let mut new_row = vec![];
@@ -83,10 +82,10 @@ pub fn validate_tab_column(column_name: &ColumnName, tab: &Tab) -> Result<(), Db
 /// extract record id from comma separated value
 pub fn extract_record_id<'a>(
     record_id: &str,
-    pk_types: &Vec<&SqlType>,
-    pk_columns: &Vec<&'a ColumnName>,
+    pk_types: &[&SqlType],
+    pk_columns: &[&'a ColumnName],
 ) -> Result<Vec<(&'a ColumnName, Value)>, IntelError> {
-    let splinters: Vec<&str> = record_id.split(",").collect();
+    let splinters: Vec<&str> = record_id.split(',').collect();
     let mut record_id = Vec::with_capacity(splinters.len());
     assert_eq!(splinters.len(), pk_types.len());
     assert_eq!(pk_columns.len(), pk_types.len());
@@ -157,7 +156,7 @@ pub fn extract_record_id<'a>(
 ///
 pub fn find_value<'a>(
     needle: &ColumnName,
-    record_id: &'a Vec<(&ColumnName, Value)>,
+    record_id: &'a [(&ColumnName, Value)],
     required_type: &SqlType,
 ) -> Option<Value> {
     record_id
@@ -167,8 +166,9 @@ pub fn find_value<'a>(
 }
 
 /// convert Vec<Dao> to Rows
-pub fn records_to_rows(columns: &Vec<String>, records: Vec<Dao>) -> Rows {
-    let mut rows = Rows::new(columns.clone());
+#[allow(unused)]
+pub fn records_to_rows(columns: &[String], records: Vec<Dao>) -> Rows {
+    let mut rows = Rows::new(columns.to_vec());
     for record in records {
         let mut values = vec![];
         for col in columns.iter() {

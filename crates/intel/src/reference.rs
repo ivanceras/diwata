@@ -1,5 +1,4 @@
 use crate::widget::Widget;
-use serde_derive::Deserialize;
 use serde_derive::Serialize;
 
 /// Intellisense module for the models
@@ -16,6 +15,7 @@ use serde_derive::Serialize;
 /// the interpretation of this column
 /// of the the data it holds based on column specification
 /// column_name, sql_type and limits
+#[allow(unused)]
 #[derive(Debug, PartialEq, Serialize, Clone)]
 pub enum Reference {
     PersonName,
@@ -117,6 +117,7 @@ pub enum Reference {
     EthereumAddress,
 }
 
+#[allow(unused)]
 #[derive(Debug, PartialEq, Serialize, Clone)]
 pub enum Document {
     Pdf,

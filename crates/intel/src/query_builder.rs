@@ -40,10 +40,6 @@ impl Query {
         self.append("SELECT ");
     }
 
-    pub fn select_all(&mut self, table_name: &TableName) {
-        self.append(&format!("SELECT {}.*", table_name.safe_name()));
-    }
-
     /// enumerate all column including the rename to each specific data types
     pub fn enumerate_columns(&mut self, table: &Table) {
         let columns = &table.columns;
@@ -69,85 +65,76 @@ impl Query {
 
     // inlcude in the select the display columns of the lookup tables for each of the
     // fields on each tab, the source table of the field display are left joined in this query
-    pub fn enumerate_display_columns(&mut self, tab: &Tab, tables: &Vec<Table>) {
+    pub fn enumerate_display_columns(&mut self, tab: &Tab, tables: &[Table]) {
         for field in &tab.fields {
             let dropdown_info = field.get_dropdown_info();
-            match dropdown_info {
-                Some(ref dropdown_info) => {
-                    let source_tablename = &dropdown_info.source.name;
+            if let Some(ref dropdown_info) = dropdown_info {
+                let source_tablename = &dropdown_info.source.name;
 
-                    let source_table = table_intel::get_table(&dropdown_info.source, tables);
-                    assert!(source_table.is_some());
-                    let source_table = source_table.unwrap();
-                    self.add_table_datatypes(source_table);
-                    if let Some(field_first_column) = &field.first_column_name() {
-                        let field_column_name = &field_first_column.name;
-                        let source_table_rename =
-                            format!("{}_{}", field_column_name, source_tablename);
-                        for display_column in &dropdown_info.display.columns {
-                            let display_column_name = &display_column.name;
-                            let rename = format!(
-                                "{}.{}.{}",
-                                field_column_name, source_tablename, display_column_name
-                            );
-                            self.append(&format!(
-                                ", {}.{} as \"{}\" ",
-                                source_table_rename, display_column_name, rename
-                            ));
-                        }
+                let source_table = table_intel::get_table(&dropdown_info.source, tables);
+                assert!(source_table.is_some());
+                let source_table = source_table.unwrap();
+                self.add_table_datatypes(source_table);
+                if let Some(field_first_column) = &field.first_column_name() {
+                    let field_column_name = &field_first_column.name;
+                    let source_table_rename = format!("{}_{}", field_column_name, source_tablename);
+                    for display_column in &dropdown_info.display.columns {
+                        let display_column_name = &display_column.name;
+                        let rename = format!(
+                            "{}.{}.{}",
+                            field_column_name, source_tablename, display_column_name
+                        );
+                        self.append(&format!(
+                            ", {}.{} as \"{}\" ",
+                            source_table_rename, display_column_name, rename
+                        ));
                     }
                 }
-                None => (),
             }
         }
     }
 
     /// left join the table that is looked up by the fields, so as to be able to retrieve the
     /// identifiable column values
-    pub fn left_join_display_source(&mut self, tab: &Tab, tables: &Vec<Table>) {
+    pub fn left_join_display_source(&mut self, tab: &Tab, tables: &[Table]) {
         let main_table = table_intel::get_table(&tab.table_name, tables).expect("must have table");
         for field in &tab.fields {
             let dropdown_info = field.get_dropdown_info();
-            match dropdown_info {
-                Some(ref dropdown_info) => {
-                    let source_tablename = &dropdown_info.source.name;
-                    let source_table = table_intel::get_table(&dropdown_info.source, tables);
-                    assert!(source_table.is_some());
-                    let source_table = source_table.unwrap();
-                    let source_pk = source_table.get_primary_column_names();
-                    if let Some(field_first_column) = field.first_column_name() {
-                        let field_column_name = &field_first_column.name;
-                        let field_column_names = field.column_names();
-                        let source_table_rename =
-                            format!("{}_{}", field_column_name, source_tablename);
-                        let local_foreign_pair =
-                            main_table.get_local_foreign_columns_pair_to_table(&source_table.name);
-                        println!("local foreign pair: {:?}", local_foreign_pair);
-                        assert_eq!(source_pk.len(), field_column_names.len());
-                        self.append(&format!(
-                            "\nLEFT JOIN {} AS {} ",
-                            &source_table.safe_complete_name(),
-                            source_table_rename
-                        ));
-                        for (i, (local_column, source_column)) in
-                            local_foreign_pair.iter().enumerate()
-                        {
-                            if i == 0 {
-                                self.append("\nON ");
-                            } else {
-                                self.append("\nAND ");
-                            }
-                            self.append(&format!(
-                                "{}.{} = {}.{} ",
-                                source_table_rename,
-                                source_column.name,
-                                main_table.name.name,
-                                local_column.name
-                            ));
+            if let Some(ref dropdown_info) = dropdown_info {
+                let source_tablename = &dropdown_info.source.name;
+                let source_table = table_intel::get_table(&dropdown_info.source, tables);
+                assert!(source_table.is_some());
+                let source_table = source_table.unwrap();
+                let source_pk = source_table.get_primary_column_names();
+                if let Some(field_first_column) = field.first_column_name() {
+                    let field_column_name = &field_first_column.name;
+                    let field_column_names = field.column_names();
+                    let source_table_rename = format!("{}_{}", field_column_name, source_tablename);
+                    let local_foreign_pair =
+                        main_table.get_local_foreign_columns_pair_to_table(&source_table.name);
+                    println!("local foreign pair: {:?}", local_foreign_pair);
+                    assert_eq!(source_pk.len(), field_column_names.len());
+                    self.append(&format!(
+                        "\nLEFT JOIN {} AS {} ",
+                        &source_table.safe_complete_name(),
+                        source_table_rename
+                    ));
+                    for (i, (local_column, source_column)) in local_foreign_pair.iter().enumerate()
+                    {
+                        if i == 0 {
+                            self.append("\nON ");
+                        } else {
+                            self.append("\nAND ");
                         }
+                        self.append(&format!(
+                            "{}.{} = {}.{} ",
+                            source_table_rename,
+                            source_column.name,
+                            main_table.name.name,
+                            local_column.name
+                        ));
                     }
                 }
-                None => (),
             }
         }
     }
@@ -157,7 +144,7 @@ impl Query {
     }
 
     pub fn set_sort(&mut self, sort: Sort) {
-        if sort.orders.len() > 0 {
+        if !sort.orders.is_empty() {
             self.append("ORDER BY ");
             for (i, order) in sort.orders.iter().enumerate() {
                 if i > 0 {

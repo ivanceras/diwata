@@ -8,7 +8,6 @@ use rustorm::column::Capacity;
 use rustorm::types::SqlType;
 use rustorm::ColumnName;
 use rustorm::Table;
-use serde_derive::Deserialize;
 use serde_derive::Serialize;
 
 #[derive(Debug, Serialize, Clone)]
@@ -37,7 +36,7 @@ impl ColumnDetail {
         match *self {
             ColumnDetail::Simple(ref column_name, _) => Some(&column_name),
             ColumnDetail::Compound(ref column_names_types) => {
-                if column_names_types.len() > 0 {
+                if !column_names_types.is_empty() {
                     Some(&column_names_types[0].0)
                 } else {
                     None
@@ -75,8 +74,8 @@ impl<'a> From<&'a Column> for ColumnDetail {
     }
 }
 
-impl<'a> From<&'a Vec<&'a Column>> for ColumnDetail {
-    fn from(columns: &'a Vec<&'a Column>) -> Self {
+impl<'a> From<&'a [&'a Column]> for ColumnDetail {
+    fn from(columns: &'a [&'a Column]) -> Self {
         if columns.len() == 1 {
             ColumnDetail::Simple(
                 columns[0].name.to_owned(),
@@ -138,11 +137,7 @@ impl Field {
     /// that uses composite foreign key
     /// the field name will be the table name
     /// it looks up to
-    pub fn from_has_one_table(
-        table: &Table,
-        columns: &Vec<&Column>,
-        referred_table: &Table,
-    ) -> Self {
+    pub fn from_has_one_table(table: &Table, columns: &[&Column], referred_table: &Table) -> Self {
         let control_widget = ControlWidget::from_has_one_table(columns, referred_table);
         let mut columns_comment = String::new();
         for column in columns {
@@ -182,6 +177,7 @@ impl Field {
     /// - sql_type, capacity
     /// - column_name as clue
     /// - actual value to verify if it matches the reference
+    #[allow(clippy::if_same_then_else)]
     fn derive_reference(table: &Table, column: &Column) -> Option<Reference> {
         let table_name = &column.table.name;
         let column_name = &column.name.name;
@@ -289,6 +285,7 @@ impl Field {
     }
 
     /// derive reference but not really sure
+    #[allow(clippy::if_same_then_else)]
     fn derive_maybe_reference(_table: &Table, column: &Column) -> Option<Reference> {
         let column_name = &column.name.name;
         let sql_type = &column.specification.sql_type;

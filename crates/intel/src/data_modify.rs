@@ -25,7 +25,7 @@ use rustorm::Value;
 pub fn delete_records(
     dm: &DaoManager,
     main_table: &Table,
-    record_ids: &Vec<String>,
+    record_ids: &[String],
 ) -> Result<Rows, IntelError> {
     let pk_types = &main_table.get_primary_column_types();
     let primary_columns = &main_table.get_primary_column_names();
@@ -46,7 +46,7 @@ pub fn delete_records(
 fn delete_records_from_single_primary_column(
     dm: &DaoManager,
     main_table: &Table,
-    record_ids: &Vec<Vec<(&ColumnName, Value)>>,
+    record_ids: &[Vec<(&ColumnName, Value)>],
 ) -> Result<Rows, DbError> {
     let table_name = &main_table.name;
     let primary_columns = &main_table.get_primary_column_names();
@@ -74,7 +74,7 @@ fn delete_records_from_single_primary_column(
 
 pub fn save_container(
     dm: &DaoManager,
-    tables: &Vec<Table>,
+    tables: &[Table],
     container: &SaveContainer,
 ) -> Result<(), IntelError> {
     let &(ref table_name_for_insert, ref rows_insert) = &container.for_insert;
@@ -90,7 +90,7 @@ pub fn save_container(
 
 pub fn save_changeset(
     dm: &DaoManager,
-    tables: &Vec<Table>,
+    tables: &[Table],
     window: &Window,
     table: &Table,
     changeset: &RecordChangeset,
@@ -129,11 +129,11 @@ pub fn save_changeset(
 
 fn save_one_ones(
     dm: &DaoManager,
-    tables: &Vec<Table>,
+    tables: &[Table],
     main_table: &Table,
     main_record: &Dao,
-    _one_one_tabs: &Vec<Tab>,
-    one_one_records: &Vec<(TableName, Option<Dao>)>,
+    _one_one_tabs: &[Tab],
+    one_one_records: &[(TableName, Option<Dao>)],
 ) -> Result<(), IntelError> {
     for (one_one_table_name, one_one_record) in one_one_records {
         if let Some(one_one_record) = one_one_record {
@@ -155,7 +155,7 @@ fn save_one_ones(
 
 fn save_one_one_table(
     dm: &DaoManager,
-    _tables: &Vec<Table>,
+    _tables: &[Table],
     main_table: &Table,
     main_record: &Dao,
     one_one_table: &Table,
@@ -166,11 +166,11 @@ fn save_one_one_table(
 
 fn save_has_many(
     dm: &DaoManager,
-    tables: &Vec<Table>,
+    tables: &[Table],
     main_table: &Table,
     main_record: &Dao,
-    has_many_tabs: &Vec<Tab>,
-    has_many_records: &Vec<(TableName, RecordAction, Rows)>,
+    has_many_tabs: &[Tab],
+    has_many_records: &[(TableName, RecordAction, Rows)],
 ) -> Result<(), IntelError> {
     for (has_many_table_name, record_action, has_many_rows) in has_many_records {
         let _has_many_tab = tab::find_tab(has_many_tabs, has_many_table_name)
@@ -192,7 +192,7 @@ fn save_has_many(
 
 fn save_has_many_table(
     dm: &DaoManager,
-    _tables: &Vec<Table>,
+    _tables: &[Table],
     _main_table: &Table,
     _main_record: &Dao,
     has_many_table: &Table,
@@ -251,11 +251,11 @@ fn delete_record_from_table(
 
 fn save_indirect(
     dm: &DaoManager,
-    tables: &Vec<Table>,
+    tables: &[Table],
     main_table: &Table,
     main_record: &Dao,
-    _indirect_tabs: &Vec<(TableName, Tab)>,
-    indirect_records: &Vec<(TableName, TableName, RecordAction, Rows)>,
+    _indirect_tabs: &[(TableName, Tab)],
+    indirect_records: &[(TableName, TableName, RecordAction, Rows)],
 ) -> Result<(), IntelError> {
     for (indirect_tablename, via_tablename, record_action, rows) in indirect_records {
         let indirect_table = table_intel::get_table(indirect_tablename, tables)
@@ -307,7 +307,7 @@ fn save_indirect(
 /// delete the entry from the linker table
 fn unlink_from_indirect_table(
     dm: &DaoManager,
-    _tables: &Vec<Table>,
+    _tables: &[Table],
     main_table: &Table,
     main_record: &Dao,
     indirect_table: &Table,
@@ -331,7 +331,7 @@ fn unlink_from_indirect_table(
 /// and create an entry into the linker table
 fn link_new_for_indirect_table(
     dm: &DaoManager,
-    _tables: &Vec<Table>,
+    _tables: &[Table],
     main_table: &Table,
     main_record: &Dao,
     indirect_table: &Table,
@@ -383,7 +383,7 @@ fn create_linker_record(
 /// linking existing record from the indirect table
 fn link_existing_for_indirect_table(
     dm: &DaoManager,
-    _tables: &Vec<Table>,
+    _tables: &[Table],
     main_table: &Table,
     main_record: &Dao,
     indirect_table: &Table,
@@ -529,7 +529,7 @@ fn are_all_nil(column: &str, rows: &Rows) -> bool {
 }
 
 /// insert rows 1 by 1
-fn insert_records_to_table1(
+pub fn insert_records_to_table1(
     dm: &DaoManager,
     main_table: &Table,
     rows: &Rows,

@@ -8,7 +8,6 @@ use crate::field::Field;
 use crate::table_intel;
 use rustorm::Column;
 use rustorm::Table;
-use serde_derive::Deserialize;
 use serde_derive::Serialize;
 
 #[derive(Debug, Serialize, Clone)]
@@ -24,7 +23,7 @@ pub struct Tab {
 }
 
 impl Tab {
-    pub fn from_table(table: &Table, name: Option<String>, tables: &Vec<Table>) -> Self {
+    pub fn from_table(table: &Table, name: Option<String>, tables: &[Table]) -> Self {
         let fields = Self::derive_fields(table, tables);
         let display = Self::derive_display(table);
         let tab_name = match name {
@@ -35,13 +34,13 @@ impl Tab {
             name: tab_name,
             description: table.comment.to_owned(),
             table_name: table.name.to_owned(),
-            fields: fields,
+            fields,
             is_view: table.is_view,
             display,
         }
     }
 
-    fn derive_fields(table: &Table, tables: &Vec<Table>) -> Vec<Field> {
+    fn derive_fields(table: &Table, tables: &[Table]) -> Vec<Field> {
         let mut fields = Vec::with_capacity(table.columns.len());
         fields.extend(Self::derive_simple_fields(table));
         fields.extend(Self::derive_foreign_fields(table, tables));
@@ -59,6 +58,7 @@ impl Tab {
     }
 
     /// an identifier column alone by itself
+    #[allow(clippy::if_same_then_else)]
     fn is_identifier_column(table: &Table, column: &Column) -> bool {
         let table_name = &table.name.name;
         let column_name = &column.name.name;
@@ -71,11 +71,7 @@ impl Tab {
         } else if column_name == "title" {
             true
         } else if table_name == "user" || table_name == "users" {
-            if column_name == "name" || column_name == "username" || column_name == "email" {
-                true
-            } else {
-                false
-            }
+            column_name == "name" || column_name == "username" || column_name == "email"
         } else {
             false
         }
@@ -162,7 +158,7 @@ impl Tab {
 
     /// derive the foreign field based on the referring column to the foreign table
     /// if no local column of this table has privilege then it is not included
-    fn derive_foreign_fields(table: &Table, all_tables: &Vec<Table>) -> Vec<Field> {
+    fn derive_foreign_fields(table: &Table, all_tables: &[Table]) -> Vec<Field> {
         let foreign_keys: Vec<&ForeignKey> = table.get_foreign_keys();
         let mut fields: Vec<Field> = Vec::with_capacity(foreign_keys.len());
         for fk in foreign_keys {
@@ -174,7 +170,7 @@ impl Tab {
             }
             let foreign_table = table_intel::get_table(&fk.foreign_table, all_tables);
             if let Some(foreign_table) = foreign_table {
-                if columns.len() > 0 {
+                if !columns.is_empty() {
                     // don't add the foreign field if there is no referring local column to the table: ie revoked privilege
                     let field = Field::from_has_one_table(table, &columns, foreign_table);
                     fields.push(field);
@@ -185,7 +181,7 @@ impl Tab {
     }
 
     pub fn get_display_columns(&self) -> Vec<&ColumnName> {
-        match *&self.display {
+        match self.display {
             Some(ref display) => display.columns.iter().map(|ref column| *column).collect(),
             None => vec![],
         }
@@ -198,6 +194,6 @@ impl Tab {
     }
 }
 
-pub fn find_tab<'a>(tabs: &'a Vec<Tab>, table_name: &TableName) -> Option<&'a Tab> {
+pub fn find_tab<'a>(tabs: &'a [Tab], table_name: &TableName) -> Option<&'a Tab> {
     tabs.iter().find(|tab| tab.table_name == *table_name)
 }

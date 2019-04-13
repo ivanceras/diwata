@@ -16,44 +16,29 @@ use rustorm::DaoManager;
 use rustorm::DatabaseName;
 use rustorm::DbError;
 use rustorm::EntityManager;
-use rustorm::FromDao;
 use rustorm::Rows;
 use rustorm::Table;
 use rustorm::TableName;
 use rustorm::Value;
-use rustorm_dao;
 use std::collections::BTreeMap;
 
-pub fn get_main_table<'a>(window: &Window, tables: &'a Vec<Table>) -> Option<&'a Table> {
+pub fn get_main_table<'a>(window: &Window, tables: &'a [Table]) -> Option<&'a Table> {
     let main_tablename = &window.main_tab.table_name;
-    let main_table = table_intel::get_table(main_tablename, tables);
-    main_table
+    table_intel::get_table(main_tablename, tables)
 }
 
 pub fn get_database_name(em: &EntityManager) -> Result<Option<DatabaseName>, DbError> {
     em.get_database_name()
 }
 
-pub fn get_total_records(em: &EntityManager, table_name: &TableName) -> Result<u64, DbError> {
-    /// TODO this should be move to rustorm
-    #[derive(rustorm::FromDao)]
-    struct Count {
-        count: i64,
-    }
-    let sql = format!(
-        "SELECT COUNT(*) AS count FROM {}",
-        table_name.complete_name()
-    );
-    let count: Result<Count, DbError> = em.execute_sql_with_one_return(&sql, &[]);
-    count.map(|c| c.count as u64)
-}
-
 /// get data for the window
 /// retrieving the Lookup table display columns
+#[allow(unused)]
+#[allow(clippy::too_many_arguments)]
 pub fn get_maintable_data(
     em: &EntityManager,
     dm: &DaoManager,
-    tables: &Vec<Table>,
+    tables: &[Table],
     window: &Window,
     filter: Option<Filter>,
     sort: Option<Sort>,
@@ -75,26 +60,24 @@ pub fn get_maintable_data(
     query.from(&main_tablename);
     query.left_join_display_source(&window.main_tab, tables);
 
-    match filter {
-        Some(filter) => {
-            query.append("WHERE ");
-            for (i, cond) in filter.conditions.iter().enumerate() {
-                if i > 0 {
-                    query.append("AND ");
-                }
-                let column_name = &cond.left;
-                let value_str = format!("{}%", cond.right.to_string());
-                let value = Value::Text(value_str);
-                common::validate_column(&column_name, window)?;
-                query.append(&format!(
-                    "{}.{} ILIKE ",
-                    main_tablename.name, column_name.name,
-                ));
-                query.add_param(value);
+    if let Some(filter) = filter {
+        query.append("WHERE ");
+        for (i, cond) in filter.conditions.iter().enumerate() {
+            if i > 0 {
+                query.append("AND ");
             }
+            let column_name = &cond.left;
+            let value_str = format!("{}%", cond.right.to_string());
+            let value = Value::Text(value_str);
+            common::validate_column(&column_name, window)?;
+            query.append(&format!(
+                "{}.{} ILIKE ",
+                main_tablename.name, column_name.name,
+            ));
+            query.add_param(value);
         }
-        None => (),
     }
+
     if let Some(sort) = sort {
         query.set_sort(sort);
     } else {
@@ -117,16 +100,17 @@ pub fn get_maintable_data(
     }
     query.set_page(page, page_size);
     let mut rows = query.collect_rows(dm)?;
-    let count = get_total_records(em, main_tablename)?;
+    let count = em.get_total_records(main_tablename)?;
     rows.count = Some(count);
     Ok(rows)
 }
 
 /// get the detail of the selected record data
+#[allow(clippy::too_many_arguments)]
 pub fn get_selected_record_detail(
     em: &EntityManager,
     dm: &DaoManager,
-    tables: &Vec<Table>,
+    tables: &[Table],
     window: &Window,
     record_id: &str,
     page_size: u32,
@@ -220,7 +204,7 @@ pub fn get_selected_record_detail(
                 ));
             }
             let detail = RecordDetail {
-                record: record,
+                record,
                 one_ones: one_one_records,
                 has_many: has_many_records,
                 indirect: indirect_records,
@@ -231,13 +215,14 @@ pub fn get_selected_record_detail(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn get_one_one_record(
     _em: &EntityManager,
     dm: &DaoManager,
-    tables: &Vec<Table>,
+    tables: &[Table],
     main_table: &Table,
     one_one_tab: &Tab,
-    record_id: &Vec<(&ColumnName, Value)>,
+    record_id: &[(&ColumnName, Value)],
     page_size: u32,
 ) -> Result<Option<Dao>, DbError> {
     let one_one_table =
@@ -269,7 +254,9 @@ fn get_one_one_record(
                 one_one_pk[i].complete_name(),
             ));
             let required_type = one_one_pk_data_types[i];
-            common::find_value(rc, record_id, required_type).map(|v| query.add_param(v.clone()));
+            if let Some(v) = common::find_value(rc, record_id, required_type) {
+                query.add_param(v.clone())
+            }
         }
     }
     query.append(&format!("\nLIMIT {} ", page_size));
@@ -277,10 +264,11 @@ fn get_one_one_record(
 }
 
 /// TODO: add filter and sort
+#[allow(clippy::too_many_arguments)]
 pub fn get_has_many_records_service(
     em: &EntityManager,
     dm: &DaoManager,
-    tables: &Vec<Table>,
+    tables: &[Table],
     main_table: &Table,
     record_id: &str,
     has_many_tab: &Tab,
@@ -307,13 +295,14 @@ pub fn get_has_many_records_service(
     Ok(rows)
 }
 
+#[allow(clippy::too_many_arguments)]
 fn get_has_many_records(
     em: &EntityManager,
     dm: &DaoManager,
-    tables: &Vec<Table>,
+    tables: &[Table],
     main_table: &Table,
     has_many_tab: &Tab,
-    main_record_id: &Vec<(&ColumnName, Value)>,
+    main_record_id: &[(&ColumnName, Value)],
     filter: Option<Filter>,
     sort: Option<Sort>,
     page_size: u32,
@@ -352,31 +341,29 @@ fn get_has_many_records(
             has_many_fk[i].complete_name(),
         ));
         let required_type = has_many_fk_data_types[i];
-        common::find_value(referred_column, main_record_id, required_type)
-            .map(|v| query.add_param(v.clone()));
+        if let Some(v) = common::find_value(referred_column, main_record_id, required_type) {
+            query.add_param(v.clone())
+        }
     }
 
-    // TODO: unify this into the query builder
-    match filter {
-        Some(filter) => {
-            query.append("AND ");
-            for (i, cond) in filter.conditions.iter().enumerate() {
-                if i > 0 {
-                    query.append("AND ");
-                }
-                let column_name = &cond.left;
-                let value_str = format!("{}%", cond.right.to_string());
-                let value = Value::Text(value_str);
-                common::validate_tab_column(&column_name, has_many_tab)?;
-                query.append(&format!(
-                    "{}.{} ILIKE ",
-                    has_many_tab.table_name.name, column_name.name,
-                ));
-                query.add_param(value);
+    if let Some(filter) = filter {
+        query.append("AND ");
+        for (i, cond) in filter.conditions.iter().enumerate() {
+            if i > 0 {
+                query.append("AND ");
             }
+            let column_name = &cond.left;
+            let value_str = format!("{}%", cond.right.to_string());
+            let value = Value::Text(value_str);
+            common::validate_tab_column(&column_name, has_many_tab)?;
+            query.append(&format!(
+                "{}.{} ILIKE ",
+                has_many_tab.table_name.name, column_name.name,
+            ));
+            query.add_param(value);
         }
-        None => (),
     }
+
     if let Some(sort) = sort {
         query.set_sort(sort);
     } else {
@@ -400,15 +387,16 @@ fn get_has_many_records(
 
     query.set_page(page, page_size);
     let mut rows = query.collect_rows(dm)?;
-    rows.count = Some(get_total_records(em, &has_many_table.name)?);
+    rows.count = Some(em.get_total_records(&has_many_table.name)?);
     Ok(rows)
 }
 
 /// TODO: add filter and sort
+#[allow(clippy::too_many_arguments)]
 pub fn get_indirect_records_service(
     em: &EntityManager,
     dm: &DaoManager,
-    tables: &Vec<Table>,
+    tables: &[Table],
     main_table: &Table,
     record_id: &str,
     indirect_tab: &Tab,
@@ -437,14 +425,15 @@ pub fn get_indirect_records_service(
     Ok(rows)
 }
 
+#[allow(clippy::too_many_arguments)]
 fn get_indirect_records(
     _em: &EntityManager,
     dm: &DaoManager,
-    tables: &Vec<Table>,
+    tables: &[Table],
     main_table: &Table,
     indirect_tab: &Tab,
     linker_table_name: &TableName,
-    record_id: &Vec<(&ColumnName, Value)>,
+    record_id: &[(&ColumnName, Value)],
     filter: Option<Filter>,
     sort: Option<Sort>,
     page_size: u32,
@@ -504,28 +493,27 @@ fn get_indirect_records(
         let fc_column = linker_table.get_column(&fc).expect("column should exist");
         let required_type: &SqlType = &fc_column.get_sql_type();
         let rc = &linker_fc_referring_columns[i];
-        common::find_value(rc, record_id, required_type).map(|v| query.add_param(v.clone()));
+        if let Some(v) = common::find_value(rc, record_id, required_type) {
+            query.add_param(v.clone())
+        }
     }
     // TODO: unify this into the query builder
-    match filter {
-        Some(filter) => {
-            query.append("AND ");
-            for (i, cond) in filter.conditions.iter().enumerate() {
-                if i > 0 {
-                    query.append("AND ");
-                }
-                let column_name = &cond.left;
-                let value_str = format!("{}%", cond.right.to_string());
-                let value = Value::Text(value_str);
-                common::validate_tab_column(&column_name, indirect_tab)?;
-                query.append(&format!(
-                    "{}.{} ILIKE ",
-                    indirect_tab.table_name.name, column_name.name,
-                ));
-                query.add_param(value);
+    if let Some(filter) = filter {
+        query.append("AND ");
+        for (i, cond) in filter.conditions.iter().enumerate() {
+            if i > 0 {
+                query.append("AND ");
             }
+            let column_name = &cond.left;
+            let value_str = format!("{}%", cond.right.to_string());
+            let value = Value::Text(value_str);
+            common::validate_tab_column(&column_name, indirect_tab)?;
+            query.append(&format!(
+                "{}.{} ILIKE ",
+                indirect_tab.table_name.name, column_name.name,
+            ));
+            query.add_param(value);
         }
-        None => (),
     }
     if let Some(sort) = sort {
         query.set_sort(sort);
@@ -554,10 +542,11 @@ fn get_indirect_records(
 /// for all fields in the all tabs of the window
 /// that has a dropdown, fetch the first page
 /// of the dropdown
+#[allow(clippy::too_many_arguments)]
 pub fn get_all_lookup_for_window(
     em: &EntityManager,
     dm: &DaoManager,
-    tables: &Vec<Table>,
+    tables: &[Table],
     window: &Window,
     page_size: u32,
 ) -> Result<Lookup, IntelError> {
@@ -613,21 +602,19 @@ pub fn get_all_lookup_for_window(
 fn get_tab_lookup_tablenames(tab: &Tab) -> Vec<(&TableName, Vec<&ColumnName>)> {
     let mut table_names = vec![];
     for field in tab.fields.iter() {
-        match field.get_dropdown_info() {
-            Some(dropdown_info) => {
-                let display_columns = dropdown_info.display.columns.iter().collect();
-                table_names.push((&dropdown_info.source, display_columns))
-            }
-            None => (),
+        if let Some(dropdown_info) = field.get_dropdown_info() {
+            let display_columns = dropdown_info.display.columns.iter().collect();
+            table_names.push((&dropdown_info.source, display_columns))
         }
     }
     table_names
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn get_lookup_data_of_tab(
     em: &EntityManager,
     dm: &DaoManager,
-    tables: &Vec<Table>,
+    tables: &[Table],
     tab: &Tab,
     page_size: u32,
     page: u32,
@@ -650,12 +637,13 @@ pub fn get_lookup_data_of_tab(
 /// record_id is the value that is selected in the lookup
 /// ensure that the value is included in the first page
 /// this table must have it's own window too
+#[allow(clippy::too_many_arguments)]
 pub fn get_lookup_data_of_table_with_display_columns(
     _em: &EntityManager,
     dm: &DaoManager,
-    tables: &Vec<Table>,
+    tables: &[Table],
     table_name: &TableName,
-    display_columns: &Vec<&ColumnName>,
+    display_columns: &[&ColumnName],
     page_size: u32,
     page: u32,
 ) -> Result<Rows, IntelError> {
@@ -663,7 +651,7 @@ pub fn get_lookup_data_of_table_with_display_columns(
 
     let primary_columns = table.get_primary_column_names();
     //assert!(primary_columns.len() > 0);
-    let mut sql = format!("SELECT ");
+    let mut sql = String::from("SELECT ");
     for (i, pk) in primary_columns.iter().enumerate() {
         if i > 0 {
             sql += &","

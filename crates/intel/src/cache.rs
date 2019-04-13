@@ -23,12 +23,12 @@ impl CachePool {
     }
 
     /// reset all cache content including cache from other DB_URLs
-    fn reset_all(&mut self) {
+    pub fn reset_all(&mut self) {
         self.0.clear();
     }
 
     /// clear the cache on this DB_URL
-    fn clear(&mut self, db_url: &str) -> Option<Cache> {
+    pub fn clear(&mut self, db_url: &str) -> Option<Cache> {
         self.0.remove(db_url)
     }
 

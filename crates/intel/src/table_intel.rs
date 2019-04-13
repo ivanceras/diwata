@@ -45,7 +45,7 @@ impl<'a> TableIntel<'a> {
     }
     /// get all the tables that refers to this table
     /// mainly used for counting and ranking the table windows
-    fn get_referring_tables<'t>(&self, tables: &'t Vec<Table>) -> Vec<&'t Table> {
+    pub fn get_referring_tables<'t>(&self, tables: &'t [Table]) -> Vec<&'t Table> {
         let mut referring_tables = vec![];
         for table in tables {
             if self.is_referred_by(table) {
@@ -96,7 +96,7 @@ impl<'a> TableIntel<'a> {
     /// table is also that table's primary key,
     /// and that foreign columns refers to this tables primary keys
     /// then that is a 1:1 table to this table
-    pub fn get_one_one_tables<'t>(&self, tables: &'t Vec<Table>) -> Vec<&'t Table> {
+    pub fn get_one_one_tables<'t>(&self, tables: &'t [Table]) -> Vec<&'t Table> {
         let mut one_one_tables: Vec<&Table> = vec![];
         for table in tables {
             let table_intel = TableIntel(table);
@@ -107,7 +107,7 @@ impl<'a> TableIntel<'a> {
         one_one_tables
     }
 
-    pub fn get_has_one_tables<'t>(&self, tables: &'t Vec<Table>) -> Vec<&'t Table> {
+    pub fn get_has_one_tables<'t>(&self, tables: &'t [Table]) -> Vec<&'t Table> {
         let mut has_one_tables: Vec<&Table> = vec![];
         for table in tables {
             let table_intel = TableIntel(&table);
@@ -118,7 +118,7 @@ impl<'a> TableIntel<'a> {
         has_one_tables
     }
 
-    pub fn get_has_one_tablenames(&self, tables: &Vec<Table>) -> Vec<TableName> {
+    pub fn get_has_one_tablenames(&self, tables: &[Table]) -> Vec<TableName> {
         self.get_has_one_tables(tables)
             .iter()
             .map(|t| t.name.clone())
@@ -128,7 +128,7 @@ impl<'a> TableIntel<'a> {
     /// list of tables that refers to this table
     /// but is not owned
     /// neither a linke
-    pub fn get_has_many_tables<'t>(&self, tables: &'t Vec<Table>) -> Vec<&'t Table> {
+    pub fn get_has_many_tables<'t>(&self, tables: &'t [Table]) -> Vec<&'t Table> {
         let mut has_many_tables: Vec<&Table> = vec![];
         for table in tables {
             let table_intel = TableIntel(&table);
@@ -142,7 +142,7 @@ impl<'a> TableIntel<'a> {
         has_many_tables
     }
 
-    pub fn get_indirect_tables<'t>(&self, tables: &'t Vec<Table>) -> Vec<IndirectTable<'t>> {
+    pub fn get_indirect_tables<'t>(&self, tables: &'t [Table]) -> Vec<IndirectTable<'t>> {
         let mut indirect_tables = vec![];
         for table in tables {
             let table_intel = TableIntel(&table);
@@ -154,7 +154,7 @@ impl<'a> TableIntel<'a> {
                     // is the indirect table
                     assert_eq!(has_one_tables.len(), 2);
                     let other_table = if has_one_tables[0] != self.0 {
-                        assert!(has_one_tables.len() > 0);
+                        assert!(!has_one_tables.is_empty());
                         has_one_tables[0]
                     } else {
                         assert!(has_one_tables.len() > 1);
@@ -176,13 +176,13 @@ impl<'a> TableIntel<'a> {
     /// algorithm: if it has no referring tables
     /// tip: linkers and owned tables has no referring tables
     /// so no need to check for them
-    pub fn is_window(&self, _tables: &Vec<Table>) -> bool {
+    pub fn is_window(&self, _tables: &[Table]) -> bool {
         //self.get_referring_tables(tables).len() > 0
         !self.is_linker_table()
     }
 }
 
-pub fn get_table<'t>(tablename: &TableName, tables: &'t Vec<Table>) -> Option<&'t Table> {
+pub fn get_table<'t>(tablename: &TableName, tables: &'t [Table]) -> Option<&'t Table> {
     tables.iter().find(|t| t.name == *tablename)
 }
 

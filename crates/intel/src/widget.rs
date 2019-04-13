@@ -4,9 +4,9 @@ use crate::tab::Tab;
 use rustorm::types::SqlType;
 use rustorm::Column;
 use rustorm::Table;
-use serde_derive::Deserialize;
 use serde_derive::Serialize;
 
+#[allow(unused)]
 #[derive(Debug, Serialize, Clone)]
 pub enum Widget {
     Textbox,
@@ -171,7 +171,7 @@ impl ControlWidget {
         }
     }
 
-    pub fn from_has_one_table(columns: &Vec<&Column>, table: &Table) -> Self {
+    pub fn from_has_one_table(columns: &[&Column], table: &Table) -> Self {
         let reference = Reference::TableLookup;
         let widget = reference.get_widget_fullview();
         let pk_width = columns
@@ -183,8 +183,7 @@ impl ControlWidget {
             .max()
             .unwrap_or(0);
 
-        let dropdown = Tab::derive_dropdowninfo(table)
-            .map(|dropdown_info| Dropdown::TableDropdown(dropdown_info));
+        let dropdown = Tab::derive_dropdowninfo(table).map(Dropdown::TableDropdown);
 
         // derive the width from the the total of width in dropdown display + separator
         let display_width = match dropdown {
@@ -216,7 +215,7 @@ impl ControlWidget {
             Some(ref dropdown) => match *dropdown {
                 Dropdown::TableDropdown(ref dropdown_info) => {
                     let display = &dropdown_info.display;
-                    if display.columns.len() > 0 {
+                    if !display.columns.is_empty() {
                         Alignment::Left
                     } else {
                         Alignment::Right
