@@ -13,6 +13,7 @@ services:
   - postgresql
 
 before_script:
+  - rustup component add clippy
   - cd crates/rustorm
   - ./execute-data-import.sh
   - cd -

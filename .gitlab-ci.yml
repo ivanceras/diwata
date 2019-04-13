@@ -11,6 +11,7 @@ rust-nightly:
      GIT_SUBMODULE_STRATEGY: recursive
 
   before_script:
+      - rustup component add clippy
       # search and replace localhost to postgresl in .rs files in this project
       - find . -name '*.rs' -type f -exec sed -i 's/localhost/postgres/g' {} +
       - cd crates/rustorm
