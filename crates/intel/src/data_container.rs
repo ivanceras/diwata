@@ -67,6 +67,21 @@ pub struct Condition {
     pub left: ColumnName,
     pub right: String,
 }
+impl From<&str> for Condition {
+    //TODO: verify if the column is really a column of the involved tables otherwise SQL injection
+    //is possible
+    fn from(s: &str) -> Self {
+        let splinters: Vec<&str> = s.split('=').collect();
+        assert_eq!(splinters.len(), 2);
+        let column = splinters[0];
+        let value = splinters[1].to_string();
+        let column_name = ColumnName::from(column);
+        Condition {
+            left: column_name,
+            right: value,
+        }
+    }
+}
 
 /// a limited filter structure which is used for the simple usecase of the client
 /// all conditions are AND together, and the operator depends on the data type of the column name
@@ -76,10 +91,52 @@ pub struct Condition {
 pub struct Filter {
     pub conditions: Vec<Condition>,
 }
+impl From<&str> for Filter {
+    fn from(s: &str) -> Self {
+        let splinters: Vec<&str> = s.split('&').collect();
+        let mut conditions = vec![];
+        for splinter in splinters.iter() {
+            let cond = Condition::from(*splinter);
+            conditions.push(cond);
+        }
+        Filter { conditions }
+    }
+}
 
 pub struct Order {
     pub column_name: ColumnName,
     pub direction: Direction,
+}
+
+impl From<&str> for Order {
+    fn from(s: &str) -> Self {
+        let splinters: Vec<&str> = s.split('.').collect();
+        let len = splinters.len();
+        let mut cols = splinters.clone();
+        let dir = cols.split_off(len - 1);
+        let direction = if dir.len() == 1 {
+            let dir = dir[0];
+            match dir {
+                "asc" => Some(Direction::Asc),
+                "desc" => Some(Direction::Desc),
+                _ => None,
+            }
+        } else {
+            None
+        };
+        let column = cols.join(".");
+        let column_name = ColumnName::from(&column);
+        match direction {
+            Some(direction) => Order {
+                column_name,
+                direction,
+            },
+            None => Order {
+                column_name: ColumnName::from(&splinters.join(".")),
+                direction: Direction::Asc,
+            },
+        }
+    }
 }
 
 #[derive(PartialEq)]
@@ -91,12 +148,25 @@ pub enum Direction {
 pub struct Sort {
     pub orders: Vec<Order>,
 }
+impl From<&str> for Sort {
+    fn from(s: &str) -> Self {
+        let splinters: Vec<&str> = s.split(',').collect();
+        let mut orders = vec![];
+        for splinter in splinters.iter() {
+            let order: Order = (*splinter).into();
+            orders.push(order);
+        }
+        Sort { orders }
+    }
+}
 
-#[test]
-fn test_record_changeset() {
-    use rustorm::Dao;
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn test_record_changeset() {
+        use rustorm::Dao;
 
-    let input = r#"
+        let input = r#"
 {
   "record": {
     "city": {
@@ -161,28 +231,28 @@ fn test_record_changeset() {
   "indirect": []
 }
     "#;
-    let mut dao = Dao::new();
-    dao.insert("city", "Akishima");
-    let changeset = RecordChangeset {
-        record: dao,
-        action: RecordAction::Edited,
-        one_ones: vec![],
-        has_many: vec![],
-        indirect: vec![],
-    };
-    let changeset_json = serde_json::to_string(&changeset).unwrap();
-    println!("changeset json: {}", changeset_json);
-    let result: Result<RecordChangeset, _> = serde_json::from_str(input);
-    println!("result: {:#?}", result);
-    assert!(result.is_ok());
-}
+        let mut dao = Dao::new();
+        dao.insert("city", "Akishima");
+        let changeset = RecordChangeset {
+            record: dao,
+            action: RecordAction::Edited,
+            one_ones: vec![],
+            has_many: vec![],
+            indirect: vec![],
+        };
+        let changeset_json = serde_json::to_string(&changeset).unwrap();
+        println!("changeset json: {}", changeset_json);
+        let result: Result<RecordChangeset, _> = serde_json::from_str(input);
+        println!("result: {:#?}", result);
+        assert!(result.is_ok());
+    }
 
-#[test]
-fn test_record_changeset2() {
-    extern crate serde_json;
-    use rustorm::Dao;
+    #[test]
+    fn test_record_changeset2() {
+        extern crate serde_json;
+        use rustorm::Dao;
 
-    let input = r#"
+        let input = r#"
 {
   "record": {
     "description": {
@@ -408,27 +478,27 @@ fn test_record_changeset2() {
   ]
 }
     "#;
-    let mut dao = Dao::new();
-    dao.insert("city", "Akishima");
-    let changeset = RecordChangeset {
-        record: dao,
-        action: RecordAction::Edited,
-        one_ones: vec![],
-        has_many: vec![],
-        indirect: vec![],
-    };
-    let changeset_json = serde_json::to_string(&changeset).unwrap();
-    println!("changeset json: {}", changeset_json);
-    let result: Result<RecordChangeset, _> = serde_json::from_str(input);
-    println!("result: {:#?}", result);
-    assert!(result.is_ok());
-}
+        let mut dao = Dao::new();
+        dao.insert("city", "Akishima");
+        let changeset = RecordChangeset {
+            record: dao,
+            action: RecordAction::Edited,
+            one_ones: vec![],
+            has_many: vec![],
+            indirect: vec![],
+        };
+        let changeset_json = serde_json::to_string(&changeset).unwrap();
+        println!("changeset json: {}", changeset_json);
+        let result: Result<RecordChangeset, _> = serde_json::from_str(input);
+        println!("result: {:#?}", result);
+        assert!(result.is_ok());
+    }
 
-#[test]
-fn test_record_changeset3() {
-    use rustorm::Dao;
+    #[test]
+    fn test_record_changeset3() {
+        use rustorm::Dao;
 
-    let input = r#"
+        let input = r#"
 {
   "record": {
     "description": {
@@ -669,18 +739,19 @@ fn test_record_changeset3() {
   ]
 }
     "#;
-    let mut dao = Dao::new();
-    dao.insert("city", "Akishima");
-    let changeset = RecordChangeset {
-        record: dao,
-        action: RecordAction::Edited,
-        one_ones: vec![],
-        has_many: vec![],
-        indirect: vec![],
-    };
-    let changeset_json = serde_json::to_string(&changeset).unwrap();
-    println!("changeset json: {}", changeset_json);
-    let result: Result<RecordChangeset, _> = serde_json::from_str(input);
-    println!("result: {:#?}", result);
-    assert!(result.is_ok());
+        let mut dao = Dao::new();
+        dao.insert("city", "Akishima");
+        let changeset = RecordChangeset {
+            record: dao,
+            action: RecordAction::Edited,
+            one_ones: vec![],
+            has_many: vec![],
+            indirect: vec![],
+        };
+        let changeset_json = serde_json::to_string(&changeset).unwrap();
+        println!("changeset json: {}", changeset_json);
+        let result: Result<RecordChangeset, _> = serde_json::from_str(input);
+        println!("result: {:#?}", result);
+        assert!(result.is_ok());
+    }
 }
