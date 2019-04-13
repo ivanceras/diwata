@@ -1,5 +1,5 @@
-use browser::html::*;
 use browser::html::events::*;
+use browser::html::*;
 use browser::*;
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -10,10 +10,18 @@ use wasm_bindgen::JsCast;
 use store::{Msg, Store};
 use vdom::{Component, View, Widget};
 
+pub use datawindow::DataWindow;
+pub use field::Field;
+pub use tab::Tab;
+
+mod datawindow;
+mod field;
 mod store;
+mod tab;
 
 pub struct App {
     pub store: Rc<RefCell<Store>>,
+    datawindow: DataWindow,
 }
 
 impl App {
@@ -32,10 +40,11 @@ impl App {
             )
             .expect("unable to call set_interval with callback");
         clock.forget();
-        App { store}
+        App {
+            store,
+            datawindow: DataWindow::new(),
+        }
     }
-
-
 }
 
 impl Component for App {
@@ -47,8 +56,7 @@ impl Component for App {
 }
 
 impl Widget for App {
-    fn update(&mut self) {
-    }
+    fn update(&mut self) {}
 }
 
 impl View for App {
@@ -59,11 +67,11 @@ impl View for App {
             [],
             [
                 h1([], [text("Diwata")]),
-                button([
-                        onclick(move|_| {
-                            store_clone.borrow_mut().msg(&Msg::Click)
-                        })
-                ], [text(format!("Clicked {}",clicks))])
+                button(
+                    [onclick(move |_| store_clone.borrow_mut().msg(&Msg::Click))],
+                    [text(format!("Clicked {}", clicks))],
+                ),
+                div([], [self.datawindow.view()]),
             ],
         )
     }
