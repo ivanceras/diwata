@@ -162,6 +162,8 @@ impl From<&str> for Sort {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+
     #[test]
     fn test_record_changeset() {
         use rustorm::Dao;
