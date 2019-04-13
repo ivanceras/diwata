@@ -1,6 +1,4 @@
-use crate::credentials::Credentials;
 use crate::error::ServiceError;
-use crate::handler::Server;
 use diwata_intel::cache;
 use lazy_static::lazy_static;
 use rustorm::pool;
@@ -200,7 +198,7 @@ pub fn get_pool_em() -> Result<EntityManager, ServiceError> {
     let db_url = &get_db_url()?;
     match pool.em(db_url) {
         Ok(em) => Ok(em),
-        Err(e) => return Err(ServiceError::DbError(e)),
+        Err(e) => Err(ServiceError::DbError(e)),
     }
 }
 
@@ -212,7 +210,7 @@ pub fn get_pool_session_em() -> Result<EntityManager, ServiceError> {
     let db_url = &get_session_db_url()?;
     match pool.em(db_url) {
         Ok(em) => Ok(em),
-        Err(e) => return Err(ServiceError::DbError(e)),
+        Err(e) => Err(ServiceError::DbError(e)),
     }
 }
 
@@ -224,7 +222,7 @@ pub fn get_pool_dm() -> Result<DaoManager, ServiceError> {
     let db_url = &get_db_url()?;
     match pool.dm(db_url) {
         Ok(em) => Ok(em),
-        Err(e) => return Err(ServiceError::DbError(e)),
+        Err(e) => Err(ServiceError::DbError(e)),
     }
 }
 
@@ -236,7 +234,7 @@ pub fn get_pool_session_dm() -> Result<DaoManager, ServiceError> {
     let db_url = &get_session_db_url()?;
     match pool.dm(db_url) {
         Ok(em) => Ok(em),
-        Err(e) => return Err(ServiceError::DbError(e)),
+        Err(e) => Err(ServiceError::DbError(e)),
     }
 }
 

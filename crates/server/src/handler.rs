@@ -32,18 +32,16 @@ use rustorm::TableName;
 use serde::Serialize;
 use serde_json;
 use std::convert::TryFrom;
-use std::fs::File;
-use std::io::prelude::*;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use structopt::StructOpt;
 
 use include_dir::Dir;
-use std::path::Path;
 static STATIC_DIR: Dir = include_dir!("./static");
 
 /// An instance of the server. Runs a session of rustw.
 pub struct Server {
+    #[allow(unused)]
     db_url: String,
 }
 
@@ -141,7 +139,6 @@ fn require_credentials(req: &Request) -> Result<(), ServiceError> {
     let is_required = global::is_login_required()?;
 
     if is_required {
-        let headers = req.headers();
         let credentials: Result<Credentials, ServiceError> = TryFrom::try_from(req);
         match credentials {
             Ok(credentials) => {
@@ -155,8 +152,7 @@ fn require_credentials(req: &Request) -> Result<(), ServiceError> {
     }
 }
 
-fn handle_database_name(req: Request) -> Result<impl Serialize, ServiceError> {
-    //require_credentials(&req)?;
+fn handle_database_name(_req: Request) -> Result<impl Serialize, ServiceError> {
     let ret = data_read::get_database_name(&global::get_pool_em()?)?;
     Ok(ret)
 }
@@ -275,8 +271,8 @@ fn handle_data(req: Request, path: &[&str]) -> Result<impl Serialize, ServiceErr
     let context = Context::create(credentials)?;
     let table_name = TableName::from(&table_name);
     let window = window::get_window(&table_name, &context.windows);
-    let filter = filter_str.map(|s| Filter::from_str(s));
-    let sort = sort_str.map(|s| Sort::from_str(s));
+    let filter = filter_str.map(Filter::from);
+    let sort = sort_str.map(Sort::from);
     match window {
         Some(window) => {
             let rows = data_read::get_maintable_data(
@@ -349,8 +345,8 @@ fn handle_has_many(req: Request, path: &[&str]) -> Result<impl Serialize, Servic
             sort_str = Some(v);
         }
     }
-    let filter = filter_str.map(|s| Filter::from_str(s));
-    let sort = sort_str.map(|s| Sort::from_str(s));
+    let filter = filter_str.map(Filter::from);
+    let sort = sort_str.map(Sort::from);
     let credentials: Result<Credentials, ServiceError> = TryFrom::try_from(&req);
     let context = Context::create(credentials)?;
     let table_name = TableName::from(&table_name);
@@ -409,8 +405,8 @@ fn handle_indirect(req: Request, path: &[&str]) -> Result<impl Serialize, Servic
             sort_str = Some(v);
         }
     }
-    let filter = filter_str.map(|s| Filter::from_str(s));
-    let sort = sort_str.map(|s| Sort::from_str(s));
+    let filter = filter_str.map(Filter::from);
+    let sort = sort_str.map(Sort::from);
     let credentials: Result<Credentials, ServiceError> = TryFrom::try_from(&req);
     let context = Context::create(credentials)?;
     let table_name = TableName::from(&table_name);
@@ -545,7 +541,7 @@ fn handle_record_changeset(
             let body_str = String::from_utf8(body).unwrap();
             let changeset: Result<RecordChangeset, _> = serde_json::from_str(&body_str);
             let changeset =
-                changeset.expect(&format!("unable to serialize from json {}", body_str));
+                changeset.unwrap_or_else(|_| panic!("unable to serialize from json {}", body_str));
             update_record_changeset(&context, &table_name, &changeset)
         } else {
             Err(ServiceError::RequiredCredentialsNotFound)
@@ -584,7 +580,7 @@ fn handle_tab_changeset(req: Request) -> Box<Future<Item = Response, Error = Err
 fn delete_records(
     context: &Context,
     table_name: &str,
-    record_ids: &Vec<String>,
+    record_ids: &[String],
 ) -> Result<Rows, ServiceError> {
     let table_name = TableName::from(&table_name);
     let window = window::get_window(&table_name, &context.windows);
@@ -621,14 +617,8 @@ fn update_record_changeset(
             let table = data_read::get_main_table(window, &context.tables);
             assert!(table.is_some());
             let table = table.unwrap();
-            let detail = data_modify::save_changeset(
-                &context.dm,
-                &context.tables,
-                window,
-                &table,
-                changeset,
-            )?;
-            Ok(detail)
+            data_modify::save_changeset(&context.dm, &context.tables, window, &table, changeset)?;
+            Ok(())
         }
         None => Err(ServiceError::NotFound),
     }
@@ -640,8 +630,7 @@ fn create_response<B: Serialize>(body: Result<B, ServiceError>) -> Response {
             let json = serde_json::to_string(&body).unwrap();
             let mut headers = Headers::new();
             headers.set(ContentType::json());
-            let mut resp = Response::new().with_headers(headers).with_body(json);
-            resp
+            Response::new().with_headers(headers).with_body(json)
         }
         Err(e) => {
             eprintln!("\n\nWarning an error response: {:?}", e);
