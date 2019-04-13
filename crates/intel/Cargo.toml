@@ -15,8 +15,5 @@ uuid = "0.5.1"
 bigdecimal = "0.0.14"
 url = "1.5"
 rustorm_dao = "0.3"
-
-[dependencies.rustorm]
-version = "0.13"
-features = ["with-postgres", "with-sqlite"]
+rustorm =  {version = "0.13", features = ["with-postgres", "with-sqlite"]}
 
