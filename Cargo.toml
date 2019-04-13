@@ -18,3 +18,4 @@ exclude = [
 "rustorm_codegen:0.2.0" = { path = "crates/rustorm/crates/codegen" }
 "rustorm:0.11.0" = { path = "crates/rustorm" }
 "diwata_intel:0.1.2" = { path = "crates/intel" }
+"diwata_server:0.1.2" = { path = "crates/server" }
