@@ -1,8 +1,7 @@
-
-use sqlparser::sqlast::ASTNode;
+use crate::Type;
 use crate::Value;
 use rustorm::common;
-use crate::Type;
+use sqlparser::sqlast::ASTNode;
 
 pub type Row = Vec<Value>;
 
@@ -11,7 +10,6 @@ pub struct DataView {
     fields: Vec<Field>,
     data: Vec<Row>,
 }
-
 
 /// the name of field and the type
 #[derive(Debug)]
