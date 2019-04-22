@@ -1,4 +1,7 @@
 # Diwata 
+
+## Warning: A rewrite is currently on-going, the repo is not currently working.
+
 Diwata is a database interface for PostgreSQL with the goal of being usable, user-friendly with its basic and advanced functionality be discoverable by the user.
 Goal of diwata is to be a replacement of back-end admin without explicitly writing the code for it.
 It is content aware, and renders records as it sees fits.
@@ -38,10 +41,6 @@ Navigating through the apps and opening other window in another browser window/t
 Binary data detected as images would be rendered as such
 ![](https://raw.githubusercontent.com/ivanceras/ivanceras.github.io/master/diwata/image-render.gif)
 
-
-### [Demo - Sakila (films)](http://web01.jcesar.clh.no:8000/#/window/public.film) using the sakila database example
-### [Demo - airlines (russian)](http://web01.jcesar.clh.no:8001/#/window/bookings.airports_data) russian airlines booking database
-### [Demo - Dota2 heroes](http://web01.jcesar.clh.no:8222/#/window/public.hero) using dota2 hero and abilities data
 
 
 ## Quickstart
