@@ -1,13 +1,6 @@
-
 #!/bin/bash
 
+wasm-pack build --target no-modules
 
-if . ./build-wasm.sh; then
+basic-http-server ./ -a 0.0.0.0:6001
 
-    if ! type basic-http-server > /dev/null; then
-       cargo install basic-http-server
-    fi
-
-    basic-http-server ./build/ -a 0.0.0.0:6001
-
-fi

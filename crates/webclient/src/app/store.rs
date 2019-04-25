@@ -2,7 +2,7 @@ use dataview::DataView;
 use dataview::Field;
 use dataview::Type;
 
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub enum Msg {
     Click,
     Tick,
@@ -17,7 +17,7 @@ pub struct Store {
 
 impl Store {
     pub fn new(count: u32) -> Store {
-        browser::log("creating a store");
+        sauron::log("creating a store");
 
         let fields = vec![
             Field {
@@ -65,7 +65,7 @@ c,99,fast,false,small,clang
 java,8,medium,true,large,jdk
             "#;
         let dataview = DataView::from_csv(fields, csv);
-        browser::log(format!("{:?}", dataview));
+        sauron::log(format!("{:?}", dataview));
         Store {
             click_count: count,
             ticks: 0,

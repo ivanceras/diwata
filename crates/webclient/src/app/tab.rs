@@ -1,7 +1,11 @@
 use crate::app::Field;
-use browser::html::attributes::*;
-use browser::html::*;
-use vdom::View;
+use sauron::html::attributes::*;
+use sauron::html::*;
+use sauron::Component;
+use crate::Node;
+
+
+use crate::app::store::Msg;
 
 pub struct Tab {
     fields: Vec<Field>,
@@ -15,8 +19,10 @@ impl Tab {
     }
 }
 
-impl View for Tab {
-    fn view(&self) -> vdom::Node {
+impl Component<Msg> for Tab {
+    fn update(&mut self, msg: Msg){
+    }
+    fn view(&self) -> Node {
         div(
             [],
             [
@@ -26,7 +32,7 @@ impl View for Tab {
                     self.fields
                         .iter()
                         .map(Field::view)
-                        .collect::<Vec<vdom::Node>>(),
+                        .collect::<Vec<Node>>(),
                 ),
             ],
         )

@@ -1,8 +1,9 @@
-use browser::html::attributes::*;
-use browser::html::*;
-use vdom::View;
-
+use sauron::html::attributes::*;
+use sauron::html::*;
+use sauron::Component;
 use crate::app::Tab;
+use crate::app::store::Msg;
+use crate::Node;
 
 pub struct DataWindow {
     tab: Tab,
@@ -14,8 +15,10 @@ impl DataWindow {
     }
 }
 
-impl View for DataWindow {
-    fn view(&self) -> vdom::Node {
+impl Component<Msg> for DataWindow {
+    fn update(&mut self, msg: Msg){
+    }
+    fn view(&self) -> Node {
         div(
             [],
             [
