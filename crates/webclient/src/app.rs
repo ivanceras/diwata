@@ -1,13 +1,9 @@
-use sauron::html::events::*;
-use sauron::html::*;
-use std::cell::RefCell;
-use std::rc::Rc;
-use wasm_bindgen;
-use wasm_bindgen::prelude::*;
-use wasm_bindgen::JsCast;
+use sauron::html::{events::*, *};
+use sauron_vdom::Node as VNode;
+use std::{cell::RefCell, rc::Rc};
+use wasm_bindgen::{self, prelude::*, JsCast};
 
 use crate::Component;
-use crate::Node;
 
 pub use datawindow::DataWindow;
 pub use field::Field;
@@ -17,10 +13,13 @@ mod datawindow;
 mod field;
 mod tab;
 
-#[derive(Debug,Clone)]
+use sauron::Node;
+
+#[derive(Debug, Clone)]
 pub enum Msg {
     Click,
     Tick,
+    DataWindowMsg(datawindow::Msg),
 }
 
 pub struct App {
@@ -39,22 +38,23 @@ impl App {
 
 impl Component<Msg> for App {
     fn update(&mut self, msg: Msg) {
-        match msg{
+        match msg {
             Msg::Click => self.click_count += 1,
-            _ => {},
+            Msg::DataWindowMsg(dw_msg) => self.datawindow.update(dw_msg),
+            Msg::Tick => sauron::log("ticking"),
         }
     }
 
-    fn view(&self) -> Node {
+    fn view(&self) -> Node<Msg> {
         div(
             [],
             [
                 h1([], [text("Diwata")]),
                 button(
-                    [onclick(move |_|Msg::Click)],
+                    [onclick(move |_| Msg::Click)],
                     [text(format!("Clicked {}", self.click_count))],
                 ),
-                div([], [self.datawindow.view()]),
+                div([], [self.datawindow.view().map(Msg::DataWindowMsg)]),
             ],
         )
     }

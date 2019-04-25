@@ -1,22 +1,34 @@
-use sauron::html::attributes::*;
-use sauron::html::*;
-use sauron::Component;
 use crate::Node;
+use sauron::{
+    html::{attributes::*, events::*, *},
+    Component,
+};
 
-use crate::app::Msg;
+#[derive(Debug, Clone)]
+pub enum Msg {
+    FieldClick,
+}
 
-pub struct Field {}
+pub struct Field {
+    click_count: u32,
+}
 
 impl Field {
     pub fn new() -> Self {
-        Field {}
+        Field { click_count: 0 }
     }
 }
 
 impl Component<Msg> for Field {
-    fn update(&mut self, msg: Msg){
+    fn update(&mut self, msg: Msg) {
+        match msg {
+            Msg::FieldClick => self.click_count += 1,
+        }
     }
-    fn view(&self) -> Node {
-        div([], [text("this is field")])
+    fn view(&self) -> Node<Msg> {
+        button(
+            [onclick(|_| Msg::FieldClick)],
+            [text(format!("this is field {}", self.click_count))],
+        )
     }
 }
