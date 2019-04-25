@@ -27,13 +27,12 @@ impl DataWindow {
 
 impl Component<Msg> for DataWindow {
     fn update(&mut self, msg: Msg) {
-        sauron::log!("Updating with {:?}", msg);
         match msg {
             Msg::DataWindowClicked => self.click_count += 1,
             Msg::TabMsg(tab_msg) => self.tab.update(tab_msg),
         }
     }
-    fn view(&self) -> sauron::Node<Msg> {
+    fn view(&self) -> Node<Msg> {
         div(
             [],
             [

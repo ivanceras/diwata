@@ -1,10 +1,7 @@
-use crate::{
-    app::{field, Field},
-    Node,
-};
+use crate::app::{field, Field};
 use sauron::{
     html::{attributes::*, events::*, *},
-    Component,
+    Component, Node,
 };
 
 #[derive(Debug, Clone)]
@@ -29,11 +26,9 @@ impl Tab {
 
 impl Component<Msg> for Tab {
     fn update(&mut self, msg: Msg) {
-        sauron::log!("This tab is clicked");
         match msg {
             Msg::TabClick => self.click_count += 1,
             Msg::FieldMsg(index, field_msg) => {
-                sauron::log!("It's a field msg: {:?}", field_msg);
                 self.fields[index].update(field_msg.clone());
             }
         }
@@ -43,7 +38,7 @@ impl Component<Msg> for Tab {
             [],
             [
                 button(
-                    [onclick(|_| Msg::TabClick)],
+                    [class("btn"), onclick(|_| Msg::TabClick)],
                     [text(format!("this is tab {}", self.click_count))],
                 ),
                 div(
@@ -51,7 +46,9 @@ impl Component<Msg> for Tab {
                     self.fields
                         .iter()
                         .enumerate()
-                        .map(|(index, field)| field.view().map(move|view| Msg::FieldMsg(index, view)))
+                        .map(|(index, field)| {
+                            field.view().map(move |view| Msg::FieldMsg(index, view))
+                        })
                         .collect::<Vec<Node<Msg>>>(),
                 ),
             ],

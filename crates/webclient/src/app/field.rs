@@ -1,7 +1,6 @@
-use crate::Node;
 use sauron::{
     html::{attributes::*, events::*, *},
-    Component,
+    Component, Node,
 };
 
 #[derive(Debug, Clone)]
@@ -27,7 +26,7 @@ impl Component<Msg> for Field {
     }
     fn view(&self) -> Node<Msg> {
         button(
-            [onclick(|_| Msg::FieldClick)],
+            [class("btn"), onclick(|_| Msg::FieldClick)],
             [text(format!("this is field {}", self.click_count))],
         )
     }
