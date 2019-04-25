@@ -1,7 +1,6 @@
 #![deny(warnings)]
 #![deny(clippy::all)]
 
-
 #[macro_use]
 extern crate structopt_derive;
 

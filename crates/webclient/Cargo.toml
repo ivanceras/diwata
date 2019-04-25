@@ -9,8 +9,6 @@ crate-type = ["cdylib"]
 [dependencies]
 sauron = "0.4.0"
 sauron_vdom = "0.4.0"
-#sauron = { path = "../../../sauron" }
-#sauron_vdom = { path = "../../../sauron/crates/sauron_vdom" }
 dataview = { path = "../dataview" }
 console_error_panic_hook = "0.1"
 js-sys = "0.3"

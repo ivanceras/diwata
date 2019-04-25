@@ -167,8 +167,7 @@ fn handle_index(_req: Request) -> Response {
 }
 
 fn handle_static(_req: Request, _path: &[&str]) -> Response {
-    Response::new()
-        .with_body("Soon")
+    Response::new().with_body("Soon")
 }
 
 fn handle_error(_req: Request, status: StatusCode, msg: String) -> Response {

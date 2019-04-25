@@ -7,9 +7,6 @@ members = [
     "crates/server",
     "crates/text-client",
     "crates/dataview",
-]
-
-exclude = [
     "crates/webclient",
 ]
 
@@ -18,3 +15,6 @@ exclude = [
 "rustorm_codegen:0.3.0" = { path = "crates/rustorm/crates/codegen" }
 "rustorm:0.13.0" = { path = "crates/rustorm" }
 "diwata_intel:0.1.2" = { path = "crates/intel" }
+"sauron:0.4.0" = { path = "../sauron" }
+"sauron_vdom:0.4.0"= { path = "../sauron/crates/sauron_vdom" }
+
