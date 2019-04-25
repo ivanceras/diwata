@@ -34,17 +34,14 @@ impl Component<Msg> for DataWindow {
     }
     fn view(&self) -> Node<Msg> {
         div(
-            [],
+            [class("datawindow")],
             [
                 div(
                     [],
-                    [
-                        textarea([rows(5), cols(200), placeholder("SELECT * ")], []),
-                        button(
-                            [onclick(|_| Msg::DataWindowClicked)],
-                            [text(format!("Data window here {}", self.click_count))],
-                        ),
-                    ],
+                    [button(
+                        [onclick(|_| Msg::DataWindowClicked)],
+                        [text(format!("Data window here {}", self.click_count))],
+                    )],
                 ),
                 div([], [self.tab.view().map(Msg::TabMsg)]),
             ],

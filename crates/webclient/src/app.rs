@@ -1,7 +1,7 @@
 pub use datawindow::DataWindow;
 pub use field::Field;
 use sauron::{
-    html::{events::*, *},
+    html::{attributes::*, events::*, *},
     Component, Node,
 };
 pub use tab::Tab;
@@ -40,9 +40,10 @@ impl Component<Msg> for App {
 
     fn view(&self) -> Node<Msg> {
         div(
-            [],
+            [styles([("display", "flex"), ("flex-direction", "column")])],
             [
                 h1([], [text("Diwata")]),
+                textarea([rows(5), cols(200), placeholder("SELECT * ")], []),
                 button(
                     [onclick(move |_| Msg::Click)],
                     [text(format!("Clicked {}", self.click_count))],
