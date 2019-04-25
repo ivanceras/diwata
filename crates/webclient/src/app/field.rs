@@ -3,7 +3,7 @@ use sauron::html::*;
 use sauron::Component;
 use crate::Node;
 
-use crate::app::store::Msg;
+use crate::app::Msg;
 
 pub struct Field {}
 

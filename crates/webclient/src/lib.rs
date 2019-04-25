@@ -7,7 +7,7 @@ use wasm_bindgen::prelude::*;
 use web_sys;
 
 use app::App;
-use app::store::Msg;
+use app::Msg;
 
 mod app;
 

@@ -5,7 +5,7 @@ use sauron::Component;
 use crate::Node;
 
 
-use crate::app::store::Msg;
+use crate::app::Msg;
 
 pub struct Tab {
     fields: Vec<Field>,

@@ -2,7 +2,7 @@ use sauron::html::attributes::*;
 use sauron::html::*;
 use sauron::Component;
 use crate::app::Tab;
-use crate::app::store::Msg;
+use crate::app::Msg;
 use crate::Node;
 
 pub struct DataWindow {

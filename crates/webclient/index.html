@@ -15,12 +15,12 @@
         const { initialize } = wasm_bindgen;
         async function run() {
             await wasm_bindgen('pkg/webclient_bg.wasm');
-            initialize("Hello");
+            initialize(window.initial_state);
         }
         run();
   </script>
   <script>
-      window.initialState = '#INITIAL_STATE_JSON#'
+      window.initial_state = '#INITIAL_STATE_JSON#'
   </script>
 </body>
 </html>
