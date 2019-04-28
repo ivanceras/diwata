@@ -7,8 +7,8 @@ edition = "2018"
 crate-type = ["cdylib"]
 
 [dependencies]
-sauron = "0.4.0"
-sauron_vdom = "0.4.0"
+sauron = "0.6.0"
+sauron_vdom = "0.6.0"
 dataview = { path = "../dataview" }
 console_error_panic_hook = "0.1"
 js-sys = "0.3"
