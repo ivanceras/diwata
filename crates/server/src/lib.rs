@@ -5,8 +5,10 @@
 extern crate structopt_derive;
 
 pub use error::ServiceError;
-pub use global::set_db_url;
-pub use global::set_login_required;
+pub use global::{
+    set_db_url,
+    set_login_required,
+};
 pub use handler::Server;
 
 pub mod context;

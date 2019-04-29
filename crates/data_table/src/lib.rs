@@ -1,54 +1,62 @@
-use crate::Type;
-use crate::Value;
+#![deny(warnings)]
+#![deny(clippy::all)]
+pub use rustorm::{
+    types::SqlType as Type,
+    Value,
+};
+
 use rustorm::common;
 use sqlparser::sqlast::ASTNode;
 
-pub type Row = Vec<Value>;
+pub type DataRow = Vec<Value>;
 
+/// A generic representation of rows that resembles homogeneos rows in a table
 #[derive(Debug)]
-pub struct DataView {
-    fields: Vec<Field>,
-    data: Vec<Row>,
+pub struct DataTable {
+    columns: Vec<DataColumn>,
+    rows: Vec<DataRow>,
 }
 
 /// the name of field and the type
 #[derive(Debug)]
-pub struct Field {
+pub struct DataColumn {
     pub name: String,
     pub description: Option<String>,
     pub tags: Vec<String>,
-    pub sql_type: Type,
+    pub data_type: Type,
 }
 
-impl Field {
+impl DataColumn {
     fn convert(&self, value: &Value) -> Value {
-        common::cast_type(value, &self.sql_type)
+        common::cast_type(value, &self.data_type)
     }
 }
 
-impl DataView {
-    pub fn from_csv(fields: Vec<Field>, csv: &str) -> Self {
+impl DataTable {
+    pub fn from_csv(columns: Vec<DataColumn>, csv: &str) -> Self {
         let mut rdr = csv::Reader::from_reader(csv.as_bytes());
-        let mut columns = vec![];
+        let mut column_names = vec![];
         if let Ok(header) = rdr.headers() {
             for h in header {
-                columns.push(h)
+                column_names.push(h)
             }
         } else {
             panic!("error reading header in csv");
         }
         let mut field_record_pos = vec![];
-        for field in &fields {
-            if let Some(pos) = columns.iter().position(|column| field.name == *column) {
+        for field in &columns {
+            if let Some(pos) =
+                column_names.iter().position(|column| field.name == *column)
+            {
                 field_record_pos.push(pos);
             } else {
-                panic!("data does not have this field: {}", field.name);
+                panic!("rows does not have this field: {}", field.name);
             }
         }
-        let mut tmp_rows: Vec<Row> = vec![];
+        let mut tmp_rows: Vec<DataRow> = vec![];
         for record in rdr.records() {
             if let Ok(record) = record {
-                let mut tmp_row: Row = Vec::with_capacity(fields.len());
+                let mut tmp_row: DataRow = Vec::with_capacity(columns.len());
                 for value in record.iter() {
                     tmp_row.push(Value::Text(value.to_string()));
                 }
@@ -56,10 +64,10 @@ impl DataView {
             }
         }
         println!("field record pos: {:?}", field_record_pos);
-        let mut data: Vec<Row> = vec![];
+        let mut rows: Vec<DataRow> = vec![];
         for tmp_row in tmp_rows {
-            let mut row: Row = vec![];
-            for (i, field) in fields.iter().enumerate() {
+            let mut row: DataRow = vec![];
+            for (i, field) in columns.iter().enumerate() {
                 let index = field_record_pos[i];
                 println!("index: {}", index);
                 println!("field: {:?}", field);
@@ -69,20 +77,20 @@ impl DataView {
                 println!("value: {:?}", value);
                 row.push(value);
             }
-            data.push(row);
+            rows.push(row);
         }
-        DataView { fields, data }
+        DataTable { columns, rows }
     }
 
-    /// add more data into this view
-    pub fn add_page(&mut self, page: Vec<Row>) {
+    /// add more rows into this view
+    pub fn add_page(&mut self, page: Vec<DataRow>) {
         for row in page {
-            self.data.push(row);
+            self.rows.push(row);
         }
     }
 
     /// derive a view based on the sql ast
-    pub fn get_views(&self, _view_sql: &ASTNode) -> Vec<DataView> {
+    pub fn get_views(&self, _view_sql: &ASTNode) -> Vec<DataTable> {
         vec![]
     }
 }
@@ -91,8 +99,10 @@ impl DataView {
 mod test {
 
     use super::*;
-    use crate::Type;
-    use crate::Value;
+    use crate::{
+        Type,
+        Value,
+    };
 
     #[test]
     fn test_from_csv() {
@@ -103,52 +113,52 @@ haskel,1,fast,false,small,ghc
 c,99,fast,false,small,clang
 java,8,medium,true,large,jdk
         "#;
-        let fields = vec![
-            Field {
+        let columns = vec![
+            DataColumn {
                 name: "pl".into(),
-                sql_type: Type::Text,
+                data_type: Type::Text,
                 description: None,
                 tags: vec![],
             },
-            Field {
+            DataColumn {
                 name: "compiler".into(),
-                sql_type: Type::Text,
+                data_type: Type::Text,
                 description: None,
                 tags: vec![],
             },
-            Field {
+            DataColumn {
                 name: "speed".into(),
-                sql_type: Type::Text,
+                data_type: Type::Text,
                 description: None,
                 tags: vec![],
             },
-            Field {
+            DataColumn {
                 name: "vm".into(),
-                sql_type: Type::Text,
+                data_type: Type::Text,
                 description: None,
                 tags: vec![],
             },
-            Field {
+            DataColumn {
                 name: "size".into(),
-                sql_type: Type::Text,
+                data_type: Type::Text,
                 description: None,
                 tags: vec![],
             },
-            Field {
+            DataColumn {
                 name: "version".into(),
-                sql_type: Type::Int,
+                data_type: Type::Int,
                 description: None,
                 tags: vec![],
             },
         ];
-        let dataview = DataView::from_csv(fields, csv);
-        assert_eq!(dataview.fields.len(), 6);
-        assert_eq!(dataview.fields[0].name, "pl");
-        assert_eq!(dataview.data[0][0], Value::Text("rust".to_string()));
-        assert_eq!(dataview.data[1][0], Value::Text("haskel".to_string()));
+        let dataview = DataTable::from_csv(columns, csv);
+        assert_eq!(dataview.columns.len(), 6);
+        assert_eq!(dataview.columns[0].name, "pl");
+        assert_eq!(dataview.rows[0][0], Value::Text("rust".to_string()));
+        assert_eq!(dataview.rows[1][0], Value::Text("haskel".to_string()));
 
-        assert_eq!(dataview.fields[2].name, "speed");
-        assert_eq!(dataview.data[0][2], Value::Text("fast".to_string()));
-        assert_eq!(dataview.data[1][2], Value::Text("fast".to_string()));
+        assert_eq!(dataview.columns[2].name, "speed");
+        assert_eq!(dataview.rows[0][2], Value::Text("fast".to_string()));
+        assert_eq!(dataview.rows[1][2], Value::Text("fast".to_string()));
     }
 }

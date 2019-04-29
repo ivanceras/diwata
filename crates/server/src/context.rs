@@ -1,11 +1,17 @@
-use crate::credentials::Credentials;
-use crate::error::ServiceError;
-use crate::global;
-use diwata_intel::cache;
-use diwata_intel::Window;
-use rustorm::DaoManager;
-use rustorm::EntityManager;
-use rustorm::Table;
+use crate::{
+    credentials::Credentials,
+    error::ServiceError,
+    global,
+};
+use diwata_intel::{
+    cache,
+    Window,
+};
+use rustorm::{
+    DaoManager,
+    EntityManager,
+    Table,
+};
 
 pub struct Context {
     pub em: EntityManager,
@@ -15,7 +21,9 @@ pub struct Context {
 }
 
 impl Context {
-    pub fn create(credentials: Result<Credentials, ServiceError>) -> Result<Self, ServiceError> {
+    pub fn create(
+        credentials: Result<Credentials, ServiceError>,
+    ) -> Result<Self, ServiceError> {
         let dm = global::get_pool_dm()?;
         let em = global::get_pool_em()?;
         let is_login_required = global::is_login_required()?;
@@ -71,14 +79,20 @@ fn set_session_credentials(
             )?;
             global::set_session_db_url(&session_db_url)?;
             println!("session_db_url: {}", session_db_url);
-            let role_db_url = global::recreate_db_url(&role.role_name, None, &current_db_url)?;
+            let role_db_url = global::recreate_db_url(
+                &role.role_name,
+                None,
+                &current_db_url,
+            )?;
             println!("role_db_url: {}", role_db_url);
             global::set_role_db_url(&role_db_url)?;
             Ok(())
         }
-        None => Err(ServiceError::GenericError(format!(
-            "no role for {}",
-            credentials.username
-        ))),
+        None => {
+            Err(ServiceError::GenericError(format!(
+                "no role for {}",
+                credentials.username
+            )))
+        }
     }
 }

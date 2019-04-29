@@ -9,7 +9,7 @@ crate-type = ["cdylib"]
 [dependencies]
 sauron = "0.6.0"
 sauron_vdom = "0.6.0"
-dataview = { path = "../dataview" }
+data_table = { path = "../data_table" }
 console_error_panic_hook = "0.1"
 js-sys = "0.3"
 lazy_static = "1.0"

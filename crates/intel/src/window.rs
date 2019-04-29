@@ -1,15 +1,21 @@
-use crate::cache;
-use crate::error::IntelError;
-use crate::tab::Tab;
-use crate::table_intel;
-use crate::table_intel::IndirectTable;
-use crate::table_intel::TableIntel;
-use rustorm::table::SchemaContent;
-use rustorm::ColumnName;
-use rustorm::DbError;
-use rustorm::EntityManager;
-use rustorm::Table;
-use rustorm::TableName;
+use crate::{
+    cache,
+    error::IntelError,
+    tab::Tab,
+    table_intel::{
+        self,
+        IndirectTable,
+        TableIntel,
+    },
+};
+use rustorm::{
+    table::SchemaContent,
+    ColumnName,
+    DbError,
+    EntityManager,
+    Table,
+    TableName,
+};
 use serde_derive::Serialize;
 
 #[derive(Debug, Serialize, Clone)]
@@ -75,7 +81,8 @@ impl Window {
         let indirect_tabs: Vec<(TableName, Tab)> = indirect
             .iter()
             .map(|t| {
-                let has_repeat = has_repeating_tab(&t.indirect_table.name, indirect);
+                let has_repeat =
+                    has_repeating_tab(&t.indirect_table.name, indirect);
                 let tab_name = if has_repeat {
                     Some(format!(
                         "{} (via {})",
@@ -116,7 +123,10 @@ impl Window {
     }
 }
 
-fn has_repeating_tab(table_name: &TableName, indirect: &[IndirectTable]) -> bool {
+fn has_repeating_tab(
+    table_name: &TableName,
+    indirect: &[IndirectTable],
+) -> bool {
     let mut matched = 0;
     for ind in indirect.iter() {
         if ind.indirect_table.name == *table_name {
@@ -157,9 +167,11 @@ fn get_grouped_windows(
     tables: &[Table],
 ) -> Result<Vec<GroupedWindow>, DbError> {
     let schema_content: Vec<SchemaContent> = em.get_grouped_tables()?;
-    let mut grouped_windows: Vec<GroupedWindow> = Vec::with_capacity(schema_content.len());
+    let mut grouped_windows: Vec<GroupedWindow> =
+        Vec::with_capacity(schema_content.len());
     for sc in schema_content {
-        let mut window_names = Vec::with_capacity(sc.tablenames.len() + sc.views.len());
+        let mut window_names =
+            Vec::with_capacity(sc.tablenames.len() + sc.views.len());
         for table_name in sc.tablenames.iter().chain(sc.views.iter()) {
             let table = table_intel::get_table(&table_name, tables);
             if let Some(table) = table {
@@ -189,10 +201,14 @@ pub fn derive_all_windows(tables: &[Table]) -> Vec<Window> {
     for table in tables {
         let table_intel = TableIntel(table);
         if table_intel.is_window(&tables) {
-            let one_one_tables: Vec<&Table> = table_intel.get_one_one_tables(&tables);
-            let has_one_tables: Vec<&Table> = table_intel.get_has_one_tables(&tables);
-            let has_many_tables: Vec<&Table> = table_intel.get_has_many_tables(&tables);
-            let indirect_tables: Vec<IndirectTable> = table_intel.get_indirect_tables(&tables);
+            let one_one_tables: Vec<&Table> =
+                table_intel.get_one_one_tables(&tables);
+            let has_one_tables: Vec<&Table> =
+                table_intel.get_has_one_tables(&tables);
+            let has_many_tables: Vec<&Table> =
+                table_intel.get_has_many_tables(&tables);
+            let indirect_tables: Vec<IndirectTable> =
+                table_intel.get_indirect_tables(&tables);
             println!("window: {}", table.name.name);
             let window = Window::from_tables(
                 &table,
@@ -208,7 +224,10 @@ pub fn derive_all_windows(tables: &[Table]) -> Vec<Window> {
     all_windows
 }
 
-pub fn get_window<'t>(table_name: &TableName, windows: &'t [Window]) -> Option<&'t Window> {
+pub fn get_window<'t>(
+    table_name: &TableName,
+    windows: &'t [Window],
+) -> Option<&'t Window> {
     windows
         .iter()
         .find(|w| w.main_tab.table_name == *table_name)

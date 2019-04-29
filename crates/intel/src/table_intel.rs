@@ -2,9 +2,11 @@
 //! table level/grade
 //!
 
-use rustorm::ColumnName;
-use rustorm::Table;
-use rustorm::TableName;
+use rustorm::{
+    ColumnName,
+    Table,
+    TableName,
+};
 
 pub struct TableIntel<'a>(pub &'a Table);
 
@@ -20,7 +22,8 @@ impl<'a> TableIntel<'a> {
         //as long as the contain the same
         //columnames
         // maybe subset check
-        self.get_referred_tablenames().len() == 1 && primary.iter().all(|c| foreign.contains(&c))
+        self.get_referred_tablenames().len() == 1
+            && primary.iter().all(|c| foreign.contains(&c))
     }
 
     /// it is a linker table when
@@ -43,9 +46,13 @@ impl<'a> TableIntel<'a> {
         }
         referred_tablenames
     }
+
     /// get all the tables that refers to this table
     /// mainly used for counting and ranking the table windows
-    pub fn get_referring_tables<'t>(&self, tables: &'t [Table]) -> Vec<&'t Table> {
+    pub fn get_referring_tables<'t>(
+        &self,
+        tables: &'t [Table],
+    ) -> Vec<&'t Table> {
         let mut referring_tables = vec![];
         for table in tables {
             if self.is_referred_by(table) {
@@ -61,8 +68,10 @@ impl<'a> TableIntel<'a> {
         for fk in foreign_keys {
             let foreign_table = &fk.foreign_table;
             let foreign_columns: &Vec<ColumnName> = &fk.referred_columns;
-            let primary_columns: Vec<&ColumnName> = self.0.get_primary_column_names();
-            let same_column_content = foreign_columns.iter().all(|c| primary_columns.contains(&c));
+            let primary_columns: Vec<&ColumnName> =
+                self.0.get_primary_column_names();
+            let same_column_content =
+                foreign_columns.iter().all(|c| primary_columns.contains(&c));
             if self.0.name == *foreign_table && same_column_content {
                 return true;
             }
@@ -77,7 +86,8 @@ impl<'a> TableIntel<'a> {
         for fk in this_foreign_keys {
             let foreign_table = &fk.foreign_table;
             let foreign_columns: &Vec<ColumnName> = &fk.referred_columns;
-            let arg_primary_columns: Vec<&ColumnName> = arg_table.get_primary_column_names();
+            let arg_primary_columns: Vec<&ColumnName> =
+                arg_table.get_primary_column_names();
             let same_column_content = foreign_columns
                 .iter()
                 .all(|c| arg_primary_columns.contains(&c));
@@ -96,7 +106,10 @@ impl<'a> TableIntel<'a> {
     /// table is also that table's primary key,
     /// and that foreign columns refers to this tables primary keys
     /// then that is a 1:1 table to this table
-    pub fn get_one_one_tables<'t>(&self, tables: &'t [Table]) -> Vec<&'t Table> {
+    pub fn get_one_one_tables<'t>(
+        &self,
+        tables: &'t [Table],
+    ) -> Vec<&'t Table> {
         let mut one_one_tables: Vec<&Table> = vec![];
         for table in tables {
             let table_intel = TableIntel(table);
@@ -107,7 +120,10 @@ impl<'a> TableIntel<'a> {
         one_one_tables
     }
 
-    pub fn get_has_one_tables<'t>(&self, tables: &'t [Table]) -> Vec<&'t Table> {
+    pub fn get_has_one_tables<'t>(
+        &self,
+        tables: &'t [Table],
+    ) -> Vec<&'t Table> {
         let mut has_one_tables: Vec<&Table> = vec![];
         for table in tables {
             let table_intel = TableIntel(&table);
@@ -128,7 +144,10 @@ impl<'a> TableIntel<'a> {
     /// list of tables that refers to this table
     /// but is not owned
     /// neither a linke
-    pub fn get_has_many_tables<'t>(&self, tables: &'t [Table]) -> Vec<&'t Table> {
+    pub fn get_has_many_tables<'t>(
+        &self,
+        tables: &'t [Table],
+    ) -> Vec<&'t Table> {
         let mut has_many_tables: Vec<&Table> = vec![];
         for table in tables {
             let table_intel = TableIntel(&table);
@@ -142,7 +161,10 @@ impl<'a> TableIntel<'a> {
         has_many_tables
     }
 
-    pub fn get_indirect_tables<'t>(&self, tables: &'t [Table]) -> Vec<IndirectTable<'t>> {
+    pub fn get_indirect_tables<'t>(
+        &self,
+        tables: &'t [Table],
+    ) -> Vec<IndirectTable<'t>> {
         let mut indirect_tables = vec![];
         for table in tables {
             let table_intel = TableIntel(&table);
@@ -182,7 +204,10 @@ impl<'a> TableIntel<'a> {
     }
 }
 
-pub fn get_table<'t>(tablename: &TableName, tables: &'t [Table]) -> Option<&'t Table> {
+pub fn get_table<'t>(
+    tablename: &TableName,
+    tables: &'t [Table],
+) -> Option<&'t Table> {
     tables.iter().find(|t| t.name == *tablename)
 }
 
@@ -232,9 +257,11 @@ mod test {
         assert!(all_tables.is_ok());
         let all_tables = all_tables.unwrap();
         let product_name = TableName::from("bazaar.product");
-        let product_availability_name = TableName::from("bazaar.product_availability");
+        let product_availability_name =
+            TableName::from("bazaar.product_availability");
         let product = em.get_table(&product_name).unwrap();
-        let product_availability = em.get_table(&product_availability_name).unwrap();
+        let product_availability =
+            em.get_table(&product_availability_name).unwrap();
         let intel_product = TableIntel(&product);
         let intel_availability = TableIntel(&product_availability);
         assert!(intel_product.is_referred_by(&product_availability));
@@ -269,7 +296,10 @@ mod test {
         assert_eq!(has_many_tables[1].name, TableName::from("bazaar.product"));
         assert_eq!(has_many_tables[2].name, TableName::from("bazaar.review"));
         assert_eq!(has_many_tables[3].name, TableName::from("bazaar.settings"));
-        assert_eq!(has_many_tables[4].name, TableName::from("bazaar.user_info"));
+        assert_eq!(
+            has_many_tables[4].name,
+            TableName::from("bazaar.user_info")
+        );
     }
 
     #[test]
@@ -349,7 +379,8 @@ mod test {
                 for indirect in indirect_tables {
                     println!(
                         "          indirect --> ({}) --> ({})",
-                        indirect.linker.name.name, indirect.indirect_table.name.name
+                        indirect.linker.name.name,
+                        indirect.indirect_table.name.name
                     );
                 }
             }

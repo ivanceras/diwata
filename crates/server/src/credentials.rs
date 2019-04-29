@@ -1,9 +1,17 @@
 use crate::error::ServiceError;
-use hyper;
-use hyper::header::{self, Header, Raw};
-use hyper::Request;
-use std::convert::TryFrom;
-use std::fmt;
+use hyper::{
+    self,
+    header::{
+        self,
+        Header,
+        Raw,
+    },
+    Request,
+};
+use std::{
+    convert::TryFrom,
+    fmt,
+};
 
 pub struct Credentials {
     pub username: String,

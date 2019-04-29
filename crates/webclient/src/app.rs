@@ -1,31 +1,28 @@
-pub use datawindow::DataWindow;
-pub use field::Field;
+pub use field_view::FieldView;
 use sauron::{
     html::{attributes::*, events::*, *},
     Component, Node,
 };
-pub use tab::Tab;
+pub use tab_view::TabView;
+pub use window_view::WindowView;
 
-mod datawindow;
-mod field;
-mod tab;
+mod field_view;
+mod tab_view;
+mod window_view;
 
 #[derive(Debug, Clone)]
 pub enum Msg {
-    Click,
-    DataWindowMsg(datawindow::Msg),
+    DataWindowMsg(window_view::Msg),
 }
 
 pub struct App {
-    datawindow: DataWindow,
-    click_count: u32,
+    window_view: WindowView,
 }
 
 impl App {
     pub fn new() -> App {
         App {
-            datawindow: DataWindow::new(),
-            click_count: 0,
+            window_view: WindowView::new(),
         }
     }
 }
@@ -33,8 +30,7 @@ impl App {
 impl Component<Msg> for App {
     fn update(&mut self, msg: Msg) {
         match msg {
-            Msg::Click => self.click_count += 1,
-            Msg::DataWindowMsg(dw_msg) => self.datawindow.update(dw_msg),
+            Msg::DataWindowMsg(dw_msg) => self.window_view.update(dw_msg),
         }
     }
 
@@ -44,11 +40,7 @@ impl Component<Msg> for App {
             [
                 h1([], [text("Diwata")]),
                 textarea([rows(5), cols(200), placeholder("SELECT * ")], []),
-                button(
-                    [onclick(move |_| Msg::Click)],
-                    [text(format!("Clicked {}", self.click_count))],
-                ),
-                div([], [self.datawindow.view().map(Msg::DataWindowMsg)]),
+                div([], [self.window_view.view().map(Msg::DataWindowMsg)]),
             ],
         )
     }

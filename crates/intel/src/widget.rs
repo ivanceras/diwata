@@ -1,9 +1,13 @@
-use crate::data_container::DropdownInfo;
-use crate::reference::Reference;
-use crate::tab::Tab;
-use rustorm::types::SqlType;
-use rustorm::Column;
-use rustorm::Table;
+use crate::{
+    data_container::DropdownInfo,
+    reference::Reference,
+    tab::Tab,
+};
+use rustorm::{
+    types::SqlType,
+    Column,
+    Table,
+};
 use serde_derive::Serialize;
 
 #[allow(unused)]
@@ -116,7 +120,10 @@ impl ControlWidget {
     /// derive widget base from column
     /// reference is derived first then the widget is based
     /// from the reference
-    pub fn derive_control_widget(column: &Column, reference: &Option<Reference>) -> ControlWidget {
+    pub fn derive_control_widget(
+        column: &Column,
+        reference: &Option<Reference>,
+    ) -> ControlWidget {
         let limit = column.specification.get_limit();
         let alignment = Self::derive_alignment(column);
         let sql_type = &column.specification.sql_type;
@@ -134,7 +141,9 @@ impl ControlWidget {
         } else {
             let widget = if *sql_type == SqlType::Bool {
                 Widget::Checkbox
-            } else if *sql_type == SqlType::TimestampTz || *sql_type == SqlType::Timestamp {
+            } else if *sql_type == SqlType::TimestampTz
+                || *sql_type == SqlType::Timestamp
+            {
                 Widget::DateTimePicker
             } else if *sql_type == SqlType::Date {
                 Widget::DatePicker
@@ -176,52 +185,61 @@ impl ControlWidget {
         let widget = reference.get_widget_fullview();
         let pk_width = columns
             .iter()
-            .map(|col| match Self::get_width(col) {
-                Some(width) => width,
-                None => 0,
+            .map(|col| {
+                match Self::get_width(col) {
+                    Some(width) => width,
+                    None => 0,
+                }
             })
             .max()
             .unwrap_or(0);
 
-        let dropdown = Tab::derive_dropdowninfo(table).map(Dropdown::TableDropdown);
+        let dropdown =
+            Tab::derive_dropdowninfo(table).map(Dropdown::TableDropdown);
 
         // derive the width from the the total of width in dropdown display + separator
         let display_width = match dropdown {
-            Some(ref dropdown) => match *dropdown {
-                Dropdown::TableDropdown(ref dropdown_info) => {
-                    let display = &dropdown_info.display;
-                    let separator_width = match display.separator {
-                        Some(ref separator) => separator.len(),
-                        None => 0,
-                    };
-                    let display_widths: i32 = display
-                        .columns
-                        .iter()
-                        .map(|col_name| {
-                            let column = table.get_column(col_name);
-                            match column {
-                                Some(column) => Self::get_width(column).unwrap_or(0),
-                                None => 0,
-                            }
-                        })
-                        .sum();
-                    display_widths + separator_width as i32
+            Some(ref dropdown) => {
+                match *dropdown {
+                    Dropdown::TableDropdown(ref dropdown_info) => {
+                        let display = &dropdown_info.display;
+                        let separator_width = match display.separator {
+                            Some(ref separator) => separator.len(),
+                            None => 0,
+                        };
+                        let display_widths: i32 = display
+                            .columns
+                            .iter()
+                            .map(|col_name| {
+                                let column = table.get_column(col_name);
+                                match column {
+                                    Some(column) => {
+                                        Self::get_width(column).unwrap_or(0)
+                                    }
+                                    None => 0,
+                                }
+                            })
+                            .sum();
+                        display_widths + separator_width as i32
+                    }
                 }
-            },
+            }
             None => 0,
         };
 
         let alignment = match dropdown {
-            Some(ref dropdown) => match *dropdown {
-                Dropdown::TableDropdown(ref dropdown_info) => {
-                    let display = &dropdown_info.display;
-                    if !display.columns.is_empty() {
-                        Alignment::Left
-                    } else {
-                        Alignment::Right
+            Some(ref dropdown) => {
+                match *dropdown {
+                    Dropdown::TableDropdown(ref dropdown_info) => {
+                        let display = &dropdown_info.display;
+                        if !display.columns.is_empty() {
+                            Alignment::Left
+                        } else {
+                            Alignment::Right
+                        }
                     }
                 }
-            },
+            }
             None => Alignment::Left,
         };
 

@@ -6,10 +6,14 @@ extern crate structopt;
 extern crate quicli;
 use quicli::prelude::*;
 use term_table::{
-    cell::{Alignment, Cell},
+    cell::{
+        Alignment,
+        Cell,
+    },
     row::Row,
+    Table,
+    TableStyle,
 };
-use term_table::{Table, TableStyle};
 
 // Add cool slogan for your app here, e.g.:
 /// Get first n lines of a file
@@ -60,12 +64,20 @@ fn exec(sql: &str) {
 
     table.add_row(Row::new(vec![
         Cell::new("This is left aligned text", 1),
-        Cell::new_with_alignment("This is right aligned text", 1, Alignment::Right),
+        Cell::new_with_alignment(
+            "This is right aligned text",
+            1,
+            Alignment::Right,
+        ),
     ]));
 
     table.add_row(Row::new(vec![
         Cell::new("This is left aligned text", 1),
-        Cell::new_with_alignment("This is right aligned text", 1, Alignment::Right),
+        Cell::new_with_alignment(
+            "This is right aligned text",
+            1,
+            Alignment::Right,
+        ),
     ]));
 
     table.add_row(Row::new(vec![

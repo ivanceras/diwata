@@ -1,25 +1,35 @@
 //! provides data service for window
-use crate::error::IntelError;
-use crate::tab::Tab;
-use crate::window::Window;
+use crate::{
+    error::IntelError,
+    tab::Tab,
+    window::Window,
+};
 use bigdecimal::BigDecimal;
-use rustorm::common;
-use rustorm::types::SqlType;
-use rustorm::ColumnName;
-use rustorm::Dao;
-use rustorm::DbError;
-use rustorm::Rows;
-use rustorm::Value;
-use std::collections::BTreeMap;
-use std::str::FromStr;
+use rustorm::{
+    common,
+    types::SqlType,
+    ColumnName,
+    Dao,
+    DbError,
+    Rows,
+    Value,
+};
+use std::{
+    collections::BTreeMap,
+    str::FromStr,
+};
 use uuid::Uuid;
 
 pub fn calc_offset(page: u32, page_size: u32) -> u32 {
     (page - 1) * page_size
 }
 
-pub fn cast_rows(rows: Rows, column_datatypes: &BTreeMap<String, SqlType>) -> Rows {
-    let new_columns: Vec<String> = rows.columns.iter().map(ToString::to_string).collect();
+pub fn cast_rows(
+    rows: Rows,
+    column_datatypes: &BTreeMap<String, SqlType>,
+) -> Rows {
+    let new_columns: Vec<String> =
+        rows.columns.iter().map(ToString::to_string).collect();
     let mut casted_rows = Rows::new(new_columns);
     for dao in rows.iter() {
         let mut new_row = vec![];
@@ -40,7 +50,10 @@ pub fn cast_rows(rows: Rows, column_datatypes: &BTreeMap<String, SqlType>) -> Ro
     casted_rows
 }
 
-pub fn cast_record(record: Dao, column_datatypes: &BTreeMap<String, SqlType>) -> Dao {
+pub fn cast_record(
+    record: Dao,
+    column_datatypes: &BTreeMap<String, SqlType>,
+) -> Dao {
     let mut new_rec = Dao::new();
     for (k, _v) in record.0.iter() {
         let column = k.to_string();
@@ -57,7 +70,10 @@ pub fn cast_record(record: Dao, column_datatypes: &BTreeMap<String, SqlType>) ->
 }
 
 //that belong to this window, otherwise raise a SQL injection attempt error
-pub fn validate_column(column_name: &ColumnName, window: &Window) -> Result<(), DbError> {
+pub fn validate_column(
+    column_name: &ColumnName,
+    window: &Window,
+) -> Result<(), DbError> {
     if window.has_column_name(column_name) {
         Ok(())
     } else {
@@ -68,7 +84,10 @@ pub fn validate_column(column_name: &ColumnName, window: &Window) -> Result<(), 
     }
 }
 
-pub fn validate_tab_column(column_name: &ColumnName, tab: &Tab) -> Result<(), DbError> {
+pub fn validate_tab_column(
+    column_name: &ColumnName,
+    tab: &Tab,
+) -> Result<(), DbError> {
     if tab.has_column_name(column_name) {
         Ok(())
     } else {
@@ -153,7 +172,6 @@ pub fn extract_record_id<'a>(
 /// get the value which matches the column name and cast the value to the required data type
 /// supported casting:
 /// Int -> SmallInt
-///
 pub fn find_value<'a>(
     needle: &ColumnName,
     record_id: &'a [(&ColumnName, Value)],

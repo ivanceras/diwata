@@ -3,7 +3,7 @@ members = [
     "crates/intel",
     "crates/server",
     "crates/text-client",
-    "crates/dataview",
+    "crates/data_table",
     "crates/webclient",
 ]
 

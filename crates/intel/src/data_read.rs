@@ -1,33 +1,45 @@
-use crate::common;
-use crate::data_container::Filter;
-use crate::data_container::Lookup;
-use crate::data_container::Order;
-use crate::data_container::RecordDetail;
-use crate::data_container::{Direction, Sort};
-use crate::error::IntelError;
-use crate::query_builder::Query;
-use crate::tab::Tab;
-use crate::table_intel;
-use crate::window::Window;
-use rustorm::types::SqlType;
-use rustorm::ColumnName;
-use rustorm::Dao;
-use rustorm::DaoManager;
-use rustorm::DatabaseName;
-use rustorm::DbError;
-use rustorm::EntityManager;
-use rustorm::Rows;
-use rustorm::Table;
-use rustorm::TableName;
-use rustorm::Value;
+use crate::{
+    common,
+    data_container::{
+        Direction,
+        Filter,
+        Lookup,
+        Order,
+        RecordDetail,
+        Sort,
+    },
+    error::IntelError,
+    query_builder::Query,
+    tab::Tab,
+    table_intel,
+    window::Window,
+};
+use rustorm::{
+    types::SqlType,
+    ColumnName,
+    Dao,
+    DaoManager,
+    DatabaseName,
+    DbError,
+    EntityManager,
+    Rows,
+    Table,
+    TableName,
+    Value,
+};
 use std::collections::BTreeMap;
 
-pub fn get_main_table<'a>(window: &Window, tables: &'a [Table]) -> Option<&'a Table> {
+pub fn get_main_table<'a>(
+    window: &Window,
+    tables: &'a [Table],
+) -> Option<&'a Table> {
     let main_tablename = &window.main_tab.table_name;
     table_intel::get_table(main_tablename, tables)
 }
 
-pub fn get_database_name(em: &EntityManager) -> Result<Option<DatabaseName>, DbError> {
+pub fn get_database_name(
+    em: &EntityManager,
+) -> Result<Option<DatabaseName>, DbError> {
     em.get_database_name()
 }
 
@@ -45,7 +57,8 @@ pub fn get_maintable_data(
     page: u32,
     page_size: u32,
 ) -> Result<Rows, DbError> {
-    let main_table = get_main_table(window, tables).expect("main table should exist!");
+    let main_table =
+        get_main_table(window, tables).expect("main table should exist!");
 
     let main_tablename = &main_table.name;
     let tab = &window.main_tab;
@@ -115,10 +128,12 @@ pub fn get_selected_record_detail(
     record_id: &str,
     page_size: u32,
 ) -> Result<Option<RecordDetail>, IntelError> {
-    let main_table = get_main_table(window, tables).expect("table should exist");
+    let main_table =
+        get_main_table(window, tables).expect("table should exist");
     let pk_types = main_table.get_primary_column_types();
     let primary_columns = main_table.get_primary_column_names();
-    let record_id = common::extract_record_id(record_id, &pk_types, &primary_columns)?;
+    let record_id =
+        common::extract_record_id(record_id, &pk_types, &primary_columns)?;
     println!("arg record_id: {:#?}", record_id);
     let mut query = Query::new();
     query.add_table_datatypes(&main_table);
@@ -158,7 +173,8 @@ pub fn get_selected_record_detail(
                     &record_id,
                     page_size,
                 )?;
-                one_one_records.push((one_one_tab.table_name.clone(), one_record))
+                one_one_records
+                    .push((one_one_tab.table_name.clone(), one_record))
             }
             let mut has_many_records: Vec<(TableName, Rows)> =
                 Vec::with_capacity(window.has_many_tabs.iter().count());
@@ -177,13 +193,16 @@ pub fn get_selected_record_detail(
                     1,
                 )?;
                 println!("about to push many record: {:?}", many_record);
-                has_many_records.push((has_many_tab.table_name.clone(), many_record));
+                has_many_records
+                    .push((has_many_tab.table_name.clone(), many_record));
                 println!("pushed");
             }
             println!("Getting indirect");
             let mut indirect_records: Vec<(TableName, TableName, Rows)> =
                 Vec::with_capacity(window.indirect_tabs.iter().count());
-            for &(ref linker_table, ref indirect_tab) in window.indirect_tabs.iter() {
+            for &(ref linker_table, ref indirect_tab) in
+                window.indirect_tabs.iter()
+            {
                 let ind_records = get_indirect_records(
                     em,
                     dm,
@@ -225,8 +244,8 @@ fn get_one_one_record(
     record_id: &[(&ColumnName, Value)],
     page_size: u32,
 ) -> Result<Option<Dao>, DbError> {
-    let one_one_table =
-        table_intel::get_table(&one_one_tab.table_name, tables).expect("table should exist");
+    let one_one_table = table_intel::get_table(&one_one_tab.table_name, tables)
+        .expect("table should exist");
 
     let mut query = Query::new();
     query.add_table_datatypes(&one_one_table);
@@ -279,7 +298,8 @@ pub fn get_has_many_records_service(
 ) -> Result<Rows, IntelError> {
     let pk_types = main_table.get_primary_column_types();
     let primary_columns = main_table.get_primary_column_names();
-    let record_id = common::extract_record_id(record_id, &pk_types, &primary_columns)?;
+    let record_id =
+        common::extract_record_id(record_id, &pk_types, &primary_columns)?;
     let rows = get_has_many_records(
         em,
         dm,
@@ -309,7 +329,8 @@ fn get_has_many_records(
     page: u32,
 ) -> Result<Rows, DbError> {
     let has_many_table =
-        table_intel::get_table(&has_many_tab.table_name, tables).expect("table should exist");
+        table_intel::get_table(&has_many_tab.table_name, tables)
+            .expect("table should exist");
     let mut query = Query::new();
     query.select();
     query.enumerate_columns(&has_many_table);
@@ -319,17 +340,22 @@ fn get_has_many_records(
     query.from(&has_many_table.name);
     query.left_join_display_source(has_many_tab, tables);
 
-    let has_many_fk = has_many_table.get_foreign_column_names_to_table(&main_table.name);
-    let has_many_fk_data_types = has_many_table.get_foreign_column_types_to_table(&main_table.name);
+    let has_many_fk =
+        has_many_table.get_foreign_column_names_to_table(&main_table.name);
+    let has_many_fk_data_types =
+        has_many_table.get_foreign_column_types_to_table(&main_table.name);
     assert_eq!(has_many_fk.len(), has_many_fk_data_types.len());
 
     let referred_columns_to_main_table: Option<&Vec<ColumnName>> =
         has_many_table.get_referred_columns_to_table(&main_table.name);
     assert!(referred_columns_to_main_table.is_some());
-    let referred_columns_to_main_table = referred_columns_to_main_table.unwrap();
+    let referred_columns_to_main_table =
+        referred_columns_to_main_table.unwrap();
     assert_eq!(referred_columns_to_main_table.len(), has_many_fk.len());
 
-    for (i, referred_column) in referred_columns_to_main_table.iter().enumerate() {
+    for (i, referred_column) in
+        referred_columns_to_main_table.iter().enumerate()
+    {
         if i == 0 {
             query.append("\nWHERE ");
         } else {
@@ -341,7 +367,9 @@ fn get_has_many_records(
             has_many_fk[i].complete_name(),
         ));
         let required_type = has_many_fk_data_types[i];
-        if let Some(v) = common::find_value(referred_column, main_record_id, required_type) {
+        if let Some(v) =
+            common::find_value(referred_column, main_record_id, required_type)
+        {
             query.add_param(v.clone())
         }
     }
@@ -408,7 +436,8 @@ pub fn get_indirect_records_service(
 ) -> Result<Rows, IntelError> {
     let pk_types = main_table.get_primary_column_types();
     let primary_columns = main_table.get_primary_column_names();
-    let record_id = common::extract_record_id(record_id, &pk_types, &primary_columns)?;
+    let record_id =
+        common::extract_record_id(record_id, &pk_types, &primary_columns)?;
     let rows = get_indirect_records(
         em,
         dm,
@@ -440,12 +469,13 @@ fn get_indirect_records(
     page: u32,
 ) -> Result<Rows, DbError> {
     let indirect_table =
-        table_intel::get_table(&indirect_tab.table_name, tables).expect("table should exist");
+        table_intel::get_table(&indirect_tab.table_name, tables)
+            .expect("table should exist");
     let mut query = Query::new();
     query.add_table_datatypes(&indirect_table);
 
-    let linker_table =
-        table_intel::get_table(linker_table_name, tables).expect("table should exist");
+    let linker_table = table_intel::get_table(linker_table_name, tables)
+        .expect("table should exist");
 
     let indirect_tablename = &indirect_table.name;
 
@@ -490,7 +520,8 @@ fn get_indirect_records(
             query.append("\nAND ");
         }
         query.append(&format!("{}.{} = ", linker_table.name.name, fc.name,));
-        let fc_column = linker_table.get_column(&fc).expect("column should exist");
+        let fc_column =
+            linker_table.get_column(&fc).expect("column should exist");
         let required_type: &SqlType = &fc_column.get_sql_type();
         let rc = &linker_fc_referring_columns[i];
         if let Some(v) = common::find_value(rc, record_id, required_type) {
@@ -558,7 +589,10 @@ pub fn get_all_lookup_for_window(
 
     for has_many_tab in &window.has_many_tabs {
         // treat this tab to be also a lookup for linking records in
-        lookup_tables.push((&has_many_tab.table_name, has_many_tab.get_display_columns()));
+        lookup_tables.push((
+            &has_many_tab.table_name,
+            has_many_tab.get_display_columns(),
+        ));
 
         let mut lookup = get_tab_lookup_tablenames(has_many_tab);
         lookup_tables.append(&mut lookup);
@@ -566,7 +600,10 @@ pub fn get_all_lookup_for_window(
 
     for &(ref _linker_table, ref indirect_tab) in &window.indirect_tabs {
         // treat this tab to be also a lookup for linking records in
-        lookup_tables.push((&indirect_tab.table_name, indirect_tab.get_display_columns()));
+        lookup_tables.push((
+            &indirect_tab.table_name,
+            indirect_tab.get_display_columns(),
+        ));
 
         let mut lookup = get_tab_lookup_tablenames(indirect_tab);
         lookup_tables.append(&mut lookup);
@@ -586,11 +623,12 @@ pub fn get_all_lookup_for_window(
             page_size,
             1,
         )?;
-        let lookup_table =
-            table_intel::get_table(lookup_table_name, tables).expect("table should exist");
+        let lookup_table = table_intel::get_table(lookup_table_name, tables)
+            .expect("table should exist");
         let mut column_datatypes: BTreeMap<String, SqlType> = BTreeMap::new();
         for column in lookup_table.columns.iter() {
-            column_datatypes.insert(column.name.name.clone(), column.get_sql_type());
+            column_datatypes
+                .insert(column.name.name.clone(), column.get_sql_type());
         }
         let rows = common::cast_rows(rows, &column_datatypes);
         lookup_data.push((lookup_table_name.to_owned(), rows));
@@ -603,7 +641,8 @@ fn get_tab_lookup_tablenames(tab: &Tab) -> Vec<(&TableName, Vec<&ColumnName>)> {
     let mut table_names = vec![];
     for field in tab.fields.iter() {
         if let Some(dropdown_info) = field.get_dropdown_info() {
-            let display_columns = dropdown_info.display.columns.iter().collect();
+            let display_columns =
+                dropdown_info.display.columns.iter().collect();
             table_names.push((&dropdown_info.source, display_columns))
         }
     }
@@ -647,7 +686,8 @@ pub fn get_lookup_data_of_table_with_display_columns(
     page_size: u32,
     page: u32,
 ) -> Result<Rows, IntelError> {
-    let table = table_intel::get_table(table_name, tables).expect("table should exist");
+    let table =
+        table_intel::get_table(table_name, tables).expect("table should exist");
 
     let primary_columns = table.get_primary_column_names();
     //assert!(primary_columns.len() > 0);
@@ -706,7 +746,8 @@ mod tests {
         let window = window::get_window(&table_name, &windows);
         assert!(window.is_some());
         let window = window.unwrap();
-        let data = get_maintable_data(&em, &dm, &tables, &window, None, None, 200, 1);
+        let data =
+            get_maintable_data(&em, &dm, &tables, &window, None, None, 200, 1);
         println!("data: {:#?}", data);
         assert!(data.is_ok());
     }

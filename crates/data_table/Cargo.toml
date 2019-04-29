@@ -1,5 +1,5 @@
 [package]
-name = "dataview"
+name = "data_table"
 version = "0.1.0"
 authors = ["Jovansonlee Cesar <ivanceras@gmail.com>"]
 edition = "2018"

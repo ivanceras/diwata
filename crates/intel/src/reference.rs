@@ -47,20 +47,20 @@ pub enum Reference {
     PrimaryUuid,      // it is a primary key value and uuid type
     PrimaryInt,       // it is a primary key value and int type
     PrimaryField,     // primary key value regardless of the type
-    ReferredUuid,     // a foreign key uuid referring to another record from some other table
-    Created,          // indicates a date the record was created
-    Updated,          // indicates a date the record was updated
-    CreatedBy,        // indicated the user who created the record
-    UpdatedBy,        // indicates the user who updated the record
-    IsActive,         // a boolean indicates whether the record is active or not
-    Date,             // generic date
-    DateTime,         // generic date time
+    ReferredUuid, /* a foreign key uuid referring to another record from some other table */
+    Created,      // indicates a date the record was created
+    Updated,      // indicates a date the record was updated
+    CreatedBy,    // indicated the user who created the record
+    UpdatedBy,    // indicates the user who updated the record
+    IsActive,     // a boolean indicates whether the record is active or not
+    Date,         // generic date
+    DateTime,     // generic date time
 
-    Url,       //url links, could be linked/summarized (ie: starts with https:// and or wwww )
+    Url, /* url links, could be linked/summarized (ie: starts with https:// and or wwww ) */
     VideoLink, // link to videos
     YoutubeVideoLink, // link to youtube videos
     ImageLink, // link to image, could be rehosted to avoid xss
-    Tweet,     // linked to a tweet
+    Tweet, // linked to a tweet
     MapLocation,
     Latitude,
     Longitude,
@@ -72,8 +72,8 @@ pub enum Reference {
     Banner,  // Huge images for banner puposes
 
     ForeignReferredValueLookup, // could render the referenced data to here
-    ImageForeignLookup, // foreign lookup with image rendered to help better recognize records
-    ForeignIdentifiableValueLookup, // displays the identifiable record for the lookup
+    ImageForeignLookup, /* foreign lookup with image rendered to help better recognize records */
+    ForeignIdentifiableValueLookup, /* displays the identifiable record for the lookup */
 
     Price,  // rendered as price or currency
     Symbol, // 1 character symbol such as currency symbol
@@ -83,9 +83,9 @@ pub enum Reference {
     GenderSelection,       // Male/Female selection widget
     Toggle,                // bool, rendered as toggle button
     ChecklistItem,         // bool, most likely be rendered as checkbox
-    BoolStatusReadOnly,    // most likely be check mark image that is read-only
+    BoolStatusReadOnly, // most likely be check mark image that is read-only
     ActiveStatusIndicator, // green when active, gray or invisible when not
-    SortOrder, // a column that describes the sort order of the item, if present then reordering capability will be displayed
+    SortOrder, /* a column that describes the sort order of the item, if present then reordering capability will be displayed */
     Selection, // bool, an item could be selected
 
     Enum(String, Vec<String>), // enum list

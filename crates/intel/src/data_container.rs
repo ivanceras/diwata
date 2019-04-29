@@ -1,9 +1,13 @@
-use rustorm::ColumnName;
-use rustorm::Dao;
-use rustorm::Rows;
-use rustorm::TableName;
-use serde_derive::Deserialize;
-use serde_derive::Serialize;
+use rustorm::{
+    ColumnName,
+    Dao,
+    Rows,
+    TableName,
+};
+use serde_derive::{
+    Deserialize,
+    Serialize,
+};
 
 #[derive(Debug, Serialize)]
 pub struct RecordDetail {
@@ -127,14 +131,18 @@ impl From<&str> for Order {
         let column = cols.join(".");
         let column_name = ColumnName::from(&column);
         match direction {
-            Some(direction) => Order {
-                column_name,
-                direction,
-            },
-            None => Order {
-                column_name: ColumnName::from(&splinters.join(".")),
-                direction: Direction::Asc,
-            },
+            Some(direction) => {
+                Order {
+                    column_name,
+                    direction,
+                }
+            }
+            None => {
+                Order {
+                    column_name: ColumnName::from(&splinters.join(".")),
+                    direction: Direction::Asc,
+                }
+            }
         }
     }
 }

@@ -1,4 +1,4 @@
-#![deny(warnings)]
+//#![deny(warnings)]
 #![deny(clippy::all)]
 use app::App;
 use wasm_bindgen::{self, prelude::*};

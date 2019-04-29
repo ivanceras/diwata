@@ -1,13 +1,19 @@
 use rustorm::Column;
 
-use crate::data_container::DropdownInfo;
-use crate::reference::Reference;
-use crate::widget::ControlWidget;
-use crate::widget::Dropdown;
-use rustorm::column::Capacity;
-use rustorm::types::SqlType;
-use rustorm::ColumnName;
-use rustorm::Table;
+use crate::{
+    data_container::DropdownInfo,
+    reference::Reference,
+    widget::{
+        ControlWidget,
+        Dropdown,
+    },
+};
+use rustorm::{
+    column::Capacity,
+    types::SqlType,
+    ColumnName,
+    Table,
+};
 use serde_derive::Serialize;
 
 #[derive(Debug, Serialize, Clone)]
@@ -48,19 +54,25 @@ impl ColumnDetail {
     fn column_names(&self) -> Vec<&ColumnName> {
         match *self {
             ColumnDetail::Simple(ref column_name, _) => vec![column_name],
-            ColumnDetail::Compound(ref column_names_types) => column_names_types
-                .iter()
-                .map(|&(ref column_name, _)| column_name)
-                .collect(),
+            ColumnDetail::Compound(ref column_names_types) => {
+                column_names_types
+                    .iter()
+                    .map(|&(ref column_name, _)| column_name)
+                    .collect()
+            }
         }
     }
 
     fn has_column_name(&self, arg_column_name: &ColumnName) -> bool {
         match *self {
-            ColumnDetail::Simple(ref column_name, _) => column_name == arg_column_name,
-            ColumnDetail::Compound(ref column_names_types) => column_names_types
-                .iter()
-                .any(|&(ref column_name, _)| column_name == arg_column_name),
+            ColumnDetail::Simple(ref column_name, _) => {
+                column_name == arg_column_name
+            }
+            ColumnDetail::Compound(ref column_names_types) => {
+                column_names_types
+                    .iter()
+                    .any(|&(ref column_name, _)| column_name == arg_column_name)
+            }
         }
     }
 }
@@ -100,7 +112,8 @@ impl Field {
     /// derive field from supplied column
     pub fn from_column(table: &Table, column: &Column) -> Self {
         let reference = Self::try_derive_reference(table, column);
-        let control_widget = ControlWidget::derive_control_widget(column, &reference);
+        let control_widget =
+            ControlWidget::derive_control_widget(column, &reference);
         let column_detail: ColumnDetail = ColumnDetail::from(column);
         let primary_columns = table.get_primary_column_names();
         let in_primary = primary_columns.contains(&&column.name);
@@ -118,7 +131,9 @@ impl Field {
         let control_widget = &self.control_widget;
         let dropdown = &control_widget.dropdown;
         match *dropdown {
-            Some(Dropdown::TableDropdown(ref dropdown_info)) => Some(dropdown_info),
+            Some(Dropdown::TableDropdown(ref dropdown_info)) => {
+                Some(dropdown_info)
+            }
             None => None,
         }
     }
@@ -137,17 +152,22 @@ impl Field {
     /// that uses composite foreign key
     /// the field name will be the table name
     /// it looks up to
-    pub fn from_has_one_table(table: &Table, columns: &[&Column], referred_table: &Table) -> Self {
-        let control_widget = ControlWidget::from_has_one_table(columns, referred_table);
+    pub fn from_has_one_table(
+        table: &Table,
+        columns: &[&Column],
+        referred_table: &Table,
+    ) -> Self {
+        let control_widget =
+            ControlWidget::from_has_one_table(columns, referred_table);
         let mut columns_comment = String::new();
         for column in columns {
             if let Some(ref comment) = column.comment {
                 columns_comment.push_str(&comment);
             }
         }
-        let in_primary = columns
-            .iter()
-            .all(|column| table.get_primary_column_names().contains(&&column.name));
+        let in_primary = columns.iter().all(|column| {
+            table.get_primary_column_names().contains(&&column.name)
+        });
         let column_detail: ColumnDetail = ColumnDetail::from(columns);
         Field {
             name: referred_table.name.name.to_string(),
@@ -165,7 +185,10 @@ impl Field {
 
     /// check to see if has a strict derive_reference
     /// also try the derive_maybe_reference
-    fn try_derive_reference(table: &Table, column: &Column) -> Option<Reference> {
+    fn try_derive_reference(
+        table: &Table,
+        column: &Column,
+    ) -> Option<Reference> {
         match Self::derive_reference(table, column) {
             Some(reference) => Some(reference),
             None => Self::derive_maybe_reference(table, column),
@@ -191,7 +214,9 @@ impl Field {
             Some(Reference::Password)
         } else if sql_type == &SqlType::Varchar && column_name == "name" {
             Some(Reference::Name)
-        } else if sql_type == &SqlType::Varchar && column_name == &format!("{}_name", table_name) {
+        } else if sql_type == &SqlType::Varchar
+            && column_name == &format!("{}_name", table_name)
+        {
             Some(Reference::Name)
         } else if (sql_type == &SqlType::Varchar
             || sql_type == &SqlType::Tinytext
@@ -204,7 +229,8 @@ impl Field {
             && (column_name == "tag" || column_name == "tags")
         {
             Some(Reference::Tag)
-        } else if ((sql_type == &SqlType::Int || sql_type == &SqlType::Bigint) && is_autoincrement)
+        } else if ((sql_type == &SqlType::Int || sql_type == &SqlType::Bigint)
+            && is_autoincrement)
             && column_name == "user_id"
             && (table_name == "users" || table_name == "user")
         {
@@ -226,10 +252,12 @@ impl Field {
         // if numeric range with 2 precision on decimal
         else if sql_type == &SqlType::Numeric
             && match *capacity {
-                Some(ref capacity) => match *capacity {
-                    Capacity::Limit(_limit) => false,
-                    Capacity::Range(_whole, decimal) => decimal == 2,
-                },
+                Some(ref capacity) => {
+                    match *capacity {
+                        Capacity::Limit(_limit) => false,
+                        Capacity::Range(_whole, decimal) => decimal == 2,
+                    }
+                }
                 None => false,
             }
             && (column_name == "price" || column_name == "cost")
@@ -255,11 +283,13 @@ impl Field {
             || sql_type == &SqlType::Varbinary
         {
             Some(Reference::GenericBlob)
-        } else if (sql_type == &SqlType::TimestampTz || sql_type == &SqlType::Timestamp)
+        } else if (sql_type == &SqlType::TimestampTz
+            || sql_type == &SqlType::Timestamp)
             && column_name == "created"
         {
             Some(Reference::Created)
-        } else if (sql_type == &SqlType::TimestampTz || sql_type == &SqlType::Timestamp)
+        } else if (sql_type == &SqlType::TimestampTz
+            || sql_type == &SqlType::Timestamp)
             && (column_name == "updated" || column_name == "last_update")
         {
             Some(Reference::Updated)
@@ -286,23 +316,31 @@ impl Field {
 
     /// derive reference but not really sure
     #[allow(clippy::if_same_then_else)]
-    fn derive_maybe_reference(_table: &Table, column: &Column) -> Option<Reference> {
+    fn derive_maybe_reference(
+        _table: &Table,
+        column: &Column,
+    ) -> Option<Reference> {
         let column_name = &column.name.name;
         let sql_type = &column.specification.sql_type;
         let capacity = &column.specification.capacity;
         let limit = column.specification.get_limit();
         //println!("sql type: {:?}", sql_type);
-        if sql_type == &SqlType::Char || (sql_type == &SqlType::Varchar && limit == Some(1)) {
+        if sql_type == &SqlType::Char
+            || (sql_type == &SqlType::Varchar && limit == Some(1))
+        {
             Some(Reference::Symbol)
         } else if sql_type == &SqlType::Numeric
             && match *capacity {
-                Some(ref capacity) => match *capacity {
-                    Capacity::Limit(_limit) => false,
-                    Capacity::Range(_whole, decimal) => decimal == 2,
-                },
+                Some(ref capacity) => {
+                    match *capacity {
+                        Capacity::Limit(_limit) => false,
+                        Capacity::Range(_whole, decimal) => decimal == 2,
+                    }
+                }
                 None => false,
             }
-            && (column_name.ends_with("_price") || column_name.ends_with("_cost"))
+            && (column_name.ends_with("_price")
+                || column_name.ends_with("_cost"))
         {
             Some(Reference::Price)
         } else if (sql_type == &SqlType::Numeric
@@ -333,8 +371,10 @@ impl Field {
 mod test {
 
     use super::*;
-    use rustorm::Pool;
-    use rustorm::TableName;
+    use rustorm::{
+        Pool,
+        TableName,
+    };
 
     #[test]
     fn user_id() {

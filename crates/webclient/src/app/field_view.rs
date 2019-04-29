@@ -8,17 +8,17 @@ pub enum Msg {
     FieldClick,
 }
 
-pub struct Field {
+pub struct FieldView {
     click_count: u32,
 }
 
-impl Field {
+impl FieldView {
     pub fn new() -> Self {
-        Field { click_count: 0 }
+        FieldView { click_count: 0 }
     }
 }
 
-impl Component<Msg> for Field {
+impl Component<Msg> for FieldView {
     fn update(&mut self, msg: Msg) {
         match msg {
             Msg::FieldClick => self.click_count += 1,

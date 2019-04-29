@@ -1,24 +1,32 @@
 //! collection of functions that modify the database
 //! using UPDATE and DELETE SQL
 
-use crate::common;
-use crate::data_container::RecordAction;
-use crate::data_container::RecordChangeset;
-use crate::data_container::SaveContainer;
-use crate::error::IntelError;
-use crate::tab;
-use crate::tab::Tab;
-use crate::table_intel;
-use crate::window::Window;
-use rustorm;
-use rustorm::ColumnName;
-use rustorm::Dao;
-use rustorm::DaoManager;
-use rustorm::DbError;
-use rustorm::Rows;
-use rustorm::Table;
-use rustorm::TableName;
-use rustorm::Value;
+use crate::{
+    common,
+    data_container::{
+        RecordAction,
+        RecordChangeset,
+        SaveContainer,
+    },
+    error::IntelError,
+    tab::{
+        self,
+        Tab,
+    },
+    table_intel,
+    window::Window,
+};
+use rustorm::{
+    self,
+    ColumnName,
+    Dao,
+    DaoManager,
+    DbError,
+    Rows,
+    Table,
+    TableName,
+    Value,
+};
 
 /// delete the records with the following record_ids
 /// return the total number of records deleted
@@ -36,7 +44,11 @@ pub fn delete_records(
         record_id_values.push(record_id_value);
     }
     if primary_columns.len() == 1 {
-        let rows = delete_records_from_single_primary_column(dm, main_table, &record_id_values)?;
+        let rows = delete_records_from_single_primary_column(
+            dm,
+            main_table,
+            &record_id_values,
+        )?;
         Ok(rows)
     } else {
         panic!("not yet handled composite primary key")
@@ -79,8 +91,10 @@ pub fn save_container(
 ) -> Result<(), IntelError> {
     let &(ref table_name_for_insert, ref rows_insert) = &container.for_insert;
     let &(ref table_name_for_update, ref rows_update) = &container.for_update;
-    let table_for_insert = table_intel::get_table(table_name_for_insert, tables).unwrap();
-    let table_for_update = table_intel::get_table(table_name_for_update, tables).unwrap();
+    let table_for_insert =
+        table_intel::get_table(table_name_for_insert, tables).unwrap();
+    let table_for_update =
+        table_intel::get_table(table_name_for_update, tables).unwrap();
     if rows_insert.iter().count() > 0 {
         insert_rows_to_table(dm, table_for_insert, rows_insert)?;
     }
@@ -96,8 +110,12 @@ pub fn save_changeset(
     changeset: &RecordChangeset,
 ) -> Result<(), IntelError> {
     let updated_record = match &changeset.action {
-        RecordAction::CreateNew => insert_record_to_table(dm, table, &changeset.record)?,
-        RecordAction::Edited => update_record_in_table(dm, table, &changeset.record)?,
+        RecordAction::CreateNew => {
+            insert_record_to_table(dm, table, &changeset.record)?
+        }
+        RecordAction::Edited => {
+            update_record_in_table(dm, table, &changeset.record)?
+        }
         _ => panic!("unhandled case: {:?}", changeset.action),
     };
     save_one_ones(
@@ -138,7 +156,9 @@ fn save_one_ones(
     for (one_one_table_name, one_one_record) in one_one_records {
         if let Some(one_one_record) = one_one_record {
             //TODO: verify that the one_one_table_name belongs to the one_one_tabs
-            if let Some(one_one_table) = table_intel::get_table(one_one_table_name, tables) {
+            if let Some(one_one_table) =
+                table_intel::get_table(one_one_table_name, tables)
+            {
                 save_one_one_table(
                     dm,
                     tables,
@@ -161,7 +181,13 @@ fn save_one_one_table(
     one_one_table: &Table,
     one_one_record: &Dao,
 ) -> Result<Dao, DbError> {
-    upsert_one_one_record_to_table(dm, main_table, main_record, one_one_table, one_one_record)
+    upsert_one_one_record_to_table(
+        dm,
+        main_table,
+        main_record,
+        one_one_table,
+        one_one_record,
+    )
 }
 
 fn save_has_many(
@@ -172,11 +198,13 @@ fn save_has_many(
     has_many_tabs: &[Tab],
     has_many_records: &[(TableName, RecordAction, Rows)],
 ) -> Result<(), IntelError> {
-    for (has_many_table_name, record_action, has_many_rows) in has_many_records {
+    for (has_many_table_name, record_action, has_many_rows) in has_many_records
+    {
         let _has_many_tab = tab::find_tab(has_many_tabs, has_many_table_name)
             .expect("table should belong to the tabs");
         let has_many_table =
-            table_intel::get_table(has_many_table_name, tables).expect("table should exist");
+            table_intel::get_table(has_many_table_name, tables)
+                .expect("table should exist");
         save_has_many_table(
             dm,
             tables,
@@ -211,12 +239,18 @@ fn save_has_many_table(
         RecordAction::Edited => {
             update_records_in_table(dm, has_many_table, has_many_rows)?;
         }
-        _ => panic!("unexpected record action: {:?} in has_many", record_action),
+        _ => {
+            panic!("unexpected record action: {:?} in has_many", record_action)
+        }
     }
     Ok(())
 }
 
-fn delete_from_table(dm: &DaoManager, table: &Table, rows: &Rows) -> Result<(), IntelError> {
+fn delete_from_table(
+    dm: &DaoManager,
+    table: &Table,
+    rows: &Rows,
+) -> Result<(), IntelError> {
     for dao in rows.iter() {
         delete_record_from_table(dm, table, &dao)?;
     }
@@ -257,11 +291,13 @@ fn save_indirect(
     _indirect_tabs: &[(TableName, Tab)],
     indirect_records: &[(TableName, TableName, RecordAction, Rows)],
 ) -> Result<(), IntelError> {
-    for (indirect_tablename, via_tablename, record_action, rows) in indirect_records {
+    for (indirect_tablename, via_tablename, record_action, rows) in
+        indirect_records
+    {
         let indirect_table = table_intel::get_table(indirect_tablename, tables)
             .expect("indirect table should exist");
-        let linker_table =
-            table_intel::get_table(via_tablename, tables).expect("via table should exists");
+        let linker_table = table_intel::get_table(via_tablename, tables)
+            .expect("via table should exists");
         match record_action {
             RecordAction::Unlink => {
                 unlink_from_indirect_table(
@@ -339,7 +375,8 @@ fn link_new_for_indirect_table(
     rows: &Rows,
 ) -> Result<(), IntelError> {
     for indirect_record in rows.iter() {
-        let indirect_record = insert_record_to_table(dm, indirect_table, &indirect_record)?;
+        let indirect_record =
+            insert_record_to_table(dm, indirect_table, &indirect_record)?;
         let linker_record = create_linker_record(
             main_table,
             main_record,
@@ -360,13 +397,15 @@ fn create_linker_record(
     indirect_table: &Table,
     indirect_record: &Dao,
 ) -> Result<Dao, IntelError> {
-    let main_fk_pair = linker_table.get_local_foreign_columns_pair_to_table(&main_table.name);
-    let indirect_fk_pair =
-        linker_table.get_local_foreign_columns_pair_to_table(&indirect_table.name);
+    let main_fk_pair =
+        linker_table.get_local_foreign_columns_pair_to_table(&main_table.name);
+    let indirect_fk_pair = linker_table
+        .get_local_foreign_columns_pair_to_table(&indirect_table.name);
     assert_eq!(main_fk_pair.len(), 1);
     assert_eq!(indirect_fk_pair.len(), 1);
     let (main_linker_local, main_linker_refferred) = main_fk_pair[0];
-    let (indirect_linker_local, indirect_linker_refferred) = indirect_fk_pair[0];
+    let (indirect_linker_local, indirect_linker_refferred) =
+        indirect_fk_pair[0];
     let main_pk_value = main_record
         .get_value(&main_linker_refferred.name)
         .expect("must have a value");
@@ -446,7 +485,8 @@ fn update_record_in_table(
         let value = record.get_value(&col.name.name);
         assert!(value.is_some());
         let value = value.unwrap();
-        let casted_value = rustorm::common::cast_type(&value, &col.get_sql_type());
+        let casted_value =
+            rustorm::common::cast_type(&value, &col.get_sql_type());
         params.push(casted_value);
     }
     sql += " ";
@@ -462,7 +502,8 @@ fn update_record_in_table(
         let pk_value = record.get_value(&pk.name.name);
         assert!(pk_value.is_some());
         let pk_value = pk_value.unwrap();
-        let casted_pk_value = rustorm::common::cast_type(&pk_value, &pk.get_sql_type());
+        let casted_pk_value =
+            rustorm::common::cast_type(&pk_value, &pk.get_sql_type());
         params.push(casted_pk_value);
     }
     sql += "RETURNING *";
@@ -474,14 +515,21 @@ fn update_record_in_table(
 }
 
 /// insert rows all at once in one query
-fn insert_rows_to_table(dm: &DaoManager, table: &Table, rows: &Rows) -> Result<Rows, IntelError> {
+fn insert_rows_to_table(
+    dm: &DaoManager,
+    table: &Table,
+    rows: &Rows,
+) -> Result<Rows, IntelError> {
     let table_name = &table.name;
     let mut params = vec![];
     let mut sql = format!("INSERT INTO {} ", table_name.complete_name());
     let columns = &table.get_non_primary_columns();
     sql += "(";
     for (i, col) in columns.iter().enumerate() {
-        if are_all_nil(&col.name.name, rows) && col.is_not_null() && col.has_generated_default() {
+        if are_all_nil(&col.name.name, rows)
+            && col.is_not_null()
+            && col.has_generated_default()
+        {
         } else {
             if i > 0 {
                 sql += ", ";
@@ -496,13 +544,17 @@ fn insert_rows_to_table(dm: &DaoManager, table: &Table, rows: &Rows) -> Result<R
             let value = dao.get_value(&col.name.name);
             assert!(value.is_some());
             let value = value.unwrap();
-            if value == &Value::Nil && col.is_not_null() && col.has_generated_default() {
+            if value == &Value::Nil
+                && col.is_not_null()
+                && col.has_generated_default()
+            {
             } else {
                 if i > 0 {
                     sql += ", ";
                 }
                 sql += &format!("${} ", params.len() + 1);
-                let casted_value = rustorm::common::cast_type(&value, &col.get_sql_type());
+                let casted_value =
+                    rustorm::common::cast_type(&value, &col.get_sql_type());
                 params.push(casted_value);
             }
         }
@@ -555,7 +607,10 @@ fn insert_record_to_table(
     for (i, col) in columns.iter().enumerate() {
         let value: Option<&Value> = record.get_value(&col.name.name);
         if let Some(ref value) = value {
-            if value.is_nil() && col.is_not_null() && col.has_generated_default() {
+            if value.is_nil()
+                && col.is_not_null()
+                && col.has_generated_default()
+            {
             } else {
                 if i > 0 {
                     sql += ", ";
@@ -569,13 +624,17 @@ fn insert_record_to_table(
     for (i, col) in columns.iter().enumerate() {
         let value = record.get_value(&col.name.name);
         if let Some(ref value) = value {
-            if value.is_nil() && col.is_not_null() && col.has_generated_default() {
+            if value.is_nil()
+                && col.is_not_null()
+                && col.has_generated_default()
+            {
             } else {
                 if i > 0 {
                     sql += ", ";
                 }
                 sql += &format!("${} ", params.len() + 1);
-                let casted_value = rustorm::common::cast_type(&value, &col.get_sql_type());
+                let casted_value =
+                    rustorm::common::cast_type(&value, &col.get_sql_type());
                 params.push(casted_value);
             }
         }
@@ -600,7 +659,10 @@ fn insert_record_to_linker_table(
     for (i, col) in columns.iter().enumerate() {
         let value = record.get_value(&col.name.name);
         if let Some(value) = value {
-            if value.is_nil() && col.is_not_null() && col.has_generated_default() {
+            if value.is_nil()
+                && col.is_not_null()
+                && col.has_generated_default()
+            {
             } else {
                 if i > 0 {
                     sql += ", ";
@@ -614,13 +676,17 @@ fn insert_record_to_linker_table(
     for (i, col) in columns.iter().enumerate() {
         let value = record.get_value(&col.name.name);
         if let Some(value) = value {
-            if value.is_nil() && col.is_not_null() && col.has_generated_default() {
+            if value.is_nil()
+                && col.is_not_null()
+                && col.has_generated_default()
+            {
             } else {
                 if i > 0 {
                     sql += ", ";
                 }
                 sql += &format!("${} ", params.len() + 1);
-                let casted_value = rustorm::common::cast_type(&value, &col.get_sql_type());
+                let casted_value =
+                    rustorm::common::cast_type(&value, &col.get_sql_type());
                 params.push(casted_value);
             }
         }
@@ -656,7 +722,8 @@ fn upsert_one_one_record_to_table(
 
     let one_one_table_name = &one_one_table.name;
     let mut params = vec![];
-    let mut sql = format!("INSERT INTO {} ", one_one_table_name.complete_name());
+    let mut sql =
+        format!("INSERT INTO {} ", one_one_table_name.complete_name());
     let one_one_columns = &one_one_table.columns;
     sql += "(";
 
@@ -664,7 +731,10 @@ fn upsert_one_one_record_to_table(
         let value = one_one_record.get_value(&one_col.name.name);
         assert!(value.is_some());
         let value = value.unwrap();
-        if value.is_nil() && one_col.is_not_null() && one_col.has_generated_default() {
+        if value.is_nil()
+            && one_col.is_not_null()
+            && one_col.has_generated_default()
+        {
         } else {
             if i > 0 {
                 sql += ", ";
@@ -679,13 +749,17 @@ fn upsert_one_one_record_to_table(
         let value = one_one_record.get_value(&one_col.name.name);
         assert!(value.is_some());
         let value = value.unwrap();
-        if value.is_nil() && one_col.is_not_null() && one_col.has_generated_default() {
+        if value.is_nil()
+            && one_col.is_not_null()
+            && one_col.has_generated_default()
+        {
         } else {
             if i > 0 {
                 sql += ", ";
             }
             sql += &format!("${} ", params.len() + 1);
-            let casted_value = rustorm::common::cast_type(&value, &one_col.get_sql_type());
+            let casted_value =
+                rustorm::common::cast_type(&value, &one_col.get_sql_type());
             params.push(casted_value);
         }
     }
@@ -713,12 +787,15 @@ fn upsert_one_one_record_to_table(
         let value = one_one_record
             .get_value(&one_col.name.name)
             .expect("must have value");
-        let casted_value = rustorm::common::cast_type(&value, &one_col.get_sql_type());
+        let casted_value =
+            rustorm::common::cast_type(&value, &one_col.get_sql_type());
         params.push(casted_value);
     }
     sql += " ";
 
-    for (i, (one_one_pk, main_pk_name)) in local_referred_pair.iter().enumerate() {
+    for (i, (one_one_pk, main_pk_name)) in
+        local_referred_pair.iter().enumerate()
+    {
         if i == 0 {
             sql += "WHERE ";
         } else {
@@ -730,11 +807,13 @@ fn upsert_one_one_record_to_table(
             one_one_pk.name,
             params.len() + 1
         );
-        let main_pk = main_table.get_column(main_pk_name).expect("should exist");
+        let main_pk =
+            main_table.get_column(main_pk_name).expect("should exist");
         let pk_value = main_record.get_value(&main_pk.name.name);
         assert!(pk_value.is_some());
         let pk_value = pk_value.unwrap();
-        let casted_pk_value = rustorm::common::cast_type(&pk_value, &main_pk.get_sql_type());
+        let casted_pk_value =
+            rustorm::common::cast_type(&pk_value, &main_pk.get_sql_type());
         params.push(casted_pk_value);
     }
     sql += "RETURNING *";

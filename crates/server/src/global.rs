@@ -1,11 +1,16 @@
 use crate::error::ServiceError;
 use diwata_intel::cache;
 use lazy_static::lazy_static;
-use rustorm::pool;
-use rustorm::DaoManager;
-use rustorm::EntityManager;
-use rustorm::Pool;
-use std::sync::{Arc, RwLock};
+use rustorm::{
+    pool,
+    DaoManager,
+    EntityManager,
+    Pool,
+};
+use std::sync::{
+    Arc,
+    RwLock,
+};
 use url::Url;
 
 pub static PAGE_SIZE: u32 = 40;
@@ -186,7 +191,9 @@ pub fn recreate_db_url(
             );
             Ok(cons_url)
         }
-        Err(_e) => Err(ServiceError::GenericError("Error parsing db_url".into())),
+        Err(_e) => {
+            Err(ServiceError::GenericError("Error parsing db_url".into()))
+        }
     }
 }
 
