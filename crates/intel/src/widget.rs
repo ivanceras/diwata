@@ -81,7 +81,7 @@ pub enum Widget {
 /// and the dropdown data
 #[derive(Debug, Serialize, Clone)]
 pub struct ControlWidget {
-    widget: Widget,
+    pub widget: Widget,
 
     /// if the widget is Dropdown, DropdownWithImage, AutoCompleteDropdown
     /// DialogDropdown, CountryList, CountrListWithFlag
@@ -89,19 +89,19 @@ pub struct ControlWidget {
 
     /// width (character wise) of the widget based on
     /// average of the database values on this column
-    width: i32,
+    pub width: i32,
 
     /// if limit is set in column this will warn the user
     /// if the value is too long
-    max_len: Option<i32>,
+    pub max_len: Option<i32>,
 
     /// height of the control, character wise
     /// textbox defaults to 1
-    height: i32,
+    pub height: i32,
 
     /// text-align left align for text, right align for decimal values
     /// boolean values align center
-    alignment: Alignment,
+    pub alignment: Alignment,
 }
 
 #[derive(Debug, Serialize, Clone)]

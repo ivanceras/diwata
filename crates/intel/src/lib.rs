@@ -1,7 +1,7 @@
 #![deny(warnings)]
 #![deny(clippy::all)]
 mod reference;
-mod widget;
+pub mod widget;
 
 pub mod cache;
 mod common;
@@ -9,7 +9,7 @@ pub mod data_container;
 pub mod data_modify;
 pub mod data_read;
 pub mod error;
-mod field;
+pub mod field;
 mod query_builder;
 pub mod tab;
 pub mod table_intel;
@@ -22,3 +22,5 @@ pub use tab::{
     Tab,
 };
 pub use window::Window;
+pub use rustorm::types::SqlType;
+pub use rustorm::ColumnName;

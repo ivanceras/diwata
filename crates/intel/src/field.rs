@@ -23,12 +23,12 @@ pub struct Field {
     /// derived from column comment
     pub description: Option<String>,
     /// derive from lookuped table comment
-    info: Option<String>,
-    is_primary: bool,
+    pub info: Option<String>,
+    pub is_primary: bool,
     /// column name
-    column_detail: ColumnDetail,
+    pub column_detail: ColumnDetail,
     /// the control widget based on the api of intellisense
-    control_widget: ControlWidget,
+    pub control_widget: ControlWidget,
 }
 
 #[derive(Debug, Serialize, Clone)]
