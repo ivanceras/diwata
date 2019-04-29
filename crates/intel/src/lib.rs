@@ -16,11 +16,13 @@ pub mod table_intel;
 pub mod window;
 
 pub use field::Field;
-pub use rustorm::TableName;
+pub use rustorm::{
+    types::SqlType,
+    ColumnName,
+    TableName,
+};
 pub use tab::{
     IndirectTab,
     Tab,
 };
 pub use window::Window;
-pub use rustorm::types::SqlType;
-pub use rustorm::ColumnName;

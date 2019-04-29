@@ -6,11 +6,13 @@ use sauron::{
     Component, Node,
 };
 
-use crate::app::column_view;
+use crate::app::{column_view, row_view};
+use data_table::DataRow;
 
 #[derive(Clone)]
 pub enum Msg {
     ColumnMsg(usize, column_view::Msg),
+    RowMsg(usize, row_view::Msg),
 }
 
 pub struct TableView {
@@ -50,6 +52,11 @@ impl TableView {
         };
         ColumnView::new(data_column)
     }
+
+    /// replace all the data with a new data row
+    pub fn set_data_rows(&mut self, data_row: Vec<DataRow>) {
+        self.row_views = data_row.into_iter().map(RowView::new).collect();
+    }
 }
 
 impl Component<Msg> for TableView {
@@ -57,7 +64,7 @@ impl Component<Msg> for TableView {
 
     fn view(&self) -> Node<Msg> {
         main(
-            [class("tab")],
+            [class("table")],
             [
                 header(
                     [class("column_view_names")],
@@ -71,7 +78,18 @@ impl Component<Msg> for TableView {
                         })
                         .collect::<Vec<Node<Msg>>>(),
                 ),
-                section([], []),
+                ol(
+                    [class("rows")],
+                    self.row_views
+                        .iter()
+                        .enumerate()
+                        .map(|(index, row_view)| {
+                            row_view
+                                .view()
+                                .map(move |row_msg| Msg::RowMsg(index, row_msg))
+                        })
+                        .collect::<Vec<Node<Msg>>>(),
+                ),
             ],
         )
     }

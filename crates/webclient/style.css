@@ -9,10 +9,14 @@ body {
 .app {
     display: flex;
     flex-direction: column;
+    padding: 20px;
 }
 
 .window {
     border: 1px solid green;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
 }
 
 .window_links{
@@ -24,23 +28,73 @@ body {
 .window_views{
     display: flex;
     flex-direction: row;
+    padding: 20px;
+}
+
+
+.one_one_tabs{
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+}
+
+.has_many_and_indirect_tabs_link{
+    display: flex;
+    flex-direction: row;
+}
+.has_many_tabs_link {
+    display: flex;
+    flex-direction: row;
+}
+.indirect_tabs_link {
+    display: flex;
+    flex-direction: row;
+}
+
+.has_many_and_indirect_tabs{
+    display: flex;
+    flex-direction: row;
 }
 
 .has_many_tabs{
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    padding: 20px;
 }
+
 
 .indirect_tabs{
     display: flex;
     flex-direction: row;
+    padding: 20px;
 }
 
 .table{
     border: 1px solid red;
 }
+.tab{
+    border: 1px solid blue;
+    padding: 20px;
+}
 
 .column_view_names {
     display: flex;
     flex-direction: row;
+}
+
+.rows {
+    border: 1px solid peachpuff;
+    padding: 5px;
+}
+
+.row{
+    border-bottom: 1px solid #333;
+    padding-top: 3px;
+    padding-bottom: 1px;
+    padding: 5px;
+}
+
+.value{
+    border: 1px solid #eee;
+    padding: 5px;
 }

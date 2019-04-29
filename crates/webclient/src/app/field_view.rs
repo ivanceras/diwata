@@ -24,6 +24,13 @@ impl FieldView {
 impl Component<Msg> for FieldView {
     fn update(&mut self, msg: Msg) {}
     fn view(&self) -> Node<Msg> {
-        button([class("btn")], [text("this is field {}")])
+        input(
+            [
+                r#type("text"),
+                class("value"),
+                value(format!("{:?}", self.value)),
+            ],
+            [],
+        )
     }
 }

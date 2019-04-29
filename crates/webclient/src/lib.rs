@@ -38,7 +38,7 @@ fn sample_window(name: &str) -> Window {
         group: None,
         main_tab: sample_tab(&format!("Main tab of {}", name)),
         has_one_tabs: vec![sample_tab("Has one 1"), sample_tab("Has one 2")],
-        one_one_tabs: vec![sample_tab("One one 1")],
+        one_one_tabs: vec![sample_tab("One one 1"), sample_tab("One one 2")],
         has_many_tabs: vec![sample_tab("Has many 1"), sample_tab("Has many 2")],
         indirect_tabs: vec![
             IndirectTab::new(TableName::from("bazaar.table1"), sample_tab("Indirect 1")),

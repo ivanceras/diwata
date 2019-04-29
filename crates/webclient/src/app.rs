@@ -39,14 +39,13 @@ impl App {
         self.window_views
             .iter_mut()
             .enumerate()
-            .map(|(index, window)| {
+            .for_each(|(index, window)| {
                 if index == active_window {
                     window.show()
                 } else {
                     window.hide()
                 }
             })
-            .collect()
     }
 
     fn activate_window(&mut self, index: usize) {
