@@ -153,7 +153,14 @@ impl Component<Msg> for WindowView {
                         .iter()
                         .enumerate()
                         .map(|(index, tab)| {
-                            TabView::view(tab).map(move |tab_msg| Msg::OneOneTabMsg(index, tab_msg))
+                            details(
+                                [class("one_one_tab"), open(true)],
+                                [
+                                    sauron::html::summary([], [text(&tab.name)]),
+                                    TabView::view(tab)
+                                        .map(move |tab_msg| Msg::OneOneTabMsg(index, tab_msg)),
+                                ],
+                            )
                         })
                         .collect::<Vec<Node<Msg>>>(),
                 ),

@@ -38,6 +38,17 @@ body {
     padding: 20px;
 }
 
+/* details tab */
+.one_one_tab{
+    padding: 10px;
+}
+.one_one_tab summary {
+    outline: none;
+    background-color: #ccc;
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
 .has_many_and_indirect_tabs_link{
     display: flex;
     flex-direction: row;
@@ -82,11 +93,14 @@ body {
     flex-direction: row;
 }
 
+/*ol in table_view, listing of rows */
 .rows {
     border: 1px solid peachpuff;
     padding: 5px;
+    list-style: none;
 }
 
+/* li in row_view, each row of the table*/
 .row{
     border-bottom: 1px solid #333;
     padding-top: 3px;
