@@ -13,7 +13,7 @@ mod tab_view;
 mod table_view;
 mod window_view;
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub enum Msg {
     ActivateWindow(usize),
     WindowMsg(usize, window_view::Msg),
@@ -72,7 +72,7 @@ impl Component<Msg> for App {
                     [
                         h1([], [text("Diwata")]),
                         nav(
-                            [class("window-links")],
+                            [class("window_links")],
                             self.window_views
                                 .iter()
                                 .enumerate()
@@ -87,7 +87,7 @@ impl Component<Msg> for App {
                     ],
                 ),
                 section(
-                    [class("window-views")],
+                    [class("window_views")],
                     self.window_views
                         .iter()
                         .enumerate()

@@ -1,3 +1,7 @@
+/* Use snake_case instead of kebab case for the class names
+ * The main advantage is text searching in vim where it matches the entire
+ * class name and treated as identifier
+ * */
 body {
     font-family: "Fira Sans", "Courier New", Courier,"Lucida Sans Typewriter","Lucida Typewriter",monospace;
 }
@@ -11,23 +15,32 @@ body {
     border: 1px solid green;
 }
 
-.window-links{
+.window_links{
     border: 1px solid green;
     display: flex;
     flex-direction: row;
 }
 
-.window-views{
+.window_views{
     display: flex;
     flex-direction: row;
 }
 
-.has-many-tabs{
+.has_many_tabs{
     display: flex;
     flex-direction: column;
 }
 
-.indirect-tabs{
+.indirect_tabs{
+    display: flex;
+    flex-direction: row;
+}
+
+.table{
+    border: 1px solid red;
+}
+
+.column_view_names {
     display: flex;
     flex-direction: row;
 }

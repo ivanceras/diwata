@@ -6,7 +6,7 @@ use sauron::{
 use data_table::Value;
 use diwata_intel::Field;
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub enum Msg {
     FieldClick,
 }

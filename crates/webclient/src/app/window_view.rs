@@ -6,7 +6,7 @@ use sauron::{
 use crate::app::tab_view::{self, TabView};
 use diwata_intel::{IndirectTab, TableName, Window};
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub enum Msg {
     MainTabMsg(tab_view::Msg),
     HasManyTabMsg(usize, tab_view::Msg),
@@ -67,11 +67,11 @@ impl Component<Msg> for WindowView {
                 ),
                 textarea([rows(5), cols(200), placeholder("SELECT * ")], []),
                 section(
-                    [class("main-tab")],
+                    [class("main_tab")],
                     [self.main_tab.view().map(Msg::MainTabMsg)],
                 ),
                 section(
-                    [class("has-many-tabs")],
+                    [class("has_many_tabs")],
                     self.has_many_tabs
                         .iter()
                         .enumerate()
@@ -82,7 +82,7 @@ impl Component<Msg> for WindowView {
                         .collect::<Vec<Node<Msg>>>(),
                 ),
                 aside(
-                    [class("indirect-tabs")],
+                    [class("indirect_tabs")],
                     self.indirect_tabs
                         .iter()
                         .enumerate()

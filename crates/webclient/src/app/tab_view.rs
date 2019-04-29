@@ -2,7 +2,7 @@ use crate::app::{
     column_view::ColumnView,
     detail_view::DetailView,
     field_view::{self, FieldView},
-    table_view::TableView,
+    table_view::{self, TableView},
 };
 use data_table::DataColumn;
 
@@ -13,8 +13,9 @@ use sauron::{
 
 use diwata_intel::Tab;
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub enum Msg {
+    TableMsg(table_view::Msg),
     FieldMsg(usize, field_view::Msg),
 }
 
@@ -37,6 +38,12 @@ impl TabView {
 impl Component<Msg> for TabView {
     fn update(&mut self, msg: Msg) {}
     fn view(&self) -> Node<Msg> {
-        div([], [div([], [button([], [text(&self.name)])])])
+        div(
+            [],
+            [
+                div([], [button([], [text(&self.name)])]),
+                section([], [self.table_view.view().map(Msg::TableMsg)]),
+            ],
+        )
     }
 }
