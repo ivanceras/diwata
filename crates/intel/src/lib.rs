@@ -15,4 +15,7 @@ pub mod tab;
 pub mod table_intel;
 pub mod window;
 
+pub use field::Field;
+pub use rustorm::TableName;
+pub use tab::Tab;
 pub use window::Window;

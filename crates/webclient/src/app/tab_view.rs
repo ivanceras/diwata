@@ -1,4 +1,5 @@
 use crate::app::{field_view, FieldView};
+use diwata_intel::Tab;
 use sauron::{
     html::{attributes::*, events::*, *},
     Component, Node,
@@ -10,40 +11,20 @@ pub enum Msg {
 }
 
 pub struct TabView {
-    field_views: Vec<FieldView>,
+    fields: Vec<FieldView>,
 }
 
 impl TabView {
-    pub fn new() -> Self {
+    pub fn new(tab: Tab) -> Self {
         TabView {
-            field_views: vec![FieldView::new(), FieldView::new(), FieldView::new()],
+            fields: tab.fields.into_iter().map(FieldView::new).collect(),
         }
     }
 }
 
 impl Component<Msg> for TabView {
-    fn update(&mut self, msg: Msg) {
-        match msg {
-            Msg::FieldMsg(index, field_msg) => {
-                self.field_views[index].update(field_msg.clone());
-            }
-        }
-    }
+    fn update(&mut self, msg: Msg) {}
     fn view(&self) -> Node<Msg> {
-        div(
-            [],
-            [div(
-                [],
-                self.field_views
-                    .iter()
-                    .enumerate()
-                    .map(|(index, field_view)| {
-                        field_view
-                            .view()
-                            .map(move |view| Msg::FieldMsg(index, view))
-                    })
-                    .collect::<Vec<Node<Msg>>>(),
-            )],
-        )
+        div([], [div([], [])])
     }
 }

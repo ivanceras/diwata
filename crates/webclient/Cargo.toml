@@ -8,8 +8,9 @@ crate-type = ["cdylib"]
 
 [dependencies]
 sauron = "0.6.0"
-sauron_vdom = "0.6.0"
 data_table = { path = "../data_table" }
+# we uses the objects in diwata intel and in rustorm, but not the database objects
+diwata_intel = { path = "../intel" , features = ["with-rustorm"]}
 console_error_panic_hook = "0.1"
 js-sys = "0.3"
 lazy_static = "1.0"

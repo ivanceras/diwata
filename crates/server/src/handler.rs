@@ -319,7 +319,6 @@ fn handle_select(
 ///
 ///
 ///  /has_many_select/<table_name>/<record_id>/<has_many_table>/page/<page>/filter/<filter>/sort/<sort>
-///
 fn handle_has_many(
     req: Request,
     path: &[&str],
@@ -384,7 +383,6 @@ fn handle_has_many(
 ///
 ///
 ///  /indirect_select/<table_name>/<record_id>/<indirect_table>/page/<page>/filter/<filter>/sort/<sort>
-///
 fn handle_indirect(
     req: Request,
     path: &[&str],

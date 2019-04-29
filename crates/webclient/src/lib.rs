@@ -19,5 +19,5 @@ pub fn initialize(initial_state: &str) {
     let root_node = sauron::document()
         .get_element_by_id("web-app")
         .expect("Unable to get hold of root-node");
-    Program::new_replace_mount(App::new(), &root_node);
+    Program::new_replace_mount(App::new(vec![]), &root_node);
 }

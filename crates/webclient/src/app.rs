@@ -1,3 +1,4 @@
+use diwata_intel::Window;
 pub use field_view::FieldView;
 use sauron::{
     html::{attributes::*, events::*, *},
@@ -16,23 +17,19 @@ pub enum Msg {
 }
 
 pub struct App {
-    window_view: WindowView,
+    window_view: Vec<WindowView>,
 }
 
 impl App {
-    pub fn new() -> App {
+    pub fn new(windows: Vec<Window>) -> App {
         App {
-            window_view: WindowView::new(),
+            window_view: windows.into_iter().map(WindowView::new).collect(),
         }
     }
 }
 
 impl Component<Msg> for App {
-    fn update(&mut self, msg: Msg) {
-        match msg {
-            Msg::DataWindowMsg(dw_msg) => self.window_view.update(dw_msg),
-        }
-    }
+    fn update(&mut self, msg: Msg) {}
 
     fn view(&self) -> Node<Msg> {
         div(
@@ -40,7 +37,6 @@ impl Component<Msg> for App {
             [
                 h1([], [text("Diwata")]),
                 textarea([rows(5), cols(200), placeholder("SELECT * ")], []),
-                div([], [self.window_view.view().map(Msg::DataWindowMsg)]),
             ],
         )
     }

@@ -3,6 +3,8 @@ use sauron::{
     Component, Node,
 };
 
+use diwata_intel::Field;
+
 #[derive(Debug, Clone)]
 pub enum Msg {
     FieldClick,
@@ -13,7 +15,7 @@ pub struct FieldView {
 }
 
 impl FieldView {
-    pub fn new() -> Self {
+    pub fn new(field: Field) -> Self {
         FieldView { click_count: 0 }
     }
 }
