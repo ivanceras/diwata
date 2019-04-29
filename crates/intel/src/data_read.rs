@@ -200,16 +200,14 @@ pub fn get_selected_record_detail(
             println!("Getting indirect");
             let mut indirect_records: Vec<(TableName, TableName, Rows)> =
                 Vec::with_capacity(window.indirect_tabs.iter().count());
-            for &(ref linker_table, ref indirect_tab) in
-                window.indirect_tabs.iter()
-            {
+            for indirect_tab in window.indirect_tabs.iter() {
                 let ind_records = get_indirect_records(
                     em,
                     dm,
                     tables,
                     main_table,
-                    indirect_tab,
-                    linker_table,
+                    &indirect_tab.tab,
+                    &indirect_tab.linker,
                     &record_id,
                     None,
                     None,
@@ -217,8 +215,8 @@ pub fn get_selected_record_detail(
                     1,
                 )?;
                 indirect_records.push((
-                    linker_table.clone(),
-                    indirect_tab.table_name.clone(),
+                    indirect_tab.linker.clone(),
+                    indirect_tab.tab.table_name.clone(),
                     ind_records,
                 ));
             }
@@ -598,14 +596,14 @@ pub fn get_all_lookup_for_window(
         lookup_tables.append(&mut lookup);
     }
 
-    for &(ref _linker_table, ref indirect_tab) in &window.indirect_tabs {
+    for indirect_tab in &window.indirect_tabs {
         // treat this tab to be also a lookup for linking records in
         lookup_tables.push((
-            &indirect_tab.table_name,
-            indirect_tab.get_display_columns(),
+            &indirect_tab.tab.table_name,
+            indirect_tab.tab.get_display_columns(),
         ));
 
-        let mut lookup = get_tab_lookup_tablenames(indirect_tab);
+        let mut lookup = get_tab_lookup_tablenames(&indirect_tab.tab);
         lookup_tables.append(&mut lookup);
     }
     println!("total tables: {} {:#?}", lookup_tables.len(), lookup_tables);

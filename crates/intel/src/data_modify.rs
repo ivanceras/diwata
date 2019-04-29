@@ -11,6 +11,7 @@ use crate::{
     error::IntelError,
     tab::{
         self,
+        IndirectTab,
         Tab,
     },
     table_intel,
@@ -288,7 +289,7 @@ fn save_indirect(
     tables: &[Table],
     main_table: &Table,
     main_record: &Dao,
-    _indirect_tabs: &[(TableName, Tab)],
+    _indirect_tabs: &[IndirectTab],
     indirect_records: &[(TableName, TableName, RecordAction, Rows)],
 ) -> Result<(), IntelError> {
     for (indirect_tablename, via_tablename, record_action, rows) in

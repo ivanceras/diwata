@@ -17,5 +17,8 @@ pub mod window;
 
 pub use field::Field;
 pub use rustorm::TableName;
-pub use tab::Tab;
+pub use tab::{
+    IndirectTab,
+    Tab,
+};
 pub use window::Window;

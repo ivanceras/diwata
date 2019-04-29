@@ -13,8 +13,8 @@ pub type DataRow = Vec<Value>;
 /// A generic representation of rows that resembles homogeneos rows in a table
 #[derive(Debug)]
 pub struct DataTable {
-    columns: Vec<DataColumn>,
-    rows: Vec<DataRow>,
+    pub columns: Vec<DataColumn>,
+    pub rows: Vec<DataRow>,
 }
 
 /// the name of field and the type

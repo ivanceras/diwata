@@ -1,7 +1,10 @@
 use crate::{
     cache,
     error::IntelError,
-    tab::Tab,
+    tab::{
+        IndirectTab,
+        Tab,
+    },
     table_intel::{
         self,
         IndirectTable,
@@ -46,10 +49,7 @@ pub struct Window {
     /// 1:M
     pub has_many_tabs: Vec<Tab>,
 
-    /// an indirect connection to this record
-    /// must have an option to remove/show from the list
-    /// async loaded?
-    pub indirect_tabs: Vec<(TableName, Tab)>,
+    pub indirect_tabs: Vec<IndirectTab>,
 
     pub is_view: bool,
 }
@@ -78,7 +78,7 @@ impl Window {
             .collect();
         let is_view = main_tab.is_view;
 
-        let indirect_tabs: Vec<(TableName, Tab)> = indirect
+        let indirect_tabs: Vec<IndirectTab> = indirect
             .iter()
             .map(|t| {
                 let has_repeat =
@@ -91,7 +91,7 @@ impl Window {
                 } else {
                     None
                 };
-                (
+                IndirectTab::new(
                     t.linker.name.clone(),
                     Tab::from_table(t.indirect_table, tab_name, all_tables),
                 )
@@ -116,10 +116,9 @@ impl Window {
                 .has_many_tabs
                 .iter()
                 .any(|tab| tab.has_column_name(column_name))
-            || self
-                .indirect_tabs
-                .iter()
-                .any(|&(_, ref tab)| tab.has_column_name(column_name))
+            || self.indirect_tabs.iter().any(|indirect_tab| {
+                indirect_tab.tab.has_column_name(column_name)
+            })
     }
 }
 

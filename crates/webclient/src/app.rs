@@ -1,42 +1,103 @@
 use diwata_intel::Window;
-pub use field_view::FieldView;
 use sauron::{
     html::{attributes::*, events::*, *},
     Component, Node,
 };
-pub use tab_view::TabView;
-pub use window_view::WindowView;
+use window_view::WindowView;
 
+mod column_view;
+mod detail_view;
 mod field_view;
+mod row_view;
 mod tab_view;
+mod table_view;
 mod window_view;
 
 #[derive(Debug, Clone)]
 pub enum Msg {
-    DataWindowMsg(window_view::Msg),
+    ActivateWindow(usize),
+    WindowMsg(usize, window_view::Msg),
 }
 
 pub struct App {
-    window_view: Vec<WindowView>,
+    window_views: Vec<WindowView>,
+    active_window: usize,
 }
 
 impl App {
     pub fn new(windows: Vec<Window>) -> App {
-        App {
-            window_view: windows.into_iter().map(WindowView::new).collect(),
-        }
+        let mut app = App {
+            window_views: windows.into_iter().map(WindowView::new).collect(),
+            active_window: 0,
+        };
+        app.update_active_window();
+        app
+    }
+
+    fn update_active_window(&mut self) {
+        let active_window = self.active_window;
+        self.window_views
+            .iter_mut()
+            .enumerate()
+            .map(|(index, window)| {
+                if index == active_window {
+                    window.show()
+                } else {
+                    window.hide()
+                }
+            })
+            .collect()
+    }
+
+    fn activate_window(&mut self, index: usize) {
+        self.active_window = index;
+        self.update_active_window();
     }
 }
 
 impl Component<Msg> for App {
-    fn update(&mut self, msg: Msg) {}
+    fn update(&mut self, msg: Msg) {
+        match msg {
+            Msg::ActivateWindow(index) => self.activate_window(index),
+            Msg::WindowMsg(index, window_msg) => self.window_views[index].update(window_msg),
+        }
+    }
 
     fn view(&self) -> Node<Msg> {
-        div(
-            [styles([("display", "flex"), ("flex-direction", "column")])],
+        main(
+            [class("app")],
             [
-                h1([], [text("Diwata")]),
-                textarea([rows(5), cols(200), placeholder("SELECT * ")], []),
+                header(
+                    [],
+                    [
+                        h1([], [text("Diwata")]),
+                        nav(
+                            [class("window-links")],
+                            self.window_views
+                                .iter()
+                                .enumerate()
+                                .map(|(index, window)| {
+                                    button(
+                                        [onclick(move |_| Msg::ActivateWindow(index))],
+                                        [text(&window.name)],
+                                    )
+                                })
+                                .collect::<Vec<Node<Msg>>>(),
+                        ),
+                    ],
+                ),
+                section(
+                    [class("window-views")],
+                    self.window_views
+                        .iter()
+                        .enumerate()
+                        .map(|(index, window)| {
+                            window
+                                .view()
+                                .map(move |window_msg| Msg::WindowMsg(index, window_msg))
+                        })
+                        .collect::<Vec<Node<Msg>>>(),
+                ),
             ],
         )
     }

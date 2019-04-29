@@ -1,3 +1,33 @@
 body {
     font-family: "Fira Sans", "Courier New", Courier,"Lucida Sans Typewriter","Lucida Typewriter",monospace;
 }
+
+.app {
+    display: flex;
+    flex-direction: column;
+}
+
+.window {
+    border: 1px solid green;
+}
+
+.window-links{
+    border: 1px solid green;
+    display: flex;
+    flex-direction: row;
+}
+
+.window-views{
+    display: flex;
+    flex-direction: row;
+}
+
+.has-many-tabs{
+    display: flex;
+    flex-direction: column;
+}
+
+.indirect-tabs{
+    display: flex;
+    flex-direction: row;
+}

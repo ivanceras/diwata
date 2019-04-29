@@ -19,9 +19,9 @@ use serde_derive::Serialize;
 #[derive(Debug, Serialize, Clone)]
 pub struct Field {
     /// name of the field, derive from column name
-    name: String,
+    pub name: String,
     /// derived from column comment
-    description: Option<String>,
+    pub description: Option<String>,
     /// derive from lookuped table comment
     info: Option<String>,
     is_primary: bool,
@@ -38,6 +38,13 @@ pub enum ColumnDetail {
 }
 
 impl ColumnDetail {
+    fn get_sql_type(&self) -> &SqlType {
+        match self {
+            ColumnDetail::Simple(_, ref sql_type) => sql_type,
+            ColumnDetail::Compound(ref column_types) => &column_types[0].1,
+        }
+    }
+
     fn first_column_name(&self) -> Option<&ColumnName> {
         match *self {
             ColumnDetail::Simple(ref column_name, _) => Some(&column_name),
@@ -109,6 +116,10 @@ impl<'a> From<&'a [&'a Column]> for ColumnDetail {
 }
 
 impl Field {
+    pub fn get_data_type(&self) -> &SqlType {
+        self.column_detail.get_sql_type()
+    }
+
     /// derive field from supplied column
     pub fn from_column(table: &Table, column: &Column) -> Self {
         let reference = Self::try_derive_reference(table, column);

@@ -30,6 +30,21 @@ pub struct Tab {
     pub display: Option<IdentifierDisplay>,
 }
 
+/// an indirect connection to this record
+/// must have an option to remove/show from the list
+/// async loaded?
+#[derive(Debug, Serialize, Clone)]
+pub struct IndirectTab {
+    pub linker: TableName,
+    pub tab: Tab,
+}
+
+impl IndirectTab {
+    pub fn new(linker: TableName, tab: Tab) -> Self {
+        IndirectTab { linker, tab }
+    }
+}
+
 impl Tab {
     pub fn from_table(
         table: &Table,
