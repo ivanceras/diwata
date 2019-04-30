@@ -55,9 +55,27 @@ impl WindowView {
 
     /// Important: set the data rows first before setting the frozen data
     pub fn set_window_data(&mut self, window_data: WindowData) {
-        let main_frozen_data = window_data.main_frozen_data.clone();
-        self.main_tab.set_data_rows(window_data.main_rows());
-        self.main_tab.set_frozen_data(main_frozen_data);
+        let WindowData{
+            main_tab_data,
+            main_tab_frozen_data,
+
+            has_many_tab_data,
+            has_many_tab_frozen_data,
+
+            indirect_tab_data,
+            indirect_tab_frozen_data,
+
+        } = window_data;
+        self.main_tab.set_pages(main_tab_data);
+        self.main_tab.set_frozen_data(main_tab_frozen_data);
+        
+        for (index, pages) in has_many_tab_data.into_iter().enumerate(){
+            self.has_many_tabs[index].set_pages(pages);
+        }
+
+        for (index, pages) in indirect_tab_data.into_iter().enumerate(){
+            self.indirect_tabs[index].1.set_pages(pages);
+        }
     }
 
     fn update_active_has_many_or_indirect_tab(&mut self) {

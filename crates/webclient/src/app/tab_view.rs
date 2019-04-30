@@ -6,7 +6,8 @@ use crate::{
     },
     data::FrozenData,
 };
-use data_table::DataRow;
+use data_table::{DataRow};
+use crate::data::Page;
 
 use sauron::{
     html::{attributes::*, *},
@@ -34,6 +35,12 @@ impl TabView {
             table_view: TableView::from_tab(tab),
             detail_view: None,
             is_visible: true,
+        }
+    }
+
+    pub fn set_pages(&mut self, pages: Vec<Page>) {
+        for page in pages{
+            self.set_data_rows(page.rows);
         }
     }
 

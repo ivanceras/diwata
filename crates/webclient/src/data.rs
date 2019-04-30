@@ -5,10 +5,10 @@ use data_table::{DataRow, Value};
 #[derive(Default)]
 pub struct Page {
     /// page number
-    page: usize,
+    pub page: usize,
     /// rows on this page
-    rows: Vec<DataRow>,
-    total_records: usize,
+    pub rows: Vec<DataRow>,
+    pub total_records: usize,
 }
 
 /// Contains all the data for a window
@@ -16,23 +16,37 @@ pub struct Page {
 pub struct WindowData {
     /// pages can be scrolled to and fro
     /// and sometimes unloaded for performance puposed
-    main_data: Vec<Page>,
+    pub main_tab_data: Vec<Page>,
     /// Vector of pages for each has_many_tab
-    has_many_data: Vec<Vec<Page>>,
+    pub has_many_tab_data: Vec<Vec<Page>>,
     /// Vector of pages for each indirect_tab
-    indirect_data: Vec<Vec<Page>>,
+    pub indirect_tab_data: Vec<Vec<Page>>,
 
     /// Frozen data for each of this tab
-    pub main_frozen_data: FrozenData,
-    pub has_many_frozen_data: FrozenData,
-    pub indirect_frozen_data: FrozenData,
+    pub main_tab_frozen_data: FrozenData,
+    pub has_many_tab_frozen_data: FrozenData,
+    pub indirect_tab_frozen_data: FrozenData,
 }
 
 impl WindowData {
-    pub fn main_rows(self) -> Vec<DataRow> {
-        self.main_data
-            .into_iter()
-            .flat_map(|page| page.rows)
+    pub fn main_tab_rows(&self) -> Vec<DataRow> {
+        self.main_tab_data
+            .iter()
+            .flat_map(|page| page.rows.clone())
+            .collect()
+    }
+
+    pub fn has_many_tab_rows(&self, index: usize) -> Vec<DataRow> {
+        self.has_many_tab_data[index]
+            .iter()
+            .flat_map(|page| page.rows.clone())
+            .collect()
+    }
+
+    pub fn indirect_tab_rows(&self, index: usize) -> Vec<DataRow> {
+        self.indirect_tab_data[index]
+            .iter()
+            .flat_map(|page| page.rows.clone())
             .collect()
     }
 }
@@ -45,19 +59,19 @@ pub struct FrozenData {
 
 fn make_sample_frozen_data() -> FrozenData {
     FrozenData {
-        frozen_rows: vec![0, 1, 5],
-        frozen_columns: vec![0, 1],
+        frozen_rows: vec![0,1],
+        frozen_columns: vec![0],
     }
 }
 
 pub fn make_sample_window_data() -> WindowData {
     WindowData {
-        main_data: vec![make_sample_page()],
-        has_many_data: vec![vec![make_sample_page()]],
-        indirect_data: vec![vec![make_sample_page()]],
-        main_frozen_data: make_sample_frozen_data(),
-        has_many_frozen_data: make_sample_frozen_data(),
-        indirect_frozen_data: make_sample_frozen_data(),
+        main_tab_data: vec![make_sample_page()],
+        has_many_tab_data: vec![vec![make_sample_page()]],
+        indirect_tab_data: vec![vec![make_sample_page()]],
+        main_tab_frozen_data: make_sample_frozen_data(),
+        has_many_tab_frozen_data: make_sample_frozen_data(),
+        indirect_tab_frozen_data: make_sample_frozen_data(),
     }
 }
 

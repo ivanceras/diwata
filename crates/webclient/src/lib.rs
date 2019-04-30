@@ -32,12 +32,6 @@ pub fn initialize(initial_state: &str) {
     ];
     let mut app = App::new(windows);
     app.set_window_data(0, crate::data::make_sample_window_data());
-    /*
-    app.set_window_main_tab_data(0, crate::data::make_sample_rows());
-    app.set_window_main_tab_freeze_rows(0, vec![2, 3]);
-    app.set_window_main_tab_freeze_columns(0, vec![0, 1]);
-    */
-
     Program::new_replace_mount(app, &root_node);
 }
 
