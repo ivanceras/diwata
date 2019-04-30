@@ -1,7 +1,10 @@
-use crate::app::{
-    detail_view::DetailView,
-    field_view,
-    table_view::{self, TableView},
+use crate::{
+    app::{
+        detail_view::DetailView,
+        field_view,
+        table_view::{self, TableView},
+    },
+    data::FrozenData,
 };
 use data_table::DataRow;
 
@@ -15,7 +18,6 @@ use diwata_intel::Tab;
 #[derive(Clone)]
 pub enum Msg {
     TableMsg(table_view::Msg),
-    FieldMsg(usize, field_view::Msg),
 }
 
 pub struct TabView {
@@ -44,7 +46,12 @@ impl TabView {
     }
 
     pub fn freeze_columns(&mut self, columns: Vec<usize>) {
+        sauron::log!("freeze columns: {:?}", columns);
         self.table_view.freeze_columns(columns);
+    }
+    pub fn set_frozen_data(&mut self, frozen_data: FrozenData) {
+        self.freeze_rows(frozen_data.frozen_rows);
+        self.freeze_columns(frozen_data.frozen_columns);
     }
 
     pub fn show(&mut self) {
@@ -56,7 +63,11 @@ impl TabView {
 }
 
 impl Component<Msg> for TabView {
-    fn update(&mut self, _msg: Msg) {}
+    fn update(&mut self, msg: Msg) {
+        match msg {
+            Msg::TableMsg(table_msg) => self.table_view.update(table_msg),
+        }
+    }
     fn view(&self) -> Node<Msg> {
         section(
             [

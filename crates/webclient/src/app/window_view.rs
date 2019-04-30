@@ -3,7 +3,10 @@ use sauron::{
     Component, Node,
 };
 
-use crate::app::tab_view::{self, TabView};
+use crate::{
+    app::tab_view::{self, TabView},
+    data::WindowData,
+};
 use data_table::DataRow;
 use diwata_intel::{TableName, Window};
 
@@ -50,16 +53,11 @@ impl WindowView {
         window_view
     }
 
-    pub fn set_main_tab_data(&mut self, rows: Vec<DataRow>) {
-        self.main_tab.set_data_rows(rows);
-    }
-
-    pub fn main_tab_freeze_rows(&mut self, rows: Vec<usize>) {
-        self.main_tab.freeze_rows(rows);
-    }
-
-    pub fn main_tab_freeze_columns(&mut self, columns: Vec<usize>) {
-        self.main_tab.freeze_columns(columns);
+    /// Important: set the data rows first before setting the frozen data
+    pub fn set_window_data(&mut self, window_data: WindowData) {
+        let main_frozen_data = window_data.main_frozen_data.clone();
+        self.main_tab.set_data_rows(window_data.main_rows());
+        self.main_tab.set_frozen_data(main_frozen_data);
     }
 
     fn update_active_has_many_or_indirect_tab(&mut self) {

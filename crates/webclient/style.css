@@ -39,6 +39,7 @@ q:before,q:after {
 }
 abbr,acronym { border:0;
 }
+/* end of reset */
 
 /* Use snake_case instead of kebab case for the class names
  * The main advantage is text searching in vim where it matches the entire
@@ -145,7 +146,7 @@ ol, ul, li {
     border: 1px solid green;
 }
 
-.normal_column_view_names, .frozen_column_names {
+.normal_column_names, .frozen_column_names {
     display: flex;
     flex-direction: row;
 }
@@ -162,27 +163,39 @@ ol, ul, li {
     flex-direction: column;
 }
 
+.normal_column_names_and_frozen_rows_container{
+    overflow-x: hidden;
+}
+
 .frozen_rows{
     display: flex;
     flex-direction: column;
     list-style: none;
-    overflow-x: hidden;
     border: 1px solid red;
 }
 
 
-/*ol in table_view, list of frozen column normal_rows in the left side
- * should share same values with normal_rows*/
-.frozen_columns {
+.frozen_columns_container{
     overflow-y: hidden;
 }
 
-.selector_and_frozen_column_rows{
+/*ol in table_view, list of frozen column normal_rows in the left side
+ * should share same values with normal_rows*/
+.frozen_columns {
+}
+
+.selector_and_frozen_column_row{
     display: flex;
     flex-direction: row;
 }
 
-/*ol in table_view, listing of normal_rows */
+/* The selector checkbox */
+.selector_and_frozen_column_row > input {
+    width: 30px;
+}
+
+/*ol in table_view, listing of normal_rows 
+ * can move: left, right, up, down */
 .normal_rows{
     display: flex;
     flex-direction: column;
@@ -190,19 +203,19 @@ ol, ul, li {
     overflow-x: scroll;
 }
 
-.normal_rows, .frozen_rows {
+.normal_rows, .normal_column_names_and_frozen_rows_container {
     width: 800px;
 }
 
 
-/* values in .normal_rows and .frozen_columns should be the same
+/* values in .normal_rows and .frozen_columns_container should be the same
  * to keep the alignment*/
-.normal_rows, .frozen_columns {
+.normal_rows, .frozen_columns_container {
     border: 1px solid peachpuff;
     padding: 5px;
     display: flex;
     flex-direction: column;
-    height: 600px;
+    height: 400px;
 }
 
 /* li, a row in the frozen column 

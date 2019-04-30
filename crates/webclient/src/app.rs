@@ -1,3 +1,4 @@
+use crate::data::WindowData;
 use data_table::DataRow;
 use diwata_intel::Window;
 use sauron::{
@@ -35,15 +36,8 @@ impl App {
         app
     }
 
-    pub fn set_window_main_tab_data(&mut self, index: usize, rows: Vec<DataRow>) {
-        self.window_views[index].set_main_tab_data(rows);
-    }
-    pub fn set_window_main_tab_freeze_rows(&mut self, index: usize, rows: Vec<usize>) {
-        self.window_views[index].main_tab_freeze_rows(rows);
-    }
-
-    pub fn set_window_main_tab_freeze_columns(&mut self, index: usize, columns: Vec<usize>) {
-        self.window_views[index].main_tab_freeze_columns(columns);
+    pub fn set_window_data(&mut self, index: usize, window_data: WindowData) {
+        self.window_views[index].set_window_data(window_data);
     }
 
     fn update_active_window(&mut self) {

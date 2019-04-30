@@ -24,6 +24,7 @@ impl RowView {
     }
 
     pub fn freeze_columns(&mut self, columns: Vec<usize>) {
+        sauron::log!("row view freeze columns: {:?}", columns);
         self.frozen_fields = columns;
     }
 

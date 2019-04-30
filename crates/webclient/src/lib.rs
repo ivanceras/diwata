@@ -11,6 +11,7 @@ use sauron::Program;
 use wasm_bindgen::{self, prelude::*};
 
 mod app;
+mod data;
 
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
 // allocator.
@@ -30,9 +31,12 @@ pub fn initialize(initial_state: &str) {
         sample_window("Window3"),
     ];
     let mut app = App::new(windows);
-    app.set_window_main_tab_data(0, crate::make_sample_rows());
+    app.set_window_data(0, crate::data::make_sample_window_data());
+    /*
+    app.set_window_main_tab_data(0, crate::data::make_sample_rows());
     app.set_window_main_tab_freeze_rows(0, vec![2, 3]);
     app.set_window_main_tab_freeze_columns(0, vec![0, 1]);
+    */
 
     Program::new_replace_mount(app, &root_node);
 }
@@ -92,14 +96,4 @@ fn sample_control_widget(_name: &str) -> ControlWidget {
         height: 20,
         alignment: Alignment::Left,
     }
-}
-
-pub fn make_sample_rows() -> Vec<DataRow> {
-    (0..40).into_iter().map(|n| make_sample_row(n)).collect()
-}
-pub fn make_sample_row(row: usize) -> Vec<Value> {
-    (0..25)
-        .into_iter()
-        .map(|n| Value::Text(format!("Row{}-Value{}", row, n)))
-        .collect()
 }
