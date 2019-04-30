@@ -59,7 +59,7 @@ pub struct FrozenData {
 
 fn make_sample_frozen_data() -> FrozenData {
     FrozenData {
-        frozen_rows: vec![0,1],
+        frozen_rows: vec![0, 1],
         frozen_columns: vec![0],
     }
 }

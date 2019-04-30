@@ -4,10 +4,9 @@ use crate::{
         field_view,
         table_view::{self, TableView},
     },
-    data::FrozenData,
+    data::{FrozenData, Page},
 };
-use data_table::{DataRow};
-use crate::data::Page;
+use data_table::DataRow;
 
 use sauron::{
     html::{attributes::*, *},
@@ -39,7 +38,7 @@ impl TabView {
     }
 
     pub fn set_pages(&mut self, pages: Vec<Page>) {
-        for page in pages{
+        for page in pages {
             self.set_data_rows(page.rows);
         }
     }

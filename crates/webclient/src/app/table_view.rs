@@ -113,21 +113,29 @@ impl Component<Msg> for TableView {
                     section(
                         [class("frozen_column_names_and_frozen_column_rows")],
                         [
-                            header(
-                                [class("frozen_column_names")],
-                                self.column_views
-                                    .iter()
-                                    .enumerate()
-                                    .filter(|(index, _column)| self.frozen_columns.contains(index))
-                                    .map(|(index, column)| {
-                                        column.view().map(move |column_msg| {
-                                            Msg::ColumnMsg(index, column_msg)
-                                        })
-                                    })
-                                    .collect::<Vec<Node<Msg>>>(),
+                            section(
+                                [class("spacer_and_frozen_column_names")],
+                                [
+                                    div([class("spacer")], [input([r#type("checkbox")], [])]),
+                                    // absolutely immovable frozen column and row
+                                    // can not move in any direction
+                                    header(
+                                        [class("frozen_column_names")],
+                                        self.column_views
+                                            .iter()
+                                            .enumerate()
+                                            .filter(|(index, _column)| {
+                                                self.frozen_columns.contains(index)
+                                            })
+                                            .map(|(index, column)| {
+                                                column.view().map(move |column_msg| {
+                                                    Msg::ColumnMsg(index, column_msg)
+                                                })
+                                            })
+                                            .collect::<Vec<Node<Msg>>>(),
+                                    ),
+                                ],
                             ),
-                            // absolutely immovable frozen column and row
-                            // can not move in any direction
                             ol(
                                 [class("immovable_frozen_columns")],
                                 self.row_views

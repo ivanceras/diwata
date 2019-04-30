@@ -55,7 +55,7 @@ impl WindowView {
 
     /// Important: set the data rows first before setting the frozen data
     pub fn set_window_data(&mut self, window_data: WindowData) {
-        let WindowData{
+        let WindowData {
             main_tab_data,
             main_tab_frozen_data,
 
@@ -64,16 +64,15 @@ impl WindowView {
 
             indirect_tab_data,
             indirect_tab_frozen_data,
-
         } = window_data;
         self.main_tab.set_pages(main_tab_data);
         self.main_tab.set_frozen_data(main_tab_frozen_data);
-        
-        for (index, pages) in has_many_tab_data.into_iter().enumerate(){
+
+        for (index, pages) in has_many_tab_data.into_iter().enumerate() {
             self.has_many_tabs[index].set_pages(pages);
         }
 
-        for (index, pages) in indirect_tab_data.into_iter().enumerate(){
+        for (index, pages) in indirect_tab_data.into_iter().enumerate() {
             self.indirect_tabs[index].1.set_pages(pages);
         }
     }
@@ -165,7 +164,7 @@ impl Component<Msg> for WindowView {
                         .enumerate()
                         .map(|(index, tab)| {
                             details(
-                                [class("one_one_tab"), open(true)],
+                                [class("one_one_tab")],
                                 [
                                     sauron::html::summary([], [text(&tab.name)]),
                                     TabView::view(tab)
