@@ -18,6 +18,9 @@ pub enum Msg {
 pub struct TableView {
     pub column_views: Vec<ColumnView>,
     pub row_views: Vec<RowView>,
+    /// Which columns of the rows are to be frozen on the left side of the table
+    frozen_rows: Vec<usize>,
+    frozen_columns: Vec<usize>,
 }
 
 impl TableView {
@@ -29,6 +32,8 @@ impl TableView {
                 .map(Self::convert_field_to_column_view)
                 .collect(),
             row_views: vec![],
+            frozen_rows: vec![],
+            frozen_columns: vec![],
         }
     }
 
@@ -40,6 +45,8 @@ impl TableView {
                 .map(ColumnView::new)
                 .collect(),
             row_views: data_table.rows.into_iter().map(RowView::new).collect(),
+            frozen_rows: vec![],
+            frozen_columns: vec![],
         }
     }
 
@@ -57,40 +64,138 @@ impl TableView {
     pub fn set_data_rows(&mut self, data_row: Vec<DataRow>) {
         self.row_views = data_row.into_iter().map(RowView::new).collect();
     }
+
+    pub fn freeze_rows(&mut self, rows: Vec<usize>) {
+        self.frozen_rows = rows;
+    }
+
+    pub fn freeze_columns(&mut self, columns: Vec<usize>) {
+        self.frozen_columns = columns.clone();
+        self.row_views
+            .iter_mut()
+            .for_each(|row_view| row_view.freeze_columns(columns.clone()))
+    }
 }
 
 impl Component<Msg> for TableView {
-    fn update(&mut self, msg: Msg) {}
+    fn update(&mut self, _msg: Msg) {}
 
     fn view(&self) -> Node<Msg> {
         main(
             [class("table")],
-            [
-                header(
-                    [class("column_view_names")],
-                    self.column_views
-                        .iter()
-                        .enumerate()
-                        .map(|(index, column)| {
-                            column
-                                .view()
-                                .map(move |column_msg| Msg::ColumnMsg(index, column_msg))
-                        })
-                        .collect::<Vec<Node<Msg>>>(),
-                ),
-                ol(
-                    [class("rows")],
-                    self.row_views
-                        .iter()
-                        .enumerate()
-                        .map(|(index, row_view)| {
-                            row_view
-                                .view()
-                                .map(move |row_msg| Msg::RowMsg(index, row_msg))
-                        })
-                        .collect::<Vec<Node<Msg>>>(),
-                ),
-            ],
+            [section(
+                [class("rows_and_frozen_columns")],
+                [
+                    section(
+                        [class("frozen_column_names_and_frozen_column_rows")],
+                        [
+                            header(
+                                [class("frozen_column_names")],
+                                self.column_views
+                                    .iter()
+                                    .enumerate()
+                                    .filter(|(index, _column)| self.frozen_columns.contains(index))
+                                    .map(|(index, column)| {
+                                        column.view().map(move |column_msg| {
+                                            Msg::ColumnMsg(index, column_msg)
+                                        })
+                                    })
+                                    .collect::<Vec<Node<Msg>>>(),
+                            ),
+                            // absolutely immovable frozen column and row
+                            // can not move in any direction
+                            ol(
+                                [class("immovable_frozen_columns")],
+                                self.row_views
+                                    .iter()
+                                    .enumerate()
+                                    .filter(|(index, _row_view)| self.frozen_rows.contains(index))
+                                    .map(|(index, row_view)| {
+                                        div(
+                                            [class("selector_and_frozen_column_rows")],
+                                            [
+                                                input([r#type("checkbox")], []),
+                                                row_view.view_frozen().map(move |row_msg| {
+                                                    Msg::RowMsg(index, row_msg)
+                                                }),
+                                            ],
+                                        )
+                                    })
+                                    .collect::<Vec<Node<Msg>>>(),
+                            ),
+                            // can move up and down
+                            ol(
+                                [class("frozen_columns")],
+                                self.row_views
+                                    .iter()
+                                    .enumerate()
+                                    .filter(|(index, _row_view)| !self.frozen_rows.contains(index))
+                                    .map(|(index, row_view)| {
+                                        // The checkbox selection and the rows of the frozen
+                                        // columns
+                                        div(
+                                            [class("selector_and_frozen_column_rows")],
+                                            [
+                                                input([r#type("checkbox")], []),
+                                                row_view.view_frozen().map(move |row_msg| {
+                                                    Msg::RowMsg(index, row_msg)
+                                                }),
+                                            ],
+                                        )
+                                    })
+                                    .collect::<Vec<Node<Msg>>>(),
+                            ),
+                        ],
+                    ),
+                    section(
+                        [class("frozen_rows_and_normal_rows")],
+                        [
+                            // can move left and right
+                            header(
+                                [class("normal_column_view_names")],
+                                self.column_views
+                                    .iter()
+                                    .enumerate()
+                                    .filter(|(index, _column)| !self.frozen_columns.contains(index))
+                                    .map(|(index, column)| {
+                                        column.view().map(move |column_msg| {
+                                            Msg::ColumnMsg(index, column_msg)
+                                        })
+                                    })
+                                    .collect::<Vec<Node<Msg>>>(),
+                            ),
+                            // can move left and right, but not up and down
+                            ol(
+                                [class("frozen_rows")],
+                                self.row_views
+                                    .iter()
+                                    .enumerate()
+                                    .filter(|(index, _row_view)| self.frozen_rows.contains(&index))
+                                    .map(|(index, row_view)| {
+                                        row_view
+                                            .view()
+                                            .map(move |row_msg| Msg::RowMsg(index, row_msg))
+                                    })
+                                    .collect::<Vec<Node<Msg>>>(),
+                            ),
+                            // can move: left, right, up, down
+                            ol(
+                                [class("normal_rows")],
+                                self.row_views
+                                    .iter()
+                                    .enumerate()
+                                    .filter(|(index, _row_view)| !self.frozen_rows.contains(&index))
+                                    .map(|(index, row_view)| {
+                                        row_view
+                                            .view()
+                                            .map(move |row_msg| Msg::RowMsg(index, row_msg))
+                                    })
+                                    .collect::<Vec<Node<Msg>>>(),
+                            ),
+                        ],
+                    ),
+                ],
+            )],
         )
     }
 }

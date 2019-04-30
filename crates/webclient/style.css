@@ -1,9 +1,57 @@
+/* CSS reset */
+body,div,dl,dt,dd,ul,ol,li,h1,h2,h3,h4,h5,h6,pre,form,fieldset,input,textarea,p,blockquote,th,td { 
+    margin:0;
+    padding:0;
+}
+html,body {
+    margin:0;
+    padding:0;
+}
+table {
+    border-collapse:collapse;
+    border-spacing:0;
+}
+fieldset,img { 
+    border:0;
+}
+input{
+    border:1px solid #b0b0b0;
+    padding:3px 5px 4px;
+    color:#979797;
+    width:190px;
+}
+address,caption,cite,code,dfn,th,var {
+    font-style:normal;
+    font-weight:normal;
+}
+ol,ul {
+    list-style:none;
+}
+caption,th {
+    text-align:left;
+}
+h1,h2,h3,h4,h5,h6 {
+    font-size:100%;
+    font-weight:normal;
+}
+q:before,q:after {
+    content:'';
+}
+abbr,acronym { border:0;
+}
+
 /* Use snake_case instead of kebab case for the class names
  * The main advantage is text searching in vim where it matches the entire
  * class name and treated as identifier
  * */
 body {
     font-family: "Fira Sans", "Courier New", Courier,"Lucida Sans Typewriter","Lucida Typewriter",monospace;
+}
+
+ol, ul, li {
+    margin: 0;
+    padding: 0;
+    list-style: none;
 }
 
 .app {
@@ -87,28 +135,95 @@ body {
     border: 1px solid blue;
     padding: 20px;
 }
+/* frozen column names and the rows of frozen columns */
+.frozen_column_names_and_frozen_column_rows{
+    display: flex;
+    flex-direction: column;
+}
 
-.column_view_names {
+.immovable_frozen_columns {
+    border: 1px solid green;
+}
+
+.normal_column_view_names, .frozen_column_names {
     display: flex;
     flex-direction: row;
 }
 
-/*ol in table_view, listing of rows */
-.rows {
-    border: 1px solid peachpuff;
+.rows_and_frozen_columns {
+    border: 1px solid purple;
     padding: 5px;
-    list-style: none;
+    display: flex;
+    flex-direction: row;
 }
 
-/* li in row_view, each row of the table*/
-.row{
-    border-bottom: 1px solid #333;
-    padding-top: 3px;
-    padding-bottom: 1px;
+.frozen_rows_and_normal_rows{
+    display: flex;
+    flex-direction: column;
+}
+
+.frozen_rows{
+    display: flex;
+    flex-direction: column;
+    list-style: none;
+    overflow-x: hidden;
+    border: 1px solid red;
+}
+
+
+/*ol in table_view, list of frozen column normal_rows in the left side
+ * should share same values with normal_rows*/
+.frozen_columns {
+    overflow-y: hidden;
+}
+
+.selector_and_frozen_column_rows{
+    display: flex;
+    flex-direction: row;
+}
+
+/*ol in table_view, listing of normal_rows */
+.normal_rows{
+    display: flex;
+    flex-direction: column;
+    overflow-y: scroll;
+    overflow-x: scroll;
+}
+
+.normal_rows, .frozen_rows {
+    width: 800px;
+}
+
+
+/* values in .normal_rows and .frozen_columns should be the same
+ * to keep the alignment*/
+.normal_rows, .frozen_columns {
+    border: 1px solid peachpuff;
     padding: 5px;
+    display: flex;
+    flex-direction: column;
+    height: 600px;
+}
+
+/* li, a row in the frozen column 
+ * the height should align the .row  */
+.frozen_column_row {
+}
+
+/* li in row_view, each row of the table
+ * */
+.row{
+}
+
+/* li in row_view, each row of the table
+ * The height should align the .frozen_column_row */
+.row, .frozen_column_row {
+    display: flex;
+    flex-direction: row;
+    border-bottom: 1px solid #333;
+    height: 30px;
 }
 
 .value{
     border: 1px solid #eee;
-    padding: 5px;
 }

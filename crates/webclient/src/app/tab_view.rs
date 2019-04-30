@@ -1,13 +1,12 @@
 use crate::app::{
-    column_view::ColumnView,
     detail_view::DetailView,
-    field_view::{self, FieldView},
+    field_view,
     table_view::{self, TableView},
 };
-use data_table::{DataColumn, DataRow};
+use data_table::DataRow;
 
 use sauron::{
-    html::{attributes::*, events::*, *},
+    html::{attributes::*, *},
     Component, Node,
 };
 
@@ -37,7 +36,15 @@ impl TabView {
     }
 
     pub fn set_data_rows(&mut self, data_row: Vec<DataRow>) {
-        self.table_view.set_data_rows(data_row)
+        self.table_view.set_data_rows(data_row);
+    }
+
+    pub fn freeze_rows(&mut self, rows: Vec<usize>) {
+        self.table_view.freeze_rows(rows);
+    }
+
+    pub fn freeze_columns(&mut self, columns: Vec<usize>) {
+        self.table_view.freeze_columns(columns);
     }
 
     pub fn show(&mut self) {
@@ -49,7 +56,7 @@ impl TabView {
 }
 
 impl Component<Msg> for TabView {
-    fn update(&mut self, msg: Msg) {}
+    fn update(&mut self, _msg: Msg) {}
     fn view(&self) -> Node<Msg> {
         section(
             [

@@ -1,10 +1,9 @@
 use sauron::{
-    html::{attributes::*, events::*, *},
+    html::{attributes::*, *},
     Component, Node,
 };
 
 use data_table::Value;
-use diwata_intel::Field;
 
 #[derive(Clone)]
 pub enum Msg {
@@ -22,7 +21,7 @@ impl FieldView {
 }
 
 impl Component<Msg> for FieldView {
-    fn update(&mut self, msg: Msg) {}
+    fn update(&mut self, _msg: Msg) {}
     fn view(&self) -> Node<Msg> {
         input(
             [

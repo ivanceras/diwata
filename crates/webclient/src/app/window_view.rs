@@ -4,8 +4,8 @@ use sauron::{
 };
 
 use crate::app::tab_view::{self, TabView};
-use data_table::{DataRow, Value};
-use diwata_intel::{IndirectTab, TableName, Window};
+use data_table::DataRow;
+use diwata_intel::{TableName, Window};
 
 #[derive(Clone)]
 pub enum Msg {
@@ -33,11 +33,7 @@ impl WindowView {
     pub fn new(window: Window) -> Self {
         let mut window_view = WindowView {
             name: window.name,
-            main_tab: {
-                let mut tab_view = TabView::new(window.main_tab);
-                tab_view.set_data_rows(Self::make_sample_rows());
-                tab_view
-            },
+            main_tab: TabView::new(window.main_tab),
             has_one_tabs: window.has_one_tabs.into_iter().map(TabView::new).collect(),
             one_one_tabs: window.one_one_tabs.into_iter().map(TabView::new).collect(),
             has_many_tabs: window.has_many_tabs.into_iter().map(TabView::new).collect(),
@@ -52,6 +48,18 @@ impl WindowView {
         };
         window_view.update_active_has_many_or_indirect_tab();
         window_view
+    }
+
+    pub fn set_main_tab_data(&mut self, rows: Vec<DataRow>) {
+        self.main_tab.set_data_rows(rows);
+    }
+
+    pub fn main_tab_freeze_rows(&mut self, rows: Vec<usize>) {
+        self.main_tab.freeze_rows(rows);
+    }
+
+    pub fn main_tab_freeze_columns(&mut self, columns: Vec<usize>) {
+        self.main_tab.freeze_columns(columns);
     }
 
     fn update_active_has_many_or_indirect_tab(&mut self) {
@@ -71,7 +79,7 @@ impl WindowView {
         self.indirect_tabs
             .iter_mut()
             .enumerate()
-            .for_each(|(index, (table_name, tab))| {
+            .for_each(|(index, (_table_name, tab))| {
                 if active_indirect_tab == Some(index) {
                     tab.show();
                 } else {
@@ -86,19 +94,6 @@ impl WindowView {
 
     pub fn show(&mut self) {
         self.is_visible = true;
-    }
-
-    fn make_sample_rows() -> Vec<DataRow> {
-        (0..10)
-            .into_iter()
-            .map(|n| Self::make_sample_row(n))
-            .collect()
-    }
-    fn make_sample_row(row: usize) -> Vec<Value> {
-        (0..5)
-            .into_iter()
-            .map(|n| Value::Text(format!("Row{}-Value{}", row, n)))
-            .collect()
     }
 
     fn activate_has_many_tab(&mut self, index: usize) {
@@ -119,7 +114,7 @@ impl Component<Msg> for WindowView {
             Msg::MainTabMsg(tab_msg) => self.main_tab.update(tab_msg),
             Msg::OneOneTabMsg(index, tab_msg) => self.one_one_tabs[index].update(tab_msg),
             Msg::HasManyTabMsg(index, tab_msg) => self.has_many_tabs[index].update(tab_msg),
-            Msg::IndirectTabMsg(index, (table_name, tab_msg)) => {
+            Msg::IndirectTabMsg(index, (_table_name, tab_msg)) => {
                 self.indirect_tabs[index].1.update(tab_msg)
             }
             Msg::ShowHasManyTab(index) => self.activate_has_many_tab(index),
@@ -185,7 +180,7 @@ impl Component<Msg> for WindowView {
                             self.indirect_tabs
                                 .iter()
                                 .enumerate()
-                                .map(|(index, (table_name, tab))| {
+                                .map(|(index, (_table_name, tab))| {
                                     button(
                                         [onclick(move |_| Msg::ShowIndirectTab(index))],
                                         [text(&tab.name)],

@@ -9,18 +9,25 @@ pub enum Msg {}
 
 pub struct ColumnView {
     column: DataColumn,
+    width: u32,
 }
 
 impl ColumnView {
     pub fn new(column: DataColumn) -> Self {
-        ColumnView { column }
+        ColumnView { column, width: 100 }
     }
 }
 
 impl Component<Msg> for ColumnView {
-    fn update(&mut self, msg: Msg) {}
+    fn update(&mut self, _msg: Msg) {}
 
     fn view(&self) -> Node<Msg> {
-        button([class("column_name")], [text(&self.column.name)])
+        button(
+            [
+                class("column_name"),
+                styles([("width", format!("{}px", self.width))]),
+            ],
+            [text(&self.column.name)],
+        )
     }
 }
