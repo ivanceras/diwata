@@ -71,6 +71,8 @@ impl TabView {
 
     fn show_detail_view(&mut self, row_index: usize) {
         self.detail_view.show();
+        let fields = &self.table_view.row_views[row_index].fields;
+        self.detail_view.set_fields(fields);
         self.detail_view.set_row(row_index);
     }
     /// Important NOTE: Don't remove views,

@@ -1,5 +1,5 @@
 use sauron::{
-    html::{attributes::*, *},
+    html::{attributes::*, events::*, *},
     Component, Node,
 };
 
@@ -7,9 +7,10 @@ use data_table::Value;
 
 #[derive(Clone)]
 pub enum Msg {
-    FieldClick,
+    ChangeValue(String),
 }
 
+#[derive(Clone)]
 pub struct FieldView {
     value: Value,
 }
@@ -21,12 +22,19 @@ impl FieldView {
 }
 
 impl Component<Msg> for FieldView {
-    fn update(&mut self, _msg: Msg) {}
+    fn update(&mut self, msg: Msg) {
+        match msg {
+            Msg::ChangeValue(value) => {
+                self.value = Value::Text(value);
+            }
+        }
+    }
     fn view(&self) -> Node<Msg> {
         input(
             [
                 r#type("text"),
                 class("value"),
+                onchange(|input| Msg::ChangeValue(input.value)),
                 value(format!("{:?}", self.value)),
             ],
             [],

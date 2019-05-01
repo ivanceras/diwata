@@ -175,7 +175,7 @@ ol, ul, li {
 /* add an animation for the transition of margin to smoothen out the
  * transition */
 .normal_column_names_and_frozen_rows, .frozen_columns{
-    transition: margin 100ms ease;
+    /*transition: margin 100ms ease;*/
 }
 
 .frozen_rows{

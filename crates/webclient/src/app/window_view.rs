@@ -97,8 +97,8 @@ impl Component<Msg> for WindowView {
                     [
                         class("detail_row_related_records"),
                         styles_flag([
-                            ("display", "block", !self.main_tab.in_detail_view()),
-                            ("display", "none", self.main_tab.in_detail_view()),
+                            ("display", "block", self.main_tab.in_detail_view()),
+                            ("display", "none", !self.main_tab.in_detail_view()),
                         ]),
                     ],
                     [

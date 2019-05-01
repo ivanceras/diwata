@@ -4,6 +4,7 @@ use sauron::{
     html::{attributes::*, events::*, *},
     Component, Node,
 };
+use std::{cell::RefCell, rc::Rc};
 
 #[derive(Clone)]
 pub enum Msg {
@@ -12,14 +13,17 @@ pub enum Msg {
 }
 
 pub struct RowView {
-    fields: Vec<FieldView>,
+    pub fields: Vec<Rc<RefCell<FieldView>>>,
     frozen_fields: Vec<usize>,
 }
 
 impl RowView {
     pub fn new(data_rows: DataRow) -> Self {
         RowView {
-            fields: data_rows.into_iter().map(FieldView::new).collect(),
+            fields: data_rows
+                .into_iter()
+                .map(|value| Rc::new(RefCell::new(FieldView::new(value))))
+                .collect(),
             frozen_fields: vec![],
         }
     }
@@ -31,7 +35,7 @@ impl RowView {
 
     fn view_with_filter<F>(&self, filter: F) -> Node<Msg>
     where
-        F: Fn(&(usize, &FieldView)) -> bool,
+        F: Fn(&(usize, &Rc<RefCell<FieldView>>)) -> bool,
     {
         li(
             [class("row"), ondblclick(|_| Msg::DoubleClick)],
@@ -41,6 +45,7 @@ impl RowView {
                 .filter(filter)
                 .map(|(index, field)| {
                     field
+                        .borrow()
                         .view()
                         .map(move |field_msg| Msg::FieldMsg(index, field_msg))
                 })
