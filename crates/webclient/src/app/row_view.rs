@@ -1,13 +1,14 @@
 use crate::app::field_view::{self, FieldView};
 use data_table::DataRow;
 use sauron::{
-    html::{attributes::*, *},
+    html::{attributes::*, events::*, *},
     Component, Node,
 };
 
 #[derive(Clone)]
 pub enum Msg {
     FieldMsg(usize, field_view::Msg),
+    DoubleClick,
 }
 
 pub struct RowView {
@@ -28,13 +29,16 @@ impl RowView {
         self.frozen_fields = columns;
     }
 
-    pub fn view_frozen(&self) -> Node<Msg> {
+    fn view_with_filter<F>(&self, filter: F) -> Node<Msg>
+    where
+        F: Fn(&(usize, &FieldView)) -> bool,
+    {
         li(
-            [class("row")],
+            [class("row"), ondblclick(|_| Msg::DoubleClick)],
             self.fields
                 .iter()
                 .enumerate()
-                .filter(|(index, _field)| self.frozen_fields.contains(index))
+                .filter(filter)
                 .map(|(index, field)| {
                     field
                         .view()
@@ -43,24 +47,16 @@ impl RowView {
                 .collect::<Vec<Node<Msg>>>(),
         )
     }
+
+    pub fn view_frozen(&self) -> Node<Msg> {
+        self.view_with_filter(|(index, _field)| self.frozen_fields.contains(index))
+    }
 }
 
 impl Component<Msg> for RowView {
     fn update(&mut self, _msg: Msg) {}
 
     fn view(&self) -> Node<Msg> {
-        li(
-            [class("row")],
-            self.fields
-                .iter()
-                .enumerate()
-                .filter(|(index, _field)| !self.frozen_fields.contains(index))
-                .map(|(index, field)| {
-                    field
-                        .view()
-                        .map(move |field_msg| Msg::FieldMsg(index, field_msg))
-                })
-                .collect::<Vec<Node<Msg>>>(),
-        )
+        self.view_with_filter(|(index, _field)| !self.frozen_fields.contains(index))
     }
 }

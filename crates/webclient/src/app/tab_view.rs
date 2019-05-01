@@ -1,7 +1,8 @@
 use crate::{
     app::{
-        detail_view::DetailView,
+        detail_view::{self, DetailView},
         field_view,
+        row_view::{self, RowView},
         table_view::{self, TableView},
     },
     data::{FrozenData, Page},
@@ -18,11 +19,12 @@ use diwata_intel::Tab;
 #[derive(Clone)]
 pub enum Msg {
     TableMsg(table_view::Msg),
+    DetailViewMsg(detail_view::Msg),
 }
 
 pub struct TabView {
     pub name: String,
-    detail_view: Option<DetailView>,
+    detail_view: DetailView,
     table_view: TableView,
     is_visible: bool,
 }
@@ -32,7 +34,7 @@ impl TabView {
         TabView {
             name: tab.name.clone(),
             table_view: TableView::from_tab(tab),
-            detail_view: None,
+            detail_view: DetailView::new(),
             is_visible: true,
         }
     }
@@ -66,12 +68,35 @@ impl TabView {
     pub fn hide(&mut self) {
         self.is_visible = false;
     }
+
+    fn show_detail_view(&mut self, row_index: usize) {
+        self.detail_view.show();
+        self.detail_view.set_row(row_index);
+    }
+    /// Important NOTE: Don't remove views,
+    /// just hide them, otherwise the DOM closures
+    /// will be lost causing panics in the browser
+    fn close_detail_view(&mut self) {
+        self.detail_view.hide();
+    }
+    pub fn in_detail_view(&self) -> bool {
+        self.detail_view.is_visible
+    }
 }
 
 impl Component<Msg> for TabView {
     fn update(&mut self, msg: Msg) {
         match msg {
+            Msg::TableMsg(table_view::Msg::RowMsg(row_index, row_view::Msg::DoubleClick)) => {
+                self.show_detail_view(row_index);
+            }
             Msg::TableMsg(table_msg) => self.table_view.update(table_msg),
+            Msg::DetailViewMsg(detail_view::Msg::Close) => {
+                self.close_detail_view();
+            }
+            Msg::DetailViewMsg(detail_msg) => {
+                self.detail_view.update(detail_msg);
+            }
         }
     }
     fn view(&self) -> Node<Msg> {
@@ -79,13 +104,20 @@ impl Component<Msg> for TabView {
             [
                 class("tab"),
                 styles_flag([
-                    ("display", "block", self.is_visible),
+                    ("display", "flex", self.is_visible),
                     ("display", "none", !self.is_visible),
                 ]),
             ],
             [
                 div([], [button([], [text(&self.name)])]),
-                section([], [self.table_view.view().map(Msg::TableMsg)]),
+                section(
+                    [class("detail_view")],
+                    [self.detail_view.view().map(Msg::DetailViewMsg)],
+                ),
+                section(
+                    [class("table_view")],
+                    [self.table_view.view().map(Msg::TableMsg)],
+                ),
             ],
         )
     }

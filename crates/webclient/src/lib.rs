@@ -21,6 +21,7 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 #[wasm_bindgen]
 pub fn initialize(initial_state: &str) {
+    console_error_panic_hook::set_once();
     sauron::log!("initial state: {}", initial_state);
     let root_node = sauron::document()
         .get_element_by_id("web-app")

@@ -172,6 +172,11 @@ ol, ul, li {
 .normal_column_names_and_frozen_rows_container{
     overflow-x: hidden;
 }
+/* add an animation for the transition of margin to smoothen out the
+ * transition */
+.normal_column_names_and_frozen_rows, .frozen_columns{
+    transition: margin 100ms ease;
+}
 
 .frozen_rows{
     display: flex;
