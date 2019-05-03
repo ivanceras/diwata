@@ -24,10 +24,11 @@ pub struct TableView {
     frozen_columns: Vec<usize>,
     pub scroll_top: i32,
     scroll_left: i32,
+    allocated_height: i32,
 }
 
 impl TableView {
-    pub fn from_tab(tab: Tab) -> Self {
+    pub fn from_tab(tab: Tab, allocated_height: i32) -> Self {
         TableView {
             column_views: tab
                 .fields
@@ -39,21 +40,7 @@ impl TableView {
             frozen_columns: vec![],
             scroll_top: 0,
             scroll_left: 0,
-        }
-    }
-
-    pub fn from_data_table(data_table: DataTable) -> Self {
-        TableView {
-            column_views: data_table
-                .columns
-                .into_iter()
-                .map(ColumnView::new)
-                .collect(),
-            row_views: data_table.rows.into_iter().map(RowView::new).collect(),
-            frozen_rows: vec![],
-            frozen_columns: vec![],
-            scroll_top: 0,
-            scroll_left: 0,
+            allocated_height,
         }
     }
 
@@ -93,6 +80,26 @@ impl TableView {
     pub fn freeze_columns(&mut self, columns: Vec<usize>) {
         self.frozen_columns = columns.clone();
         self.update_freeze_columns();
+    }
+
+    /// This is the allocated height set by the parent tab
+    pub fn set_allocated_height(&mut self, height: i32) {
+        self.allocated_height = height;
+    }
+
+    /// TODO: include the height of the frozen rows
+    pub fn calculate_normal_rows_height(&self) -> i32 {
+        let height = self.allocated_height - self.calculate_needed_height_for_auxilliary_spaces();
+        if height < 0 {
+            0
+        } else {
+            height
+        }
+    }
+
+    /// height from the columns names, tab_links
+    fn calculate_needed_height_for_auxilliary_spaces(&self) -> i32 {
+        100
     }
 }
 
@@ -163,7 +170,10 @@ impl Component<Msg> for TableView {
                             ),
                             // needed to overflow hide the frozen columns when scrolled up and down
                             section(
-                                [class("frozen_columns_container")],
+                                [
+                                    class("frozen_columns_container"),
+                                    styles([("height", px(self.calculate_normal_rows_height()))]),
+                                ],
                                 [
                                     // can move up and down
                                     ol(
@@ -248,6 +258,7 @@ impl Component<Msg> for TableView {
                             ol(
                                 [
                                     class("normal_rows"),
+                                    styles([("height", px(self.calculate_normal_rows_height()))]),
                                     onscroll(|scroll| Msg::Scrolled(scroll)),
                                 ],
                                 self.row_views

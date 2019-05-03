@@ -1,14 +1,15 @@
 //#![deny(warnings)]
 #![deny(clippy::all)]
-use app::App;
+use app::{App, Msg};
 use data_table::{DataRow, Value};
 use diwata_intel::{
     field::ColumnDetail,
     widget::{Alignment, ControlWidget, Widget},
     ColumnName, Field, IndirectTab, SqlType, Tab, TableName, Window,
 };
-use sauron::Program;
-use wasm_bindgen::{self, prelude::*};
+use sauron::{Dispatch, Event, Program};
+use std::rc::Rc;
+use wasm_bindgen::{self, prelude::*, JsCast};
 
 mod app;
 mod data;
@@ -32,9 +33,56 @@ pub fn initialize(initial_state: &str) {
         sample_window("Window2"),
         sample_window("Window3"),
     ];
-    let mut app = App::new(windows);
+    let (window_width, window_height) = get_window_size();
+    let mut app = App::new(windows, window_width, window_height);
     app.set_window_data(0, crate::data::make_sample_window_data());
-    Program::new_replace_mount(app, &root_node);
+    let program = Program::new_replace_mount(app, &root_node);
+    setup_global_listeners(program);
+}
+
+fn setup_global_listeners(program: Rc<Program<App, Msg>>) {
+    setup_tick_listener(&program);
+    setup_window_resize_listener(&program);
+}
+
+fn setup_tick_listener(program: &Rc<Program<App, Msg>>) {
+    let program_clone = Rc::clone(program);
+    let clock: Closure<Fn()> = Closure::wrap(Box::new(move || {
+        program_clone.dispatch(app::Msg::Tick);
+    }));
+    sauron::window()
+        .set_interval_with_callback_and_timeout_and_arguments_0(
+            clock.as_ref().unchecked_ref(),
+            3000,
+        )
+        .expect("Unable to start interval");
+    clock.forget();
+}
+
+fn setup_window_resize_listener(program: &Rc<Program<App, Msg>>) {
+    let program_clone = Rc::clone(program);
+    let resize_callback: Closure<Fn(web_sys::Event)> =
+        Closure::wrap(Box::new(move |event: web_sys::Event| {
+            let (window_width, window_height) = get_window_size();
+            program_clone.dispatch(app::Msg::BrowserResized(window_width, window_height));
+        }));
+    sauron::window().set_onresize(Some(resize_callback.as_ref().unchecked_ref()));
+    resize_callback.forget();
+}
+
+fn get_window_size() -> (i32, i32) {
+    let window = sauron::window();
+    let window_width = window
+        .inner_width()
+        .expect("unable to get window width")
+        .as_f64()
+        .expect("cant convert to f64");
+    let window_height = window
+        .inner_height()
+        .expect("unable to get height")
+        .as_f64()
+        .expect("cant convert to f64");
+    (window_width as i32, window_height as i32)
 }
 
 fn sample_window(name: &str) -> Window {

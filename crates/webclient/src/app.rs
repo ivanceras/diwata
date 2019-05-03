@@ -19,18 +19,27 @@ mod window_view;
 pub enum Msg {
     ActivateWindow(usize),
     WindowMsg(usize, window_view::Msg),
+    BrowserResized(i32, i32),
+    Tick,
 }
 
 pub struct App {
     window_views: Vec<WindowView>,
     active_window: usize,
+    browser_height: i32,
+    browser_width: i32,
 }
 
 impl App {
-    pub fn new(windows: Vec<Window>) -> App {
+    pub fn new(windows: Vec<Window>, browser_width: i32, browser_height: i32) -> App {
         let mut app = App {
-            window_views: windows.into_iter().map(WindowView::new).collect(),
+            window_views: windows
+                .into_iter()
+                .map(|window| WindowView::new(window, browser_width, browser_height))
+                .collect(),
             active_window: 0,
+            browser_width,
+            browser_height,
         };
         app.update_active_window();
         app
@@ -65,45 +74,60 @@ impl Component<Msg> for App {
         match msg {
             Msg::ActivateWindow(index) => self.activate_window(index),
             Msg::WindowMsg(index, window_msg) => self.window_views[index].update(window_msg),
+            Msg::BrowserResized(width, height) => {
+                sauron::log!("Browser is resized to: {}, {}", width, height);
+                self.browser_width = width;
+                self.browser_height = height;
+                //also notify all opened windows with the resize;
+                self.window_views.iter_mut().for_each(|window| {
+                    window.update(window_view::Msg::BrowserResized(width, height))
+                });
+            }
+            Msg::Tick => {
+                sauron::log("Ticking");
+            }
         }
     }
 
     fn view(&self) -> Node<Msg> {
         main(
             [class("app")],
-            [
-                header(
-                    [],
-                    [
-                        h1([], [text("Diwata")]),
-                        nav(
-                            [class("window_links")],
-                            self.window_views
-                                .iter()
-                                .enumerate()
-                                .map(|(index, window)| {
-                                    button(
-                                        [onclick(move |_| Msg::ActivateWindow(index))],
-                                        [text(&window.name)],
-                                    )
-                                })
-                                .collect::<Vec<Node<Msg>>>(),
-                        ),
-                    ],
-                ),
-                section(
-                    [class("window_views")],
-                    self.window_views
-                        .iter()
-                        .enumerate()
-                        .map(|(index, window)| {
-                            window
-                                .view()
-                                .map(move |window_msg| Msg::WindowMsg(index, window_msg))
-                        })
-                        .collect::<Vec<Node<Msg>>>(),
-                ),
-            ],
+            [section(
+                [class("window_links_and_window_views")],
+                [
+                    header(
+                        [],
+                        [
+                            h1([], [text("Diwata")]),
+                            nav(
+                                [class("window_links")],
+                                self.window_views
+                                    .iter()
+                                    .enumerate()
+                                    .map(|(index, window)| {
+                                        button(
+                                            [onclick(move |_| Msg::ActivateWindow(index))],
+                                            [text(&window.name)],
+                                        )
+                                    })
+                                    .collect::<Vec<Node<Msg>>>(),
+                            ),
+                        ],
+                    ),
+                    section(
+                        [class("window_views")],
+                        self.window_views
+                            .iter()
+                            .enumerate()
+                            .map(|(index, window)| {
+                                window
+                                    .view()
+                                    .map(move |window_msg| Msg::WindowMsg(index, window_msg))
+                            })
+                            .collect::<Vec<Node<Msg>>>(),
+                    ),
+                ],
+            )],
         )
     }
 }

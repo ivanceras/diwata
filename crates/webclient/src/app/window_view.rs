@@ -17,13 +17,14 @@ use diwata_intel::{TableName, Window};
 pub struct WindowView {
     pub name: String,
     main_tab: TabView,
-    has_one_tabs: Vec<TabView>,
     one_one_tabs: Vec<TabView>,
     has_many_tabs: Vec<TabView>,
     indirect_tabs: Vec<(TableName, TabView)>,
     is_visible: bool,
     active_has_many_tab: Option<usize>,
     active_indirect_tab: Option<usize>,
+    browser_height: i32,
+    browser_width: i32,
 }
 
 #[derive(Clone)]
@@ -34,7 +35,7 @@ pub enum Msg {
     IndirectTabMsg(usize, (TableName, tab_view::Msg)),
     ShowHasManyTab(usize),
     ShowIndirectTab(usize),
-    ViewResized(i32, i32),
+    BrowserResized(i32, i32),
 }
 
 impl Component<Msg> for WindowView {
@@ -48,8 +49,11 @@ impl Component<Msg> for WindowView {
             }
             Msg::ShowHasManyTab(index) => self.activate_has_many_tab(index),
             Msg::ShowIndirectTab(index) => self.activate_indirect_tab(index),
-            Msg::ViewResized(width, height) => {
+            Msg::BrowserResized(width, height) => {
                 sauron::log!("resized: {},{}", width, height);
+                self.browser_width = width;
+                self.browser_height = height;
+                self.update_height_allocation();
             }
         }
     }
@@ -57,11 +61,14 @@ impl Component<Msg> for WindowView {
         main(
             [
                 class("window"),
+                styles([("height", px(self.calculate_detail_window_height()))]),
                 styles_flag([
                     ("display", "flex", self.is_visible),
                     ("display", "none", !self.is_visible),
+                    // show only the scrollbar when in detailed view
+                    // to prevent double scrolling when table_view is shown
+                    ("overflow", "auto", self.main_tab.in_detail_view()),
                 ]),
-                onresize(|(width, height)| Msg::ViewResized(width, height))
             ],
             [
                 header(
@@ -101,10 +108,17 @@ impl Component<Msg> for WindowView {
                 section(
                     [
                         class("detail_row_related_records"),
+                        styles([("height", px(self.calculate_related_tabs_height()))]),
                         styles_flag([
                             ("display", "block", self.main_tab.in_detail_view()),
                             ("display", "none", !self.main_tab.in_detail_view()),
                         ]),
+                        // don't display if the allocated heights for the related tab is too small
+                        styles_flag([(
+                            "display",
+                            "none",
+                            self.calculate_related_tabs_height() < 10,
+                        )]),
                     ],
                     [
                         header(
@@ -179,21 +193,48 @@ impl Component<Msg> for WindowView {
 }
 
 impl WindowView {
-    pub fn new(window: Window) -> Self {
+    pub fn new(window: Window, browser_width: i32, browser_height: i32) -> Self {
         let mut window_view = WindowView {
             name: window.name,
-            main_tab: TabView::new(window.main_tab),
-            has_one_tabs: window.has_one_tabs.into_iter().map(TabView::new).collect(),
-            one_one_tabs: window.one_one_tabs.into_iter().map(TabView::new).collect(),
-            has_many_tabs: window.has_many_tabs.into_iter().map(TabView::new).collect(),
+            main_tab: TabView::new(
+                window.main_tab,
+                Self::calculate_main_table_height_with(browser_height),
+            ),
+            one_one_tabs: window
+                .one_one_tabs
+                .into_iter()
+                .map(|tab| {
+                    TabView::new(tab, Self::calculate_main_table_height_with(browser_height))
+                })
+                .collect(),
+            has_many_tabs: window
+                .has_many_tabs
+                .into_iter()
+                .map(|tab| {
+                    TabView::new(
+                        tab,
+                        Self::calculate_related_tab_heights_with(browser_height),
+                    )
+                })
+                .collect(),
             indirect_tabs: window
                 .indirect_tabs
                 .into_iter()
-                .map(|tab| (tab.linker, TabView::new(tab.tab)))
+                .map(|tab| {
+                    (
+                        tab.linker,
+                        TabView::new(
+                            tab.tab,
+                            Self::calculate_related_tab_heights_with(browser_height),
+                        ),
+                    )
+                })
                 .collect(),
             is_visible: true,
             active_has_many_tab: Some(0),
             active_indirect_tab: None,
+            browser_width,
+            browser_height,
         };
         window_view.update_active_has_many_or_indirect_tab();
         window_view
@@ -266,5 +307,44 @@ impl WindowView {
         self.active_has_many_tab = None;
         self.active_indirect_tab = Some(index);
         self.update_active_has_many_or_indirect_tab();
+    }
+
+    fn calculate_main_table_height_with(browser_height: i32) -> i32 {
+        browser_height / 2
+    }
+
+    fn calculate_detail_window_height(&self) -> i32 {
+        self.calculate_main_table_height()
+    }
+
+    /// should be affected when related tab heights splitter is dragged up and down
+    fn calculate_main_table_height(&self) -> i32 {
+        Self::calculate_main_table_height_with(self.browser_height)
+    }
+
+    fn calculate_related_tab_heights_with(browser_height: i32) -> i32 {
+        let main_table_height = Self::calculate_main_table_height_with(browser_height);
+        main_table_height - Self::calculate_needed_height_for_auxilliary_spaces()
+    }
+
+    fn calculate_related_tabs_height(&self) -> i32 {
+        Self::calculate_related_tab_heights_with(self.browser_height)
+    }
+
+    /// height needed for the toolbars, columns, sql textarea, paddings and margins
+    fn calculate_needed_height_for_auxilliary_spaces() -> i32 {
+        300
+    }
+
+    fn update_height_allocation(&mut self) {
+        self.main_tab
+            .set_table_height(self.calculate_main_table_height());
+        let calculated_related_tabs_height = self.calculate_related_tabs_height();
+        self.has_many_tabs
+            .iter_mut()
+            .for_each(|tab| tab.set_table_height(calculated_related_tabs_height));
+        self.indirect_tabs
+            .iter_mut()
+            .for_each(|(_table_name, tab)| tab.set_table_height(calculated_related_tabs_height));
     }
 }

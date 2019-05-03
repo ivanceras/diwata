@@ -31,10 +31,10 @@ pub struct TabView {
 }
 
 impl TabView {
-    pub fn new(tab: Tab) -> Self {
+    pub fn new(tab: Tab, allocated_height: i32) -> Self {
         TabView {
             name: tab.name.clone(),
-            table_view: TableView::from_tab(tab),
+            table_view: TableView::from_tab(tab, allocated_height),
             detail_view: DetailView::new(),
             is_visible: true,
         }
@@ -71,25 +71,10 @@ impl TabView {
     }
 
     fn show_detail_view<'a>(&'a mut self, row_index: usize) {
-        /*
-        use wasm_bindgen::JsCast;
-        use wasm_bindgen::closure::Closure;
-        use std::rc::Rc;
-        use std::cell::RefCell;
-        */
-
         self.detail_view.show();
         let fields = &self.table_view.row_views[row_index].fields;
         self.detail_view.set_fields(fields);
         self.detail_view.set_row(row_index);
-        /*
-        let rc_self:Rc<RefCell<&'a Self>> = Rc::new(RefCell::new(&self));
-        let closure:Closure<FnMut()+'static> = Closure::wrap(Box::new(move||{
-            rc_self.borrow_mut().update(Msg::StartExpandDetailView);
-        }));
-        let func: &js_sys::Function = closure.as_ref().unchecked_ref();
-        sauron::window().set_timeout_with_callback_and_timeout_and_arguments_0(func, 1000);
-        */
     }
     /// Important NOTE: Don't remove views,
     /// just hide them, otherwise the DOM closures
@@ -110,6 +95,10 @@ impl TabView {
         } else {
             0
         }
+    }
+
+    pub fn set_table_height(&mut self, height: i32) {
+        self.table_view.set_allocated_height(height);
     }
 }
 

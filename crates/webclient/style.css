@@ -59,6 +59,11 @@ ol, ul, li {
     display: flex;
     flex-direction: column;
     padding: 20px;
+    border: 5px solid #000;
+    margin-left: 300px;
+}
+
+.window_links_and_window_views{
 }
 
 .window {
@@ -226,7 +231,6 @@ ol, ul, li {
     padding: 5px;
     display: flex;
     flex-direction: column;
-    height: 400px;
 }
 
 /* li, a row in the frozen column 
@@ -287,16 +291,15 @@ ol, ul, li {
 }
 
 .window{
-    overflow-y: auto;
-    resize: vertical;
-    border: 4px solid #222;
 }
 
+/* Contains the detailed records additional information, ie: has_many and indirect records
+ * Anchored to the bottom of the page
+ * */
 .detail_row_related_records{
     position: absolute;
     bottom: 0;
-    resize: vertical;
-    overflow-y: auto;
-    border: 2px solid #333;
-    margin-bottom: 20px;
+    margin-bottom: 1px;
+    border: 2px solid #555;
+    margin-left: 200px;
 }
