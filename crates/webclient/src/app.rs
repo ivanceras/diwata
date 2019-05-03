@@ -98,7 +98,6 @@ impl Component<Msg> for App {
                     header(
                         [],
                         [
-                            h1([], [text("Diwata")]),
                             nav(
                                 [class("window_links")],
                                 self.window_views

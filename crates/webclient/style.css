@@ -58,7 +58,6 @@ ol, ul, li {
 .app {
     display: flex;
     flex-direction: column;
-    padding: 20px;
     border: 5px solid #000;
     margin-left: 300px;
 }
@@ -70,7 +69,6 @@ ol, ul, li {
     border: 1px solid green;
     display: flex;
     flex-direction: column;
-    padding: 20px;
 }
 
 .window_links{
@@ -82,19 +80,19 @@ ol, ul, li {
 .window_views{
     display: flex;
     flex-direction: row;
-    padding: 20px;
 }
 
+.main_tab_and_one_one_tabs{
+    background: peachpuff;
+}
 
 .one_one_tabs{
     display: flex;
     flex-direction: column;
-    padding: 20px;
 }
 
 /* details tab */
 .one_one_tab{
-    padding: 10px;
 }
 .one_one_tab summary {
     outline: none;
@@ -119,7 +117,6 @@ ol, ul, li {
 .has_many_and_indirect_tabs{
     display: flex;
     flex-direction: row;
-    padding: 20px;
 }
 
 .has_many_tabs{
@@ -138,7 +135,6 @@ ol, ul, li {
 }
 .tab{
     border: 1px solid blue;
-    padding: 20px;
 }
 /* frozen column names and the rows of frozen columns */
 .frozen_column_names_and_frozen_column_rows{
@@ -266,7 +262,6 @@ ol, ul, li {
     flex-direction: row;
 }
 .detail_view{
-    padding-left: 200px;
 }
 
 @keyframes expand {
@@ -291,15 +286,15 @@ ol, ul, li {
 }
 
 .window{
+    position: absolute;
+    background: lightblue;
 }
 
 /* Contains the detailed records additional information, ie: has_many and indirect records
  * Anchored to the bottom of the page
  * */
 .detail_row_related_records{
-    position: absolute;
-    bottom: 0;
-    margin-bottom: 1px;
     border: 2px solid #555;
-    margin-left: 200px;
+    /*background-color: #ddd;*/
+    margin-top: 20px;
 }

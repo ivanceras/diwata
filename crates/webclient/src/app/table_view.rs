@@ -89,7 +89,7 @@ impl TableView {
 
     /// TODO: include the height of the frozen rows
     pub fn calculate_normal_rows_height(&self) -> i32 {
-        let height = self.allocated_height - self.calculate_needed_height_for_auxilliary_spaces();
+        let height = self.allocated_height - Self::calculate_needed_height_for_auxilliary_spaces();
         if height < 0 {
             0
         } else {
@@ -98,8 +98,8 @@ impl TableView {
     }
 
     /// height from the columns names, tab_links
-    fn calculate_needed_height_for_auxilliary_spaces(&self) -> i32 {
-        100
+    pub fn calculate_needed_height_for_auxilliary_spaces() -> i32 {
+       50 
     }
 }
 
