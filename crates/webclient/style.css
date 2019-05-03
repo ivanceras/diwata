@@ -251,3 +251,13 @@ ol, ul, li {
 .value{
     border: 1px solid #eee;
 }
+
+.tab_view{
+    display: flex;
+    flex-direction: row;
+}
+
+.detail_view{
+    display:flex;
+    flex-direction: row;
+}
