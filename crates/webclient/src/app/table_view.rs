@@ -22,7 +22,7 @@ pub struct TableView {
     /// Which columns of the rows are to be frozen on the left side of the table
     frozen_rows: Vec<usize>,
     frozen_columns: Vec<usize>,
-    scroll_top: i32,
+    pub scroll_top: i32,
     scroll_left: i32,
 }
 
@@ -76,6 +76,10 @@ impl TableView {
 
     pub fn freeze_rows(&mut self, rows: Vec<usize>) {
         self.frozen_rows = rows;
+    }
+
+    pub fn frozen_row_count(&self) -> usize {
+        self.frozen_rows.len()
     }
     /// Keep updating which columns are frozen
     /// call these when new rows are set or added

@@ -34,6 +34,7 @@ pub enum Msg {
     IndirectTabMsg(usize, (TableName, tab_view::Msg)),
     ShowHasManyTab(usize),
     ShowIndirectTab(usize),
+    ViewResized(i32, i32),
 }
 
 impl Component<Msg> for WindowView {
@@ -47,6 +48,9 @@ impl Component<Msg> for WindowView {
             }
             Msg::ShowHasManyTab(index) => self.activate_has_many_tab(index),
             Msg::ShowIndirectTab(index) => self.activate_indirect_tab(index),
+            Msg::ViewResized(width, height) => {
+                sauron::log!("resized: {},{}", width, height);
+            }
         }
     }
     fn view(&self) -> Node<Msg> {
@@ -57,6 +61,7 @@ impl Component<Msg> for WindowView {
                     ("display", "flex", self.is_visible),
                     ("display", "none", !self.is_visible),
                 ]),
+                onresize(|(width, height)| Msg::ViewResized(width, height))
             ],
             [
                 header(

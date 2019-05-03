@@ -20,6 +20,7 @@ use diwata_intel::Tab;
 pub enum Msg {
     TableMsg(table_view::Msg),
     DetailViewMsg(detail_view::Msg),
+    StartExpandDetailView,
 }
 
 pub struct TabView {
@@ -69,11 +70,26 @@ impl TabView {
         self.is_visible = false;
     }
 
-    fn show_detail_view(&mut self, row_index: usize) {
+    fn show_detail_view<'a>(&'a mut self, row_index: usize) {
+        /*
+        use wasm_bindgen::JsCast;
+        use wasm_bindgen::closure::Closure;
+        use std::rc::Rc;
+        use std::cell::RefCell;
+        */
+
         self.detail_view.show();
         let fields = &self.table_view.row_views[row_index].fields;
         self.detail_view.set_fields(fields);
         self.detail_view.set_row(row_index);
+        /*
+        let rc_self:Rc<RefCell<&'a Self>> = Rc::new(RefCell::new(&self));
+        let closure:Closure<FnMut()+'static> = Closure::wrap(Box::new(move||{
+            rc_self.borrow_mut().update(Msg::StartExpandDetailView);
+        }));
+        let func: &js_sys::Function = closure.as_ref().unchecked_ref();
+        sauron::window().set_timeout_with_callback_and_timeout_and_arguments_0(func, 1000);
+        */
     }
     /// Important NOTE: Don't remove views,
     /// just hide them, otherwise the DOM closures
@@ -83,6 +99,17 @@ impl TabView {
     }
     pub fn in_detail_view(&self) -> bool {
         self.detail_view.is_visible
+    }
+
+    /// calculate top of the clicked row, this will be used
+    /// as the basis of where the detail_view row animation starts
+    fn clicked_row_top(&self) -> i32 {
+        if let Some(row_index) = self.detail_view.row_index {
+            let row_height = 30;
+            (row_index as i32 * row_height) - self.table_view.scroll_top
+        } else {
+            0
+        }
     }
 }
 
@@ -99,25 +126,35 @@ impl Component<Msg> for TabView {
             Msg::DetailViewMsg(detail_msg) => {
                 self.detail_view.update(detail_msg);
             }
+            Msg::StartExpandDetailView => {
+                sauron::log("Set the margin top of detail view to 0");
+            }
         }
     }
     fn view(&self) -> Node<Msg> {
         section(
             [
-                class("tab"),
-                styles_flag([
-                    ("display", "flex", self.is_visible),
-                    ("display", "none", !self.is_visible),
-                ]),
+                class("tab_view"),
+                styles_flag([("display", "none", !self.is_visible)]),
             ],
             [
                 div([], [button([], [text(&self.name)])]),
                 section(
-                    [class("detail_view")],
+                    [
+                        class("detail_view_container"),
+                        classes_flag([("animate_detail_view", self.detail_view.is_visible)]),
+                        // This is set here and extracted in attr(margin_top px) in css
+                        // expand_detail_view animation
+                        attr("margin_top", self.clicked_row_top()),
+                        styles([("margin-top", px(self.clicked_row_top()))]),
+                    ],
                     [self.detail_view.view().map(Msg::DetailViewMsg)],
                 ),
                 section(
-                    [class("table_view")],
+                    [
+                        class("table_view"),
+                        styles_flag([("display", "none", self.detail_view.is_visible)]),
+                    ],
                     [self.table_view.view().map(Msg::TableMsg)],
                 ),
             ],

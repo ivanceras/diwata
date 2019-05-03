@@ -66,10 +66,7 @@ impl Component<Msg> for DetailView {
         main(
             [
                 class("detail_view"),
-                styles_flag([
-                    ("display", "flex", self.is_visible),
-                    ("display", "none", !self.is_visible),
-                ]),
+                styles_flag([("display", "none", !self.is_visible)]),
             ],
             [
                 text(format!("Detailed view {:?}", self.row_index)),

@@ -10,6 +10,7 @@ use std::{cell::RefCell, rc::Rc};
 pub enum Msg {
     FieldMsg(usize, field_view::Msg),
     DoubleClick,
+    Click,
 }
 
 pub struct RowView {
@@ -38,7 +39,11 @@ impl RowView {
         F: Fn(&(usize, &Rc<RefCell<FieldView>>)) -> bool,
     {
         li(
-            [class("row"), ondblclick(|_| Msg::DoubleClick)],
+            [
+                class("row"),
+                onclick(|_| Msg::Click),
+                ondblclick(|_| Msg::DoubleClick),
+            ],
             self.fields
                 .iter()
                 .enumerate()
