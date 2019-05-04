@@ -61,25 +61,20 @@ impl Component<Msg> for WindowView {
         main(
             [
                 class("window"),
-                //styles([("height", px(self.calculate_window_height()))]),
-                styles_flag([
-                    ("display", "none", !self.is_visible),
-                ]),
+                styles_flag([("display", "none", !self.is_visible)]),
             ],
             [
                 header(
                     [class("query_input")],
-                    [
-                        textarea([rows(5), cols(200), placeholder("SELECT * ")], []),
-                    ],
+                    [textarea([rows(5), cols(200), placeholder("SELECT * ")], [])],
                 ),
                 section(
                     [
                         class("main_tab_and_one_one_tabs"),
-                        //styles([("height", px(self.calculate_detail_window_height()))]),
+                        styles([("height", px(self.calculate_detail_window_height()))]),
                         // show only the scrollbar when in detailed view
                         // to prevent double scrolling when table_view is shown
-                        //styles_flag([("overflow", "auto", self.in_detail_view())]),
+                        styles_flag([("overflow", "auto", self.in_detail_view())]),
                     ],
                     [
                         section(
@@ -328,7 +323,7 @@ impl WindowView {
 
     /// height needed for the toolbars, columns, sql textarea, paddings and margins
     fn calculate_needed_height_for_auxilliary_spaces(&self) -> i32 {
-        100
+        200
     }
 
     fn update_height_allocation(&mut self) {

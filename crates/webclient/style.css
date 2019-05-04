@@ -59,7 +59,11 @@ ol, ul, li {
     display: grid;
     grid-template-columns: min-content max-content;
     grid-template-rows: min-content max-content;
-    border: 5px solid #000;
+}
+
+/* The list of windows on the left side bar*/
+.window_list{
+    overflow: auto;
 }
 
 .window_links_and_window_views{

@@ -77,6 +77,18 @@ impl App {
         self.active_window = index;
         self.update_active_window();
     }
+
+    fn calculate_window_list_height(&self) -> i32 {
+        self.browser_height - self.calculate_needed_auxilliary_spaces()
+    }
+
+    fn calculate_needed_auxilliary_spaces(&self) -> i32 {
+        50
+    }
+
+    fn calculate_window_list_width(&self) -> i32 {
+        200
+    }
 }
 
 impl Component<Msg> for App {
@@ -109,7 +121,13 @@ impl Component<Msg> for App {
                 header([class("user_credentials")], [text("User")]),
                 // BOTTOM-LEFT: Content 3
                 section(
-                    [class("window_list")],
+                    [
+                        class("window_list"),
+                        styles([
+                            ("height", px(self.calculate_window_list_height())),
+                            ("width", px(self.calculate_window_list_width())),
+                        ]),
+                    ],
                     self.window_list
                         .iter()
                         .map(|group| {
@@ -122,7 +140,9 @@ impl Component<Msg> for App {
                                         group
                                             .window_names
                                             .iter()
-                                            .map(|win_name| li([], [(text(&win_name.name))]))
+                                            .map(|win_name| {
+                                                li([], [a([href("#")], [text(&win_name.name)])])
+                                            })
                                             .collect::<Vec<Node<Msg>>>(),
                                     ),
                                 ],

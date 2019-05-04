@@ -218,7 +218,7 @@ impl TableView {
         ol(
             [
                 class("normal_rows"),
-                //styles([("height", px(self.calculate_normal_rows_height()))]),
+                styles([("height", px(self.calculate_normal_rows_height()))]),
                 onscroll(|scroll| Msg::Scrolled(scroll)),
             ],
             self.row_views
@@ -290,7 +290,7 @@ impl Component<Msg> for TableView {
                 section(
                     [
                         class("frozen_columns_container"),
-                        //styles([("height", px(self.calculate_normal_rows_height()))]),
+                        styles([("height", px(self.calculate_normal_rows_height()))]),
                     ],
                     [self.view_frozen_columns()],
                 ),

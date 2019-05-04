@@ -54,7 +54,7 @@ fn make_group_window(group: &str) -> GroupedWindow {
 }
 
 fn make_window_names() -> Vec<WindowName> {
-    (0..10)
+    (0..40)
         .into_iter()
         .map(|n| make_window_name(&format!("Window{}", n)))
         .collect()
