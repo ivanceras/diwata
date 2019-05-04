@@ -99,7 +99,139 @@ impl TableView {
 
     /// height from the columns names, tab_links
     pub fn calculate_needed_height_for_auxilliary_spaces() -> i32 {
-       50 
+        50
+    }
+
+    /// These are values in a row that is under the frozen columns
+    /// Can move up and down
+    fn view_frozen_columns(&self) -> Node<Msg> {
+        // can move up and down
+        ol(
+            [
+                class("frozen_columns"),
+                styles([("margin-top", px(-self.scroll_top))]),
+            ],
+            self.row_views
+                .iter()
+                .enumerate()
+                .filter(|(index, _row_view)| !self.frozen_rows.contains(index))
+                .map(|(index, row_view)| {
+                    // The checkbox selection and the rows of the frozen
+                    // columns
+                    div(
+                        [class("selector_and_frozen_column_row")],
+                        [
+                            input([r#type("checkbox")], []),
+                            row_view
+                                .view_frozen()
+                                .map(move |row_msg| Msg::RowMsg(index, row_msg)),
+                        ],
+                    )
+                })
+                .collect::<Vec<Node<Msg>>>(),
+        )
+    }
+
+    /// These are the columns of the frozen columns.
+    /// Since frozen, they can not move in any direction
+    fn view_frozen_column_names(&self) -> Node<Msg> {
+        // absolutely immovable frozen column and row
+        // can not move in any direction
+        header(
+            [class("frozen_column_names")],
+            self.column_views
+                .iter()
+                .enumerate()
+                .filter(|(index, _column)| self.frozen_columns.contains(index))
+                .map(|(index, column)| {
+                    column
+                        .view()
+                        .map(move |column_msg| Msg::ColumnMsg(index, column_msg))
+                })
+                .collect::<Vec<Node<Msg>>>(),
+        )
+    }
+
+    /// The column names of the normal columns
+    /// can move left and right and always follows the alignment of the column of the normal rows
+    fn view_normal_column_names(&self) -> Node<Msg> {
+        header(
+            [class("normal_column_names")],
+            self.column_views
+                .iter()
+                .enumerate()
+                .filter(|(index, _column)| !self.frozen_columns.contains(index))
+                .map(|(index, column)| {
+                    column
+                        .view()
+                        .map(move |column_msg| Msg::ColumnMsg(index, column_msg))
+                })
+                .collect::<Vec<Node<Msg>>>(),
+        )
+    }
+
+    /// The rows are both frozen row and frozen column
+    /// Therefore can not move in any direction
+    fn view_immovable_frozen_columns(&self) -> Node<Msg> {
+        ol(
+            [class("immovable_frozen_columns")],
+            self.row_views
+                .iter()
+                .enumerate()
+                .filter(|(index, _row_view)| self.frozen_rows.contains(index))
+                .map(|(index, row_view)| {
+                    div(
+                        [class("selector_and_frozen_column_row")],
+                        [
+                            input([r#type("checkbox")], []),
+                            row_view
+                                .view_frozen()
+                                .map(move |row_msg| Msg::RowMsg(index, row_msg)),
+                        ],
+                    )
+                })
+                .collect::<Vec<Node<Msg>>>(),
+        )
+    }
+
+    /// These are the pinned columns
+    fn view_frozen_rows(&self) -> Node<Msg> {
+        // can move left and right, but not up and down
+        ol(
+            [class("frozen_rows")],
+            self.row_views
+                .iter()
+                .enumerate()
+                .filter(|(index, _row_view)| self.frozen_rows.contains(&index))
+                .map(|(index, row_view)| {
+                    row_view
+                        .view()
+                        .map(move |row_msg| Msg::RowMsg(index, row_msg))
+                })
+                .collect::<Vec<Node<Msg>>>(),
+        )
+    }
+
+    /// The rest of the columns and move in any direction
+    fn view_normal_rows(&self) -> Node<Msg> {
+        // can move: left, right, up, down
+        ol(
+            [
+                class("normal_rows"),
+                styles([("height", px(self.calculate_normal_rows_height()))]),
+                onscroll(|scroll| Msg::Scrolled(scroll)),
+            ],
+            self.row_views
+                .iter()
+                .enumerate()
+                .filter(|(index, _row_view)| !self.frozen_rows.contains(&index))
+                .map(|(index, row_view)| {
+                    row_view
+                        .view()
+                        .map(move |row_msg| Msg::RowMsg(index, row_msg))
+                })
+                .collect::<Vec<Node<Msg>>>(),
+        )
     }
 }
 
@@ -130,81 +262,17 @@ impl Component<Msg> for TableView {
                                 [class("spacer_and_frozen_column_names")],
                                 [
                                     div([class("spacer")], [input([r#type("checkbox")], [])]),
-                                    // absolutely immovable frozen column and row
-                                    // can not move in any direction
-                                    header(
-                                        [class("frozen_column_names")],
-                                        self.column_views
-                                            .iter()
-                                            .enumerate()
-                                            .filter(|(index, _column)| {
-                                                self.frozen_columns.contains(index)
-                                            })
-                                            .map(|(index, column)| {
-                                                column.view().map(move |column_msg| {
-                                                    Msg::ColumnMsg(index, column_msg)
-                                                })
-                                            })
-                                            .collect::<Vec<Node<Msg>>>(),
-                                    ),
+                                    self.view_frozen_column_names(),
                                 ],
                             ),
-                            ol(
-                                [class("immovable_frozen_columns")],
-                                self.row_views
-                                    .iter()
-                                    .enumerate()
-                                    .filter(|(index, _row_view)| self.frozen_rows.contains(index))
-                                    .map(|(index, row_view)| {
-                                        div(
-                                            [class("selector_and_frozen_column_row")],
-                                            [
-                                                input([r#type("checkbox")], []),
-                                                row_view.view_frozen().map(move |row_msg| {
-                                                    Msg::RowMsg(index, row_msg)
-                                                }),
-                                            ],
-                                        )
-                                    })
-                                    .collect::<Vec<Node<Msg>>>(),
-                            ),
+                            self.view_immovable_frozen_columns(),
                             // needed to overflow hide the frozen columns when scrolled up and down
                             section(
                                 [
                                     class("frozen_columns_container"),
                                     styles([("height", px(self.calculate_normal_rows_height()))]),
                                 ],
-                                [
-                                    // can move up and down
-                                    ol(
-                                        [
-                                            class("frozen_columns"),
-                                            styles([("margin-top", px(-self.scroll_top))]),
-                                        ],
-                                        self.row_views
-                                            .iter()
-                                            .enumerate()
-                                            .filter(|(index, _row_view)| {
-                                                !self.frozen_rows.contains(index)
-                                            })
-                                            .map(|(index, row_view)| {
-                                                // The checkbox selection and the rows of the frozen
-                                                // columns
-                                                div(
-                                                    [class("selector_and_frozen_column_row")],
-                                                    [
-                                                        input([r#type("checkbox")], []),
-                                                        row_view.view_frozen().map(
-                                                            move |row_msg| {
-                                                                Msg::RowMsg(index, row_msg)
-                                                            },
-                                                        ),
-                                                    ],
-                                                )
-                                            })
-                                            .collect::<Vec<Node<Msg>>>(),
-                                    ),
-                                ],
+                                [self.view_frozen_columns()],
                             ),
                         ],
                     ),
@@ -220,58 +288,12 @@ impl Component<Msg> for TableView {
                                     ],
                                     [
                                         // can move left and right
-                                        header(
-                                            [class("normal_column_names")],
-                                            self.column_views
-                                                .iter()
-                                                .enumerate()
-                                                .filter(|(index, _column)| {
-                                                    !self.frozen_columns.contains(index)
-                                                })
-                                                .map(|(index, column)| {
-                                                    column.view().map(move |column_msg| {
-                                                        Msg::ColumnMsg(index, column_msg)
-                                                    })
-                                                })
-                                                .collect::<Vec<Node<Msg>>>(),
-                                        ),
-                                        // can move left and right, but not up and down
-                                        ol(
-                                            [class("frozen_rows")],
-                                            self.row_views
-                                                .iter()
-                                                .enumerate()
-                                                .filter(|(index, _row_view)| {
-                                                    self.frozen_rows.contains(&index)
-                                                })
-                                                .map(|(index, row_view)| {
-                                                    row_view.view().map(move |row_msg| {
-                                                        Msg::RowMsg(index, row_msg)
-                                                    })
-                                                })
-                                                .collect::<Vec<Node<Msg>>>(),
-                                        ),
+                                        self.view_normal_column_names(),
+                                        self.view_frozen_rows(),
                                     ],
                                 )],
                             ),
-                            // can move: left, right, up, down
-                            ol(
-                                [
-                                    class("normal_rows"),
-                                    styles([("height", px(self.calculate_normal_rows_height()))]),
-                                    onscroll(|scroll| Msg::Scrolled(scroll)),
-                                ],
-                                self.row_views
-                                    .iter()
-                                    .enumerate()
-                                    .filter(|(index, _row_view)| !self.frozen_rows.contains(&index))
-                                    .map(|(index, row_view)| {
-                                        row_view
-                                            .view()
-                                            .map(move |row_msg| Msg::RowMsg(index, row_msg))
-                                    })
-                                    .collect::<Vec<Node<Msg>>>(),
-                            ),
+                            self.view_normal_rows(),
                         ],
                     ),
                 ],

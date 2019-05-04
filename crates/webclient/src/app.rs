@@ -97,21 +97,19 @@ impl Component<Msg> for App {
                 [
                     header(
                         [],
-                        [
-                            nav(
-                                [class("window_links")],
-                                self.window_views
-                                    .iter()
-                                    .enumerate()
-                                    .map(|(index, window)| {
-                                        button(
-                                            [onclick(move |_| Msg::ActivateWindow(index))],
-                                            [text(&window.name)],
-                                        )
-                                    })
-                                    .collect::<Vec<Node<Msg>>>(),
-                            ),
-                        ],
+                        [nav(
+                            [class("window_links")],
+                            self.window_views
+                                .iter()
+                                .enumerate()
+                                .map(|(index, window)| {
+                                    button(
+                                        [onclick(move |_| Msg::ActivateWindow(index))],
+                                        [text(&window.name)],
+                                    )
+                                })
+                                .collect::<Vec<Node<Msg>>>(),
+                        )],
                     ),
                     section(
                         [class("window_views")],

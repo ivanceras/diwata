@@ -125,7 +125,8 @@ impl Component<Msg> for WindowView {
                         styles_flag([(
                             "display",
                             "none",
-                            self.calculate_related_tabs_height() < TableView::calculate_needed_height_for_auxilliary_spaces(),
+                            self.calculate_related_tabs_height()
+                                < TableView::calculate_needed_height_for_auxilliary_spaces(),
                         )]),
                     ],
                     [
@@ -213,7 +214,10 @@ impl WindowView {
                 .one_one_tabs
                 .into_iter()
                 .map(|tab| {
-                    TabView::new(tab, Self::calculate_main_table_height_with(browser_height, in_detail_view))
+                    TabView::new(
+                        tab,
+                        Self::calculate_main_table_height_with(browser_height, in_detail_view),
+                    )
                 })
                 .collect(),
             has_many_tabs: window
@@ -234,7 +238,10 @@ impl WindowView {
                         tab.linker,
                         TabView::new(
                             tab.tab,
-                            Self::calculate_related_tab_heights_with(browser_height, in_detail_view),
+                            Self::calculate_related_tab_heights_with(
+                                browser_height,
+                                in_detail_view,
+                            ),
                         ),
                     )
                 })
@@ -329,9 +336,9 @@ impl WindowView {
     /// split the browser height if in detail view
     /// use the broser height when in no detail view is there
     fn calculate_main_table_height_with(browser_height: i32, in_detail_view: bool) -> i32 {
-        if in_detail_view{
-            Self::calculate_window_height_with(browser_height) / 2 
-        }else{
+        if in_detail_view {
+            Self::calculate_window_height_with(browser_height) / 2
+        } else {
             Self::calculate_window_height_with(browser_height)
         }
     }
@@ -346,7 +353,8 @@ impl WindowView {
     }
 
     fn calculate_related_tab_heights_with(browser_height: i32, in_detail_view: bool) -> i32 {
-        let main_table_height = Self::calculate_main_table_height_with(browser_height, in_detail_view);
+        let main_table_height =
+            Self::calculate_main_table_height_with(browser_height, in_detail_view);
         main_table_height - Self::calculate_needed_height_for_auxilliary_spaces()
     }
 
