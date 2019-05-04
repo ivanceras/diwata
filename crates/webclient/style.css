@@ -227,6 +227,7 @@ ol, ul, li {
 .normal_rows, .frozen_columns_container {
     border: 1px solid peachpuff;
     padding: 5px;
+    height: 400px;
 }
 
 /* li, a row in the frozen column 

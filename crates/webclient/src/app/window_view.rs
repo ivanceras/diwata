@@ -63,15 +63,13 @@ impl Component<Msg> for WindowView {
                 class("window"),
                 //styles([("height", px(self.calculate_window_height()))]),
                 styles_flag([
-                    ("visibility", "visible", self.is_visible),
-                    ("visibility", "hidden", !self.is_visible),
+                    ("display", "none", !self.is_visible),
                 ]),
             ],
             [
                 header(
                     [class("query_input")],
                     [
-                        h2([], [button([], [text(&self.name)])]),
                         textarea([rows(5), cols(200), placeholder("SELECT * ")], []),
                     ],
                 ),
@@ -121,15 +119,6 @@ impl Component<Msg> for WindowView {
                             ("display", "block", self.in_detail_view()),
                             ("display", "none", !self.in_detail_view()),
                         ]),
-                        // don't display if the allocated heights for the related tab is too small
-                        /*
-                        styles_flag([(
-                            "display",
-                            "none",
-                            self.calculate_related_tabs_height()
-                                < TableView::calculate_needed_height_for_auxilliary_spaces(),
-                        )]),
-                        */
                     ],
                     [
                         header(

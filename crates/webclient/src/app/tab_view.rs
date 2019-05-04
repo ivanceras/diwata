@@ -142,7 +142,7 @@ impl Component<Msg> for TabView {
                 section(
                     [
                         class("table_view"),
-                        //styles_flag([("display", "none", self.detail_view.is_visible)]),
+                        styles_flag([("display", "none", self.detail_view.is_visible)]),
                     ],
                     [self.table_view.view().map(Msg::TableMsg)],
                 ),
