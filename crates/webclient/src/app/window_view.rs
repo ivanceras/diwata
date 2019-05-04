@@ -301,12 +301,19 @@ impl WindowView {
 
     /// split the browser height if in detail view
     /// use the broser height when in no detail view is there
+    /// clamped to 0 if the height becomes negative
     fn calculate_main_table_height(&self) -> i32 {
         let window_height = self.calculate_window_height();
-        if self.in_detail_view() {
+        let main_table_height = if self.in_detail_view() {
             window_height - self.calculate_related_tabs_height()
         } else {
             window_height
+        };
+
+        if main_table_height < 0 {
+            0
+        } else {
+            main_table_height
         }
     }
 
