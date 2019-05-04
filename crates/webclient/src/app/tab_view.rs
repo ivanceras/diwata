@@ -97,8 +97,8 @@ impl TabView {
         }
     }
 
-    pub fn set_table_height(&mut self, height: i32) {
-        self.table_view.set_allocated_height(height);
+    pub fn set_table_size(&mut self, size: (i32, i32)) {
+        self.table_view.set_allocated_size(size);
     }
 }
 

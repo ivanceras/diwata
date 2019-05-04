@@ -53,7 +53,7 @@ impl Component<Msg> for WindowView {
                 sauron::log!("resized: {},{}", width, height);
                 self.browser_width = width;
                 self.browser_height = height;
-                self.update_height_allocation();
+                self.update_size_allocation();
             }
         }
     }
@@ -66,12 +66,22 @@ impl Component<Msg> for WindowView {
             [
                 header(
                     [class("query_input")],
-                    [textarea([rows(5), cols(200), placeholder("SELECT * ")], [])],
+                    [textarea(
+                        [
+                            class("sql_input"),
+                            styles([("width", px(self.calculate_sql_input_width()))]),
+                            placeholder("SELECT * "),
+                        ],
+                        [],
+                    )],
                 ),
                 section(
                     [
                         class("main_tab_and_one_one_tabs"),
-                        styles([("height", px(self.calculate_detail_window_height()))]),
+                            styles([
+                                ("width", px(self.calculate_detail_window_width())),
+                                ("height", px(self.calculate_detail_window_height())),
+                            ]),
                         // show only the scrollbar when in detailed view
                         // to prevent double scrolling when table_view is shown
                         styles_flag([("overflow", "auto", self.in_detail_view())]),
@@ -215,7 +225,7 @@ impl WindowView {
             browser_height,
         };
         window_view.update_active_has_many_or_indirect_tab();
-        window_view.update_height_allocation();
+        window_view.update_size_allocation();
         window_view
     }
 
@@ -295,31 +305,55 @@ impl WindowView {
     }
 
     /// Window height is the browser height - the spacers
-    fn calculate_window_height(&self) -> i32 {
-        self.browser_height - self.calculate_needed_height_for_auxilliary_spaces()
+    fn calculate_window_size(&self) -> (i32, i32) {
+        let width = self.browser_width - self.calculate_needed_width_for_auxilliary_spaces();
+        let height = self.browser_height - self.calculate_needed_height_for_auxilliary_spaces();
+        (width, height)
     }
 
     /// split the browser height if in detail view
     /// use the broser height when in no detail view is there
     /// clamped to 0 if the height becomes negative
-    fn calculate_main_table_height(&self) -> i32 {
-        let window_height = self.calculate_window_height();
+    fn calculate_main_table_size(&self) -> (i32, i32) {
+        let (window_width, window_height) = self.calculate_window_size();
+        let (related_tab_width, related_tab_height) = self.calculate_related_tabs_size();
+
         let main_table_height = if self.in_detail_view() {
-            window_height - self.calculate_related_tabs_height()
+            window_height - related_tab_height
         } else {
             window_height
         };
 
-        if main_table_height < 0 {
+        let clamped_main_table_height = if main_table_height < 0 {
             0
         } else {
             main_table_height
-        }
+        };
+        (window_width, clamped_main_table_height)
     }
 
     /// the detail view takes up the main table height
+    fn calculate_detail_window_size(&self) -> (i32, i32) {
+        self.calculate_main_table_size()
+    }
+
     fn calculate_detail_window_height(&self) -> i32 {
-        self.calculate_main_table_height()
+        self.calculate_detail_window_size().1
+    }
+
+    fn calculate_sql_input_width(&self) -> i32 {
+        self.calculate_detail_window_width() - 100
+    }
+
+    fn calculate_detail_window_width(&self) -> i32 {
+        self.calculate_detail_window_size().0
+    }
+
+    fn calculate_related_tabs_size(&self) -> (i32, i32) {
+        (
+            self.calculate_related_tabs_width(),
+            self.calculate_related_tabs_height(),
+        )
     }
 
     /// fix the related tab heights and the user can also adjust this
@@ -328,25 +362,34 @@ impl WindowView {
         300
     }
 
-    /// height needed for the toolbars, columns, sql textarea, paddings and margins
-    fn calculate_needed_height_for_auxilliary_spaces(&self) -> i32 {
-        200
+    fn calculate_related_tabs_width(&self) -> i32 {
+        self.browser_width - self.calculate_needed_width_for_auxilliary_spaces()
     }
 
-    fn update_height_allocation(&mut self) {
-        let calculated_main_table_height = self.calculate_main_table_height();
-        let calculated_related_tabs_height = self.calculate_related_tabs_height();
+    /// height needed for the toolbars, columns, sql textarea, paddings and margins
+    fn calculate_needed_height_for_auxilliary_spaces(&self) -> i32 {
+        150
+    }
 
-        self.main_tab.set_table_height(calculated_main_table_height);
+    /// this includes the window_list width, and left padding and margins
+    fn calculate_needed_width_for_auxilliary_spaces(&self) -> i32 {
+        700
+    }
+
+    fn update_size_allocation(&mut self) {
+        let calculated_main_table_size = self.calculate_main_table_size();
+        let calculated_related_tabs_size = self.calculate_related_tabs_size();
+
+        self.main_tab.set_table_size(calculated_main_table_size);
         self.one_one_tabs
             .iter_mut()
-            .for_each(|tab| tab.set_table_height(calculated_main_table_height));
+            .for_each(|tab| tab.set_table_size(calculated_main_table_size));
         self.has_many_tabs
             .iter_mut()
-            .for_each(|tab| tab.set_table_height(calculated_related_tabs_height));
+            .for_each(|tab| tab.set_table_size(calculated_related_tabs_size));
         self.indirect_tabs
             .iter_mut()
-            .for_each(|(_table_name, tab)| tab.set_table_height(calculated_related_tabs_height));
+            .for_each(|(_table_name, tab)| tab.set_table_size(calculated_related_tabs_size));
     }
 
     fn in_detail_view(&self) -> bool {

@@ -24,6 +24,7 @@ pub struct TableView {
     frozen_columns: Vec<usize>,
     pub scroll_top: i32,
     scroll_left: i32,
+    allocated_width: i32,
     allocated_height: i32,
 }
 
@@ -40,6 +41,7 @@ impl TableView {
             frozen_columns: vec![],
             scroll_top: 0,
             scroll_left: 0,
+            allocated_width: 0,
             allocated_height: 0,
         }
     }
@@ -68,6 +70,10 @@ impl TableView {
     pub fn frozen_row_count(&self) -> usize {
         self.frozen_rows.len()
     }
+
+    fn frozen_row_height(&self) -> i32 {
+        self.frozen_row_count() as i32 * 30 //use the actual row height
+    }
     /// Keep updating which columns are frozen
     /// call these when new rows are set or added
     pub fn update_freeze_columns(&mut self) {
@@ -83,23 +89,32 @@ impl TableView {
     }
 
     /// This is the allocated height set by the parent tab
-    pub fn set_allocated_height(&mut self, height: i32) {
+    pub fn set_allocated_size(&mut self, (width, height): (i32, i32)) {
+        self.allocated_width = width;
         self.allocated_height = height;
     }
 
     /// TODO: include the height of the frozen rows
-    pub fn calculate_normal_rows_height(&self) -> i32 {
-        let height = self.allocated_height - Self::calculate_needed_height_for_auxilliary_spaces();
-        if height < 0 {
-            0
-        } else {
-            height
-        }
+    pub fn calculate_normal_rows_size(&self) -> (i32, i32) {
+        let height = self.allocated_height
+            - self.frozen_row_height()
+            - Self::calculate_needed_height_for_auxilliary_spaces();
+        let clamped_height = if height < 0 { 0 } else { height };
+        (self.allocated_width, clamped_height)
     }
 
-    /// height from the columns names, tab_links
+    fn calculate_normal_rows_height(&self) -> i32 {
+        self.calculate_normal_rows_size().1
+    }
+
+    fn calculate_normal_rows_width(&self) -> i32 {
+        self.calculate_normal_rows_size().0
+    }
+
+    /// height from the columns names, tab_links in the parent tab_view
+    /// paddings and borders
     pub fn calculate_needed_height_for_auxilliary_spaces() -> i32 {
-        50
+        100
     }
 
     /// These are values in a row that is under the frozen columns
@@ -218,7 +233,12 @@ impl TableView {
         ol(
             [
                 class("normal_rows"),
-                styles([("height", px(self.calculate_normal_rows_height()))]),
+                {
+                    styles([
+                        ("width", px(self.calculate_normal_rows_width())),
+                        ("height", px(self.calculate_normal_rows_height())),
+                    ])
+                },
                 onscroll(|scroll| Msg::Scrolled(scroll)),
             ],
             self.row_views
@@ -272,7 +292,10 @@ impl Component<Msg> for TableView {
                 ),
                 // TOP-RIGHT: Content 2
                 section(
-                    [class("normal_column_names_and_frozen_rows_container")],
+                    [
+                        class("normal_column_names_and_frozen_rows_container"),
+                        styles([("width", px(self.calculate_normal_rows_width()))]),
+                    ],
                     [section(
                         [
                             class("normal_column_names_and_frozen_rows"),

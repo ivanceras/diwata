@@ -75,6 +75,10 @@ ol, ul, li {
     flex-direction: column;
 }
 
+.sql_input {
+    height: 90px;
+}
+
 .window_links{
     border: 1px solid green;
     display: flex;
