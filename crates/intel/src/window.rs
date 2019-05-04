@@ -144,8 +144,8 @@ pub struct WindowName {
 
 #[derive(Debug, Serialize)]
 pub struct GroupedWindow {
-    group: String,
-    window_names: Vec<WindowName>,
+    pub group: String,
+    pub window_names: Vec<WindowName>,
 }
 
 pub fn get_grouped_windows_using_cache(
