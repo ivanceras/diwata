@@ -56,10 +56,10 @@ ol, ul, li {
 }
 
 .app {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: min-content max-content;
+    grid-template-rows: min-content max-content;
     border: 5px solid #000;
-    margin-left: 300px;
 }
 
 .window_links_and_window_views{
@@ -133,6 +133,8 @@ ol, ul, li {
 .table{
     border: 1px solid red;
     display: grid;
+    grid-template-columns: min-content max-content;
+    grid-template-rows: min-content max-content;
 }
 .tab{
     border: 1px solid blue;
@@ -261,6 +263,11 @@ ol, ul, li {
 }
 .detail_view{
 }
+.detail_view_grid{
+    display: grid;
+    grid-template-columns: min-content min-content min-content;
+    grid-template-rows: min-content;
+}
 
 @keyframes expand {
   from {
@@ -284,7 +291,7 @@ ol, ul, li {
 }
 
 .window{
-    position: absolute;
+    /*position: absolute;*/
     background: lightblue;
 }
 

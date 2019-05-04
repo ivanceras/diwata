@@ -71,7 +71,7 @@ impl Component<Msg> for DetailView {
             [
                 text(format!("Detailed view {:?}", self.row_index)),
                 section(
-                    [],
+                    [class("detail_view_grid")],
                     self.fields
                         .iter()
                         .enumerate()

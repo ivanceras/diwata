@@ -5,6 +5,7 @@ use data_table::{DataRow, Value};
 use diwata_intel::{
     field::ColumnDetail,
     widget::{Alignment, ControlWidget, Widget},
+    window::{GroupedWindow, WindowName},
     ColumnName, Field, IndirectTab, SqlType, Tab, TableName, Window,
 };
 use sauron::{Dispatch, Event, Program};
@@ -33,11 +34,38 @@ pub fn initialize(initial_state: &str) {
         sample_window("Window2"),
         sample_window("Window3"),
     ];
+    let window_list: Vec<GroupedWindow> = make_sample_window_list();
     let (window_width, window_height) = get_window_size();
-    let mut app = App::new(windows, window_width, window_height);
+    let mut app = App::new(window_list, windows, window_width, window_height);
     app.set_window_data(0, crate::data::make_sample_window_data());
     let program = Program::new_replace_mount(app, &root_node);
     setup_global_listeners(program);
+}
+
+fn make_sample_window_list() -> Vec<GroupedWindow> {
+    vec![make_group_window("Group1"), make_group_window("Group2")]
+}
+
+fn make_group_window(group: &str) -> GroupedWindow {
+    GroupedWindow {
+        group: group.to_string(),
+        window_names: make_window_names(),
+    }
+}
+
+fn make_window_names() -> Vec<WindowName> {
+    (0..10)
+        .into_iter()
+        .map(|n| make_window_name(&format!("Window{}", n)))
+        .collect()
+}
+
+fn make_window_name(name: &str) -> WindowName {
+    WindowName {
+        name: name.to_string(),
+        table_name: TableName::from(name),
+        is_view: false,
+    }
 }
 
 fn setup_global_listeners(program: Rc<Program<App, Msg>>) {

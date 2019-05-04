@@ -17,6 +17,7 @@ pub struct WindowData {
     /// pages can be scrolled to and fro
     /// and sometimes unloaded for performance puposed
     pub main_tab_data: Vec<Page>,
+    pub one_one_tab_data: Vec<DataRow>,
     /// Vector of pages for each has_many_tab
     pub has_many_tab_data: Vec<Vec<Page>>,
     /// Vector of pages for each indirect_tab
@@ -67,6 +68,7 @@ fn make_sample_frozen_data() -> FrozenData {
 pub fn make_sample_window_data() -> WindowData {
     WindowData {
         main_tab_data: vec![make_sample_page()],
+        one_one_tab_data: vec![make_sample_row(0), make_sample_row(1)],
         has_many_tab_data: vec![vec![make_sample_page()]],
         indirect_tab_data: vec![vec![make_sample_page()]],
         main_tab_frozen_data: make_sample_frozen_data(),

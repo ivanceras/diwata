@@ -1,6 +1,9 @@
 use crate::data::WindowData;
 use data_table::DataRow;
-use diwata_intel::Window;
+use diwata_intel::{
+    window::{GroupedWindow, WindowName},
+    TableName, Window,
+};
 use sauron::{
     html::{attributes::*, events::*, *},
     Component, Node,
@@ -25,18 +28,25 @@ pub enum Msg {
 
 pub struct App {
     window_views: Vec<WindowView>,
+    window_list: Vec<GroupedWindow>,
     active_window: usize,
     browser_height: i32,
     browser_width: i32,
 }
 
 impl App {
-    pub fn new(windows: Vec<Window>, browser_width: i32, browser_height: i32) -> App {
+    pub fn new(
+        window_list: Vec<GroupedWindow>,
+        windows: Vec<Window>,
+        browser_width: i32,
+        browser_height: i32,
+    ) -> App {
         let mut app = App {
             window_views: windows
                 .into_iter()
                 .map(|window| WindowView::new(window, browser_width, browser_height))
                 .collect(),
+            window_list,
             active_window: 0,
             browser_width,
             browser_height,
@@ -92,39 +102,69 @@ impl Component<Msg> for App {
     fn view(&self) -> Node<Msg> {
         main(
             [class("app")],
-            [section(
-                [class("window_links_and_window_views")],
-                [
-                    header(
-                        [],
-                        [nav(
-                            [class("window_links")],
+            [
+                // TOP-LEFT: Content 1
+                header([class("logo")], [h1([], [text("Diwata")])]),
+                // TOP-RIGHT: Content 2
+                header([class("user_credentials")], [text("User")]),
+                // BOTTOM-LEFT: Content 3
+                section(
+                    [class("window_list")],
+                    self.window_list
+                        .iter()
+                        .map(|group| {
+                            ul(
+                                [],
+                                [
+                                    li([], [text(&group.group)]),
+                                    ul(
+                                        [],
+                                        group
+                                            .window_names
+                                            .iter()
+                                            .map(|win_name| li([], [(text(&win_name.name))]))
+                                            .collect::<Vec<Node<Msg>>>(),
+                                    ),
+                                ],
+                            )
+                        })
+                        .collect::<Vec<Node<Msg>>>(),
+                ),
+                // BOTTOM-RIGHT: Content 4
+                section(
+                    [class("window_links_and_window_views")],
+                    [
+                        header(
+                            [],
+                            [nav(
+                                [class("window_links")],
+                                self.window_views
+                                    .iter()
+                                    .enumerate()
+                                    .map(|(index, window)| {
+                                        button(
+                                            [onclick(move |_| Msg::ActivateWindow(index))],
+                                            [text(&window.name)],
+                                        )
+                                    })
+                                    .collect::<Vec<Node<Msg>>>(),
+                            )],
+                        ),
+                        section(
+                            [class("window_views")],
                             self.window_views
                                 .iter()
                                 .enumerate()
                                 .map(|(index, window)| {
-                                    button(
-                                        [onclick(move |_| Msg::ActivateWindow(index))],
-                                        [text(&window.name)],
-                                    )
+                                    window
+                                        .view()
+                                        .map(move |window_msg| Msg::WindowMsg(index, window_msg))
                                 })
                                 .collect::<Vec<Node<Msg>>>(),
-                        )],
-                    ),
-                    section(
-                        [class("window_views")],
-                        self.window_views
-                            .iter()
-                            .enumerate()
-                            .map(|(index, window)| {
-                                window
-                                    .view()
-                                    .map(move |window_msg| Msg::WindowMsg(index, window_msg))
-                            })
-                            .collect::<Vec<Node<Msg>>>(),
-                    ),
-                ],
-            )],
+                        ),
+                    ],
+                ),
+            ],
         )
     }
 }

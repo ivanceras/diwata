@@ -31,10 +31,10 @@ pub struct TabView {
 }
 
 impl TabView {
-    pub fn new(tab: Tab, allocated_height: i32) -> Self {
+    pub fn new(tab: Tab) -> Self {
         TabView {
             name: tab.name.clone(),
-            table_view: TableView::from_tab(tab, allocated_height),
+            table_view: TableView::from_tab(tab),
             detail_view: DetailView::new(),
             is_visible: true,
         }
@@ -131,18 +131,18 @@ impl Component<Msg> for TabView {
                 section(
                     [
                         class("detail_view_container"),
-                        classes_flag([("animate_detail_view", self.detail_view.is_visible)]),
+                        //classes_flag([("animate_detail_view", self.detail_view.is_visible)]),
                         // This is set here and extracted in attr(margin_top px) in css
                         // expand_detail_view animation
-                        attr("margin_top", self.clicked_row_top()),
-                        styles([("margin-top", px(self.clicked_row_top()))]),
+                        //attr("margin_top", self.clicked_row_top()),
+                        //styles([("margin-top", px(self.clicked_row_top()))]),
                     ],
                     [self.detail_view.view().map(Msg::DetailViewMsg)],
                 ),
                 section(
                     [
                         class("table_view"),
-                        styles_flag([("display", "none", self.detail_view.is_visible)]),
+                        //styles_flag([("display", "none", self.detail_view.is_visible)]),
                     ],
                     [self.table_view.view().map(Msg::TableMsg)],
                 ),

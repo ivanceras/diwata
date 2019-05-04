@@ -28,7 +28,7 @@ pub struct TableView {
 }
 
 impl TableView {
-    pub fn from_tab(tab: Tab, allocated_height: i32) -> Self {
+    pub fn from_tab(tab: Tab) -> Self {
         TableView {
             column_views: tab
                 .fields
@@ -40,7 +40,7 @@ impl TableView {
             frozen_columns: vec![],
             scroll_top: 0,
             scroll_left: 0,
-            allocated_height,
+            allocated_height: 0,
         }
     }
 
@@ -218,7 +218,7 @@ impl TableView {
         ol(
             [
                 class("normal_rows"),
-                styles([("height", px(self.calculate_normal_rows_height()))]),
+                //styles([("height", px(self.calculate_normal_rows_height()))]),
                 onscroll(|scroll| Msg::Scrolled(scroll)),
             ],
             self.row_views
@@ -249,55 +249,54 @@ impl Component<Msg> for TableView {
         }
     }
 
+    /// A grid of 2x2  containing 4 major parts of the table
     fn view(&self) -> Node<Msg> {
         main(
             [class("table")],
-            [section(
-                [class("rows_and_frozen_columns")],
-                [
-                    section(
-                        [class("frozen_column_names_and_frozen_column_rows")],
+            [
+                // TOP-LEFT: Content 1
+                section(
+                    [class(
+                        "spacer_and_frozen_column_names_and_immovable_frozen_columns",
+                    )],
+                    [
+                        div(
+                            [class("spacer_and_frozen_column_names")],
+                            [
+                                div([class("spacer")], [input([r#type("checkbox")], [])]),
+                                self.view_frozen_column_names(),
+                            ],
+                        ),
+                        self.view_immovable_frozen_columns(),
+                    ],
+                ),
+                // TOP-RIGHT: Content 2
+                section(
+                    [class("normal_column_names_and_frozen_rows_container")],
+                    [section(
                         [
-                            section(
-                                [class("spacer_and_frozen_column_names")],
-                                [
-                                    div([class("spacer")], [input([r#type("checkbox")], [])]),
-                                    self.view_frozen_column_names(),
-                                ],
-                            ),
-                            self.view_immovable_frozen_columns(),
-                            // needed to overflow hide the frozen columns when scrolled up and down
-                            section(
-                                [
-                                    class("frozen_columns_container"),
-                                    styles([("height", px(self.calculate_normal_rows_height()))]),
-                                ],
-                                [self.view_frozen_columns()],
-                            ),
+                            class("normal_column_names_and_frozen_rows"),
+                            styles([("margin-left", px(-self.scroll_left))]),
                         ],
-                    ),
-                    section(
-                        [class("frozen_rows_and_normal_rows")],
                         [
-                            section(
-                                [class("normal_column_names_and_frozen_rows_container")],
-                                [section(
-                                    [
-                                        class("normal_column_names_and_frozen_rows"),
-                                        styles([("margin-left", px(-self.scroll_left))]),
-                                    ],
-                                    [
-                                        // can move left and right
-                                        self.view_normal_column_names(),
-                                        self.view_frozen_rows(),
-                                    ],
-                                )],
-                            ),
-                            self.view_normal_rows(),
+                            // can move left and right
+                            self.view_normal_column_names(),
+                            self.view_frozen_rows(),
                         ],
-                    ),
-                ],
-            )],
+                    )],
+                ),
+                // BOTTOM-LEFT: Content 3
+                // needed to overflow hide the frozen columns when scrolled up and down
+                section(
+                    [
+                        class("frozen_columns_container"),
+                        //styles([("height", px(self.calculate_normal_rows_height()))]),
+                    ],
+                    [self.view_frozen_columns()],
+                ),
+                // BOTTOM-RIGHT: Content 4
+                self.view_normal_rows(),
+            ],
         )
     }
 }
