@@ -35,8 +35,8 @@ use diwata_intel::{
     data_read,
     tab::{
         self,
-        Tab,
     },
+    IndirectTab,
     window,
 };
 use hyper::server::Http;
@@ -420,21 +420,21 @@ fn handle_indirect(
             assert!(main_table.is_some());
             let main_table = main_table.unwrap();
 
-            let indirect_tab: Option<&(TableName, Tab)> =
-                window.indirect_tabs.iter().find(|&(_linker_table, tab)| {
-                    tab.table_name == indirect_table_name
+            let indirect_tab: Option<&IndirectTab> =
+                window.indirect_tabs.iter().find(|indirect_tab| {
+                    indirect_tab.tab.table_name == indirect_table_name
                 });
 
             match indirect_tab {
-                Some(&(ref linker_table, ref indirect_tab)) => {
+                Some(ref indirect_tab) => {
                     let rows = data_read::get_indirect_records_service(
                         &context.em,
                         &context.dm,
                         &context.tables,
                         &main_table,
                         &record_id,
-                        &indirect_tab,
-                        &linker_table,
+                        &indirect_tab.tab,
+                        &indirect_tab.linker,
                         filter,
                         sort,
                         global::PAGE_SIZE,
