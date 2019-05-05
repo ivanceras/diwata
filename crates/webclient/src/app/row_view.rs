@@ -41,6 +41,7 @@ impl RowView {
         li(
             [
                 class("row"),
+                styles([("height", px(Self::row_height()))]),
                 onclick(|_| Msg::Click),
                 ondblclick(|_| Msg::DoubleClick),
             ],
@@ -60,6 +61,10 @@ impl RowView {
 
     pub fn view_frozen(&self) -> Node<Msg> {
         self.view_with_filter(|(index, _field)| self.frozen_fields.contains(index))
+    }
+
+    pub fn row_height() -> i32 {
+        30
     }
 }
 

@@ -68,7 +68,7 @@ impl TableView {
     }
 
     fn frozen_row_height(&self) -> i32 {
-        self.frozen_rows.len() as i32 * 30 //use the actual row height
+        self.frozen_rows.len() as i32 * RowView::row_height() //use the actual row height
     }
 
     fn frozen_column_width(&self) -> i32 {

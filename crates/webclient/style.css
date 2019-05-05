@@ -46,7 +46,10 @@ abbr,acronym { border:0;
  * class name and treated as identifier
  * */
 body {
-    font-family: "Fira Sans", "Courier New", Courier,"Lucida Sans Typewriter","Lucida Typewriter",monospace;
+    font-family: system,-apple-system,".SFNSDisplay-Regular","Helvetica Neue",Helvetica,"Segoe UI",sans-serif;
+    color: #333;
+    font-size: 13px;
+    line-height: 1.6;
 }
 
 ol, ul, li {
@@ -66,12 +69,19 @@ ol, ul, li {
 .window_list{
     overflow: auto;
     background-color: #f5f5f4;
+    border-right: 1px solid #ddd;
+}
+
+.window_list_group_name {
+    margin: 0;
+    padding: 10px 10px 2px;
+    font-size: 12px;
+    font-weight: 500;
 }
 
 .window_list_link{
     padding: 2px 10px 2px 25px;
     display: block;
-    color: #333;
     text-decoration: none;
 }
 
@@ -95,7 +105,6 @@ ol, ul, li {
 }
 
 .sql_input {
-    height: 90px;
 }
 
 .window_links{
@@ -129,6 +138,24 @@ ol, ul, li {
     display: flex;
     flex-direction: row;
 }
+
+.tab_links{
+    background-color: #ccc;
+    border-width: 1px 1px 0 1px;
+    border-color: #888;
+    padding: 5px 20px;
+    border-radius: 5px 5px 0 0;
+    border-style: solid;
+    text-decoration: none;
+    display: block;
+    outline: 0;
+    cursor:default;
+}
+
+.tab_links.active{
+    background-color: #f5f5f4;
+}
+
 .has_many_tabs_link {
     display: flex;
     flex-direction: row;
@@ -180,6 +207,46 @@ ol, ul, li {
 .normal_column_names, .frozen_column_names {
     display: flex;
     flex-direction: row;
+}
+
+.column_name_and_control{
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid #ccc;
+    height: 70px;
+}
+
+.column_name_and_sort{
+    display:flex;
+    flex-direction: row;
+    justify-content: center;
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+.filter_icon_and_column_filter{
+    display: flex;
+    flex-direction:row;
+    justify-content: center;
+}
+.column_name{
+}
+input.column_filter[type="text"]{
+    width: 100px;
+    height: 15px;
+    border-color: #aaa;
+    border-width: 1px 1px 1px 1px;
+    border-style: solid;
+    border-radius: 0 5px 5px 0;
+}
+.filter_icon{
+    width: 16px;
+    height: 19px;
+    color: #aaa;
+    padding: 3px 2px 0 3px;
+    border-color: #aaa;
+    border-width: 1px 0 1px 1px;
+    border-style: solid;
+    border-radius: 5px 0 0 5px;
 }
 
 .rows_and_frozen_columns {
@@ -257,13 +324,23 @@ ol, ul, li {
 
 /* li in row_view, each row of the table
  * The height should align the .frozen_column_row */
-.row, .frozen_column_row {
+.row{
     display: flex;
     flex-direction: row;
-    height: 30px;
+}
+
+.field_view{
+    padding-left: 5px;
+    padding-right: 5px;
+    border-right: 1px solid #ccc;
 }
 
 .value{
+}
+
+input.value[type="text"]{
+    border: 0;
+    border-bottom: 1px solid #000;
 }
 
 .tab_view{
@@ -307,6 +384,8 @@ ol, ul, li {
 
 .window{
     /*position: absolute;*/
+    padding-top: 10px;
+    padding-bottom: 5px;
 }
 
 /* Contains the detailed records additional information, ie: has_many and indirect records

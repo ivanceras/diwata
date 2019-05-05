@@ -15,7 +15,7 @@ pub struct WindowView {
     one_one_tabs: Vec<TabView>,
     has_many_tabs: Vec<TabView>,
     indirect_tabs: Vec<(TableName, TabView)>,
-    is_visible: bool,
+    pub is_visible: bool,
     active_has_many_tab: Option<usize>,
     active_indirect_tab: Option<usize>,
     browser_height: i32,
@@ -61,14 +61,30 @@ impl Component<Msg> for WindowView {
             [
                 header(
                     [class("query_input")],
-                    [textarea(
-                        [
-                            class("sql_input"),
-                            styles([("width", px(self.calculate_sql_input_width()))]),
-                            placeholder("SELECT * "),
-                        ],
-                        [],
-                    )],
+                    [
+                        textarea(
+                            [
+                                class("sql_input"),
+                                styles([
+                                    ("width", px(self.calculate_sql_input_width())),
+                                    ("height", px(self.calculate_sql_input_height())),
+                                ]),
+                                placeholder("SELECT * "),
+                            ],
+                            [],
+                        ),
+                        textarea(
+                            [
+                                class("parsed_sql"),
+                                styles([
+                                    ("width", px(self.calculate_parsed_sql_width())),
+                                    ("height", px(self.calculate_sql_input_height())),
+                                ]),
+                                placeholder("SELECT * "),
+                            ],
+                            [],
+                        ),
+                    ],
                 ),
                 section(
                     [
@@ -130,8 +146,12 @@ impl Component<Msg> for WindowView {
                                         .iter()
                                         .enumerate()
                                         .map(|(index, tab)| {
-                                            button(
-                                                [onclick(move |_| Msg::ShowHasManyTab(index))],
+                                            a(
+                                                [
+                                                    class("tab_links"),
+                                                    classes_flag([("active", tab.is_visible)]),
+                                                    onclick(move |_| Msg::ShowHasManyTab(index)),
+                                                ],
                                                 [text(&tab.name)],
                                             )
                                         })
@@ -143,8 +163,12 @@ impl Component<Msg> for WindowView {
                                         .iter()
                                         .enumerate()
                                         .map(|(index, (_table_name, tab))| {
-                                            button(
-                                                [onclick(move |_| Msg::ShowIndirectTab(index))],
+                                            a(
+                                                [
+                                                    class("tab_links"),
+                                                    classes_flag([("active", tab.is_visible)]),
+                                                    onclick(move |_| Msg::ShowIndirectTab(index)),
+                                                ],
                                                 [text(&tab.name)],
                                             )
                                         })
@@ -332,7 +356,15 @@ impl WindowView {
     }
 
     fn calculate_sql_input_width(&self) -> i32 {
-        self.calculate_detail_window_width() - 100
+        self.calculate_detail_window_width() / 2 - 5
+    }
+
+    fn calculate_sql_input_height(&self) -> i32 {
+        90
+    }
+
+    fn calculate_parsed_sql_width(&self) -> i32 {
+        self.calculate_detail_window_width() / 2 - 5
     }
 
     fn calculate_detail_window_width(&self) -> i32 {

@@ -30,14 +30,17 @@ impl Component<Msg> for FieldView {
         }
     }
     fn view(&self) -> Node<Msg> {
-        input(
-            [
-                r#type("text"),
-                class("value"),
-                onchange(|input| Msg::ChangeValue(input.value)),
-                value(format!("{:?}", self.value)),
-            ],
-            [],
+        div(
+            [class("field_view")],
+            [input(
+                [
+                    r#type("text"),
+                    class("value"),
+                    onchange(|input| Msg::ChangeValue(input.value)),
+                    value(format!("{:?}", self.value)),
+                ],
+                [],
+            )],
         )
     }
 }

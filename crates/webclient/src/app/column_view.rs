@@ -1,3 +1,4 @@
+use crate::assets;
 use data_table::DataColumn;
 use sauron::{
     html::{attributes::*, *},
@@ -14,7 +15,7 @@ pub struct ColumnView {
 
 impl ColumnView {
     pub fn new(column: DataColumn) -> Self {
-        ColumnView { column, width: 100 }
+        ColumnView { column, width: 210 }
     }
 }
 
@@ -22,12 +23,27 @@ impl Component<Msg> for ColumnView {
     fn update(&mut self, _msg: Msg) {}
 
     fn view(&self) -> Node<Msg> {
-        button(
+        div(
+            [class("column_name_and_control")],
             [
-                class("column_name"),
-                styles([("width", format!("{}px", self.width))]),
+                div(
+                    [class("column_name_and_sort")],
+                    [
+                        div([class("column_name")], [text(&self.column.name)]),
+                        div([], [assets::sort_btn_asc(18, 18)]),
+                    ],
+                ),
+                div(
+                    [
+                        class("filter_icon_and_column_filter"),
+                        styles([("width", format!("{}px", self.width))]),
+                    ],
+                    [
+                        div([class("filter_icon")], [assets::svg_filter_icon(18, 18)]),
+                        input([r#type("text"), class("column_filter")], []),
+                    ],
+                ),
             ],
-            [text(&self.column.name)],
         )
     }
 }

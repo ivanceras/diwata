@@ -130,7 +130,7 @@ impl Component<Msg> for App {
                             ul(
                                 [],
                                 [
-                                    li([], [text(&group.group)]),
+                                    li([class("window_list_group_name")], [text(&group.group)]),
                                     ul(
                                         [],
                                         group
@@ -170,8 +170,12 @@ impl Component<Msg> for App {
                                     .iter()
                                     .enumerate()
                                     .map(|(index, window)| {
-                                        button(
-                                            [onclick(move |_| Msg::ActivateWindow(index))],
+                                        a(
+                                            [
+                                                class("tab_links"),
+                                                classes_flag([("active", window.is_visible)]),
+                                                onclick(move |_| Msg::ActivateWindow(index)),
+                                            ],
                                             [text(&window.name)],
                                         )
                                     })

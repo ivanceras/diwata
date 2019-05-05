@@ -25,7 +25,7 @@ pub struct TabView {
     pub name: String,
     detail_view: DetailView,
     table_view: TableView,
-    is_visible: bool,
+    pub is_visible: bool,
 }
 
 impl TabView {
