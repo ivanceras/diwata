@@ -4,9 +4,7 @@ use sauron::{
 };
 
 use crate::{
-    app::{
-        tab_view::{self, TabView},
-    },
+    app::tab_view::{self, TabView},
     data::WindowData,
 };
 use diwata_intel::{TableName, Window};
@@ -245,7 +243,9 @@ impl WindowView {
 
         for (index, pages) in indirect_tab_data.into_iter().enumerate() {
             self.indirect_tabs[index].1.set_pages(pages);
-            self.indirect_tabs[index].1.set_frozen_data(indirect_tab_frozen_data[index].clone());
+            self.indirect_tabs[index]
+                .1
+                .set_frozen_data(indirect_tab_frozen_data[index].clone());
         }
     }
 

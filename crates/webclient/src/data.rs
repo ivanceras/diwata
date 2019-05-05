@@ -29,7 +29,6 @@ pub struct WindowData {
     pub indirect_tab_frozen_data: Vec<FrozenData>,
 }
 
-
 #[derive(Default, Clone)]
 pub struct FrozenData {
     pub frozen_rows: Vec<usize>,

@@ -1,5 +1,5 @@
 use crate::app::{column_view::ColumnView, row_view::RowView};
-use data_table::{DataColumn};
+use data_table::DataColumn;
 use diwata_intel::{Field, Tab};
 use sauron::{
     html::{attributes::*, events::*, *},

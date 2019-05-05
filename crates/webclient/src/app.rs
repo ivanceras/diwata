@@ -1,8 +1,5 @@
 use crate::data::WindowData;
-use diwata_intel::{
-    window::{GroupedWindow},
-    Window,
-};
+use diwata_intel::{window::GroupedWindow, Window};
 use sauron::{
     html::{attributes::*, events::*, *},
     Component, Node,

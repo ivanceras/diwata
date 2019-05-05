@@ -1,7 +1,7 @@
 use crate::{
     app::{
         detail_view::{self, DetailView},
-        row_view::{self},
+        row_view,
         table_view::{self, TableView},
     },
     data::{FrozenData, Page},
