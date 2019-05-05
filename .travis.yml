@@ -4,7 +4,7 @@ os:
 language: rust
 
 rust:
-  - stable
+    #- stable
   - nightly
 
 addons:

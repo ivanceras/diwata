@@ -1,29 +1,29 @@
 stages:
   - build
 
-rust-latest:
-  stage: build
-  image: rust:latest
-  services:
-      - postgres:latest
-  variables:
-     GIT_SUBMODULE_STRATEGY: recursive
-
-  before_script:
-      - rustup component add clippy
-      # search and replace localhost to postgresl in .rs files in this project
-      - find . -name '*.rs' -type f -exec sed -i 's/localhost/postgres/g' {} +
-      - cd crates/rustorm
-      - ./install-postgresql-client.sh
-      - ./rename-database-host.sh
-      - ./execute-data-import.sh
-      - cd -
-      - cd ../ && git clone https://github.com/ivanceras/sauron
-      - cd -
-
-  script:
-      - cargo test --all
-      - cargo clippy
+#rust-latest:
+#  stage: build
+#  image: rust:latest
+#  services:
+#      - postgres:latest
+#  variables:
+#     GIT_SUBMODULE_STRATEGY: recursive
+#
+#  before_script:
+#      - rustup component add clippy
+#      # search and replace localhost to postgresl in .rs files in this project
+#      - find . -name '*.rs' -type f -exec sed -i 's/localhost/postgres/g' {} +
+#      - cd crates/rustorm
+#      - ./install-postgresql-client.sh
+#      - ./rename-database-host.sh
+#      - ./execute-data-import.sh
+#      - cd -
+#      - cd ../ && git clone https://github.com/ivanceras/sauron
+#      - cd -
+#
+#  script:
+#      - cargo test --all
+#      - cargo clippy
 
 rust-nightly:
   stage: build
@@ -41,6 +41,8 @@ rust-nightly:
       - ./install-postgresql-client.sh
       - ./rename-database-host.sh
       - ./execute-data-import.sh
+      - cd -
+      - cd ../ && git clone https://github.com/ivanceras/sauron
       - cd -
 
   script:
