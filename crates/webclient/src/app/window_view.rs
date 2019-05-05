@@ -390,7 +390,7 @@ impl WindowView {
 
     /// height needed for the toolbars, columns, sql textarea, paddings and margins
     fn calculate_needed_height_for_auxilliary_spaces(&self) -> i32 {
-        150
+        190
     }
 
     /// this includes the window_list width, and left padding and margins

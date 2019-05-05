@@ -65,6 +65,22 @@ impl TableView {
 
     pub fn freeze_rows(&mut self, rows: Vec<usize>) {
         self.frozen_rows = rows;
+        self.update_frozen_rows();
+    }
+
+    /// call this is frozen rows selection are changed
+    fn update_frozen_rows(&mut self) {
+        let frozen_rows = &self.frozen_rows;
+        self.row_views
+            .iter_mut()
+            .enumerate()
+            .for_each(|(index, row_view)| {
+                if frozen_rows.contains(&index) {
+                    row_view.set_is_frozen(true)
+                } else {
+                    row_view.set_is_frozen(false)
+                }
+            })
     }
 
     fn frozen_row_height(&self) -> i32 {
@@ -146,7 +162,7 @@ impl TableView {
                         [
                             input([r#type("checkbox")], []),
                             row_view
-                                .view_frozen()
+                                .view_frozen_columns()
                                 .map(move |row_msg| Msg::RowMsg(index, row_msg)),
                         ],
                     )
@@ -208,7 +224,7 @@ impl TableView {
                         [
                             input([r#type("checkbox")], []),
                             row_view
-                                .view_frozen()
+                                .view_frozen_columns()
                                 .map(move |row_msg| Msg::RowMsg(index, row_msg)),
                         ],
                     )

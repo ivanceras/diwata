@@ -207,6 +207,7 @@ ol, ul, li {
 .normal_column_names, .frozen_column_names {
     display: flex;
     flex-direction: row;
+    background-color: #ddd;
 }
 
 .column_name_and_control{
@@ -231,7 +232,7 @@ ol, ul, li {
 .column_name{
 }
 input.column_filter[type="text"]{
-    width: 100px;
+    width: 160px;
     height: 15px;
     border-color: #aaa;
     border-width: 1px 1px 1px 1px;
@@ -274,6 +275,20 @@ input.column_filter[type="text"]{
     list-style: none;
 }
 
+.row.frozen_row, .value.frozen_row{
+    background-color: #fefece;
+}
+
+
+/* can move up and down */
+.row.frozen_column, .value.frozen_column{
+    background-color: #cecefe;
+}
+/* both frozen row and frozen column, immovable */
+.row.frozen_row.frozen_column, .value.frozen_row.frozen_column {
+    background-color: #ecfeec;
+}
+
 
 .frozen_columns_container{
     overflow-y: hidden;
@@ -304,6 +319,10 @@ input.column_filter[type="text"]{
 
 .normal_rows, .normal_column_names_and_frozen_rows_container {
     width: 800px;
+}
+
+.row{
+    background-color: #fff;
 }
 
 
@@ -342,6 +361,8 @@ input.value[type="text"]{
     border: 0;
     border-bottom: 1px solid #000;
 }
+
+
 
 .tab_view{
     display: flex;
