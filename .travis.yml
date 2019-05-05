@@ -18,6 +18,8 @@ before_script:
   - cd crates/rustorm
   - ./execute-data-import.sh
   - cd -
+  - cd ../ && git clone https://github.com/ivanceras/sauron
+  - cd -
 
 
   

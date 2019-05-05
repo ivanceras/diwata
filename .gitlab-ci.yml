@@ -18,6 +18,8 @@ rust-latest:
       - ./rename-database-host.sh
       - ./execute-data-import.sh
       - cd -
+      - cd ../ && git clone https://github.com/ivanceras/sauron
+      - cd -
 
   script:
       - cargo test --all
