@@ -1,8 +1,7 @@
 use crate::{
     app::{
         detail_view::{self, DetailView},
-        field_view,
-        row_view::{self, RowView},
+        row_view::{self},
         table_view::{self, TableView},
     },
     data::{FrozenData, Page},
@@ -20,7 +19,6 @@ use diwata_intel::Tab;
 pub enum Msg {
     TableMsg(table_view::Msg),
     DetailViewMsg(detail_view::Msg),
-    StartExpandDetailView,
 }
 
 pub struct TabView {
@@ -88,6 +86,7 @@ impl TabView {
 
     /// calculate top of the clicked row, this will be used
     /// as the basis of where the detail_view row animation starts
+    #[allow(unused)]
     fn clicked_row_top(&self) -> i32 {
         if let Some(row_index) = self.detail_view.row_index {
             let row_height = 30;
@@ -114,9 +113,6 @@ impl Component<Msg> for TabView {
             }
             Msg::DetailViewMsg(detail_msg) => {
                 self.detail_view.update(detail_msg);
-            }
-            Msg::StartExpandDetailView => {
-                sauron::log("Set the margin top of detail view to 0");
             }
         }
     }

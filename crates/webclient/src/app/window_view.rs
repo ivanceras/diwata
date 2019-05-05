@@ -5,13 +5,10 @@ use sauron::{
 
 use crate::{
     app::{
-        row_view,
         tab_view::{self, TabView},
-        table_view::{self, TableView},
     },
     data::WindowData,
 };
-use data_table::DataRow;
 use diwata_intel::{TableName, Window};
 
 pub struct WindowView {
@@ -199,7 +196,6 @@ impl Component<Msg> for WindowView {
 
 impl WindowView {
     pub fn new(window: Window, browser_width: i32, browser_height: i32) -> Self {
-        let in_detail_view = false;
         let mut window_view = WindowView {
             name: window.name,
             main_tab: TabView::new(window.main_tab),
@@ -244,10 +240,12 @@ impl WindowView {
 
         for (index, pages) in has_many_tab_data.into_iter().enumerate() {
             self.has_many_tabs[index].set_pages(pages);
+            self.has_many_tabs[index].set_frozen_data(has_many_tab_frozen_data[index].clone());
         }
 
         for (index, pages) in indirect_tab_data.into_iter().enumerate() {
             self.indirect_tabs[index].1.set_pages(pages);
+            self.indirect_tabs[index].1.set_frozen_data(indirect_tab_frozen_data[index].clone());
         }
     }
 
@@ -308,7 +306,7 @@ impl WindowView {
     /// clamped to 0 if the height becomes negative
     fn calculate_main_table_size(&self) -> (i32, i32) {
         let (window_width, window_height) = self.calculate_window_size();
-        let (related_tab_width, related_tab_height) = self.calculate_related_tabs_size();
+        let (_related_tab_width, related_tab_height) = self.calculate_related_tabs_size();
 
         let main_table_height = if self.in_detail_view() {
             window_height - related_tab_height

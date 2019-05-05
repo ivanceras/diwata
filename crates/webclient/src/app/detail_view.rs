@@ -1,6 +1,4 @@
 use crate::app::field_view::{self, FieldView};
-
-use data_table::DataRow;
 use sauron::{
     html::{attributes::*, events::*, *},
     Component, Node,
@@ -17,8 +15,6 @@ pub enum Msg {
 /// row, displaying only that 1 row, and it's related content
 /// such as one_one tab, has_many and indirect tab
 pub struct DetailView {
-    //TODO: use a reference to the field view
-    // instead of cloning
     fields: Vec<Rc<RefCell<FieldView>>>,
     pub is_visible: bool,
     pub row_index: Option<usize>,

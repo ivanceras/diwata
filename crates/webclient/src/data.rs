@@ -25,32 +25,10 @@ pub struct WindowData {
 
     /// Frozen data for each of this tab
     pub main_tab_frozen_data: FrozenData,
-    pub has_many_tab_frozen_data: FrozenData,
-    pub indirect_tab_frozen_data: FrozenData,
+    pub has_many_tab_frozen_data: Vec<FrozenData>,
+    pub indirect_tab_frozen_data: Vec<FrozenData>,
 }
 
-impl WindowData {
-    pub fn main_tab_rows(&self) -> Vec<DataRow> {
-        self.main_tab_data
-            .iter()
-            .flat_map(|page| page.rows.clone())
-            .collect()
-    }
-
-    pub fn has_many_tab_rows(&self, index: usize) -> Vec<DataRow> {
-        self.has_many_tab_data[index]
-            .iter()
-            .flat_map(|page| page.rows.clone())
-            .collect()
-    }
-
-    pub fn indirect_tab_rows(&self, index: usize) -> Vec<DataRow> {
-        self.indirect_tab_data[index]
-            .iter()
-            .flat_map(|page| page.rows.clone())
-            .collect()
-    }
-}
 
 #[derive(Default, Clone)]
 pub struct FrozenData {
@@ -72,8 +50,8 @@ pub fn make_sample_window_data() -> WindowData {
         has_many_tab_data: vec![vec![make_sample_page()]],
         indirect_tab_data: vec![vec![make_sample_page()]],
         main_tab_frozen_data: make_sample_frozen_data(),
-        has_many_tab_frozen_data: make_sample_frozen_data(),
-        indirect_tab_frozen_data: make_sample_frozen_data(),
+        has_many_tab_frozen_data: vec![make_sample_frozen_data()],
+        indirect_tab_frozen_data: vec![make_sample_frozen_data()],
     }
 }
 

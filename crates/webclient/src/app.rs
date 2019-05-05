@@ -1,8 +1,7 @@
 use crate::data::WindowData;
-use data_table::DataRow;
 use diwata_intel::{
-    window::{GroupedWindow, WindowName},
-    TableName, Window,
+    window::{GroupedWindow},
+    Window,
 };
 use sauron::{
     html::{attributes::*, events::*, *},

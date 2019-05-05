@@ -1,14 +1,13 @@
-//#![deny(warnings)]
+#![deny(warnings)]
 #![deny(clippy::all)]
 use app::{App, Msg};
-use data_table::{DataRow, Value};
 use diwata_intel::{
     field::ColumnDetail,
     widget::{Alignment, ControlWidget, Widget},
     window::{GroupedWindow, WindowName},
     ColumnName, Field, IndirectTab, SqlType, Tab, TableName, Window,
 };
-use sauron::{Dispatch, Event, Program};
+use sauron::{Dispatch, Program};
 use std::rc::Rc;
 use wasm_bindgen::{self, prelude::*, JsCast};
 
@@ -89,7 +88,7 @@ fn setup_tick_listener(program: &Rc<Program<App, Msg>>) {
 fn setup_window_resize_listener(program: &Rc<Program<App, Msg>>) {
     let program_clone = Rc::clone(program);
     let resize_callback: Closure<Fn(web_sys::Event)> =
-        Closure::wrap(Box::new(move |event: web_sys::Event| {
+        Closure::wrap(Box::new(move |_| {
             let (window_width, window_height) = get_window_size();
             program_clone.dispatch(app::Msg::BrowserResized(window_width, window_height));
         }));
