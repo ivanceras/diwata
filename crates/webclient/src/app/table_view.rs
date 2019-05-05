@@ -67,12 +67,12 @@ impl TableView {
         self.frozen_rows = rows;
     }
 
-    pub fn frozen_row_count(&self) -> usize {
-        self.frozen_rows.len()
+    fn frozen_row_height(&self) -> i32 {
+        self.frozen_rows.len() as i32 * 30 //use the actual row height
     }
 
-    fn frozen_row_height(&self) -> i32 {
-        self.frozen_row_count() as i32 * 30 //use the actual row height
+    fn frozen_column_width(&self) -> i32 {
+        self.frozen_columns.len() as i32 * 200 //use the actual column sizes for each frozen columns
     }
     /// Keep updating which columns are frozen
     /// call these when new rows are set or added
@@ -98,9 +98,13 @@ impl TableView {
     pub fn calculate_normal_rows_size(&self) -> (i32, i32) {
         let height = self.allocated_height
             - self.frozen_row_height()
-            - Self::calculate_needed_height_for_auxilliary_spaces();
+            - self.calculate_needed_height_for_auxilliary_spaces();
+        let width = self.allocated_width
+            - self.frozen_column_width()
+            - self.calculate_needed_width_for_auxilliary_spaces();
         let clamped_height = if height < 0 { 0 } else { height };
-        (self.allocated_width, clamped_height)
+        let clamped_width = if width < 0 { 0 } else { width };
+        (clamped_width, clamped_height)
     }
 
     fn calculate_normal_rows_height(&self) -> i32 {
@@ -113,8 +117,12 @@ impl TableView {
 
     /// height from the columns names, tab_links in the parent tab_view
     /// paddings and borders
-    pub fn calculate_needed_height_for_auxilliary_spaces() -> i32 {
+    pub fn calculate_needed_height_for_auxilliary_spaces(&self) -> i32 {
         100
+    }
+
+    pub fn calculate_needed_width_for_auxilliary_spaces(&self) -> i32 {
+        80
     }
 
     /// These are values in a row that is under the frozen columns

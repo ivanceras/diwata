@@ -363,9 +363,10 @@ impl WindowView {
 
     /// this includes the window_list width, and left padding and margins
     fn calculate_needed_width_for_auxilliary_spaces(&self) -> i32 {
-        700
+        300
     }
 
+    /// TODO: also call this when detail view is closed to recalculate the sizes
     fn update_size_allocation(&mut self) {
         let calculated_main_table_size = self.calculate_main_table_size();
         let calculated_related_tabs_size = self.calculate_related_tabs_size();

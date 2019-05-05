@@ -59,18 +59,37 @@ ol, ul, li {
     display: grid;
     grid-template-columns: min-content max-content;
     grid-template-rows: min-content max-content;
+    background-color: #ddd;
 }
 
 /* The list of windows on the left side bar*/
 .window_list{
     overflow: auto;
+    background-color: #f5f5f4;
+}
+
+.window_list_link{
+    padding: 2px 10px 2px 25px;
+    display: block;
+    color: #333;
+    text-decoration: none;
+}
+
+.window_list_link .table_icon {
+    width: 19px;
+    height: 18px;
+    float: left;
+    color: #737475;
+    margin-top: 2px;
+    margin-right: 7px;
+    font-size: 18px;
+    text-align: center;
 }
 
 .window_links_and_window_views{
 }
 
 .window {
-    border: 1px solid green;
     display: flex;
     flex-direction: column;
 }
@@ -80,7 +99,6 @@ ol, ul, li {
 }
 
 .window_links{
-    border: 1px solid green;
     display: flex;
     flex-direction: row;
 }
@@ -91,7 +109,6 @@ ol, ul, li {
 }
 
 .main_tab_and_one_one_tabs{
-    background: peachpuff;
 }
 
 .one_one_tabs{
@@ -104,7 +121,6 @@ ol, ul, li {
 }
 .one_one_tab summary {
     outline: none;
-    background-color: #ccc;
     padding-top: 10px;
     padding-bottom: 10px;
 }
@@ -139,13 +155,11 @@ ol, ul, li {
 }
 
 .table{
-    border: 1px solid red;
     display: grid;
     grid-template-columns: min-content max-content;
     grid-template-rows: min-content max-content;
 }
 .tab{
-    border: 1px solid blue;
 }
 /* frozen column names and the rows of frozen columns */
 .frozen_column_names_and_frozen_column_rows{
@@ -161,7 +175,6 @@ ol, ul, li {
 
 /* ol, contains the frozen columns and their selection*/
 .immovable_frozen_columns {
-    border: 1px solid green;
 }
 
 .normal_column_names, .frozen_column_names {
@@ -170,8 +183,6 @@ ol, ul, li {
 }
 
 .rows_and_frozen_columns {
-    border: 1px solid purple;
-    padding: 5px;
     display: flex;
     flex-direction: row;
 }
@@ -194,7 +205,6 @@ ol, ul, li {
     display: flex;
     flex-direction: column;
     list-style: none;
-    border: 1px solid red;
 }
 
 
@@ -233,9 +243,6 @@ ol, ul, li {
 /* values in .normal_rows and .frozen_columns_container should be the same
  * to keep the alignment*/
 .normal_rows, .frozen_columns_container {
-    border: 1px solid peachpuff;
-    padding: 5px;
-    height: 400px;
 }
 
 /* li, a row in the frozen column 
@@ -253,17 +260,16 @@ ol, ul, li {
 .row, .frozen_column_row {
     display: flex;
     flex-direction: row;
-    border-bottom: 1px solid #333;
     height: 30px;
 }
 
 .value{
-    border: 1px solid #eee;
 }
 
 .tab_view{
     display: flex;
     flex-direction: row;
+    background-color: #f5f5f4;
 }
 
 .detail_view_container{
@@ -301,14 +307,11 @@ ol, ul, li {
 
 .window{
     /*position: absolute;*/
-    background: lightblue;
 }
 
 /* Contains the detailed records additional information, ie: has_many and indirect records
  * Anchored to the bottom of the page
  * */
 .detail_row_related_records{
-    border: 2px solid #555;
-    /*background-color: #ddd;*/
     margin-top: 20px;
 }

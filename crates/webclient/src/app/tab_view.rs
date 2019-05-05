@@ -123,7 +123,6 @@ impl Component<Msg> for TabView {
                 styles_flag([("display", "none", !self.is_visible)]),
             ],
             [
-                div([], [button([], [text(&self.name)])]),
                 section(
                     [
                         class("detail_view_container"),

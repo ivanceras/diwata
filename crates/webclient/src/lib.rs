@@ -12,6 +12,7 @@ use std::rc::Rc;
 use wasm_bindgen::{self, prelude::*, JsCast};
 
 mod app;
+mod assets;
 mod data;
 
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global

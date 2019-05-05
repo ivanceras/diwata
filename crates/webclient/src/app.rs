@@ -1,4 +1,4 @@
-use crate::data::WindowData;
+use crate::{assets, data::WindowData};
 use diwata_intel::{window::GroupedWindow, Window};
 use sauron::{
     html::{attributes::*, events::*, *},
@@ -137,7 +137,19 @@ impl Component<Msg> for App {
                                             .window_names
                                             .iter()
                                             .map(|win_name| {
-                                                li([], [a([href("#")], [text(&win_name.name)])])
+                                                li(
+                                                    [],
+                                                    [a(
+                                                        [href("#"), class("window_list_link")],
+                                                        [
+                                                            text(&win_name.name),
+                                                            span(
+                                                                [class("table_icon")],
+                                                                [assets::svg_table_icon()],
+                                                            ),
+                                                        ],
+                                                    )],
+                                                )
                                             })
                                             .collect::<Vec<Node<Msg>>>(),
                                     ),
