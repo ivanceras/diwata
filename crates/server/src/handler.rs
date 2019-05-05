@@ -33,11 +33,9 @@ use diwata_intel::{
     },
     data_modify,
     data_read,
-    tab::{
-        self,
-    },
-    IndirectTab,
+    tab,
     window,
+    IndirectTab,
 };
 use hyper::server::Http;
 use log::*;

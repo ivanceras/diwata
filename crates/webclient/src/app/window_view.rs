@@ -78,10 +78,10 @@ impl Component<Msg> for WindowView {
                 section(
                     [
                         class("main_tab_and_one_one_tabs"),
-                            styles([
-                                ("width", px(self.calculate_detail_window_width())),
-                                ("height", px(self.calculate_detail_window_height())),
-                            ]),
+                        styles([
+                            ("width", px(self.calculate_detail_window_width())),
+                            ("height", px(self.calculate_detail_window_height())),
+                        ]),
                         // show only the scrollbar when in detailed view
                         // to prevent double scrolling when table_view is shown
                         styles_flag([("overflow", "auto", self.in_detail_view())]),
