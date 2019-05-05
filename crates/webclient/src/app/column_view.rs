@@ -30,7 +30,7 @@ impl Component<Msg> for ColumnView {
                     [class("column_name_and_sort")],
                     [
                         div([class("column_name")], [text(&self.column.name)]),
-                        div([], [assets::sort_btn_asc(18, 18)]),
+                        div([], [assets::sort_btn_asc(18, 18, "#888")]),
                     ],
                 ),
                 div(
@@ -39,7 +39,10 @@ impl Component<Msg> for ColumnView {
                         styles([("width", format!("{}px", self.width))]),
                     ],
                     [
-                        div([class("filter_icon")], [assets::svg_filter_icon(18, 18)]),
+                        div(
+                            [class("filter_icon")],
+                            [assets::svg_filter_icon(18, 18, "#888")],
+                        ),
                         input([r#type("text"), class("column_filter")], []),
                     ],
                 ),

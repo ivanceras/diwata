@@ -76,13 +76,13 @@ impl Component<Msg> for WindowView {
                         textarea(
                             [
                                 class("parsed_sql"),
+                                readonly(true),
                                 styles([
                                     ("width", px(self.calculate_parsed_sql_width())),
                                     ("height", px(self.calculate_sql_input_height())),
                                 ]),
-                                placeholder("SELECT * "),
                             ],
-                            [],
+                            [text("SELECT * FROM table")],
                         ),
                     ],
                 ),

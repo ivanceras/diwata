@@ -75,11 +75,11 @@ impl App {
     }
 
     fn calculate_window_list_height(&self) -> i32 {
-        self.browser_height - self.calculate_needed_auxilliary_spaces()
+        self.browser_height - self.calculate_needed_auxilliary_window_list_height()
     }
 
-    fn calculate_needed_auxilliary_spaces(&self) -> i32 {
-        50
+    fn calculate_needed_auxilliary_window_list_height(&self) -> i32 {
+        150
     }
 
     fn calculate_window_list_width(&self) -> i32 {
@@ -109,13 +109,11 @@ impl Component<Msg> for App {
 
     fn view(&self) -> Node<Msg> {
         main(
+            // GRID
             [class("app")],
             [
-                // TOP-LEFT: Content 1
+                section([class("logo_and_window_list")], [
                 header([class("logo")], [h1([], [text("Diwata")])]),
-                // TOP-RIGHT: Content 2
-                header([class("user_credentials")], [text("User")]),
-                // BOTTOM-LEFT: Content 3
                 section(
                     [
                         class("window_list"),
@@ -158,7 +156,7 @@ impl Component<Msg> for App {
                         })
                         .collect::<Vec<Node<Msg>>>(),
                 ),
-                // BOTTOM-RIGHT: Content 4
+                ]),
                 section(
                     [class("window_links_and_window_views")],
                     [

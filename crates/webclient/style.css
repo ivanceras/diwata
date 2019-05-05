@@ -59,10 +59,23 @@ ol, ul, li {
 }
 
 .app {
-    display: grid;
-    grid-template-columns: min-content max-content;
-    grid-template-rows: min-content max-content;
+    display: flex;
+    flex-direction: row;
     background-color: #ddd;
+}
+
+
+.logo_and_window_list{
+    display: flex;
+    flex-direction:column;
+}
+
+.logo{
+    width: 100px;
+    height: 100px;
+    border: 1px solid green;
+    background: url(img/diwata100.jpg) no-repeat center;
+    background-color: green;
 }
 
 /* The list of windows on the left side bar*/
@@ -104,8 +117,15 @@ ol, ul, li {
     flex-direction: column;
 }
 
-.sql_input {
+.query_input{
+    display: flex;
+    flex-direction: row;
 }
+
+.sql_input, .parsed_sql {
+    resize: none;
+}
+
 
 .window_links{
     display: flex;
