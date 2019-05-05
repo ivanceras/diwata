@@ -45,8 +45,8 @@ impl DetailView {
         self.row_index = Some(row_index);
     }
 
-    pub fn set_fields(&mut self, fields: &Vec<Rc<RefCell<FieldView>>>) {
-        self.fields = fields.clone();
+    pub fn set_fields(&mut self, fields: &[Rc<RefCell<FieldView>>]) {
+        self.fields = fields.to_vec();
     }
 }
 

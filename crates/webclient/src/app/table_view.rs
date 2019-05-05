@@ -239,7 +239,7 @@ impl TableView {
                         ("height", px(self.calculate_normal_rows_height())),
                     ])
                 },
-                onscroll(|scroll| Msg::Scrolled(scroll)),
+                onscroll(Msg::Scrolled),
             ],
             self.row_views
                 .iter()

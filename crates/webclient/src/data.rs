@@ -86,11 +86,10 @@ pub fn make_sample_page() -> Page {
 }
 
 pub fn make_sample_rows() -> Vec<DataRow> {
-    (0..40).into_iter().map(|n| make_sample_row(n)).collect()
+    (0..40).map(make_sample_row).collect()
 }
 pub fn make_sample_row(row: usize) -> Vec<Value> {
     (0..25)
-        .into_iter()
         .map(|n| Value::Text(format!("Row{}-Value{}", row, n)))
         .collect()
 }

@@ -55,7 +55,6 @@ fn make_group_window(group: &str) -> GroupedWindow {
 
 fn make_window_names() -> Vec<WindowName> {
     (0..40)
-        .into_iter()
         .map(|n| make_window_name(&format!("Window{}", n)))
         .collect()
 }
@@ -136,7 +135,6 @@ fn sample_tab(name: &str) -> Tab {
         description: None,
         table_name: TableName::from("bazaar.product"),
         fields: (0..10)
-            .into_iter()
             .map(|n| sample_field(&format!("Field {}", n)))
             .collect(),
         is_view: false,

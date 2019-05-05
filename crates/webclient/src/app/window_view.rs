@@ -203,16 +203,8 @@ impl WindowView {
         let mut window_view = WindowView {
             name: window.name,
             main_tab: TabView::new(window.main_tab),
-            one_one_tabs: window
-                .one_one_tabs
-                .into_iter()
-                .map(|tab| TabView::new(tab))
-                .collect(),
-            has_many_tabs: window
-                .has_many_tabs
-                .into_iter()
-                .map(|tab| TabView::new(tab))
-                .collect(),
+            one_one_tabs: window.one_one_tabs.into_iter().map(TabView::new).collect(),
+            has_many_tabs: window.has_many_tabs.into_iter().map(TabView::new).collect(),
             indirect_tabs: window
                 .indirect_tabs
                 .into_iter()

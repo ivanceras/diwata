@@ -70,7 +70,7 @@ impl TabView {
         self.is_visible = false;
     }
 
-    fn show_detail_view<'a>(&'a mut self, row_index: usize) {
+    fn show_detail_view(&mut self, row_index: usize) {
         self.detail_view.show();
         let fields = &self.table_view.row_views[row_index].fields;
         self.detail_view.set_fields(fields);
