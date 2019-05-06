@@ -117,10 +117,6 @@ impl Component<Msg> for App {
                     [class("logo_and_window_list")],
                     [
                         header([class("logo")], [h1([], [text("Diwata")])]),
-                        header(
-                            [class("connect")],
-                            [button([], [text("Connect to database..")])],
-                        ),
                         section(
                             [
                                 class("window_list"),
@@ -175,24 +171,33 @@ impl Component<Msg> for App {
                     [class("window_links_and_window_views")],
                     [
                         header(
-                            [],
-                            [nav(
-                                [class("window_links")],
-                                self.window_views
-                                    .iter()
-                                    .enumerate()
-                                    .map(|(index, window)| {
-                                        a(
-                                            [
-                                                class("tab_links"),
-                                                classes_flag([("active", window.is_visible)]),
-                                                onclick(move |_| Msg::ActivateWindow(index)),
-                                            ],
-                                            [text(&window.name)],
-                                        )
-                                    })
-                                    .collect::<Vec<Node<Msg>>>(),
-                            )],
+                            [class("window_links_and_logout")],
+                            [
+                                nav(
+                                    [class("logout")],
+                                    [
+                                        button([], [text("logout")]),
+                                        button([], [text("Connect to database..")]),
+                                    ],
+                                ),
+                                nav(
+                                    [class("window_links")],
+                                    self.window_views
+                                        .iter()
+                                        .enumerate()
+                                        .map(|(index, window)| {
+                                            a(
+                                                [
+                                                    class("tab_links"),
+                                                    classes_flag([("active", window.is_visible)]),
+                                                    onclick(move |_| Msg::ActivateWindow(index)),
+                                                ],
+                                                [text(&window.name)],
+                                            )
+                                        })
+                                        .collect::<Vec<Node<Msg>>>(),
+                                ),
+                            ],
                         ),
                         section(
                             [class("window_views")],

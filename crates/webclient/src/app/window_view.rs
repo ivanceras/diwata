@@ -118,7 +118,11 @@ impl Component<Msg> for WindowView {
                             ],
                         ),
                         div(
-                            [class("close_detail_btn"), onclick(|_| Msg::CloseDetailView)],
+                            [
+                                class("close_detail_btn"),
+                                styles_flag([("display", "none", !self.in_detail_view())]),
+                                onclick(|_| Msg::CloseDetailView),
+                            ],
                             [assets::close_button(48, 48, "#888")],
                         ),
                     ],
