@@ -10,11 +10,62 @@ pub enum Msg {
 
 pub struct ToolbarView {
     pub show_query: bool,
+    allocated_width: i32,
+    allocated_height: i32,
 }
 
 impl ToolbarView {
     pub fn new() -> Self {
-        ToolbarView { show_query: true }
+        ToolbarView {
+            show_query: true,
+            allocated_width: 0,
+            allocated_height: 0,
+        }
+    }
+
+    /// sql input size is resizable
+    fn calculate_sql_input_size(&self) -> (i32, i32) {
+        (self.allocated_width / 2, 90)
+    }
+
+    fn calculate_sql_input_width(&self) -> i32 {
+        self.calculate_sql_input_size().0
+    }
+
+    fn calculate_sql_input_height(&self) -> i32 {
+        self.calculate_sql_input_size().1
+    }
+
+    /// fix run button size
+    fn run_query_button_size(&self) -> (i32, i32) {
+        (100, 40)
+    }
+
+    fn run_query_button_width(&self) -> i32 {
+        self.run_query_button_size().0
+    }
+
+    fn run_query_button_height(&self) -> i32 {
+        self.run_query_button_size().1
+    }
+
+    pub fn set_allocated_size(&mut self, (width, height): (i32, i32)) {
+        self.allocated_width = width;
+        self.allocated_height = height;
+    }
+
+    /// the remaining width of the window width
+    fn calculate_parsed_sql_size(&self) -> (i32, i32) {
+        let (sql_input_width, _) = self.calculate_sql_input_size();
+        let (run_query_width, _) = self.run_query_button_size();
+        let parse_sql_width = self.allocated_width - (sql_input_width + run_query_width);
+        (parse_sql_width, 90)
+    }
+    fn calculate_parsed_sql_width(&self) -> i32 {
+        self.calculate_parsed_sql_size().0
+    }
+    fn calculate_parsed_sql_height(&self) -> i32 {
+        self.calculate_parsed_sql_size().1
     }
 }
 
@@ -26,31 +77,98 @@ impl Component<Msg> for ToolbarView {
     }
 
     fn view(&self) -> Node<Msg> {
-        section(
-            [class("toolbar")],
-            [
-                button([], [text("Create new record")]),
-                button([], [text("Insert new record")]),
-                button([], [text("Save")]),
-                button([], [text("Cancel")]),
-                button([], [text("Delete")]),
-                button([], [text("Refresh")]),
-                button([], [text("Clear filter")]),
-                button([], [text("Filter more..")]),
-                button([], [text("Sort..")]),
-                button([], [text("Export")]),
-                button(
-                    [onclick(|_| Msg::ToggleShowQuery)],
+        section([class("toolbar_and_query_view")], [
+                header(
+                    [class("toolbar")],
                     [
-                        input([r#type("checkbox")], []).attributes(attrs_flag([(
-                            "checked",
-                            "checked",
-                            self.show_query,
-                        )])),
-                        text("Show query"),
+                        button([], [text("Create new record")]),
+                        button([], [text("Insert new record")]),
+                        button([], [text("Save")]),
+                        button([], [text("Cancel")]),
+                        button([], [text("Delete")]),
+                        button([], [text("Refresh")]),
+                        button([], [text("Clear filter")]),
+                        button([], [text("Filter more..")]),
+                        button([], [text("Sort..")]),
+                        button([], [text("Export")]),
+                        button(
+                            [onclick(|_| Msg::ToggleShowQuery)],
+                            [
+                                input([r#type("checkbox")], []).attributes(attrs_flag([(
+                                    "checked",
+                                    "checked",
+                                    self.show_query,
+                                )])),
+                                text("Show query"),
+                            ],
+                        ),
                     ],
                 ),
-            ],
-        )
+                section(
+                    [
+                        class("query_input"),
+                        styles_flag([("display", "none", !self.show_query)]),
+                    ],
+                    [
+                        textarea(
+                            [
+                                class("sql_input"),
+                                styles([
+                                    ("width", px(self.calculate_sql_input_width())),
+                                    ("height", px(self.calculate_sql_input_height())),
+                                ]),
+                                placeholder("SELECT * "),
+                            ],
+                            [],
+                        ),
+                        button([class("run_query"),
+                               styles([
+                                      ("width", px(self.run_query_button_width())),
+                                      ("height", px(self.run_query_button_height()))
+                               ])
+                        ], [text("Run query")]),
+                        textarea(
+                            [
+                                class("parsed_sql"),
+                                readonly(true),
+                                styles([
+                                    ("width", px(self.calculate_parsed_sql_width())),
+                                    ("height", px(self.calculate_parsed_sql_height())),
+                                ]),
+                            ],
+                            [text("SELECT * FROM table
+                                Rem consequatur consectetur labore occaecati ipsa aut vel optio. 
+                                Eius eligendi aliquid beatae cumque ad illum. 
+                                Deleniti suscipit non in consequatur. 
+                                Doloremque beatae eum nulla praesentium cumque 
+                                voluptatem quae tenetur.
+                                SELECT * FROM table
+                                Rem consequatur consectetur labore occaecati ipsa aut vel optio. 
+                                Eius eligendi aliquid beatae cumque ad illum. 
+                                Deleniti suscipit non in consequatur. 
+                                Doloremque beatae eum nulla praesentium cumque voluptatem quae tenetur.
+                                SELECT * FROM table
+                                Rem consequatur consectetur labore occaecati ipsa aut vel optio. 
+                                Eius eligendi aliquid beatae cumque ad illum. Deleniti suscipit non in consequatur. 
+                                Doloremque beatae eum nulla praesentium cumque voluptatem quae tenetur.
+                                SELECT * FROM table
+                                Rem consequatur consectetur labore occaecati ipsa aut vel optio. 
+                                Eius eligendi aliquid beatae cumque ad illum. Deleniti suscipit non in consequatur. 
+                                Doloremque beatae eum nulla praesentium cumque voluptatem quae tenetur.
+                                SELECT * FROM table
+                                Rem consequatur consectetur labore occaecati ipsa aut vel optio. 
+                                Eius eligendi aliquid beatae cumque ad illum. 
+                                Deleniti suscipit non in consequatur. 
+                                Doloremque beatae eum nulla praesentium cumque voluptatem quae tenetur.
+                                SELECT * FROM table
+                                Rem consequatur consectetur labore occaecati ipsa aut vel optio. 
+                                Eius eligendi aliquid beatae cumque ad illum. 
+                                Deleniti suscipit non in consequatur. 
+                                Doloremque beatae eum nulla praesentium cumque voluptatem quae tenetur.
+                                  ")],
+                        ),
+                    ],
+                ),
+        ])
     }
 }

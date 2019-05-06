@@ -82,7 +82,7 @@ ol, ul, li {
 .window_list{
     overflow: auto;
     background-color: #f5f5f4;
-    border-right: 1px solid #ddd;
+    /*border-right: 1px solid #ddd;*/
 }
 
 .window_list_group_name {
@@ -134,11 +134,19 @@ ol, ul, li {
 .window_links{
     display: flex;
     flex-direction: row;
+    border-bottom: 1px solid #888;
 }
 
 .window_views{
     display: flex;
     flex-direction: row;
+    border-left: 1px solid #888;
+    border-right: 1px solid #888;
+    background-color: #f5f5f4;
+}
+
+.toolbar_and_query_view{
+    margin-left: 10px;
 }
 
 .main_tab_and_one_one_tabs_and_detail_close_btn{
@@ -147,9 +155,8 @@ ol, ul, li {
 }
 
 .close_detail_btn {
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
+    width: 48px;
+    height: 48px;
 }
 
 .one_one_tabs{
@@ -159,6 +166,8 @@ ol, ul, li {
 
 /* details tab */
 .one_one_tab{
+    margin-bottom: 2px;
+    background-color: #ccc;
 }
 .one_one_tab summary {
     outline: none;
@@ -169,6 +178,8 @@ ol, ul, li {
 .has_many_and_indirect_tabs_link{
     display: flex;
     flex-direction: row;
+    border-bottom: 1px solid #888;
+    padding-left: 40px;
 }
 
 .tab_links{
@@ -186,6 +197,8 @@ ol, ul, li {
 
 .tab_links.active{
     background-color: #f5f5f4;
+    /*Makes the active tab connects with the container */
+    margin-bottom: -1px; 
 }
 
 .has_many_tabs_link {
@@ -218,6 +231,8 @@ ol, ul, li {
     grid-template-columns: min-content max-content;
     grid-template-rows: min-content max-content;
     border: 1px solid #ccc;
+    margin: 10px;
+    padding-left: 10px;
 }
 .tab{
 }

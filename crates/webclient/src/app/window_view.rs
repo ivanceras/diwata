@@ -8,6 +8,7 @@ use crate::{
         tab_view::{self, TabView},
         toolbar_view::{self, ToolbarView},
     },
+    assets,
     data::WindowData,
 };
 use diwata_intel::{TableName, Window};
@@ -23,7 +24,6 @@ pub struct WindowView {
     active_indirect_tab: Option<usize>,
     browser_height: i32,
     browser_width: i32,
-    show_sql_input: bool,
     toolbar_view: ToolbarView,
 }
 
@@ -72,51 +72,9 @@ impl Component<Msg> for WindowView {
                     [class("toolbar_view")],
                     [self.toolbar_view.view().map(Msg::ToolbarMsg)],
                 ),
-                header(
+                section(
+                    [class("main_tab_and_one_one_tabs_and_detail_close_btn")],
                     [
-                        class("query_input"),
-                        styles_flag([("display", "none", !self.toolbar_view.show_query)]),
-                    ],
-                    [
-                        textarea(
-                            [
-                                class("sql_input"),
-                                styles([
-                                    ("width", px(self.calculate_sql_input_width())),
-                                    ("height", px(self.calculate_sql_input_height())),
-                                ]),
-                                placeholder("SELECT * "),
-                            ],
-                            [],
-                        ),
-                        button([class("run_query"),
-                               styles([
-                                      ("width", px(self.run_query_button_width())),
-                                      ("height", px(self.run_query_button_height()))
-                               ])
-                        ], [text("Run query")]),
-                        textarea(
-                            [
-                                class("parsed_sql"),
-                                readonly(true),
-                                styles([
-                                    ("width", px(self.calculate_parsed_sql_width())),
-                                    ("height", px(self.calculate_parsed_sql_height())),
-                                ]),
-                            ],
-                            [text("SELECT * FROM table
-                                Rem consequatur consectetur labore occaecati ipsa aut vel optio. Eius eligendi aliquid beatae cumque ad illum. Deleniti suscipit non in consequatur. Doloremque beatae eum nulla praesentium cumque voluptatem quae tenetur.
-                                SELECT * FROM table
-                                Rem consequatur consectetur labore occaecati ipsa aut vel optio. Eius eligendi aliquid beatae cumque ad illum. Deleniti suscipit non in consequatur. Doloremque beatae eum nulla praesentium cumque voluptatem quae tenetur.SELECT * FROM table
-                                Rem consequatur consectetur labore occaecati ipsa aut vel optio. Eius eligendi aliquid beatae cumque ad illum. Deleniti suscipit non in consequatur. Doloremque beatae eum nulla praesentium cumque voluptatem quae tenetur.SELECT * FROM table
-                                Rem consequatur consectetur labore occaecati ipsa aut vel optio. Eius eligendi aliquid beatae cumque ad illum. Deleniti suscipit non in consequatur. Doloremque beatae eum nulla praesentium cumque voluptatem quae tenetur.SELECT * FROM table
-                                Rem consequatur consectetur labore occaecati ipsa aut vel optio. Eius eligendi aliquid beatae cumque ad illum. Deleniti suscipit non in consequatur. Doloremque beatae eum nulla praesentium cumque voluptatem quae tenetur.SELECT * FROM table
-                                Rem consequatur consectetur labore occaecati ipsa aut vel optio. Eius eligendi aliquid beatae cumque ad illum. Deleniti suscipit non in consequatur. Doloremque beatae eum nulla praesentium cumque voluptatem quae tenetur.
-                                  ")],
-                        ),
-                    ],
-                ),
-                section([class("main_tab_and_one_one_tabs_and_detail_close_btn")], [
                         section(
                             [
                                 class("main_tab_and_one_one_tabs"),
@@ -159,10 +117,12 @@ impl Component<Msg> for WindowView {
                                 ),
                             ],
                         ),
-                        button([class("close_detail_btn"),
-                            onclick(|_|Msg::CloseDetailView),
-                        ], [text("X")]),
-                ]),
+                        div(
+                            [class("close_detail_btn"), onclick(|_| Msg::CloseDetailView)],
+                            [assets::close_button(48, 48, "#888")],
+                        ),
+                    ],
+                ),
                 section(
                     [
                         class("detail_row_related_records"),
@@ -268,7 +228,6 @@ impl WindowView {
             active_indirect_tab: None,
             browser_width,
             browser_height,
-            show_sql_input: false,
             toolbar_view: ToolbarView::new(),
         };
         window_view.update_active_has_many_or_indirect_tab();
@@ -395,7 +354,7 @@ impl WindowView {
     /// sql input size is resizable
     fn calculate_sql_input_size(&self) -> (i32, i32) {
         let (window_width, _) = self.calculate_window_size();
-        (window_width/2, 90)
+        (window_width / 2, 90)
     }
 
     fn calculate_sql_input_width(&self) -> i32 {
@@ -471,6 +430,9 @@ impl WindowView {
         let calculated_related_tabs_size = self.calculate_related_tabs_size();
 
         self.main_tab.set_table_size(calculated_main_table_size);
+        // toolbar uses the window_size
+        self.toolbar_view
+            .set_allocated_size(self.calculate_window_size());
         self.one_one_tabs
             .iter_mut()
             .for_each(|tab| tab.set_table_size(calculated_main_table_size));
