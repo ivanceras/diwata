@@ -25,7 +25,7 @@ impl ToolbarView {
 
     /// sql input size is resizable
     fn calculate_sql_input_size(&self) -> (i32, i32) {
-        (self.allocated_width / 2, 90)
+        (self.allocated_width / 2 - 200, 90)
     }
 
     fn calculate_sql_input_width(&self) -> i32 {
@@ -58,7 +58,7 @@ impl ToolbarView {
     fn calculate_parsed_sql_size(&self) -> (i32, i32) {
         let (sql_input_width, _) = self.calculate_sql_input_size();
         let (run_query_width, _) = self.run_query_button_size();
-        let parse_sql_width = self.allocated_width - (sql_input_width + run_query_width);
+        let parse_sql_width = self.allocated_width - (sql_input_width + run_query_width + self.calculate_needed_auxilliary_width());
         (parse_sql_width, 90)
     }
     fn calculate_parsed_sql_width(&self) -> i32 {
@@ -66,6 +66,10 @@ impl ToolbarView {
     }
     fn calculate_parsed_sql_height(&self) -> i32 {
         self.calculate_parsed_sql_size().1
+    }
+
+    fn calculate_needed_auxilliary_width(&self) -> i32 {
+        50
     }
 }
 
