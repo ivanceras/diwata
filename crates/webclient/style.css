@@ -327,7 +327,7 @@ input.column_filter[type="text"]{
 
 /* can move up and down */
 .row.frozen_column, .value.frozen_column{
-    background-color: #cecefe;
+    background-color: #eefefb;
 }
 /* both frozen row and frozen column, immovable */
 .row.frozen_row.frozen_column, .value.frozen_row.frozen_column {

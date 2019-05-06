@@ -394,7 +394,8 @@ impl WindowView {
 
     /// sql input size is resizable
     fn calculate_sql_input_size(&self) -> (i32, i32) {
-        (800, 90)
+        let (window_width, _) = self.calculate_window_size();
+        (window_width/2, 90)
     }
 
     fn calculate_sql_input_width(&self) -> i32 {
