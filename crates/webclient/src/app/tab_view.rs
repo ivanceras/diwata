@@ -77,7 +77,7 @@ impl TabView {
     /// Important NOTE: Don't remove views,
     /// just hide them, otherwise the DOM closures
     /// will be lost causing panics in the browser
-    fn close_detail_view(&mut self) {
+    pub fn close_detail_view(&mut self) {
         self.detail_view.hide();
     }
     pub fn in_detail_view(&self) -> bool {

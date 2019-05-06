@@ -12,6 +12,7 @@ mod field_view;
 mod row_view;
 mod tab_view;
 mod table_view;
+mod toolbar_view;
 mod window_view;
 
 #[derive(Clone)]
@@ -112,51 +113,64 @@ impl Component<Msg> for App {
             // GRID
             [class("app")],
             [
-                section([class("logo_and_window_list")], [
-                header([class("logo")], [h1([], [text("Diwata")])]),
                 section(
+                    [class("logo_and_window_list")],
                     [
-                        class("window_list"),
-                        styles([
-                            ("height", px(self.calculate_window_list_height())),
-                            ("width", px(self.calculate_window_list_width())),
-                        ]),
-                    ],
-                    self.window_list
-                        .iter()
-                        .map(|group| {
-                            ul(
-                                [],
-                                [
-                                    li([class("window_list_group_name")], [text(&group.group)]),
+                        header([class("logo")], [h1([], [text("Diwata")])]),
+                        header(
+                            [class("connect")],
+                            [button([], [text("Connect to database..")])],
+                        ),
+                        section(
+                            [
+                                class("window_list"),
+                                styles([
+                                    ("height", px(self.calculate_window_list_height())),
+                                    ("width", px(self.calculate_window_list_width())),
+                                ]),
+                            ],
+                            self.window_list
+                                .iter()
+                                .map(|group| {
                                     ul(
                                         [],
-                                        group
-                                            .window_names
-                                            .iter()
-                                            .map(|win_name| {
-                                                li(
-                                                    [],
-                                                    [a(
-                                                        [href("#"), class("window_list_link")],
-                                                        [
-                                                            text(&win_name.name),
-                                                            span(
-                                                                [class("table_icon")],
-                                                                [assets::svg_table_icon()],
-                                                            ),
-                                                        ],
-                                                    )],
-                                                )
-                                            })
-                                            .collect::<Vec<Node<Msg>>>(),
-                                    ),
-                                ],
-                            )
-                        })
-                        .collect::<Vec<Node<Msg>>>(),
+                                        [
+                                            li(
+                                                [class("window_list_group_name")],
+                                                [text(&group.group)],
+                                            ),
+                                            ul(
+                                                [],
+                                                group
+                                                    .window_names
+                                                    .iter()
+                                                    .map(|win_name| {
+                                                        li(
+                                                            [],
+                                                            [a(
+                                                                [
+                                                                    href("#"),
+                                                                    class("window_list_link"),
+                                                                ],
+                                                                [
+                                                                    text(&win_name.name),
+                                                                    span(
+                                                                        [class("table_icon")],
+                                                                        [assets::svg_table_icon()],
+                                                                    ),
+                                                                ],
+                                                            )],
+                                                        )
+                                                    })
+                                                    .collect::<Vec<Node<Msg>>>(),
+                                            ),
+                                        ],
+                                    )
+                                })
+                                .collect::<Vec<Node<Msg>>>(),
+                        ),
+                    ],
                 ),
-                ]),
                 section(
                     [class("window_links_and_window_views")],
                     [

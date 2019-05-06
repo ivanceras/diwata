@@ -49,13 +49,21 @@ impl Component<Msg> for FieldView {
     }
     fn view(&self) -> Node<Msg> {
         div(
-            [class("field_view")],
+            [
+                class("field_view"),
+                classes_flag([
+                    ("frozen_row", self.is_frozen_row),
+                    ("frozen_column", self.is_frozen_column),
+                ]),
+            ],
             [input(
                 [
                     r#type("text"),
                     class("value"),
-                    classes_flag([("frozen_row", self.is_frozen_row)]),
-                    classes_flag([("frozen_column", self.is_frozen_column)]),
+                    classes_flag([
+                        ("frozen_row", self.is_frozen_row),
+                        ("frozen_column", self.is_frozen_column),
+                    ]),
                     onchange(|input| Msg::ChangeValue(input.value)),
                     value(format!("{:?}", self.value)),
                 ],

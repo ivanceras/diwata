@@ -110,6 +110,7 @@ ol, ul, li {
 }
 
 .window_links_and_window_views{
+    padding-top: 10px;
 }
 
 .window {
@@ -126,6 +127,9 @@ ol, ul, li {
     resize: none;
 }
 
+.run_query{
+    margin-top: auto;
+}
 
 .window_links{
     display: flex;
@@ -137,7 +141,15 @@ ol, ul, li {
     flex-direction: row;
 }
 
-.main_tab_and_one_one_tabs{
+.main_tab_and_one_one_tabs_and_detail_close_btn{
+    display: flex;
+    flex-direction: row;
+}
+
+.close_detail_btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
 }
 
 .one_one_tabs{
@@ -205,6 +217,7 @@ ol, ul, li {
     display: grid;
     grid-template-columns: min-content max-content;
     grid-template-rows: min-content max-content;
+    border: 1px solid #ccc;
 }
 .tab{
 }
@@ -222,6 +235,14 @@ ol, ul, li {
 
 /* ol, contains the frozen columns and their selection*/
 .immovable_frozen_columns {
+    border-bottom: 2px dashed #ccc;
+}
+
+.frozen_column_names{
+}
+/* remove the dashed border when in frozen column */
+.frozen_column_names .column_name_and_control{
+    border-right: 2px dashed #ccc;
 }
 
 .normal_column_names, .frozen_column_names {
@@ -285,8 +306,12 @@ input.column_filter[type="text"]{
 }
 /* add an animation for the transition of margin to smoothen out the
  * transition */
-.normal_column_names_and_frozen_rows, .frozen_columns{
-    /*transition: margin 100ms ease;*/
+.normal_column_names_and_frozen_rows{
+    transition: margin 10ms ease;
+}
+
+.frozen_columns {
+    border-bottom: 2px dashed #ccc;
 }
 
 .frozen_rows{
@@ -374,12 +399,21 @@ input.column_filter[type="text"]{
     border-right: 1px solid #ccc;
 }
 
+/* dashed border when in frozen column */
+.field_view.frozen_column{
+    border-right: 2px dashed #ccc;
+}
+
 .value{
 }
 
 input.value[type="text"]{
     border: 0;
-    border-bottom: 1px solid #000;
+    border-bottom: 1px solid #ccc;
+}
+
+input[type="checkbox"]{
+    width: 20px;
 }
 
 

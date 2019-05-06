@@ -4,7 +4,10 @@ use sauron::{
 };
 
 use crate::{
-    app::tab_view::{self, TabView},
+    app::{
+        tab_view::{self, TabView},
+        toolbar_view::{self, ToolbarView},
+    },
     data::WindowData,
 };
 use diwata_intel::{TableName, Window};
@@ -20,6 +23,8 @@ pub struct WindowView {
     active_indirect_tab: Option<usize>,
     browser_height: i32,
     browser_width: i32,
+    show_sql_input: bool,
+    toolbar_view: ToolbarView,
 }
 
 #[derive(Clone)]
@@ -31,6 +36,8 @@ pub enum Msg {
     ShowHasManyTab(usize),
     ShowIndirectTab(usize),
     BrowserResized(i32, i32),
+    ToolbarMsg(toolbar_view::Msg),
+    CloseDetailView,
 }
 
 impl Component<Msg> for WindowView {
@@ -50,6 +57,8 @@ impl Component<Msg> for WindowView {
                 self.browser_height = height;
                 self.update_size_allocation();
             }
+            Msg::ToolbarMsg(toolbar_msg) => self.toolbar_view.update(toolbar_msg),
+            Msg::CloseDetailView => self.close_detail_view(),
         }
     }
     fn view(&self) -> Node<Msg> {
@@ -60,7 +69,14 @@ impl Component<Msg> for WindowView {
             ],
             [
                 header(
-                    [class("query_input")],
+                    [class("toolbar_view")],
+                    [self.toolbar_view.view().map(Msg::ToolbarMsg)],
+                ),
+                header(
+                    [
+                        class("query_input"),
+                        styles_flag([("display", "none", !self.toolbar_view.show_query)]),
+                    ],
                     [
                         textarea(
                             [
@@ -73,61 +89,80 @@ impl Component<Msg> for WindowView {
                             ],
                             [],
                         ),
+                        button([class("run_query"),
+                               styles([
+                                      ("width", px(self.run_query_button_width())),
+                                      ("height", px(self.run_query_button_height()))
+                               ])
+                        ], [text("Run query")]),
                         textarea(
                             [
                                 class("parsed_sql"),
                                 readonly(true),
                                 styles([
                                     ("width", px(self.calculate_parsed_sql_width())),
-                                    ("height", px(self.calculate_sql_input_height())),
+                                    ("height", px(self.calculate_parsed_sql_height())),
                                 ]),
                             ],
-                            [text("SELECT * FROM table")],
+                            [text("SELECT * FROM table
+                                Rem consequatur consectetur labore occaecati ipsa aut vel optio. Eius eligendi aliquid beatae cumque ad illum. Deleniti suscipit non in consequatur. Doloremque beatae eum nulla praesentium cumque voluptatem quae tenetur.
+                                SELECT * FROM table
+                                Rem consequatur consectetur labore occaecati ipsa aut vel optio. Eius eligendi aliquid beatae cumque ad illum. Deleniti suscipit non in consequatur. Doloremque beatae eum nulla praesentium cumque voluptatem quae tenetur.SELECT * FROM table
+                                Rem consequatur consectetur labore occaecati ipsa aut vel optio. Eius eligendi aliquid beatae cumque ad illum. Deleniti suscipit non in consequatur. Doloremque beatae eum nulla praesentium cumque voluptatem quae tenetur.SELECT * FROM table
+                                Rem consequatur consectetur labore occaecati ipsa aut vel optio. Eius eligendi aliquid beatae cumque ad illum. Deleniti suscipit non in consequatur. Doloremque beatae eum nulla praesentium cumque voluptatem quae tenetur.SELECT * FROM table
+                                Rem consequatur consectetur labore occaecati ipsa aut vel optio. Eius eligendi aliquid beatae cumque ad illum. Deleniti suscipit non in consequatur. Doloremque beatae eum nulla praesentium cumque voluptatem quae tenetur.SELECT * FROM table
+                                Rem consequatur consectetur labore occaecati ipsa aut vel optio. Eius eligendi aliquid beatae cumque ad illum. Deleniti suscipit non in consequatur. Doloremque beatae eum nulla praesentium cumque voluptatem quae tenetur.
+                                  ")],
                         ),
                     ],
                 ),
-                section(
-                    [
-                        class("main_tab_and_one_one_tabs"),
-                        styles([
-                            ("width", px(self.calculate_detail_window_width())),
-                            ("height", px(self.calculate_detail_window_height())),
-                        ]),
-                        // show only the scrollbar when in detailed view
-                        // to prevent double scrolling when table_view is shown
-                        styles_flag([("overflow", "auto", self.in_detail_view())]),
-                    ],
-                    [
-                        section(
-                            [class("main_tab")],
-                            [self.main_tab.view().map(Msg::MainTabMsg)],
-                        ),
+                section([class("main_tab_and_one_one_tabs_and_detail_close_btn")], [
                         section(
                             [
-                                class("one_one_tabs"),
-                                styles_flag([
-                                    ("display", "flex", self.in_detail_view()),
-                                    ("display", "none", !self.in_detail_view()),
+                                class("main_tab_and_one_one_tabs"),
+                                styles([
+                                    ("width", px(self.calculate_detail_window_width())),
+                                    ("height", px(self.calculate_detail_window_height())),
                                 ]),
+                                // show only the scrollbar when in detailed view
+                                // to prevent double scrolling when table_view is shown
+                                styles_flag([("overflow", "auto", self.in_detail_view())]),
                             ],
-                            self.one_one_tabs
-                                .iter()
-                                .enumerate()
-                                .map(|(index, tab)| {
-                                    details(
-                                        [class("one_one_tab")],
-                                        [
-                                            sauron::html::summary([], [text(&tab.name)]),
-                                            TabView::view(tab).map(move |tab_msg| {
-                                                Msg::OneOneTabMsg(index, tab_msg)
-                                            }),
-                                        ],
-                                    )
-                                })
-                                .collect::<Vec<Node<Msg>>>(),
+                            [
+                                section(
+                                    [class("main_tab")],
+                                    [self.main_tab.view().map(Msg::MainTabMsg)],
+                                ),
+                                section(
+                                    [
+                                        class("one_one_tabs"),
+                                        styles_flag([
+                                            ("display", "flex", self.in_detail_view()),
+                                            ("display", "none", !self.in_detail_view()),
+                                        ]),
+                                    ],
+                                    self.one_one_tabs
+                                        .iter()
+                                        .enumerate()
+                                        .map(|(index, tab)| {
+                                            details(
+                                                [class("one_one_tab")],
+                                                [
+                                                    sauron::html::summary([], [text(&tab.name)]),
+                                                    TabView::view(tab).map(move |tab_msg| {
+                                                        Msg::OneOneTabMsg(index, tab_msg)
+                                                    }),
+                                                ],
+                                            )
+                                        })
+                                        .collect::<Vec<Node<Msg>>>(),
+                                ),
+                            ],
                         ),
-                    ],
-                ),
+                        button([class("close_detail_btn"),
+                            onclick(|_|Msg::CloseDetailView),
+                        ], [text("X")]),
+                ]),
                 section(
                     [
                         class("detail_row_related_records"),
@@ -233,6 +268,8 @@ impl WindowView {
             active_indirect_tab: None,
             browser_width,
             browser_height,
+            show_sql_input: false,
+            toolbar_view: ToolbarView::new(),
         };
         window_view.update_active_has_many_or_indirect_tab();
         window_view.update_size_allocation();
@@ -355,16 +392,45 @@ impl WindowView {
         self.calculate_detail_window_size().1
     }
 
+    /// sql input size is resizable
+    fn calculate_sql_input_size(&self) -> (i32, i32) {
+        (800, 90)
+    }
+
     fn calculate_sql_input_width(&self) -> i32 {
-        self.calculate_detail_window_width() / 2 - 5
+        self.calculate_sql_input_size().0
     }
 
     fn calculate_sql_input_height(&self) -> i32 {
-        90
+        self.calculate_sql_input_size().1
     }
 
+    /// fix run button size
+    fn run_query_button_size(&self) -> (i32, i32) {
+        (100, 40)
+    }
+
+    fn run_query_button_width(&self) -> i32 {
+        self.run_query_button_size().0
+    }
+
+    fn run_query_button_height(&self) -> i32 {
+        self.run_query_button_size().1
+    }
+
+    /// the remaining width of the window width
+    fn calculate_parsed_sql_size(&self) -> (i32, i32) {
+        let (window_width, _) = self.calculate_window_size();
+        let (sql_input_width, _) = self.calculate_sql_input_size();
+        let (run_query_width, _) = self.run_query_button_size();
+        let parse_sql_width = window_width - (sql_input_width + run_query_width);
+        (parse_sql_width, 90)
+    }
     fn calculate_parsed_sql_width(&self) -> i32 {
-        self.calculate_detail_window_width() / 2 - 5
+        self.calculate_parsed_sql_size().0
+    }
+    fn calculate_parsed_sql_height(&self) -> i32 {
+        self.calculate_parsed_sql_size().1
     }
 
     fn calculate_detail_window_width(&self) -> i32 {
@@ -417,5 +483,9 @@ impl WindowView {
 
     fn in_detail_view(&self) -> bool {
         self.main_tab.in_detail_view()
+    }
+
+    fn close_detail_view(&mut self) {
+        self.main_tab.close_detail_view()
     }
 }
