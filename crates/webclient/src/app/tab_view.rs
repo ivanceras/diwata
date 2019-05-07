@@ -26,6 +26,8 @@ pub struct TabView {
     detail_view: DetailView,
     table_view: TableView,
     pub is_visible: bool,
+    /// one_one_tab should only contain at most 1 datarow and is on detail view
+    is_one_one: bool,
 }
 
 impl TabView {
@@ -35,6 +37,7 @@ impl TabView {
             table_view: TableView::from_tab(tab),
             detail_view: DetailView::new(),
             is_visible: true,
+            is_one_one: false,
         }
     }
 
@@ -98,6 +101,21 @@ impl TabView {
 
     pub fn set_table_size(&mut self, size: (i32, i32)) {
         self.table_view.set_allocated_size(size);
+    }
+
+    pub fn set_is_one_one(&mut self, is_one_one: bool) {
+        self.is_one_one = is_one_one;
+        self.update_view();
+    }
+
+    fn update_view(&mut self) {
+        if self.is_one_one {
+            if self.table_view.row_views.len() == 1 {
+                self.show_detail_view(0);
+            }else{
+                sauron::log!("There should be 1 data row in one_one_tab");
+            }
+        }
     }
 }
 

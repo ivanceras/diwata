@@ -43,7 +43,10 @@ pub enum Msg {
 impl Component<Msg> for WindowView {
     fn update(&mut self, msg: Msg) {
         match msg {
-            Msg::MainTabMsg(tab_msg) => self.main_tab.update(tab_msg),
+            Msg::MainTabMsg(tab_msg) => {
+                self.main_tab.update(tab_msg);
+                self.update_size_allocation();
+            }
             Msg::OneOneTabMsg(index, tab_msg) => self.one_one_tabs[index].update(tab_msg),
             Msg::HasManyTabMsg(index, tab_msg) => self.has_many_tabs[index].update(tab_msg),
             Msg::IndirectTabMsg(index, (_table_name, tab_msg)) => {
@@ -57,8 +60,14 @@ impl Component<Msg> for WindowView {
                 self.browser_height = height;
                 self.update_size_allocation();
             }
-            Msg::ToolbarMsg(toolbar_msg) => self.toolbar_view.update(toolbar_msg),
-            Msg::CloseDetailView => self.close_detail_view(),
+            Msg::ToolbarMsg(toolbar_msg) => {
+                self.toolbar_view.update(toolbar_msg);
+                self.update_size_allocation();
+            }
+            Msg::CloseDetailView => {
+                self.close_detail_view();
+                self.update_size_allocation();
+            }
         }
     }
     fn view(&self) -> Node<Msg> {
@@ -220,7 +229,15 @@ impl WindowView {
         let mut window_view = WindowView {
             name: window.name,
             main_tab: TabView::new(window.main_tab),
-            one_one_tabs: window.one_one_tabs.into_iter().map(TabView::new).collect(),
+            one_one_tabs: window
+                .one_one_tabs
+                .into_iter()
+                .map(|tab| {
+                    let mut tab_view = TabView::new(tab);
+                    tab_view.set_is_one_one(true);
+                    tab_view
+                })
+                .collect(),
             has_many_tabs: window.has_many_tabs.into_iter().map(TabView::new).collect(),
             indirect_tabs: window
                 .indirect_tabs
@@ -332,11 +349,17 @@ impl WindowView {
         let (window_width, window_height) = self.calculate_window_size();
         let (_related_tab_width, related_tab_height) = self.calculate_related_tabs_size();
 
-        let main_table_height = if self.in_detail_view() {
+        let mut main_table_height = if self.in_detail_view() {
             window_height - related_tab_height
         } else {
             window_height
         };
+
+        main_table_height -= self.toolbar_view.get_consumed_height();
+        if self.in_detail_view() {
+            main_table_height -= self.related_tab_links_needed_height();
+        }
+
 
         let clamped_main_table_height = if main_table_height < 0 {
             0
@@ -346,6 +369,11 @@ impl WindowView {
         (window_width, clamped_main_table_height)
     }
 
+    /// the height of the related tab links in has_many and indirect tabs
+    fn related_tab_links_needed_height(&self) -> i32{
+        35
+    }
+
     /// the detail view takes up the main table height
     fn calculate_detail_window_size(&self) -> (i32, i32) {
         self.calculate_main_table_size()
@@ -353,48 +381,6 @@ impl WindowView {
 
     fn calculate_detail_window_height(&self) -> i32 {
         self.calculate_detail_window_size().1
-    }
-
-    /// sql input size is resizable
-    fn calculate_sql_input_size(&self) -> (i32, i32) {
-        let (window_width, _) = self.calculate_window_size();
-        (window_width / 2, 90)
-    }
-
-    fn calculate_sql_input_width(&self) -> i32 {
-        self.calculate_sql_input_size().0
-    }
-
-    fn calculate_sql_input_height(&self) -> i32 {
-        self.calculate_sql_input_size().1
-    }
-
-    /// fix run button size
-    fn run_query_button_size(&self) -> (i32, i32) {
-        (100, 40)
-    }
-
-    fn run_query_button_width(&self) -> i32 {
-        self.run_query_button_size().0
-    }
-
-    fn run_query_button_height(&self) -> i32 {
-        self.run_query_button_size().1
-    }
-
-    /// the remaining width of the window width
-    fn calculate_parsed_sql_size(&self) -> (i32, i32) {
-        let (window_width, _) = self.calculate_window_size();
-        let (sql_input_width, _) = self.calculate_sql_input_size();
-        let (run_query_width, _) = self.run_query_button_size();
-        let parse_sql_width = window_width - (sql_input_width + run_query_width);
-        (parse_sql_width, 90)
-    }
-    fn calculate_parsed_sql_width(&self) -> i32 {
-        self.calculate_parsed_sql_size().0
-    }
-    fn calculate_parsed_sql_height(&self) -> i32 {
-        self.calculate_parsed_sql_size().1
     }
 
     fn calculate_detail_window_width(&self) -> i32 {
@@ -418,9 +404,9 @@ impl WindowView {
         self.browser_width - self.calculate_needed_width_for_auxilliary_spaces()
     }
 
-    /// height needed for the toolbars, columns, sql textarea, paddings and margins
+    /// height needed for the columns, paddings and margins
     fn calculate_needed_height_for_auxilliary_spaces(&self) -> i32 {
-        190
+        70
     }
 
     /// this includes the window_list width, and left padding and margins

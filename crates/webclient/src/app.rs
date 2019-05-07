@@ -80,7 +80,7 @@ impl App {
     }
 
     fn calculate_needed_auxilliary_window_list_height(&self) -> i32 {
-        150
+       170 
     }
 
     fn calculate_window_list_width(&self) -> i32 {
@@ -116,7 +116,7 @@ impl Component<Msg> for App {
                 section(
                     [class("logo_and_window_list")],
                     [
-                        header([class("logo")], [h1([], [text("Diwata")])]),
+                        header([class("logo")], []),
                         section(
                             [
                                 class("window_list"),

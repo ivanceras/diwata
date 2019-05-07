@@ -1,4 +1,4 @@
-//#![deny(warnings)]
+#![deny(warnings)]
 #![deny(clippy::all)]
 use app::{App, Msg};
 use diwata_intel::{
@@ -34,6 +34,10 @@ pub fn initialize(initial_state: &str) {
         sample_window("Window2"),
         sample_window("Window3"),
     ];
+    sauron::log!(
+        "{}",
+        ron::ser::to_string(&windows).expect("unable serialize")
+    );
     let window_list: Vec<GroupedWindow> = make_sample_window_list();
     let (window_width, window_height) = get_window_size();
     let mut app = App::new(window_list, windows, window_width, window_height);

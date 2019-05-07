@@ -16,6 +16,7 @@ js-sys = "0.3"
 lazy_static = "1.0"
 nalgebra = "0.18.0"
 wee_alloc = { version = "0.4.3", optional = true }
+ron = "0.5.1"
 
 [dependencies.wasm-bindgen]
 version = "0.2.33"

@@ -134,7 +134,7 @@ impl TableView {
     /// height from the columns names, tab_links in the parent tab_view
     /// paddings and borders
     pub fn calculate_needed_height_for_auxilliary_spaces(&self) -> i32 {
-        100
+        90
     }
 
     pub fn calculate_needed_width_for_auxilliary_spaces(&self) -> i32 {

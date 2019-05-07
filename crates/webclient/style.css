@@ -71,18 +71,24 @@ ol, ul, li {
 }
 
 .logo{
-    width: 100px;
-    height: 100px;
+    width: 120px;
+    height: 120px;
     border: 1px solid green;
-    background: url(img/diwata100.jpg) no-repeat center;
+    background: url(img/diwata200.png) no-repeat center;
     background-color: green;
+    border-radius: 50%;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 10px;
+    margin-bottom: 10px;
 }
 
 /* The list of windows on the left side bar*/
 .window_list{
     overflow: auto;
     background-color: #f5f5f4;
-    /*border-right: 1px solid #ddd;*/
+    border-top-left-radius: 4px;
+    border-bottom-left-radius: 4px;
 }
 
 .window_list_group_name {
