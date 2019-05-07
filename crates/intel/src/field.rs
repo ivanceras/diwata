@@ -163,6 +163,8 @@ impl Field {
     /// that uses composite foreign key
     /// the field name will be the table name
     /// it looks up to
+    /// This is the reason why column_detail is needed for cases where 
+    /// the referencing columns is a composite key
     pub fn from_has_one_table(
         table: &Table,
         columns: &[&Column],
