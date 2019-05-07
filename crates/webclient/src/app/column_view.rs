@@ -40,16 +40,20 @@ impl Component<Msg> for ColumnView {
             [class("column_name_and_control")],
             [
                 div(
-                    [class("column_name_and_sort")],
+                    [
+                        class("column_name_and_sort"),
+                        styles([("width", px(self.width)), ("height", px(self.height))]),
+                    ],
                     [
                         div([class("column_name")], [text(&self.column.name)]),
                         div([], [assets::sort_btn_asc(18, 18, "#888")]),
                     ],
                 ),
-                widgets::search_widget::new(
-                    self.width,
-                    self.height,
-                    oninput(|input| Msg::ChangeSearch(input.value)),
+                div(
+                    [class("column_name_search_widget_container")],
+                    [widgets::search_widget(oninput(|input| {
+                        Msg::ChangeSearch(input.value)
+                    }))],
                 ),
             ],
         )

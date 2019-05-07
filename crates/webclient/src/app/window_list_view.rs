@@ -48,11 +48,9 @@ impl Component<Msg> for WindowListView {
             [
                 section(
                     [class("window_list_search")],
-                    [widgets::search_widget::new(
-                        self.calculate_window_list_width(),
-                        30,
-                        oninput(|input| Msg::ChangeSearch(input.value)),
-                    )],
+                    [widgets::search_widget(oninput(|input| {
+                        Msg::ChangeSearch(input.value)
+                    }))],
                 ),
                 section(
                     [

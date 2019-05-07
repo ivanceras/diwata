@@ -7,7 +7,6 @@ use std::{cell::RefCell, rc::Rc};
 
 #[derive(Clone)]
 pub enum Msg {
-    Close,
     FieldMsg(usize, field_view::Msg),
 }
 
@@ -52,9 +51,6 @@ impl Component<Msg> for DetailView {
             Msg::FieldMsg(index, field_msg) => {
                 self.fields[index].borrow_mut().update(field_msg);
             }
-            Msg::Close => {
-                sauron::log("Closing, intercepted in parent views");
-            }
         }
     }
 
@@ -79,7 +75,6 @@ impl Component<Msg> for DetailView {
                         })
                         .collect::<Vec<Node<Msg>>>(),
                 ),
-                button([onclick(|_| Msg::Close)], [text("Close")]),
             ],
         )
     }

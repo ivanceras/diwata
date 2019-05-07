@@ -138,9 +138,6 @@ impl Component<Msg> for TabView {
                 self.show_detail_view(row_index);
             }
             Msg::TableMsg(table_msg) => self.table_view.update(table_msg),
-            Msg::DetailViewMsg(detail_view::Msg::Close) => {
-                self.close_detail_view();
-            }
             Msg::DetailViewMsg(detail_msg) => {
                 self.detail_view.update(detail_msg);
             }

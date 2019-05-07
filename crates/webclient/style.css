@@ -170,12 +170,17 @@ ol, ul, li {
 .toolbar{
     margin-top: 10px;
     margin-bottom: 10px;
+    display:flex;
+    flex-direction: row;
 }
 
 .toolbar > button {
 	margin-left: -1px;
 	border: 1px solid #c2c0c2;
 	padding: 6px 12px;
+    display:flex;
+    flex-direction: row;
+    height: 35px;
 }
 
 .toolbar > button:first-child {
@@ -320,11 +325,39 @@ ol, ul, li {
     padding-top: 10px;
     padding-bottom: 10px;
 }
+
+.column_name_search_widget_container{
+    justify-content: center;
+    margin: auto;
+}
+
+.quick_find_widget{
+    display: flex;
+    flex-direction: row;
+    margin-right: 5px;
+}
+
 .search_icon_and_column_filter{
     display: flex;
     flex-direction:row;
-    justify-content: center;
 }
+.quick_search_icon{
+    height: 30px;
+    color: #aaa;
+    padding: 3px 2px 0 3px;
+    border-color: #aaa;
+    border-width: 1px 0 1px 1px;
+    border-style: solid;
+    border-radius: 5px 0 0 5px;
+}
+.quick_find_btn{
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
+    border-width: 1px 1px 1px 0;
+    border-style: solid;
+    border-color: #aaa;
+}
+
 .column_name{
 }
 input.column_filter[type="text"]{

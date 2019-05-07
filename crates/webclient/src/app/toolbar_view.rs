@@ -1,3 +1,4 @@
+use crate::widgets;
 use sauron::{
     html::{attributes::*, events::*, *},
     Component, Node,
@@ -7,6 +8,7 @@ use sauron::{
 pub enum Msg {
     ToggleShowQuery,
     ToggleShowRelatedTabs,
+    ChangeQuickFind(String),
 }
 
 pub struct ToolbarView {
@@ -14,6 +16,7 @@ pub struct ToolbarView {
     pub show_related_tabs: bool,
     allocated_width: i32,
     allocated_height: i32,
+    quick_find_search: String,
 }
 
 impl ToolbarView {
@@ -23,6 +26,7 @@ impl ToolbarView {
             show_related_tabs: true,
             allocated_width: 0,
             allocated_height: 0,
+            quick_find_search: String::new(),
         }
     }
 
@@ -98,6 +102,7 @@ impl Component<Msg> for ToolbarView {
         match msg {
             Msg::ToggleShowQuery => self.show_query = !self.show_query,
             Msg::ToggleShowRelatedTabs => self.show_related_tabs = !self.show_related_tabs,
+            Msg::ChangeQuickFind(search) => self.quick_find_search = search,
         }
     }
 
@@ -106,6 +111,7 @@ impl Component<Msg> for ToolbarView {
                 header(
                     [class("toolbar")],
                     [
+                        widgets::quick_find(26, oninput(|input|Msg::ChangeQuickFind(input.value))),
                         button([], [text("Create new record")]),
                         button([], [text("Insert new record")]),
                         button([], [text("Save")]),
