@@ -21,8 +21,9 @@ futures = "0.1.14"
 url = "1.5"
 include_dir = "0.2"
 cfg-if = "0.1.2"
-diwata_intel = "0.1.2"
+diwata_intel = { version = "0.1.2", features = ["with-rustorm", "with-postgres", "with-sqlite"] }
 rustorm =  {version = "0.13", features = ["with-postgres", "with-sqlite"]}
+ron = "0.5.1"
 
 
 

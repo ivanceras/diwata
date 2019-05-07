@@ -8,7 +8,7 @@ use futures::{
 };
 use hyper::{
     error::Error,
-    header::ContentType,
+    header::{ContentType,AccessControlAllowOrigin},
     server::{
         Response,
         Service,
@@ -53,6 +53,7 @@ use std::{
     },
 };
 use structopt::StructOpt;
+use ron;
 
 /// An instance of the server. Runs a session of rustw.
 pub struct Server {
@@ -660,9 +661,11 @@ fn update_record_changeset(
 fn create_response<B: Serialize>(body: Result<B, ServiceError>) -> Response {
     match body {
         Ok(body) => {
-            let json = serde_json::to_string(&body).unwrap();
+            //let json = serde_json::to_string(&body).unwrap();
+            let json = ron::ser::to_string(&body).expect("unable to serialize to ron");
             let mut headers = Headers::new();
-            headers.set(ContentType::json());
+            headers.set(ContentType::text());
+            headers.set(AccessControlAllowOrigin::Any);
             Response::new().with_headers(headers).with_body(json)
         }
         Err(e) => {

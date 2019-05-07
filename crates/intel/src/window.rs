@@ -19,7 +19,8 @@ use rustorm::{
     Table,
     TableName,
 };
-use serde_derive::Serialize;
+use serde::Serialize;
+use serde::Deserialize;
 
 #[derive(Debug, Serialize, Clone)]
 pub struct Window {
@@ -135,14 +136,14 @@ fn has_repeating_tab(
     matched > 1
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct WindowName {
     pub name: String,
     pub table_name: TableName,
     pub is_view: bool,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct GroupedWindow {
     pub group: String,
     pub window_names: Vec<WindowName>,
