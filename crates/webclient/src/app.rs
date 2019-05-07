@@ -24,6 +24,7 @@ pub enum Msg {
     BrowserResized(i32, i32),
     Tick,
     WindowListMsg(window_list_view::Msg),
+    ReceiveWindowList(Vec<GroupedWindow>),
 }
 
 pub struct App {
@@ -106,11 +107,16 @@ impl Component<Msg> for App {
                 self.window_views.iter_mut().for_each(|window| {
                     window.update(window_view::Msg::BrowserResized(width, height))
                 });
+                self.update_size_allocation();
             }
             Msg::Tick => {
                 sauron::log("Ticking");
             }
             Msg::WindowListMsg(window_list_msg) => self.window_list_view.update(window_list_msg),
+            Msg::ReceiveWindowList(window_list) => {
+                sauron::log!("Got some window_list: {:#?}", window_list);
+                self.window_list_view.update(window_list_view::Msg::ReceiveWindowList(window_list));
+            }
         }
     }
 

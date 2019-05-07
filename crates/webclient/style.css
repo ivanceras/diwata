@@ -89,6 +89,7 @@ ol, ul, li {
     background-color: #f5f5f4;
     border-top-left-radius: 4px;
     border-bottom-left-radius: 4px;
+    margin-top: 10px;
 }
 
 .window_list_group_name {
@@ -175,6 +176,7 @@ ol, ul, li {
     margin-bottom: 10px;
     display:flex;
     flex-direction: row;
+    flex-wrap: wrap;
 }
 
 .toolbar > button {
@@ -298,14 +300,14 @@ ol, ul, li {
 
 /* ol, contains the frozen columns and their selection*/
 .immovable_frozen_columns {
-    border-bottom: 2px dashed #ccc;
+    border-bottom: 1px dashed #ccc;
 }
 
 .frozen_column_names{
 }
 /* remove the dashed border when in frozen column */
 .frozen_column_names .column_name_and_control{
-    border-right: 2px dashed #ccc;
+    border-right: 1px dashed #ccc;
 }
 
 .normal_column_names, .frozen_column_names {
@@ -402,7 +404,7 @@ input.column_filter[type="text"]{
 }
 
 .frozen_columns {
-    border-bottom: 2px dashed #ccc;
+    border-bottom: 1px dashed #ccc;
 }
 
 .frozen_rows{
@@ -492,7 +494,7 @@ input.column_filter[type="text"]{
 
 /* dashed border when in frozen column */
 .field_view.frozen_column{
-    border-right: 2px dashed #ccc;
+    border-right: 1px dashed #ccc;
 }
 
 .value{

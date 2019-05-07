@@ -9,7 +9,8 @@ use diwata_intel::{
 };
 use sauron::{Dispatch, Program};
 use std::rc::Rc;
-use wasm_bindgen::{self, prelude::*, JsCast};
+use wasm_bindgen::{self, prelude::*, JsCast, JsValue};
+use web_sys::Response;
 
 mod app;
 mod assets;
@@ -24,12 +25,22 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 #[wasm_bindgen]
 pub fn initialize(initial_state: &str) {
+    let program = setup_program(initial_state);
+}
+pub fn setup_program (initial_state: &str) -> Rc<Program<App,Msg>> {
     #[cfg(feature = "console_error_panic_hook")]
     console_error_panic_hook::set_once();
     sauron::log!("initial state: {}", initial_state);
     let root_node = sauron::document()
         .get_element_by_id("web-app")
         .expect("Unable to get hold of root-node");
+    let app = make_app();
+    let program = Program::new_replace_mount(app, &root_node);
+    setup_global_listeners(&program);
+    program
+}
+
+pub fn make_app() -> App {
     let windows: Vec<Window> = vec![
         sample_window("Window1"),
         sample_window("Window2"),
@@ -43,8 +54,7 @@ pub fn initialize(initial_state: &str) {
     let (window_width, window_height) = get_window_size();
     let mut app = App::new(window_list, windows, window_width, window_height);
     app.set_window_data(0, crate::data::make_sample_window_data());
-    let program = Program::new_replace_mount(app, &root_node);
-    setup_global_listeners(program);
+    app
 }
 
 fn make_sample_window_list() -> Vec<GroupedWindow> {
@@ -72,9 +82,10 @@ fn make_window_name(name: &str) -> WindowName {
     }
 }
 
-fn setup_global_listeners(program: Rc<Program<App, Msg>>) {
-    setup_tick_listener(&program);
-    setup_window_resize_listener(&program);
+fn setup_global_listeners(program: &Rc<Program<App, Msg>>) {
+    setup_tick_listener(program);
+    setup_window_resize_listener(program);
+    fetch_window_list(program);
 }
 
 fn setup_tick_listener(program: &Rc<Program<App, Msg>>) {
@@ -101,6 +112,33 @@ fn setup_window_resize_listener(program: &Rc<Program<App, Msg>>) {
     resize_callback.forget();
 }
 
+fn fetch_window_list(program: &Rc<Program<App,Msg>>) {
+    let program_clone = Rc::clone(program);
+    let promise = sauron::window().fetch_with_str("http://localhost:8000/windows");
+    let response_cb: Closure<FnMut(JsValue)> = Closure::once( move|js_value: JsValue| {
+        let ron_value = js_value.as_string().expect("There's no string value");
+        sauron::log!("Got a window_list: {:#?}", ron_value);
+        let grouped_window = ron::de::from_str(&ron_value).expect("Unable to deserialize");
+        program_clone.dispatch(app::Msg::ReceiveWindowList(grouped_window));
+    });
+    let cb: Closure<FnMut(JsValue)> = Closure::once(move|js_value:JsValue| {
+        sauron::log!("js_value: {:#?}", js_value);
+        let response: &Response = js_value.as_ref().unchecked_ref();
+        let response_promise = response.text().expect("expecting a text");
+        sauron::log!("got ron_value: {:?}", response_promise.to_string());
+        response_promise.then(&response_cb);
+        response_cb.forget();
+    });
+    promise.then(&cb);
+    cb.forget();
+}
+
+#[cfg(not(target_arch="wasm32"))]
+fn get_window_size() -> (i32, i32) {
+    (800, 800)
+}
+
+#[cfg(target_arch="wasm32")]
 fn get_window_size() -> (i32, i32) {
     let window = sauron::window();
     let window_width = window

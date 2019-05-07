@@ -8,6 +8,7 @@ use sauron::{
 #[derive(Clone)]
 pub enum Msg {
     ChangeSearch(String),
+    ReceiveWindowList(Vec<GroupedWindow>),
 }
 
 pub struct WindowListView {
@@ -40,7 +41,16 @@ impl WindowListView {
 }
 
 impl Component<Msg> for WindowListView {
-    fn update(&mut self, _msg: Msg) {}
+    fn update(&mut self, msg: Msg) {
+        match msg{
+            Msg::ChangeSearch(search) => {
+                sauron::log!("searching for {}", search);
+            }
+            Msg::ReceiveWindowList(window_list) => {
+                self.window_list = window_list;
+            }
+        }
+    }
 
     fn view(&self) -> Node<Msg> {
         div(
