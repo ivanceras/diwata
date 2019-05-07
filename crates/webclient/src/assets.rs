@@ -14,7 +14,7 @@ where
             ])
 }
 
-pub fn svg_filter_icon<MSG>(w: i32, h: i32, color: &'static str) -> Node<MSG>
+pub fn svg_search_icon<MSG>(w: i32, h: i32, color: &'static str) -> Node<MSG>
 where
     MSG: Clone,
 {

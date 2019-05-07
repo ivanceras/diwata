@@ -14,6 +14,7 @@ use wasm_bindgen::{self, prelude::*, JsCast};
 mod app;
 mod assets;
 mod data;
+mod widgets;
 
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
 // allocator.

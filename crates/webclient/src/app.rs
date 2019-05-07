@@ -80,7 +80,7 @@ impl App {
     }
 
     fn calculate_needed_auxilliary_window_list_height(&self) -> i32 {
-       170 
+        170
     }
 
     fn calculate_window_list_width(&self) -> i32 {

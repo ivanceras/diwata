@@ -79,14 +79,14 @@ impl ToolbarView {
         consumed_heights += self.toolbar_icon_height();
         consumed_heights += if self.show_query {
             self.calculate_parsed_sql_height()
-        }else{
+        } else {
             0
         };
         consumed_heights
     }
 
     fn toolbar_icon_height(&self) -> i32 {
-        90 
+        90
     }
 }
 

@@ -112,7 +112,7 @@ impl TabView {
         if self.is_one_one {
             if self.table_view.row_views.len() == 1 {
                 self.show_detail_view(0);
-            }else{
+            } else {
                 sauron::log!("There should be 1 data row in one_one_tab");
             }
         }

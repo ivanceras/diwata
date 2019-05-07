@@ -318,7 +318,7 @@ ol, ul, li {
     padding-top: 10px;
     padding-bottom: 10px;
 }
-.filter_icon_and_column_filter{
+.search_icon_and_column_filter{
     display: flex;
     flex-direction:row;
     justify-content: center;
@@ -333,7 +333,7 @@ input.column_filter[type="text"]{
     border-style: solid;
     border-radius: 0 5px 5px 0;
 }
-.filter_icon{
+.search_icon{
     width: 16px;
     height: 19px;
     color: #aaa;

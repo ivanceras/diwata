@@ -360,7 +360,6 @@ impl WindowView {
             main_table_height -= self.related_tab_links_needed_height();
         }
 
-
         let clamped_main_table_height = if main_table_height < 0 {
             0
         } else {
@@ -370,7 +369,7 @@ impl WindowView {
     }
 
     /// the height of the related tab links in has_many and indirect tabs
-    fn related_tab_links_needed_height(&self) -> i32{
+    fn related_tab_links_needed_height(&self) -> i32 {
         35
     }
 
