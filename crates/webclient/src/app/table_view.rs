@@ -131,10 +131,9 @@ impl TableView {
         self.calculate_normal_rows_size().0
     }
 
-    /// height from the columns names, tab_links in the parent tab_view
-    /// paddings and borders
+    /// height from the columns names, padding, margins and borders
     pub fn calculate_needed_height_for_auxilliary_spaces(&self) -> i32 {
-        90
+        120
     }
 
     pub fn calculate_needed_width_for_auxilliary_spaces(&self) -> i32 {

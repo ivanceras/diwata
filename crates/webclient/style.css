@@ -127,6 +127,7 @@ ol, ul, li {
 .query_input{
     display: flex;
     flex-direction: row;
+    padding-bottom: 10px;
 }
 
 .sql_input, .parsed_sql {
@@ -218,6 +219,7 @@ ol, ul, li {
     flex-direction: row;
     border-bottom: 1px solid #888;
     padding-left: 40px;
+    margin-top: 20px;
 }
 
 .tab_links{
@@ -476,6 +478,11 @@ input[type="checkbox"]{
     flex-direction: row;
     background-color: #f5f5f4;
 }
+.tab_view.in_detail_view{
+    background-color: #fff;
+    margin-left: 10px;
+    margin-right: 10px;
+}
 
 .detail_view_container{
     display:flex;
@@ -520,5 +527,4 @@ input[type="checkbox"]{
  * Anchored to the bottom of the page
  * */
 .detail_row_related_records{
-    margin-top: 20px;
 }

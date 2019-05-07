@@ -139,10 +139,7 @@ impl Component<Msg> for WindowView {
                 section(
                     [
                         class("detail_row_related_records"),
-                        styles_flag([
-                            ("display", "block", self.in_detail_view()),
-                            ("display", "none", !self.in_detail_view()),
-                        ]),
+                        styles_flag([("display", "none", !self.is_show_related_tabs())]),
                     ],
                     [
                         header(
@@ -349,16 +346,8 @@ impl WindowView {
         let (window_width, window_height) = self.calculate_window_size();
         let (_related_tab_width, related_tab_height) = self.calculate_related_tabs_size();
 
-        let mut main_table_height = if self.in_detail_view() {
-            window_height - related_tab_height
-        } else {
-            window_height
-        };
-
-        main_table_height -= self.toolbar_view.get_consumed_height();
-        if self.in_detail_view() {
-            main_table_height -= self.related_tab_links_needed_height();
-        }
+        let main_table_height =
+            window_height - (related_tab_height + self.toolbar_view.get_consumed_height());
 
         let clamped_main_table_height = if main_table_height < 0 {
             0
@@ -370,7 +359,7 @@ impl WindowView {
 
     /// the height of the related tab links in has_many and indirect tabs
     fn related_tab_links_needed_height(&self) -> i32 {
-        35
+        40
     }
 
     /// the detail view takes up the main table height
@@ -389,14 +378,18 @@ impl WindowView {
     fn calculate_related_tabs_size(&self) -> (i32, i32) {
         (
             self.calculate_related_tabs_width(),
-            self.calculate_related_tabs_height(),
+            if self.is_show_related_tabs() {
+                self.calculate_related_tabs_height()
+            } else {
+                0
+            },
         )
     }
 
     /// fix the related tab heights and the user can also adjust this
     /// up and down
     fn calculate_related_tabs_height(&self) -> i32 {
-        300
+        300 + self.related_tab_links_needed_height()
     }
 
     fn calculate_related_tabs_width(&self) -> i32 {
@@ -435,6 +428,10 @@ impl WindowView {
 
     fn in_detail_view(&self) -> bool {
         self.main_tab.in_detail_view()
+    }
+
+    fn is_show_related_tabs(&self) -> bool {
+        self.in_detail_view() && self.toolbar_view.show_related_tabs
     }
 
     fn close_detail_view(&mut self) {

@@ -6,10 +6,12 @@ use sauron::{
 #[derive(Clone)]
 pub enum Msg {
     ToggleShowQuery,
+    ToggleShowRelatedTabs,
 }
 
 pub struct ToolbarView {
     pub show_query: bool,
+    pub show_related_tabs: bool,
     allocated_width: i32,
     allocated_height: i32,
 }
@@ -18,6 +20,7 @@ impl ToolbarView {
     pub fn new() -> Self {
         ToolbarView {
             show_query: true,
+            show_related_tabs: true,
             allocated_width: 0,
             allocated_height: 0,
         }
@@ -94,6 +97,7 @@ impl Component<Msg> for ToolbarView {
     fn update(&mut self, msg: Msg) {
         match msg {
             Msg::ToggleShowQuery => self.show_query = !self.show_query,
+            Msg::ToggleShowRelatedTabs => self.show_related_tabs = !self.show_related_tabs,
         }
     }
 
@@ -121,6 +125,17 @@ impl Component<Msg> for ToolbarView {
                                     self.show_query,
                                 )])),
                                 text("Show query"),
+                            ],
+                        ),
+                        button(
+                            [onclick(|_| Msg::ToggleShowRelatedTabs)],
+                            [
+                                input([r#type("checkbox")], []).attributes(attrs_flag([(
+                                    "checked",
+                                    "checked",
+                                    self.show_related_tabs,
+                                )])),
+                                text("Show related records"),
                             ],
                         ),
                     ],
@@ -157,35 +172,35 @@ impl Component<Msg> for ToolbarView {
                                     ("height", px(self.calculate_parsed_sql_height())),
                                 ]),
                             ],
-                            [text("SELECT * FROM table
-                                Rem consequatur consectetur labore occaecati ipsa aut vel optio. 
-                                Eius eligendi aliquid beatae cumque ad illum. 
-                                Deleniti suscipit non in consequatur. 
-                                Doloremque beatae eum nulla praesentium cumque 
-                                voluptatem quae tenetur.
-                                SELECT * FROM table
-                                Rem consequatur consectetur labore occaecati ipsa aut vel optio. 
-                                Eius eligendi aliquid beatae cumque ad illum. 
-                                Deleniti suscipit non in consequatur. 
-                                Doloremque beatae eum nulla praesentium cumque voluptatem quae tenetur.
-                                SELECT * FROM table
-                                Rem consequatur consectetur labore occaecati ipsa aut vel optio. 
-                                Eius eligendi aliquid beatae cumque ad illum. Deleniti suscipit non in consequatur. 
-                                Doloremque beatae eum nulla praesentium cumque voluptatem quae tenetur.
-                                SELECT * FROM table
-                                Rem consequatur consectetur labore occaecati ipsa aut vel optio. 
-                                Eius eligendi aliquid beatae cumque ad illum. Deleniti suscipit non in consequatur. 
-                                Doloremque beatae eum nulla praesentium cumque voluptatem quae tenetur.
-                                SELECT * FROM table
-                                Rem consequatur consectetur labore occaecati ipsa aut vel optio. 
-                                Eius eligendi aliquid beatae cumque ad illum. 
-                                Deleniti suscipit non in consequatur. 
-                                Doloremque beatae eum nulla praesentium cumque voluptatem quae tenetur.
-                                SELECT * FROM table
-                                Rem consequatur consectetur labore occaecati ipsa aut vel optio. 
-                                Eius eligendi aliquid beatae cumque ad illum. 
-                                Deleniti suscipit non in consequatur. 
-                                Doloremque beatae eum nulla praesentium cumque voluptatem quae tenetur.
+                            [text("SELECT * FROM table\n\
+                                Rem consequatur consectetur labore occaecati ipsa aut vel optio.\n\
+                                Eius eligendi aliquid beatae cumque ad illum.\n\
+                                Deleniti suscipit non in consequatur.\n\
+                                Doloremque beatae eum nulla praesentium cumque \n\
+                                voluptatem quae tenetur.\n\
+                                SELECT * FROM table\n\
+                                Rem consequatur consectetur labore occaecati ipsa aut vel optio.\n \
+                                Eius eligendi aliquid beatae cumque ad illum.\n \
+                                Deleniti suscipit non in consequatur. \n\
+                                Doloremque beatae eum nulla praesentium cumque voluptatem quae tenetur\n\
+                                SELECT * FROM table\n\
+                                Rem consequatur consectetur labore occaecati ipsa aut vel optio. \n\
+                                Eius eligendi aliquid beatae cumque ad illum. Deleniti suscipit non in consequatur. \n\
+                                Doloremque beatae eum nulla praesentium cumque voluptatem quae tenetur.\n\
+                                SELECT * FROM table\n\
+                                Rem consequatur consectetur labore occaecati ipsa aut vel optio. \n\
+                                Eius eligendi aliquid beatae cumque ad illum. Deleniti suscipit non in consequatur. \n\
+                                Doloremque beatae eum nulla praesentium cumque voluptatem quae tenetur.\n\
+                                SELECT * FROM table\n\
+                                Rem consequatur consectetur labore occaecati ipsa aut vel optio. \n\
+                                Eius eligendi aliquid beatae cumque ad illum. \n\
+                                Deleniti suscipit non in consequatur. \n\
+                                Doloremque beatae eum nulla praesentium cumque voluptatem quae tenetur.\n\
+                                SELECT * FROM table\n\
+                                Rem consequatur consectetur labore occaecati ipsa aut vel optio. \n\
+                                Eius eligendi aliquid beatae cumque ad illum. \n\
+                                Deleniti suscipit non in consequatur. \n\
+                                Doloremque beatae eum nulla praesentium cumque voluptatem quae tenetur.\n\
                                   ")],
                         ),
                     ],

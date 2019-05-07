@@ -49,6 +49,7 @@ impl TabView {
 
     pub fn set_data_rows(&mut self, data_row: Vec<DataRow>) {
         self.table_view.set_data_rows(data_row);
+        self.update_view();
     }
 
     pub fn freeze_rows(&mut self, rows: Vec<usize>) {
@@ -72,6 +73,7 @@ impl TabView {
     }
 
     fn show_detail_view(&mut self, row_index: usize) {
+        sauron::log("Showing detail view...");
         self.detail_view.show();
         let fields = &self.table_view.row_views[row_index].fields;
         self.detail_view.set_fields(fields);
@@ -108,12 +110,22 @@ impl TabView {
         self.update_view();
     }
 
+    /// check whether to be displayed in detail view if this
+    /// a one one tab with only 1 record
     fn update_view(&mut self) {
+        sauron::log!(
+            "update view when set in is_one_on with: {}",
+            self.is_one_one
+        );
         if self.is_one_one {
             if self.table_view.row_views.len() == 1 {
+                sauron::log!("Succeed one_one_tab");
                 self.show_detail_view(0);
             } else {
-                sauron::log!("There should be 1 data row in one_one_tab");
+                sauron::log!(
+                    "There should be 1 data row in one_one_tab, got{} ",
+                    self.table_view.row_views.len()
+                );
             }
         }
     }
@@ -138,6 +150,7 @@ impl Component<Msg> for TabView {
         section(
             [
                 class("tab_view"),
+                classes_flag([("in_detail_view", self.in_detail_view())]),
                 styles_flag([("display", "none", !self.is_visible)]),
             ],
             [

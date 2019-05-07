@@ -1,9 +1,10 @@
-use crate::{assets, data::WindowData};
+use crate::data::WindowData;
 use diwata_intel::{window::GroupedWindow, Window};
 use sauron::{
     html::{attributes::*, events::*, *},
     Component, Node,
 };
+use window_list_view::WindowListView;
 use window_view::WindowView;
 
 mod column_view;
@@ -13,6 +14,7 @@ mod row_view;
 mod tab_view;
 mod table_view;
 mod toolbar_view;
+mod window_list_view;
 mod window_view;
 
 #[derive(Clone)]
@@ -21,14 +23,15 @@ pub enum Msg {
     WindowMsg(usize, window_view::Msg),
     BrowserResized(i32, i32),
     Tick,
+    WindowListMsg(window_list_view::Msg),
 }
 
 pub struct App {
     window_views: Vec<WindowView>,
-    window_list: Vec<GroupedWindow>,
     active_window: usize,
     browser_height: i32,
     browser_width: i32,
+    window_list_view: WindowListView,
 }
 
 impl App {
@@ -43,17 +46,31 @@ impl App {
                 .into_iter()
                 .map(|window| WindowView::new(window, browser_width, browser_height))
                 .collect(),
-            window_list,
+            window_list_view: WindowListView::new(window_list),
             active_window: 0,
             browser_width,
             browser_height,
         };
         app.update_active_window();
+        app.update_size_allocation();
         app
     }
 
     pub fn set_window_data(&mut self, index: usize, window_data: WindowData) {
         self.window_views[index].set_window_data(window_data);
+    }
+
+    fn update_size_allocation(&mut self) {
+        let window_list_size = self.calculate_window_list_size();
+        self.window_list_view.set_allocated_size(window_list_size);
+    }
+
+    fn calculate_window_list_size(&self) -> (i32, i32) {
+        (200, self.browser_height - self.logo_height())
+    }
+
+    fn logo_height(&self) -> i32 {
+        170
     }
 
     fn update_active_window(&mut self) {
@@ -74,18 +91,6 @@ impl App {
         self.active_window = index;
         self.update_active_window();
     }
-
-    fn calculate_window_list_height(&self) -> i32 {
-        self.browser_height - self.calculate_needed_auxilliary_window_list_height()
-    }
-
-    fn calculate_needed_auxilliary_window_list_height(&self) -> i32 {
-        170
-    }
-
-    fn calculate_window_list_width(&self) -> i32 {
-        200
-    }
 }
 
 impl Component<Msg> for App {
@@ -105,6 +110,7 @@ impl Component<Msg> for App {
             Msg::Tick => {
                 sauron::log("Ticking");
             }
+            Msg::WindowListMsg(window_list_msg) => self.window_list_view.update(window_list_msg),
         }
     }
 
@@ -117,54 +123,7 @@ impl Component<Msg> for App {
                     [class("logo_and_window_list")],
                     [
                         header([class("logo")], []),
-                        section(
-                            [
-                                class("window_list"),
-                                styles([
-                                    ("height", px(self.calculate_window_list_height())),
-                                    ("width", px(self.calculate_window_list_width())),
-                                ]),
-                            ],
-                            self.window_list
-                                .iter()
-                                .map(|group| {
-                                    ul(
-                                        [],
-                                        [
-                                            li(
-                                                [class("window_list_group_name")],
-                                                [text(&group.group)],
-                                            ),
-                                            ul(
-                                                [],
-                                                group
-                                                    .window_names
-                                                    .iter()
-                                                    .map(|win_name| {
-                                                        li(
-                                                            [],
-                                                            [a(
-                                                                [
-                                                                    href("#"),
-                                                                    class("window_list_link"),
-                                                                ],
-                                                                [
-                                                                    text(&win_name.name),
-                                                                    span(
-                                                                        [class("table_icon")],
-                                                                        [assets::svg_table_icon()],
-                                                                    ),
-                                                                ],
-                                                            )],
-                                                        )
-                                                    })
-                                                    .collect::<Vec<Node<Msg>>>(),
-                                            ),
-                                        ],
-                                    )
-                                })
-                                .collect::<Vec<Node<Msg>>>(),
-                        ),
+                        self.window_list_view.view().map(Msg::WindowListMsg),
                     ],
                 ),
                 section(
