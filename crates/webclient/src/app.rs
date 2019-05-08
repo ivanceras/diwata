@@ -1,10 +1,12 @@
-use crate::data::WindowData;
+use crate::{cmd::Cmd, data::WindowData};
 use diwata_intel::{window::GroupedWindow, Window};
 use sauron::{
     html::{attributes::*, events::*, *},
-    Component, Node,
+    Browser, Component, Dispatch, Http, Node,
 };
-use wasm_bindgen::JsValue;
+use std::rc::Rc;
+use wasm_bindgen::{closure::Closure, JsCast, JsValue};
+use web_sys::Response;
 use window_list_view::WindowListView;
 use window_view::WindowView;
 
@@ -25,8 +27,7 @@ pub enum Msg {
     BrowserResized(i32, i32),
     Tick,
     WindowListMsg(window_list_view::Msg),
-    ReceiveWindowList(Vec<GroupedWindow>),
-    ErrorFetchingWindowList(JsValue),
+    FetchWindowList(Result<Vec<GroupedWindow>, JsValue>),
 }
 
 pub struct App {
@@ -94,9 +95,41 @@ impl App {
         self.active_window = index;
         self.update_active_window();
     }
+
+    fn fetch_window_list<DSP>(&self, program: &Rc<DSP>)
+    where
+        DSP: Dispatch<Msg> + 'static,
+    {
+        let url = "http://localhost:8000/windows";
+        let text_decoder = |v: String| {
+            let grouped_window = ron::de::from_str(&v).expect("Unable to decode ron data");
+            grouped_window
+        };
+        Http::fetch_with_text_response_decoder(
+            program,
+            url,
+            text_decoder,
+            Msg::FetchWindowList,
+        );
+    }
+
+    fn setup_window_resize_listener<DSP>(&self, program: &Rc<DSP>)
+    where
+        DSP: Dispatch<Msg> + 'static,
+    {
+        Browser::onresize(program, Msg::BrowserResized);
+    }
 }
 
 impl Component<Msg> for App {
+    fn init<DSP>(&self, program: &Rc<DSP>)
+    where
+        DSP: Dispatch<Msg> + 'static,
+    {
+        self.fetch_window_list(program);
+        self.setup_window_resize_listener(program);
+    }
+
     fn update(&mut self, msg: Msg) {
         match msg {
             Msg::ActivateWindow(index) => self.activate_window(index),
@@ -115,12 +148,12 @@ impl Component<Msg> for App {
                 sauron::log("Ticking");
             }
             Msg::WindowListMsg(window_list_msg) => self.window_list_view.update(window_list_msg),
-            Msg::ReceiveWindowList(window_list) => {
+            Msg::FetchWindowList(Ok(window_list)) => {
                 sauron::log!("Got some window_list: {:#?}", window_list);
                 self.window_list_view
                     .update(window_list_view::Msg::ReceiveWindowList(window_list));
             }
-            Msg::ErrorFetchingWindowList(js_value) => {
+            Msg::FetchWindowList(Err(js_value)) => {
                 sauron::log!("There was an error fetching window list: {:#?}", js_value);
             }
         }

@@ -14,6 +14,7 @@ use web_sys::Response;
 
 mod app;
 mod assets;
+mod cmd;
 mod data;
 mod widgets;
 
@@ -36,7 +37,6 @@ pub fn setup_program(initial_state: &str) -> Rc<Program<App, Msg>> {
         .expect("Unable to get hold of root-node");
     let app = make_app();
     let program = Program::new_replace_mount(app, &root_node);
-    setup_global_listeners(&program);
     program
 }
 
@@ -80,49 +80,6 @@ fn make_window_name(name: &str) -> WindowName {
         table_name: TableName::from(name),
         is_view: false,
     }
-}
-
-fn setup_global_listeners(program: &Rc<Program<App, Msg>>) {
-    setup_tick_listener(program);
-    setup_window_resize_listener(program);
-    fetch_window_list(program);
-}
-
-fn setup_tick_listener(program: &Rc<Program<App, Msg>>) {
-    let program_clone = Rc::clone(program);
-    let clock: Closure<Fn()> = Closure::wrap(Box::new(move || {
-        program_clone.dispatch(app::Msg::Tick);
-    }));
-    sauron::window()
-        .set_interval_with_callback_and_timeout_and_arguments_0(
-            clock.as_ref().unchecked_ref(),
-            3000,
-        )
-        .expect("Unable to start interval");
-    clock.forget();
-}
-
-fn setup_window_resize_listener(program: &Rc<Program<App, Msg>>) {
-    let program_clone = Rc::clone(program);
-    let resize_callback: Closure<Fn(web_sys::Event)> = Closure::wrap(Box::new(move |_| {
-        let (window_width, window_height) = get_window_size();
-        program_clone.dispatch(app::Msg::BrowserResized(window_width, window_height));
-    }));
-    sauron::window().set_onresize(Some(resize_callback.as_ref().unchecked_ref()));
-    resize_callback.forget();
-}
-
-fn fetch_window_list(program: &Rc<Program<App, Msg>>) {
-    let response_text_decoder = move |response_text: String| {
-        ron::de::from_str(&response_text).expect("Unable to deserialize")
-    };
-    let fail_cb = move |js_value: JsValue| Msg::ErrorFetchingWindowList(js_value);
-    program.fetch_with_text_response_decoder(
-        "http://localhost:8000/windows",
-        response_text_decoder,
-        Msg::ReceiveWindowList,
-        fail_cb,
-    );
 }
 
 #[cfg(not(target_arch = "wasm32"))]
