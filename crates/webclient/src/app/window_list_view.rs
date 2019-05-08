@@ -42,7 +42,7 @@ impl WindowListView {
 
 impl Component<Msg> for WindowListView {
     fn update(&mut self, msg: Msg) {
-        match msg{
+        match msg {
             Msg::ChangeSearch(search) => {
                 sauron::log!("searching for {}", search);
             }

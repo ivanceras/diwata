@@ -27,7 +27,7 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 pub fn initialize(initial_state: &str) {
     let program = setup_program(initial_state);
 }
-pub fn setup_program (initial_state: &str) -> Rc<Program<App,Msg>> {
+pub fn setup_program(initial_state: &str) -> Rc<Program<App, Msg>> {
     #[cfg(feature = "console_error_panic_hook")]
     console_error_panic_hook::set_once();
     sauron::log!("initial state: {}", initial_state);
@@ -112,33 +112,25 @@ fn setup_window_resize_listener(program: &Rc<Program<App, Msg>>) {
     resize_callback.forget();
 }
 
-fn fetch_window_list(program: &Rc<Program<App,Msg>>) {
-    let program_clone = Rc::clone(program);
-    let promise = sauron::window().fetch_with_str("http://localhost:8000/windows");
-    let response_cb: Closure<FnMut(JsValue)> = Closure::once( move|js_value: JsValue| {
-        let ron_value = js_value.as_string().expect("There's no string value");
-        sauron::log!("Got a window_list: {:#?}", ron_value);
-        let grouped_window = ron::de::from_str(&ron_value).expect("Unable to deserialize");
-        program_clone.dispatch(app::Msg::ReceiveWindowList(grouped_window));
-    });
-    let cb: Closure<FnMut(JsValue)> = Closure::once(move|js_value:JsValue| {
-        sauron::log!("js_value: {:#?}", js_value);
-        let response: &Response = js_value.as_ref().unchecked_ref();
-        let response_promise = response.text().expect("expecting a text");
-        sauron::log!("got ron_value: {:?}", response_promise.to_string());
-        response_promise.then(&response_cb);
-        response_cb.forget();
-    });
-    promise.then(&cb);
-    cb.forget();
+fn fetch_window_list(program: &Rc<Program<App, Msg>>) {
+    let response_text_decoder = move |response_text: String| {
+        ron::de::from_str(&response_text).expect("Unable to deserialize")
+    };
+    let fail_cb = move |js_value: JsValue| Msg::ErrorFetchingWindowList(js_value);
+    program.fetch_with_text_response_decoder(
+        "http://localhost:8000/windows",
+        response_text_decoder,
+        Msg::ReceiveWindowList,
+        fail_cb,
+    );
 }
 
-#[cfg(not(target_arch="wasm32"))]
+#[cfg(not(target_arch = "wasm32"))]
 fn get_window_size() -> (i32, i32) {
     (800, 800)
 }
 
-#[cfg(target_arch="wasm32")]
+#[cfg(target_arch = "wasm32")]
 fn get_window_size() -> (i32, i32) {
     let window = sauron::window();
     let window_width = window

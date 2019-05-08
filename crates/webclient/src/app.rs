@@ -4,6 +4,7 @@ use sauron::{
     html::{attributes::*, events::*, *},
     Component, Node,
 };
+use wasm_bindgen::JsValue;
 use window_list_view::WindowListView;
 use window_view::WindowView;
 
@@ -25,6 +26,7 @@ pub enum Msg {
     Tick,
     WindowListMsg(window_list_view::Msg),
     ReceiveWindowList(Vec<GroupedWindow>),
+    ErrorFetchingWindowList(JsValue),
 }
 
 pub struct App {
@@ -115,7 +117,11 @@ impl Component<Msg> for App {
             Msg::WindowListMsg(window_list_msg) => self.window_list_view.update(window_list_msg),
             Msg::ReceiveWindowList(window_list) => {
                 sauron::log!("Got some window_list: {:#?}", window_list);
-                self.window_list_view.update(window_list_view::Msg::ReceiveWindowList(window_list));
+                self.window_list_view
+                    .update(window_list_view::Msg::ReceiveWindowList(window_list));
+            }
+            Msg::ErrorFetchingWindowList(js_value) => {
+                sauron::log!("There was an error fetching window list: {:#?}", js_value);
             }
         }
     }

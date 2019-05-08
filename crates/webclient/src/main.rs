@@ -1,10 +1,11 @@
 use sauron::Component;
 extern crate webclient;
 
-fn main(){
+fn main() {
     let app = webclient::make_app();
     let view = app.view();
-    println!(r#"
+    println!(
+        r#"
 
 <!DOCTYPE html>
 <html lang="en">
@@ -16,12 +17,15 @@ fn main(){
 </head>
 <body style='margin: 0; padding: 0; width: 100%; height: 100%;'>
   <div id="web-app" style='width: 100%; height: 100%;'>
-    "#);
+    "#
+    );
     println!("{}", view);
-    println!(r#"
+    println!(
+        r#"
 
   </div>
 </body>
 </html>
-    "#);
+    "#
+    );
 }
