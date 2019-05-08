@@ -86,13 +86,13 @@ impl Component<Msg> for WindowListView {
                                                 li(
                                                     [],
                                                     [a(
-                                                        [href("#"), class("window_list_link")],
+                                                        [href(format!("#{}",win_name.table_name.complete_name())), class("window_list_link")],
                                                         [
-                                                            text(&win_name.name),
                                                             span(
                                                                 [class("table_icon")],
                                                                 [assets::svg_table_icon()],
                                                             ),
+                                                            text(&win_name.name),
                                                         ],
                                                     )],
                                                 )

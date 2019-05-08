@@ -101,7 +101,8 @@ ol, ul, li {
 
 .window_list_link{
     padding: 2px 10px 2px 25px;
-    display: block;
+    display: flex;
+    flex-direction: row;
     text-decoration: none;
 }
 
