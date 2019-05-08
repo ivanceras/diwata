@@ -8,7 +8,10 @@ use futures::{
 };
 use hyper::{
     error::Error,
-    header::{ContentType,AccessControlAllowOrigin},
+    header::{
+        AccessControlAllowOrigin,
+        ContentType,
+    },
     server::{
         Response,
         Service,
@@ -39,6 +42,7 @@ use diwata_intel::{
 };
 use hyper::server::Http;
 use log::*;
+use ron;
 use rustorm::{
     Rows,
     TableName,
@@ -53,7 +57,6 @@ use std::{
     },
 };
 use structopt::StructOpt;
-use ron;
 
 /// An instance of the server. Runs a session of rustw.
 pub struct Server {
@@ -196,7 +199,12 @@ fn handle_static(_req: Request, _path: &[&str]) -> Response {
 
 fn handle_error(_req: Request, status: StatusCode, msg: String) -> Response {
     debug!("ERROR: {} ({})", msg, status);
-    Response::new().with_status(status).with_body(msg)
+    let mut headers = Headers::new();
+    headers.set(AccessControlAllowOrigin::Any);
+    Response::new()
+        .with_headers(headers)
+        .with_status(status)
+        .with_body(msg)
 }
 
 fn handle_windows(req: Request) -> Result<impl Serialize, ServiceError> {
@@ -662,7 +670,8 @@ fn create_response<B: Serialize>(body: Result<B, ServiceError>) -> Response {
     match body {
         Ok(body) => {
             //let json = serde_json::to_string(&body).unwrap();
-            let json = ron::ser::to_string(&body).expect("unable to serialize to ron");
+            let json =
+                ron::ser::to_string(&body).expect("unable to serialize to ron");
             let mut headers = Headers::new();
             headers.set(ContentType::text());
             headers.set(AccessControlAllowOrigin::Any);
