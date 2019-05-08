@@ -36,8 +36,7 @@ pub fn setup_program(initial_state: &str) -> Rc<Program<App, Msg>> {
         .get_element_by_id("web-app")
         .expect("Unable to get hold of root-node");
     let app = make_app();
-    let program = Program::new_replace_mount(app, &root_node);
-    program
+    Program::new_replace_mount(app, &root_node)
 }
 
 pub fn make_app() -> App {

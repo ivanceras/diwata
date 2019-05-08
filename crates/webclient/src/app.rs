@@ -101,16 +101,8 @@ impl App {
         DSP: Dispatch<Msg> + 'static,
     {
         let url = "http://localhost:8000/windows";
-        let text_decoder = |v: String| {
-            let grouped_window = ron::de::from_str(&v).expect("Unable to decode ron data");
-            grouped_window
-        };
-        Http::fetch_with_text_response_decoder(
-            program,
-            url,
-            text_decoder,
-            Msg::FetchWindowList,
-        );
+        let text_decoder = |v: String| ron::de::from_str(&v).expect("Unable to decode ron data");
+        Http::fetch_with_text_response_decoder(program, url, text_decoder, Msg::FetchWindowList);
     }
 
     fn setup_window_resize_listener<DSP>(&self, program: &Rc<DSP>)

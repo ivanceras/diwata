@@ -15,7 +15,7 @@ impl<MSG> Cmd<MSG> {
     where
         F: Fn(()) -> MSG + 'static,
     {
-        let cmd_vec: Vec<Callback<(), MSG>> = cmd.into_iter().map(|cmd| cmd.into()).collect();
+        let cmd_vec: Vec<Callback<(), MSG>> = cmd.into_iter().map(Into::into).collect();
         Cmd(cmd_vec)
     }
 }
