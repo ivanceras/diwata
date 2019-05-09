@@ -1,3 +1,4 @@
+/*
 use sauron::Component;
 extern crate webclient;
 
@@ -29,3 +30,4 @@ fn main() {
     "#
     );
 }
+*/
