@@ -7,7 +7,7 @@ edition = "2018"
 crate-type = ["cdylib"]
 
 [dependencies]
-sauron = "0.6.0"
+sauron = {version = "0.6.0", features = [] }
 data_table = { path = "../data_table" }
 # we uses the objects in diwata intel and in rustorm, but not the database objects
 diwata_intel = { path = "../intel" , features = ["with-rustorm"]}

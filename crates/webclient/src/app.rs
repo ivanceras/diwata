@@ -105,14 +105,13 @@ impl App {
     }
 
     fn setup_window_resize_listener(&self) -> Cmd<App,Msg> {
-        sauron::log("SETUPPP ------------>>>>>> setup window_resize_listener");
         Browser::onresize(Msg::BrowserResized)
     }
 }
 
 impl Component<Msg> for App {
 
-    fn init(&self) -> Cmd<App,Msg> 
+    fn init(&self) -> Cmd<Self,Msg> 
     {
         Cmd::batch(vec![
             self.fetch_window_list(),
