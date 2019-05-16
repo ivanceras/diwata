@@ -1,9 +1,8 @@
+use data_table::{DataColumn, Value};
 use sauron::{
     html::{attributes::*, events::*, *},
     Component, Node,
 };
-
-use data_table::Value;
 
 #[derive(Debug, Clone)]
 pub enum Msg {
@@ -22,7 +21,7 @@ pub struct FieldView {
 }
 
 impl FieldView {
-    pub fn new(value: Value) -> Self {
+    pub fn new(value: Value, column: &DataColumn) -> Self {
         FieldView {
             value,
             is_frozen_row: false,

@@ -1,15 +1,14 @@
-use crate::{data::WindowData};
+use crate::data::WindowData;
 use diwata_intel::{window::GroupedWindow, Window};
 use sauron::{
     html::{attributes::*, events::*, *},
-    Browser, Component, Dispatch, Http, Node,
+    Browser, Cmd, Component, Dispatch, Http, Node,
 };
 use std::rc::Rc;
 use wasm_bindgen::{closure::Closure, JsCast, JsValue};
 use web_sys::Response;
 use window_list_view::WindowListView;
 use window_view::WindowView;
-use sauron::Cmd;
 
 mod column_view;
 mod detail_view;
@@ -61,7 +60,6 @@ impl App {
         app
     }
 
-
     pub fn set_window_data(&mut self, index: usize, window_data: WindowData) {
         self.window_views[index].set_window_data(window_data);
     }
@@ -98,21 +96,19 @@ impl App {
         self.update_active_window();
     }
 
-    fn fetch_window_list(&self) -> Cmd<App,Msg> {
+    fn fetch_window_list(&self) -> Cmd<App, Msg> {
         let url = "http://localhost:8000/windows";
         let text_decoder = |v: String| ron::de::from_str(&v).expect("Unable to decode ron data");
         Http::fetch_with_text_response_decoder(url, text_decoder, Msg::FetchWindowList)
     }
 
-    fn setup_window_resize_listener(&self) -> Cmd<App,Msg> {
+    fn setup_window_resize_listener(&self) -> Cmd<App, Msg> {
         Browser::onresize(Msg::BrowserResized)
     }
 }
 
 impl Component<Msg> for App {
-
-    fn init(&self) -> Cmd<Self,Msg> 
-    {
+    fn init(&self) -> Cmd<Self, Msg> {
         Cmd::batch(vec![
             self.fetch_window_list(),
             self.setup_window_resize_listener(),
@@ -138,7 +134,6 @@ impl Component<Msg> for App {
             }
             Msg::WindowListMsg(window_list_msg) => self.window_list_view.update(window_list_msg),
             Msg::FetchWindowList(Ok(window_list)) => {
-                sauron::log!("Got some window_list: {:#?}", window_list);
                 self.window_list_view
                     .update(window_list_view::Msg::ReceiveWindowList(window_list));
             }

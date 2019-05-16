@@ -11,7 +11,7 @@ pub enum Msg {
 }
 
 pub struct ColumnView {
-    column: DataColumn,
+    pub column: DataColumn,
     width: i32,
     height: i32,
 }

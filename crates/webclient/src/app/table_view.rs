@@ -17,6 +17,7 @@ pub enum Msg {
 }
 
 pub struct TableView {
+    pub data_columns: Vec<DataColumn>,
     pub column_views: Vec<ColumnView>,
     pub row_views: Vec<RowView>,
     /// Which columns of the rows are to be frozen on the left side of the table
@@ -30,12 +31,14 @@ pub struct TableView {
 
 impl TableView {
     pub fn from_tab(tab: Tab) -> Self {
+        let data_columns = Self::fields_to_data_columns(&tab.fields);
         TableView {
             column_views: tab
                 .fields
                 .iter()
-                .map(Self::convert_field_to_column_view)
+                .map(|field| ColumnView::new(Self::field_to_data_column(field)))
                 .collect(),
+            data_columns: data_columns,
             row_views: vec![],
             frozen_rows: vec![],
             frozen_columns: vec![],
@@ -46,20 +49,27 @@ impl TableView {
         }
     }
 
-    fn convert_field_to_column_view(field: &Field) -> ColumnView {
-        let data_column = DataColumn {
+    fn fields_to_data_columns(fields: &[Field]) -> Vec<DataColumn> {
+        fields.iter().map(Self::field_to_data_column).collect()
+    }
+
+    fn field_to_data_column(field: &Field) -> DataColumn {
+        DataColumn {
             name: field.name.clone(),
             description: field.description.clone(),
             tags: vec![],
             data_type: field.get_data_type().clone(),
-        };
-        ColumnView::new(data_column)
+        }
     }
 
     /// replace all the data with a new data row
     /// TODO: also update the freeze_columns for each row_views
     pub fn set_data_rows(&mut self, data_row: Vec<DataRow>) {
-        self.row_views = data_row.into_iter().map(RowView::new).collect();
+        self.row_views = data_row
+            .into_iter()
+            .enumerate()
+            .map(|(index, row)| RowView::new(row, &self.data_columns))
+            .collect();
         self.update_freeze_columns();
     }
 

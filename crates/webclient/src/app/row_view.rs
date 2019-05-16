@@ -1,5 +1,5 @@
 use crate::app::field_view::{self, FieldView};
-use data_table::DataRow;
+use data_table::{DataColumn, DataRow};
 use sauron::{
     html::{attributes::*, events::*, *},
     Component, Node,
@@ -20,11 +20,14 @@ pub struct RowView {
 }
 
 impl RowView {
-    pub fn new(data_rows: DataRow) -> Self {
+    pub fn new(data_rows: DataRow, data_columns: &Vec<DataColumn>) -> Self {
+        sauron::log!("data_rows: {}", data_rows.len());
+        sauron::log!("data_columns: {}", data_columns.len());
         RowView {
             fields: data_rows
                 .into_iter()
-                .map(|value| Rc::new(RefCell::new(FieldView::new(value))))
+                .zip(data_columns.iter())
+                .map(|(value, column)| Rc::new(RefCell::new(FieldView::new(value, column))))
                 .collect(),
             frozen_fields: vec![],
             is_frozen: false,

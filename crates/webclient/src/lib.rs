@@ -17,7 +17,6 @@ mod assets;
 mod data;
 mod widgets;
 
-
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
 // allocator.
 #[cfg(feature = "wee_alloc")]
@@ -45,10 +44,6 @@ pub fn make_app() -> App {
         sample_window("Window2"),
         sample_window("Window3"),
     ];
-    sauron::log!(
-        "{}",
-        ron::ser::to_string(&windows).expect("unable serialize")
-    );
     let window_list: Vec<GroupedWindow> = make_sample_window_list();
     let (window_width, window_height) = get_window_size();
     let mut app = App::new(window_list, windows, window_width, window_height);
