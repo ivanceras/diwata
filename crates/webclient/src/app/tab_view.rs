@@ -15,7 +15,7 @@ use sauron::{
 
 use diwata_intel::Tab;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub enum Msg {
     TableMsg(table_view::Msg),
     DetailViewMsg(detail_view::Msg),

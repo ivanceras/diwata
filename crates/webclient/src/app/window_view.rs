@@ -27,7 +27,7 @@ pub struct WindowView {
     toolbar_view: ToolbarView,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub enum Msg {
     MainTabMsg(tab_view::Msg),
     OneOneTabMsg(usize, tab_view::Msg),

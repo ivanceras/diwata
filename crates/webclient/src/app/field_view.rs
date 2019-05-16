@@ -5,7 +5,7 @@ use sauron::{
 
 use data_table::Value;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub enum Msg {
     ChangeValue(String),
 }

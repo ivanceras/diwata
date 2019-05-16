@@ -9,7 +9,7 @@ use sauron::{
 use crate::app::{column_view, row_view};
 use data_table::DataRow;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub enum Msg {
     ColumnMsg(usize, column_view::Msg),
     RowMsg(usize, row_view::Msg),

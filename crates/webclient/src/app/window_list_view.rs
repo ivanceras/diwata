@@ -5,7 +5,7 @@ use sauron::{
     Component, Node,
 };
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub enum Msg {
     ChangeSearch(String),
     ReceiveWindowList(Vec<GroupedWindow>),

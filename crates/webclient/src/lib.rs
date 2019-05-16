@@ -14,9 +14,9 @@ use web_sys::Response;
 
 mod app;
 mod assets;
-mod cmd;
 mod data;
 mod widgets;
+
 
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
 // allocator.

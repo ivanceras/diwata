@@ -4,7 +4,7 @@ use sauron::{
     Component, Node,
 };
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub enum Msg {
     ToggleShowQuery,
     ToggleShowRelatedTabs,

@@ -1,4 +1,4 @@
-use crate::{cmd::Cmd, data::WindowData};
+use crate::{data::WindowData};
 use diwata_intel::{window::GroupedWindow, Window};
 use sauron::{
     html::{attributes::*, events::*, *},
@@ -9,6 +9,7 @@ use wasm_bindgen::{closure::Closure, JsCast, JsValue};
 use web_sys::Response;
 use window_list_view::WindowListView;
 use window_view::WindowView;
+use sauron::Cmd;
 
 mod column_view;
 mod detail_view;
@@ -20,7 +21,7 @@ mod toolbar_view;
 mod window_list_view;
 mod window_view;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub enum Msg {
     ActivateWindow(usize),
     WindowMsg(usize, window_view::Msg),
@@ -60,6 +61,7 @@ impl App {
         app
     }
 
+
     pub fn set_window_data(&mut self, index: usize, window_data: WindowData) {
         self.window_views[index].set_window_data(window_data);
     }
@@ -96,30 +98,26 @@ impl App {
         self.update_active_window();
     }
 
-    fn fetch_window_list<DSP>(&self, program: &Rc<DSP>)
-    where
-        DSP: Dispatch<Msg> + 'static,
-    {
+    fn fetch_window_list(&self) -> Cmd<App,Msg> {
         let url = "http://localhost:8000/windows";
         let text_decoder = |v: String| ron::de::from_str(&v).expect("Unable to decode ron data");
-        Http::fetch_with_text_response_decoder(program, url, text_decoder, Msg::FetchWindowList);
+        Http::fetch_with_text_response_decoder(url, text_decoder, Msg::FetchWindowList)
     }
 
-    fn setup_window_resize_listener<DSP>(&self, program: &Rc<DSP>)
-    where
-        DSP: Dispatch<Msg> + 'static,
-    {
-        Browser::onresize(program, Msg::BrowserResized);
+    fn setup_window_resize_listener(&self) -> Cmd<App,Msg> {
+        sauron::log("SETUPPP ------------>>>>>> setup window_resize_listener");
+        Browser::onresize(Msg::BrowserResized)
     }
 }
 
 impl Component<Msg> for App {
-    fn init<DSP>(&self, program: &Rc<DSP>)
-    where
-        DSP: Dispatch<Msg> + 'static,
+
+    fn init(&self) -> Cmd<App,Msg> 
     {
-        self.fetch_window_list(program);
-        self.setup_window_resize_listener(program);
+        Cmd::batch(vec![
+            self.fetch_window_list(),
+            self.setup_window_resize_listener(),
+        ])
     }
 
     fn update(&mut self, msg: Msg) {
