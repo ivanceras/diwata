@@ -11,6 +11,7 @@ use crate::{
     assets,
     data::WindowData,
 };
+use data_table::DataRow;
 use diwata_intel::{TableName, Window};
 use sauron::{Cmd, Http};
 use wasm_bindgen::JsValue;
@@ -274,6 +275,10 @@ impl WindowView {
 
     pub fn get_sql_query(&self) -> String {
         self.toolbar_view.query.to_string()
+    }
+
+    pub fn set_data_rows(&mut self, data_rows: Vec<DataRow>) {
+        self.main_tab.set_data_rows(data_rows);
     }
 
     /// Important: set the data rows first before setting the frozen data

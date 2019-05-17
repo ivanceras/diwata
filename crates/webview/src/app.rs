@@ -28,7 +28,7 @@ pub enum Msg {
     Tick,
     WindowListMsg(window_list_view::Msg),
     FetchWindowList(Result<Vec<GroupedWindow>, JsValue>),
-    ReceivedWindowQueryResult(Result<Rows, JsValue>),
+    ReceivedWindowQueryResult(usize, Result<Rows, JsValue>),
 }
 
 pub struct App {
@@ -120,7 +120,9 @@ impl Component<Msg> for App {
             Msg::WindowMsg(index, window_view::Msg::ToolbarMsg(toolbar_view::Msg::RunQuery)) => {
                 let sql = self.window_views[index].get_sql_query();
                 sauron::log!("In app.rs Run the query: {}", sql);
-                rest_api::execute_sql_query(sql)
+                rest_api::execute_sql_query(sql, move |rows| {
+                    Msg::ReceivedWindowQueryResult(index, rows)
+                })
             }
             Msg::WindowMsg(index, window_msg) => {
                 self.window_views[index].update(window_msg);
@@ -154,8 +156,15 @@ impl Component<Msg> for App {
                 sauron::log!("There was an error fetching window list: {:#?}", js_value);
                 Cmd::none()
             }
-            Msg::ReceivedWindowQueryResult(result) => {
+            Msg::ReceivedWindowQueryResult(index, Ok(result)) => {
                 sauron::log!("Received window query result: {:#?}", result);
+                //FIXME: need to replace the window with a new one
+                // with a new set of window data from this result
+                self.window_views[index].set_data_rows(result.data);
+                Cmd::none()
+            }
+            Msg::ReceivedWindowQueryResult(index, Err(err)) => {
+                sauron::log!("Error retrieveing records from sql query");
                 Cmd::none()
             }
         }
