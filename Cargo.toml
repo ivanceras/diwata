@@ -4,7 +4,8 @@ members = [
     "crates/server",
     "crates/text-client",
     "crates/data_table",
-    "crates/webclient",
+    "crates/webview",
+    "crates/webapp",
 ]
 
 exclude = [

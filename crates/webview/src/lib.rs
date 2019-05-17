@@ -17,16 +17,8 @@ mod assets;
 mod data;
 mod widgets;
 
-// When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
-// allocator.
-#[cfg(feature = "wee_alloc")]
-#[global_allocator]
-static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
-#[wasm_bindgen]
-pub fn initialize(initial_state: &str) {
-    let program = setup_program(initial_state);
-}
+
 pub fn setup_program(initial_state: &str) -> Rc<Program<App, Msg>> {
     #[cfg(feature = "console_error_panic_hook")]
     console_error_panic_hook::set_once();

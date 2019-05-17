@@ -10,11 +10,11 @@
   <div id="web-app" style='width: 100%; height: 100%;'>
       #HTML_INSERTED_HERE_BY_SERVER#
   </div>
-  <script src='pkg/webclient.js'></script>
+  <script src='pkg/webapp.js'></script>
   <script type=module>
         const { initialize } = wasm_bindgen;
         async function run() {
-            await wasm_bindgen('pkg/webclient_bg.wasm');
+            await wasm_bindgen('pkg/webapp_bg.wasm');
             initialize(window.initial_state);
         }
         run();

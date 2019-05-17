@@ -1,0 +1,16 @@
+[package]
+name = "webapp"
+version = "0.1.0"
+authors = ["Jovansonlee Cesar <ivanceras@gmail.com>"]
+edition = "2018"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+webview = { path = "../webview" }
+
+
+[dependencies.wasm-bindgen]
+version = "0.2.33"
+features = ["default", "nightly"]
