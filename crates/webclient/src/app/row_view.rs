@@ -20,7 +20,7 @@ pub struct RowView {
 }
 
 impl RowView {
-    pub fn new(data_rows: DataRow, data_columns: &Vec<DataColumn>) -> Self {
+    pub fn new(data_rows: DataRow, data_columns: &[DataColumn]) -> Self {
         sauron::log!("data_rows: {}", data_rows.len());
         sauron::log!("data_columns: {}", data_columns.len());
         RowView {

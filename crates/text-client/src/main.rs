@@ -50,7 +50,7 @@ main!(|args: Cli, log_level: verbosity| {
     }
 });
 
-fn exec(sql: &str) {
+fn exec(_sql: &str) {
     let mut table = Table::new();
     table.max_column_width = 40;
 

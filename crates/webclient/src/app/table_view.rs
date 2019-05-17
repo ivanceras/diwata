@@ -38,7 +38,7 @@ impl TableView {
                 .iter()
                 .map(|field| ColumnView::new(Self::field_to_data_column(field)))
                 .collect(),
-            data_columns: data_columns,
+            data_columns,
             row_views: vec![],
             frozen_rows: vec![],
             frozen_columns: vec![],
