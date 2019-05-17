@@ -1,4 +1,5 @@
 use data_table::{DataRow, Value};
+use diwata_intel::Rows;
 
 /// Page a collection of rows
 /// also shows the total records from the table source
@@ -9,6 +10,17 @@ pub struct Page {
     /// rows on this page
     pub rows: Vec<DataRow>,
     pub total_records: usize,
+}
+
+impl Page{
+
+    fn from_rows(rows: Rows) -> Self {
+        Page {
+            page: 1,
+            rows: rows.data,
+            total_records: rows.count.unwrap_or(0),
+        }
+    }
 }
 
 /// Contains all the data for a window
@@ -28,6 +40,18 @@ pub struct WindowData {
     pub has_many_tab_frozen_data: Vec<FrozenData>,
     pub indirect_tab_frozen_data: Vec<FrozenData>,
 }
+
+impl WindowData{
+
+    pub fn from_rows(rows: Rows) -> Self {
+        WindowData {
+            main_tab_data: vec![Page::from_rows(rows)],
+            ..Default::default()
+        }
+    }
+}
+
+
 
 #[derive(Default, Clone)]
 pub struct FrozenData {

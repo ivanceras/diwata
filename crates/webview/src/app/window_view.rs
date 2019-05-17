@@ -277,9 +277,6 @@ impl WindowView {
         self.toolbar_view.query.to_string()
     }
 
-    pub fn set_data_rows(&mut self, data_rows: Vec<DataRow>) {
-        self.main_tab.set_data_rows(data_rows);
-    }
 
     /// Important: set the data rows first before setting the frozen data
     pub fn set_window_data(&mut self, window_data: WindowData) {

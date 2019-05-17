@@ -156,11 +156,16 @@ impl Component<Msg> for App {
                 sauron::log!("There was an error fetching window list: {:#?}", js_value);
                 Cmd::none()
             }
-            Msg::ReceivedWindowQueryResult(index, Ok(result)) => {
-                sauron::log!("Received window query result: {:#?}", result);
-                //FIXME: need to replace the window with a new one
+
+            // FIXME: Also return the window, since the table
+            // in the select from can be anything other than
+            // the window's current main table.
+            Msg::ReceivedWindowQueryResult(index, Ok(rows)) => {
+                sauron::log!("Received window query result: {:#?}", rows);
+                // FIXME: need to replace the window with a new one
                 // with a new set of window data from this result
-                self.window_views[index].set_data_rows(result.data);
+                let window_data = WindowData::from_rows(rows);
+                self.window_views[index].set_window_data(window_data);
                 Cmd::none()
             }
             Msg::ReceivedWindowQueryResult(index, Err(err)) => {
