@@ -3,12 +3,16 @@ use sauron::{
     html::{attributes::*, events::*, *},
     Component, Node,
 };
+use sqlparser::dialect::GenericSqlDialect;
+use sqlparser::sqlparser::Parser;
 
 #[derive(Debug, Clone)]
 pub enum Msg {
     ToggleShowQuery,
     ToggleShowRelatedTabs,
     ChangeQuickFind(String),
+    QueryChanged(String),
+    RunQuery,
 }
 
 pub struct ToolbarView {
@@ -17,6 +21,7 @@ pub struct ToolbarView {
     allocated_width: i32,
     allocated_height: i32,
     quick_find_search: String,
+    query: String,
 }
 
 impl ToolbarView {
@@ -27,6 +32,7 @@ impl ToolbarView {
             allocated_width: 0,
             allocated_height: 0,
             quick_find_search: String::new(),
+            query: String::new(),
         }
     }
 
@@ -103,6 +109,17 @@ impl Component<Msg> for ToolbarView {
             Msg::ToggleShowQuery => self.show_query = !self.show_query,
             Msg::ToggleShowRelatedTabs => self.show_related_tabs = !self.show_related_tabs,
             Msg::ChangeQuickFind(search) => self.quick_find_search = search,
+            Msg::QueryChanged(query) => {
+                sauron::log!("Query is 1 changed to: {}", query);
+                //self.query = query;
+                let dialect = GenericSqlDialect{};
+                sauron::log!("Using generaic dialect");
+                let statements = Parser::parse_sql(&dialect, query);
+                sauron::log!("statements: {:#?}", statements);
+            }
+            Msg::RunQuery => {
+                sauron::log!("Running query: {}", self.query);
+            }
         }
     }
 
@@ -155,6 +172,7 @@ impl Component<Msg> for ToolbarView {
                         textarea(
                             [
                                 class("sql_input"),
+                                onchange(|input|Msg::QueryChanged(input.value)),
                                 styles([
                                     ("width", px(self.calculate_sql_input_width())),
                                     ("height", px(self.calculate_sql_input_height())),
@@ -164,6 +182,7 @@ impl Component<Msg> for ToolbarView {
                             [],
                         ),
                         button([class("run_query"),
+                                onclick(|_|Msg::RunQuery),
                                styles([
                                       ("width", px(self.run_query_button_width())),
                                       ("height", px(self.run_query_button_height()))

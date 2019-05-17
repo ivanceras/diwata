@@ -1,8 +1,8 @@
 use sauron::Component;
-extern crate webclient;
+extern crate webview;
 
 fn main() {
-    let app = webclient::make_app();
+    let app = webview::make_app();
     let view = app.view();
     println!(
         r#"
