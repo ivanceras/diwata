@@ -24,7 +24,7 @@ cfg-if = "0.1.2"
 diwata_intel = { version = "0.1.2", features = ["with-rustorm", "with-postgres", "with-sqlite"] }
 rustorm =  {version = "0.13", features = ["with-postgres", "with-sqlite"]}
 ron = "0.5.1"
-
+serde_urlencoded = "0.5.5"
 
 
 

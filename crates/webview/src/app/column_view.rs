@@ -2,7 +2,7 @@ use crate::{assets, widgets};
 use data_table::DataColumn;
 use sauron::{
     html::{attributes::*, events::*, *},
-    Component, Node,
+    Cmd, Component, Node,
 };
 
 #[derive(Debug, Clone)]
@@ -27,10 +27,11 @@ impl ColumnView {
 }
 
 impl Component<Msg> for ColumnView {
-    fn update(&mut self, msg: Msg) {
+    fn update(&mut self, msg: Msg) -> Cmd<Self, Msg> {
         match msg {
             Msg::ChangeSearch(search) => {
                 sauron::log!("Search term change: {}", search);
+                Cmd::none()
             }
         }
     }

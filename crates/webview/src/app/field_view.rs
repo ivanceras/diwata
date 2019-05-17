@@ -1,7 +1,7 @@
 use data_table::{DataColumn, Value};
 use sauron::{
     html::{attributes::*, events::*, *},
-    Component, Node,
+    Cmd, Component, Node,
 };
 
 #[derive(Debug, Clone)]
@@ -39,10 +39,11 @@ impl FieldView {
 }
 
 impl Component<Msg> for FieldView {
-    fn update(&mut self, msg: Msg) {
+    fn update(&mut self, msg: Msg) -> Cmd<Self, Msg> {
         match msg {
             Msg::ChangeValue(value) => {
                 self.value = Value::Text(value);
+                Cmd::none()
             }
         }
     }

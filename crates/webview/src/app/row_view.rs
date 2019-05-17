@@ -2,7 +2,7 @@ use crate::app::field_view::{self, FieldView};
 use data_table::{DataColumn, DataRow};
 use sauron::{
     html::{attributes::*, events::*, *},
-    Component, Node,
+    Cmd, Component, Node,
 };
 use std::{cell::RefCell, rc::Rc};
 
@@ -118,7 +118,9 @@ impl RowView {
 }
 
 impl Component<Msg> for RowView {
-    fn update(&mut self, _msg: Msg) {}
+    fn update(&mut self, _msg: Msg) -> Cmd<Self, Msg> {
+        Cmd::none()
+    }
 
     fn view(&self) -> Node<Msg> {
         self.view_with_filter(|(index, _field)| !self.frozen_fields.contains(index))

@@ -28,6 +28,8 @@ use rustorm::{
     Value,
 };
 use std::collections::BTreeMap;
+//use sqlparser::dialect::GenericSqlDialect;
+//use sqlparser::sqlparser::Parser;
 
 pub fn get_main_table<'a>(
     window: &Window,
@@ -41,6 +43,20 @@ pub fn get_database_name(
     em: &EntityManager,
 ) -> Result<Option<DatabaseName>, DbError> {
     em.get_database_name()
+}
+
+pub fn execute_sql_query<'a>(
+    _em: &EntityManager,
+    dm: &DaoManager,
+    _tables: &'a [Table],
+    sql: String,
+) -> Result<Rows, DbError> {
+    /*
+    let dialect = GenericSqlDialect{};
+    let ast = Parser::parse_sql(&dialect, sql);
+    println!("{:#?}", ast);
+    */
+    dm.execute_sql_with_return(&sql, &[])
 }
 
 /// get data for the window

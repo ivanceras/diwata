@@ -1,4 +1,7 @@
-use wasm_bindgen::{self, prelude::*};
+use wasm_bindgen::{
+    self,
+    prelude::*,
+};
 use webview;
 
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global

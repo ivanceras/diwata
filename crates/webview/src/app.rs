@@ -1,5 +1,5 @@
-use crate::data::WindowData;
-use diwata_intel::{window::GroupedWindow, Window};
+use crate::{data::WindowData, rest_api};
+use diwata_intel::{window::GroupedWindow, Rows, Window};
 use sauron::{
     html::{attributes::*, events::*, *},
     Browser, Cmd, Component, Dispatch, Http, Node,
@@ -28,6 +28,7 @@ pub enum Msg {
     Tick,
     WindowListMsg(window_list_view::Msg),
     FetchWindowList(Result<Vec<GroupedWindow>, JsValue>),
+    ReceivedWindowQueryResult(Result<Rows, JsValue>),
 }
 
 pub struct App {
@@ -96,12 +97,6 @@ impl App {
         self.update_active_window();
     }
 
-    fn fetch_window_list(&self) -> Cmd<App, Msg> {
-        let url = "http://localhost:8000/windows";
-        let text_decoder = |v: String| ron::de::from_str(&v).expect("Unable to decode ron data");
-        Http::fetch_with_text_response_decoder(url, text_decoder, Msg::FetchWindowList)
-    }
-
     fn setup_window_resize_listener(&self) -> Cmd<App, Msg> {
         Browser::onresize(Msg::BrowserResized)
     }
@@ -110,35 +105,58 @@ impl App {
 impl Component<Msg> for App {
     fn init(&self) -> Cmd<Self, Msg> {
         Cmd::batch(vec![
-            self.fetch_window_list(),
+            rest_api::fetch_window_list(),
             self.setup_window_resize_listener(),
         ])
     }
 
-    fn update(&mut self, msg: Msg) {
+    fn update(&mut self, msg: Msg) -> Cmd<Self, Msg> {
         match msg {
-            Msg::ActivateWindow(index) => self.activate_window(index),
-            Msg::WindowMsg(index, window_msg) => self.window_views[index].update(window_msg),
+            Msg::ActivateWindow(index) => {
+                self.activate_window(index);
+                Cmd::none()
+            }
+            //FIXME: This is managed here since Mapping in Cmd is not yet solved/supported
+            Msg::WindowMsg(index, window_view::Msg::ToolbarMsg(toolbar_view::Msg::RunQuery)) => {
+                let sql = self.window_views[index].get_sql_query();
+                sauron::log!("In app.rs Run the query: {}", sql);
+                rest_api::execute_sql_query(sql)
+            }
+            Msg::WindowMsg(index, window_msg) => {
+                self.window_views[index].update(window_msg);
+                Cmd::none()
+            }
             Msg::BrowserResized(width, height) => {
                 sauron::log!("Browser is resized to: {}, {}", width, height);
                 self.browser_width = width;
                 self.browser_height = height;
                 //also notify all opened windows with the resize;
                 self.window_views.iter_mut().for_each(|window| {
-                    window.update(window_view::Msg::BrowserResized(width, height))
+                    window.update(window_view::Msg::BrowserResized(width, height));
                 });
                 self.update_size_allocation();
+                Cmd::none()
             }
             Msg::Tick => {
                 sauron::log("Ticking");
+                Cmd::none()
             }
-            Msg::WindowListMsg(window_list_msg) => self.window_list_view.update(window_list_msg),
+            Msg::WindowListMsg(window_list_msg) => {
+                self.window_list_view.update(window_list_msg);
+                Cmd::none()
+            }
             Msg::FetchWindowList(Ok(window_list)) => {
                 self.window_list_view
                     .update(window_list_view::Msg::ReceiveWindowList(window_list));
+                Cmd::none()
             }
             Msg::FetchWindowList(Err(js_value)) => {
                 sauron::log!("There was an error fetching window list: {:#?}", js_value);
+                Cmd::none()
+            }
+            Msg::ReceivedWindowQueryResult(result) => {
+                sauron::log!("Received window query result: {:#?}", result);
+                Cmd::none()
             }
         }
     }

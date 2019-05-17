@@ -12,6 +12,8 @@ use crate::{
     data::WindowData,
 };
 use diwata_intel::{TableName, Window};
+use sauron::{Cmd, Http};
+use wasm_bindgen::JsValue;
 
 pub struct WindowView {
     pub name: String,
@@ -41,32 +43,49 @@ pub enum Msg {
 }
 
 impl Component<Msg> for WindowView {
-    fn update(&mut self, msg: Msg) {
+    fn update(&mut self, msg: Msg) -> Cmd<Self, Msg> {
         match msg {
             Msg::MainTabMsg(tab_msg) => {
                 self.main_tab.update(tab_msg);
                 self.update_size_allocation();
+                Cmd::none()
             }
-            Msg::OneOneTabMsg(index, tab_msg) => self.one_one_tabs[index].update(tab_msg),
-            Msg::HasManyTabMsg(index, tab_msg) => self.has_many_tabs[index].update(tab_msg),
+            Msg::OneOneTabMsg(index, tab_msg) => {
+                self.one_one_tabs[index].update(tab_msg);
+                Cmd::none()
+            }
+            Msg::HasManyTabMsg(index, tab_msg) => {
+                self.has_many_tabs[index].update(tab_msg);
+                Cmd::none()
+            }
             Msg::IndirectTabMsg(index, (_table_name, tab_msg)) => {
-                self.indirect_tabs[index].1.update(tab_msg)
+                self.indirect_tabs[index].1.update(tab_msg);
+                Cmd::none()
             }
-            Msg::ShowHasManyTab(index) => self.activate_has_many_tab(index),
-            Msg::ShowIndirectTab(index) => self.activate_indirect_tab(index),
+            Msg::ShowHasManyTab(index) => {
+                self.activate_has_many_tab(index);
+                Cmd::none()
+            }
+            Msg::ShowIndirectTab(index) => {
+                self.activate_indirect_tab(index);
+                Cmd::none()
+            }
             Msg::BrowserResized(width, height) => {
                 sauron::log!("resized: {},{}", width, height);
                 self.browser_width = width;
                 self.browser_height = height;
                 self.update_size_allocation();
+                Cmd::none()
             }
             Msg::ToolbarMsg(toolbar_msg) => {
                 self.toolbar_view.update(toolbar_msg);
                 self.update_size_allocation();
+                Cmd::none()
             }
             Msg::CloseDetailView => {
                 self.close_detail_view();
                 self.update_size_allocation();
+                Cmd::none()
             }
         }
     }
@@ -251,6 +270,10 @@ impl WindowView {
         window_view.update_active_has_many_or_indirect_tab();
         window_view.update_size_allocation();
         window_view
+    }
+
+    pub fn get_sql_query(&self) -> String {
+        self.toolbar_view.query.to_string()
     }
 
     /// Important: set the data rows first before setting the frozen data

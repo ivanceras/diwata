@@ -1,7 +1,7 @@
 use crate::app::field_view::{self, FieldView};
 use sauron::{
     html::{attributes::*, events::*, *},
-    Component, Node,
+    Cmd, Component, Node,
 };
 use std::{cell::RefCell, rc::Rc};
 
@@ -46,10 +46,11 @@ impl DetailView {
 }
 
 impl Component<Msg> for DetailView {
-    fn update(&mut self, msg: Msg) {
+    fn update(&mut self, msg: Msg) -> Cmd<Self, Msg> {
         match msg {
             Msg::FieldMsg(index, field_msg) => {
                 self.fields[index].borrow_mut().update(field_msg);
+                Cmd::none()
             }
         }
     }

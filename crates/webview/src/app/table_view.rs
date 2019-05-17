@@ -3,7 +3,7 @@ use data_table::DataColumn;
 use diwata_intel::{Field, Tab};
 use sauron::{
     html::{attributes::*, events::*, *},
-    Component, Node,
+    Cmd, Component, Node,
 };
 
 use crate::app::{column_view, row_view};
@@ -289,17 +289,20 @@ impl TableView {
 }
 
 impl Component<Msg> for TableView {
-    fn update(&mut self, msg: Msg) {
+    fn update(&mut self, msg: Msg) -> Cmd<Self, Msg> {
         match msg {
-            Msg::RowMsg(row_index, row_msg) => self.row_views[row_index].update(row_msg),
+            Msg::RowMsg(row_index, row_msg) => {
+                self.row_views[row_index].update(row_msg);
+            }
             Msg::ColumnMsg(column_index, column_msg) => {
-                self.column_views[column_index].update(column_msg)
+                self.column_views[column_index].update(column_msg);
             }
             Msg::Scrolled((scroll_top, scroll_left)) => {
                 self.scroll_top = scroll_top;
                 self.scroll_left = scroll_left;
             }
         }
+        Cmd::none()
     }
 
     /// A grid of 2x2  containing 4 major parts of the table

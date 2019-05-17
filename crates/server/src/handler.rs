@@ -47,7 +47,10 @@ use rustorm::{
     Rows,
     TableName,
 };
-use serde::Serialize;
+use serde::{
+    Deserialize,
+    Serialize,
+};
 use serde_json;
 use std::{
     convert::TryFrom,
@@ -123,6 +126,8 @@ pub fn handle_route(
         create_response(handle_windows(req))
     } else if head == "window" {
         create_response(handle_window(req, tail))
+    } else if head == "sql" {
+        create_response(handle_sql_query(req, tail))
     } else if head == "data" {
         create_response(handle_data(req, tail))
     } else if head == "select" {
@@ -321,6 +326,32 @@ fn handle_select(
         }
         None => Err(ServiceError::NotFound),
     }
+}
+
+/// /sql?sql=query
+fn handle_sql_query(
+    req: Request,
+    _path: &[&str],
+) -> Result<impl Serialize, ServiceError> {
+    require_credentials(&req)?;
+    let credentials: Result<Credentials, ServiceError> =
+        TryFrom::try_from(&req);
+    let context = Context::create(credentials)?;
+    let query = req.query().expect("Expecting a query");
+    #[derive(Debug, Deserialize)]
+    struct SqlQuery {
+        sql: String,
+    }
+    let fields: SqlQuery = serde_urlencoded::from_str(query)
+        .map_err(|e| ServiceError::GenericError(e.to_string()))?;
+    println!("fields: {:#?}", fields);
+    let rows = data_read::execute_sql_query(
+        &context.em,
+        &context.dm,
+        &context.tables,
+        fields.sql,
+    )?;
+    Ok(rows)
 }
 
 ///

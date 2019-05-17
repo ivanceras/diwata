@@ -2,7 +2,7 @@ use crate::{assets, widgets};
 use diwata_intel::window::GroupedWindow;
 use sauron::{
     html::{attributes::*, events::*, *},
-    Component, Node,
+    Cmd, Component, Node,
 };
 
 #[derive(Debug, Clone)]
@@ -41,7 +41,7 @@ impl WindowListView {
 }
 
 impl Component<Msg> for WindowListView {
-    fn update(&mut self, msg: Msg) {
+    fn update(&mut self, msg: Msg) -> Cmd<Self, Msg> {
         match msg {
             Msg::ChangeSearch(search) => {
                 sauron::log!("searching for {}", search);
@@ -50,6 +50,7 @@ impl Component<Msg> for WindowListView {
                 self.window_list = window_list;
             }
         }
+        Cmd::none()
     }
 
     fn view(&self) -> Node<Msg> {

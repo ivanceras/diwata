@@ -8,12 +8,11 @@ use crate::{
 };
 use data_table::DataRow;
 
+use diwata_intel::Tab;
 use sauron::{
     html::{attributes::*, *},
-    Component, Node,
+    Cmd, Component, Node,
 };
-
-use diwata_intel::Tab;
 
 #[derive(Debug, Clone)]
 pub enum Msg {
@@ -132,16 +131,19 @@ impl TabView {
 }
 
 impl Component<Msg> for TabView {
-    fn update(&mut self, msg: Msg) {
+    fn update(&mut self, msg: Msg) -> Cmd<Self, Msg> {
         match msg {
             Msg::TableMsg(table_view::Msg::RowMsg(row_index, row_view::Msg::DoubleClick)) => {
                 self.show_detail_view(row_index);
             }
-            Msg::TableMsg(table_msg) => self.table_view.update(table_msg),
+            Msg::TableMsg(table_msg) => {
+                self.table_view.update(table_msg);
+            }
             Msg::DetailViewMsg(detail_msg) => {
                 self.detail_view.update(detail_msg);
             }
         }
+        Cmd::none()
     }
     fn view(&self) -> Node<Msg> {
         section(

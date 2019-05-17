@@ -1,10 +1,9 @@
 use crate::widgets;
 use sauron::{
     html::{attributes::*, events::*, *},
-    Component, Node,
+    Cmd, Component, Node,
 };
-use sqlparser::dialect::GenericSqlDialect;
-use sqlparser::sqlparser::Parser;
+use sqlparser::{dialect::GenericSqlDialect, sqlparser::Parser};
 
 #[derive(Debug, Clone)]
 pub enum Msg {
@@ -21,7 +20,8 @@ pub struct ToolbarView {
     allocated_width: i32,
     allocated_height: i32,
     quick_find_search: String,
-    query: String,
+    pub query: String,
+    pub formatted_query: String,
 }
 
 impl ToolbarView {
@@ -33,6 +33,7 @@ impl ToolbarView {
             allocated_height: 0,
             quick_find_search: String::new(),
             query: String::new(),
+            formatted_query: String::new(),
         }
     }
 
@@ -104,31 +105,42 @@ impl ToolbarView {
 }
 
 impl Component<Msg> for ToolbarView {
-    fn update(&mut self, msg: Msg) {
+    fn update(&mut self, msg: Msg) -> Cmd<Self, Msg> {
         match msg {
             Msg::ToggleShowQuery => self.show_query = !self.show_query,
             Msg::ToggleShowRelatedTabs => self.show_related_tabs = !self.show_related_tabs,
             Msg::ChangeQuickFind(search) => self.quick_find_search = search,
             Msg::QueryChanged(query) => {
                 sauron::log!("Query is 1 changed to: {}", query);
-                //self.query = query;
-                let dialect = GenericSqlDialect{};
+                self.query = query.to_string();
+                let dialect = GenericSqlDialect {};
                 sauron::log!("Using generaic dialect");
                 let statements = Parser::parse_sql(&dialect, query);
-                sauron::log!("statements: {:#?}", statements);
+                if let Ok(statements) = statements {
+                    self.formatted_query = statements
+                        .into_iter()
+                        .map(|st| st.to_string())
+                        .collect::<Vec<String>>()
+                        .join(";\n");
+                } else {
+                    self.formatted_query = "ERROR".to_string();
+                }
             }
             Msg::RunQuery => {
                 sauron::log!("Running query: {}", self.query);
             }
         }
+        Cmd::none()
     }
 
     fn view(&self) -> Node<Msg> {
-        section([class("toolbar_and_query_view")], [
+        section(
+            [class("toolbar_and_query_view")],
+            [
                 header(
                     [class("toolbar")],
                     [
-                        widgets::quick_find(26, oninput(|input|Msg::ChangeQuickFind(input.value))),
+                        widgets::quick_find(26, oninput(|input| Msg::ChangeQuickFind(input.value))),
                         button([], [text("Create new record")]),
                         button([], [text("Insert new record")]),
                         button([], [text("Save")]),
@@ -172,7 +184,7 @@ impl Component<Msg> for ToolbarView {
                         textarea(
                             [
                                 class("sql_input"),
-                                onchange(|input|Msg::QueryChanged(input.value)),
+                                oninput(|input| Msg::QueryChanged(input.value)),
                                 styles([
                                     ("width", px(self.calculate_sql_input_width())),
                                     ("height", px(self.calculate_sql_input_height())),
@@ -181,13 +193,17 @@ impl Component<Msg> for ToolbarView {
                             ],
                             [],
                         ),
-                        button([class("run_query"),
-                                onclick(|_|Msg::RunQuery),
-                               styles([
-                                      ("width", px(self.run_query_button_width())),
-                                      ("height", px(self.run_query_button_height()))
-                               ])
-                        ], [text("Run query")]),
+                        button(
+                            [
+                                class("run_query"),
+                                onclick(|_| Msg::RunQuery),
+                                styles([
+                                    ("width", px(self.run_query_button_width())),
+                                    ("height", px(self.run_query_button_height())),
+                                ]),
+                            ],
+                            [text("Run query")],
+                        ),
                         textarea(
                             [
                                 class("parsed_sql"),
@@ -197,39 +213,11 @@ impl Component<Msg> for ToolbarView {
                                     ("height", px(self.calculate_parsed_sql_height())),
                                 ]),
                             ],
-                            [text("SELECT * FROM table\n\
-                                Rem consequatur consectetur labore occaecati ipsa aut vel optio.\n\
-                                Eius eligendi aliquid beatae cumque ad illum.\n\
-                                Deleniti suscipit non in consequatur.\n\
-                                Doloremque beatae eum nulla praesentium cumque \n\
-                                voluptatem quae tenetur.\n\
-                                SELECT * FROM table\n\
-                                Rem consequatur consectetur labore occaecati ipsa aut vel optio.\n \
-                                Eius eligendi aliquid beatae cumque ad illum.\n \
-                                Deleniti suscipit non in consequatur. \n\
-                                Doloremque beatae eum nulla praesentium cumque voluptatem quae tenetur\n\
-                                SELECT * FROM table\n\
-                                Rem consequatur consectetur labore occaecati ipsa aut vel optio. \n\
-                                Eius eligendi aliquid beatae cumque ad illum. Deleniti suscipit non in consequatur. \n\
-                                Doloremque beatae eum nulla praesentium cumque voluptatem quae tenetur.\n\
-                                SELECT * FROM table\n\
-                                Rem consequatur consectetur labore occaecati ipsa aut vel optio. \n\
-                                Eius eligendi aliquid beatae cumque ad illum. Deleniti suscipit non in consequatur. \n\
-                                Doloremque beatae eum nulla praesentium cumque voluptatem quae tenetur.\n\
-                                SELECT * FROM table\n\
-                                Rem consequatur consectetur labore occaecati ipsa aut vel optio. \n\
-                                Eius eligendi aliquid beatae cumque ad illum. \n\
-                                Deleniti suscipit non in consequatur. \n\
-                                Doloremque beatae eum nulla praesentium cumque voluptatem quae tenetur.\n\
-                                SELECT * FROM table\n\
-                                Rem consequatur consectetur labore occaecati ipsa aut vel optio. \n\
-                                Eius eligendi aliquid beatae cumque ad illum. \n\
-                                Deleniti suscipit non in consequatur. \n\
-                                Doloremque beatae eum nulla praesentium cumque voluptatem quae tenetur.\n\
-                                  ")],
+                            [text(&self.formatted_query)],
                         ),
                     ],
                 ),
-        ])
+            ],
+        )
     }
 }

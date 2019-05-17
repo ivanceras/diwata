@@ -15,9 +15,8 @@ use web_sys::Response;
 mod app;
 mod assets;
 mod data;
+mod rest_api;
 mod widgets;
-
-
 
 pub fn setup_program(initial_state: &str) -> Rc<Program<App, Msg>> {
     #[cfg(feature = "console_error_panic_hook")]

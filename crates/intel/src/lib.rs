@@ -19,6 +19,7 @@ pub use field::Field;
 pub use rustorm::{
     types::SqlType,
     ColumnName,
+    Rows,
     TableName,
 };
 pub use tab::{
