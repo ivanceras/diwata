@@ -72,7 +72,6 @@ impl TabView {
     }
 
     fn show_detail_view(&mut self, row_index: usize) {
-        sauron::log("Showing detail view...");
         self.detail_view.show();
         let fields = &self.table_view.row_views[row_index].fields;
         self.detail_view.set_fields(fields);
@@ -149,6 +148,9 @@ impl Component<Msg> for TabView {
         section(
             [
                 class("tab_view"),
+                // to ensure no reusing of tab view when replaced with
+                // another tab 
+                 key(format!("tab_{}",self.name)),
                 classes_flag([("in_detail_view", self.in_detail_view())]),
                 styles_flag([("display", "none", !self.is_visible)]),
             ],

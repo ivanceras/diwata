@@ -17,6 +17,7 @@ pub enum Msg {
 }
 
 pub struct TableView {
+    pub name: String,
     pub data_columns: Vec<DataColumn>,
     pub column_views: Vec<ColumnView>,
     pub row_views: Vec<RowView>,
@@ -33,6 +34,7 @@ impl TableView {
     pub fn from_tab(tab: Tab) -> Self {
         let data_columns = Self::fields_to_data_columns(&tab.fields);
         TableView {
+            name: tab.table_name.complete_name(),
             column_views: tab
                 .fields
                 .iter()
@@ -65,10 +67,12 @@ impl TableView {
     /// replace all the data with a new data row
     /// TODO: also update the freeze_columns for each row_views
     pub fn set_data_rows(&mut self, data_row: Vec<DataRow>) {
+        sauron::log!("Setting data row in table_view: {:#?}", data_row);
+        sauron::log!("There are {} data_row", data_row.len());
         self.row_views = data_row
             .into_iter()
             .enumerate()
-            .map(|(index, row)| RowView::new(row, &self.data_columns))
+            .map(|(index, row)| RowView::new(index, row, &self.data_columns))
             .collect();
         self.update_freeze_columns();
     }
@@ -263,6 +267,7 @@ impl TableView {
     /// The rest of the columns and move in any direction
     fn view_normal_rows(&self) -> Node<Msg> {
         // can move: left, right, up, down
+        sauron::log!("In view normal rows: There are {} row_views in {}", self.row_views.len(), self.name);
         ol(
             [
                 class("normal_rows"),
@@ -308,7 +313,11 @@ impl Component<Msg> for TableView {
     /// A grid of 2x2  containing 4 major parts of the table
     fn view(&self) -> Node<Msg> {
         main(
-            [class("table")],
+            [class("table"),
+            // to ensure no reusing of table view when replaced with
+            // another table
+             key(format!("table_{}",self.name)),
+            ],
             [
                 // TOP-LEFT: Content 1
                 section(

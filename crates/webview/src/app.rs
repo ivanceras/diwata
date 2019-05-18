@@ -9,6 +9,7 @@ use wasm_bindgen::{closure::Closure, JsCast, JsValue};
 use web_sys::Response;
 use window_list_view::WindowListView;
 use window_view::WindowView;
+use diwata_intel::data_container::QueryResult;
 
 mod column_view;
 mod detail_view;
@@ -28,7 +29,7 @@ pub enum Msg {
     Tick,
     WindowListMsg(window_list_view::Msg),
     FetchWindowList(Result<Vec<GroupedWindow>, JsValue>),
-    ReceivedWindowQueryResult(usize, Result<(Window, Rows), JsValue>),
+    ReceivedWindowQueryResult(usize, Result<QueryResult, JsValue>),
 }
 
 pub struct App {
@@ -118,11 +119,16 @@ impl Component<Msg> for App {
             }
             //FIXME: This is managed here since Mapping in Cmd is not yet solved/supported
             Msg::WindowMsg(index, window_view::Msg::ToolbarMsg(toolbar_view::Msg::RunQuery)) => {
-                let sql = self.window_views[index].get_sql_query();
-                sauron::log!("In app.rs Run the query: {}", sql);
-                rest_api::execute_sql_query(sql, move |window_rows| {
-                    Msg::ReceivedWindowQueryResult(index, window_rows)
-                })
+                let sql = self.window_views[index].sql_query();
+                if let Some(sql) = sql{
+                    sauron::log!("In app.rs Run the query: {}", sql);
+                    rest_api::execute_sql_query(sql, move |window_rows| {
+                        Msg::ReceivedWindowQueryResult(index, window_rows)
+                    })
+                }else{
+                    sauron::log!("Nothing to execute!");
+                    Cmd::none()
+                }
             }
             Msg::WindowMsg(index, window_msg) => {
                 self.window_views[index].update(window_msg);
@@ -160,16 +166,31 @@ impl Component<Msg> for App {
             // FIXME: Also return the window, since the table
             // in the select from can be anything other than
             // the window's current main table.
-            Msg::ReceivedWindowQueryResult(index, Ok((window, rows))) => {
-                sauron::log!("Received window query result: {:#?}", rows);
-                // FIXME: need to replace the window with a new one
-                // with a new set of window data from this result
-                let window_data = WindowData::from_rows(rows);
-                //self.window_views[index].set_window_data(window_data);
-                let mut new_window = WindowView::new(window, self.browser_width, self.browser_height);
-                new_window.set_window_data(window_data); 
-                // replace the previous window
-                self.window_views[index] = new_window;
+            Msg::ReceivedWindowQueryResult(index, Ok(query_result)) => {
+                sauron::log!("Received window query result: {:#?}", query_result.record);
+                if let Some(window) = query_result.window{
+                    let window_clone = window.clone();
+                    query_result.record.map_left(|rows|{
+                        let sql_query = self.window_views[index].sql_query();
+                        let mut new_window = WindowView::new(window_clone, self.browser_width, self.browser_height);
+                        let mut window_data = WindowData::from_rows(rows);
+                        window_data.sql_query = sql_query;
+                        // set the previous sql query
+                        new_window.set_window_data(window_data); 
+                        // replace the previous window
+                        self.window_views[index] = new_window;
+                    }).map_right(|record_detail|{
+                        let sql_query = self.window_views[index].sql_query();
+                        let mut new_window = WindowView::new(window, self.browser_width, self.browser_height);
+                        let mut window_data = WindowData::from_record_detail(record_detail);
+                        window_data.sql_query = sql_query;
+                        new_window.set_window_data(window_data);
+                        self.window_views[index] = new_window;
+                    });
+
+                }else{
+                    sauron::log!("No window returned in query result");
+                }
                 Cmd::none()
             }
             Msg::ReceivedWindowQueryResult(index, Err(err)) => {

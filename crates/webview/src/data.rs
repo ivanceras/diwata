@@ -1,5 +1,7 @@
 use data_table::{DataRow, Value};
 use diwata_intel::Rows;
+use diwata_intel::data_container::RecordDetail;
+use diwata_intel::Dao;
 
 /// Page a collection of rows
 /// also shows the total records from the table source
@@ -20,11 +22,31 @@ impl Page {
             total_records: rows.count.unwrap_or(0),
         }
     }
+
+    fn from_dao(dao: Dao) -> Self {
+        Page {
+            page: 1,
+            rows: vec![data_row_from_dao(dao)],
+            total_records: 1,
+        }
+    }
+}
+
+/// Convert the dao into a vec of value
+/// TODO: ensure the alignment of column and data
+fn data_row_from_dao(dao: Dao) -> DataRow {
+    let mut values = vec![];
+    for (k, v) in dao.0.into_iter(){
+        values.push(v);
+    }
+    values
 }
 
 /// Contains all the data for a window
 #[derive(Default)]
 pub struct WindowData {
+    /// The sql query used to obtain this data,
+    pub sql_query: Option<String>,
     /// pages can be scrolled to and fro
     /// and sometimes unloaded for performance puposed
     pub main_tab_data: Vec<Page>,
@@ -47,6 +69,14 @@ impl WindowData {
             ..Default::default()
         }
     }
+
+    pub fn from_record_detail(record_detail: RecordDetail) -> Self {
+        WindowData{
+            main_tab_data: vec![Page::from_dao(record_detail.record)],
+            //TODO: also set the related records here
+            ..Default::default()
+        }
+    }
 }
 
 #[derive(Default, Clone)]
@@ -64,6 +94,7 @@ fn make_sample_frozen_data() -> FrozenData {
 
 pub fn make_sample_window_data() -> WindowData {
     WindowData {
+        sql_query: Some("select * from placeholder".to_string()),
         main_tab_data: vec![make_sample_page()],
         one_one_tab_data: vec![make_sample_row(0), make_sample_row(1)],
         has_many_tab_data: vec![vec![make_sample_page()]],

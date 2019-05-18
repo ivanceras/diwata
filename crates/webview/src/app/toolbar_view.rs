@@ -20,7 +20,7 @@ pub struct ToolbarView {
     allocated_width: i32,
     allocated_height: i32,
     quick_find_search: String,
-    pub query: String,
+    pub sql_query: String,
     pub formatted_query: String,
 }
 
@@ -32,8 +32,14 @@ impl ToolbarView {
             allocated_width: 0,
             allocated_height: 0,
             quick_find_search: String::new(),
-            query: String::new(),
+            sql_query: String::new(),
             formatted_query: String::new(),
+        }
+    }
+
+    pub fn set_sql_query(&mut self, sql_query: Option<String>) {
+        if let Some(sql_query) = sql_query{
+            self.sql_query = sql_query;
         }
     }
 
@@ -110,12 +116,12 @@ impl Component<Msg> for ToolbarView {
             Msg::ToggleShowQuery => self.show_query = !self.show_query,
             Msg::ToggleShowRelatedTabs => self.show_related_tabs = !self.show_related_tabs,
             Msg::ChangeQuickFind(search) => self.quick_find_search = search,
-            Msg::QueryChanged(query) => {
-                sauron::log!("Query is 1 changed to: {}", query);
-                self.query = query.to_string();
+            Msg::QueryChanged(sql_query) => {
+                sauron::log!("Query is 1 changed to: {}", sql_query);
+                self.sql_query = sql_query.to_string();
                 let dialect = GenericSqlDialect {};
                 sauron::log!("Using generaic dialect");
-                let statements = Parser::parse_sql(&dialect, query);
+                let statements = Parser::parse_sql(&dialect, sql_query);
                 if let Ok(statements) = statements {
                     self.formatted_query = statements
                         .into_iter()
@@ -127,7 +133,7 @@ impl Component<Msg> for ToolbarView {
                 }
             }
             Msg::RunQuery => {
-                sauron::log!("Running query: {}", self.query);
+                sauron::log!("Running sql_query: {}", self.sql_query);
             }
         }
         Cmd::none()
@@ -184,11 +190,12 @@ impl Component<Msg> for ToolbarView {
                         textarea(
                             [
                                 class("sql_input"),
-                                oninput(|input| Msg::QueryChanged(input.value)),
+                                onchange(|input| Msg::QueryChanged(input.value)),
                                 styles([
                                     ("width", px(self.calculate_sql_input_width())),
                                     ("height", px(self.calculate_sql_input_height())),
                                 ]),
+                                value(&self.sql_query),
                                 placeholder("SELECT * "),
                             ],
                             [],

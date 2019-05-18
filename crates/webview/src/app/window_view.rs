@@ -94,6 +94,9 @@ impl Component<Msg> for WindowView {
         main(
             [
                 class("window"),
+                // to ensure no reusing of window view when replaced with
+                // another window, such as when the user changed the sql query and run it
+                 key(format!("window_{}",self.name)),
                 styles_flag([("display", "none", !self.is_visible)]),
             ],
             [
@@ -273,13 +276,19 @@ impl WindowView {
         window_view
     }
 
-    pub fn get_sql_query(&self) -> String {
-        self.toolbar_view.query.to_string()
+    pub fn sql_query(&self) -> Option<String> {
+        let sql = &self.toolbar_view.sql_query;
+        if sql.trim().is_empty(){
+            None
+        }else{
+            Some(sql.to_string())
+        }
     }
 
     /// Important: set the data rows first before setting the frozen data
     pub fn set_window_data(&mut self, window_data: WindowData) {
         let WindowData {
+            sql_query,
             main_tab_data,
             main_tab_frozen_data,
             one_one_tab_data,
@@ -290,6 +299,8 @@ impl WindowView {
             indirect_tab_data,
             indirect_tab_frozen_data,
         } = window_data;
+
+        self.toolbar_view.set_sql_query(sql_query);
         self.main_tab.set_pages(main_tab_data);
         self.main_tab.set_frozen_data(main_tab_frozen_data);
 

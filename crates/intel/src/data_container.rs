@@ -8,14 +8,57 @@ use serde::{
     Deserialize,
     Serialize,
 };
+use crate::Window;
+use either::Either;
 
-#[derive(Debug, Serialize)]
+/// Holds the result for a sql query
+/// If there are multiple records
+/// it will in Either::Left rows,
+/// and if there is only 1 record, happens
+/// when the where clause specify a Primary_key = id
+/// Then that record is retrieved and it's additional details as well.
+/// such as 1:1 records and related records in has_many and indirect table
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct QueryResult{
+    pub window: Option<Window>,
+    pub record: Either<Rows, RecordDetail>
+}
+
+impl QueryResult {
+
+    /// When there are multiple results of records
+    pub fn with_rows(window: Option<Window>, rows: Rows) -> Self {
+        QueryResult{
+            window,
+            record:Either::Left(rows),
+        }
+    }
+    /// When there is only 1 record
+    pub fn with_record_detail(window: Option<Window>, record_detail: RecordDetail) -> Self {
+        QueryResult{
+            window,
+            record: Either::Right(record_detail),
+        }
+    }
+
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct RecordDetail {
     pub record: Dao,
     pub one_ones: Vec<(TableName, Option<Dao>)>,
     pub has_many: Vec<(TableName, Rows)>,
-    // (linker_tablename, indirect_tablename, records)
     pub indirect: Vec<(TableName, TableName, Rows)>,
+}
+
+impl RecordDetail{
+
+    pub fn from_dao(dao: Dao) -> Self {
+        RecordDetail{
+            record: dao,
+            ..Default::default()
+        }
+    }
 }
 
 #[derive(Debug, Deserialize, Serialize)]

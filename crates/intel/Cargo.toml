@@ -17,6 +17,7 @@ url = "1.5"
 rustorm_dao = "0.3"
 rustorm =  {version = "0.13", optional = true}
 sqlparser = { path = "../../../sqlparser-rs" }
+either = { version = "1.5", features = ["serde"] }
 
 
 [features]

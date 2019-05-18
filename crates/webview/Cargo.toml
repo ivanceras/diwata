@@ -15,6 +15,7 @@ nalgebra = "0.18.0"
 wee_alloc = { version = "0.4.3", optional = true }
 ron = "0.5.1"
 sqlparser = { path = "../../../sqlparser-rs" }
+either = "1.5"
 
 [dependencies.wasm-bindgen]
 version = "0.2.33"

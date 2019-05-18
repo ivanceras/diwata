@@ -451,7 +451,8 @@ input.column_filter[type="text"]{
 /*ol in table_view, listing of normal_rows 
  * can move: left, right, up, down */
 .normal_rows{
-    display: grid;
+    display: flex;
+    flex-direction: column;
     overflow-y: scroll;
     overflow-x: scroll;
 }

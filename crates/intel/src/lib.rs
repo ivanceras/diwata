@@ -22,6 +22,7 @@ pub use rustorm::{
     ColumnName,
     Rows,
     TableName,
+    Dao,
 };
 pub use tab::{
     IndirectTab,

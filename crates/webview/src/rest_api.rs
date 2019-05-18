@@ -2,6 +2,7 @@ use crate::app::{App, Msg};
 use diwata_intel::{Rows,Window};
 use sauron::{Cmd, Http};
 use wasm_bindgen::JsValue;
+use diwata_intel::data_container::QueryResult;
 
 pub fn fetch_window_list() -> Cmd<App, Msg> {
     let url = "http://localhost:8000/windows";
@@ -11,7 +12,7 @@ pub fn fetch_window_list() -> Cmd<App, Msg> {
 
 pub fn execute_sql_query<F>(sql: String, msg_receiver: F) -> Cmd<App, Msg>
 where
-    F: Fn(Result<(Window,Rows), JsValue>) -> Msg + Clone + 'static,
+    F: Fn(Result<QueryResult, JsValue>) -> Msg + Clone + 'static,
 {
     let url = format!("http://localhost:8000/sql/?sql={}", sql);
     let text_decoder = |v: String| {

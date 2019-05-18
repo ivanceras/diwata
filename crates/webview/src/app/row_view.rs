@@ -14,16 +14,18 @@ pub enum Msg {
 }
 
 pub struct RowView {
+    index: usize,
     pub fields: Vec<Rc<RefCell<FieldView>>>,
     frozen_fields: Vec<usize>,
     is_frozen: bool,
 }
 
 impl RowView {
-    pub fn new(data_rows: DataRow, data_columns: &[DataColumn]) -> Self {
+    pub fn new(index: usize, data_rows: DataRow, data_columns: &[DataColumn]) -> Self {
         sauron::log!("data_rows: {}", data_rows.len());
         sauron::log!("data_columns: {}", data_columns.len());
         RowView {
+            index,
             fields: data_rows
                 .into_iter()
                 .zip(data_columns.iter())
@@ -47,6 +49,12 @@ impl RowView {
         li(
             [
                 class("row"),
+                // IMPORTANT: key is needed here to avoid sauron
+                // reusing dom elements of similar rows, this is needed
+                // so as to complete remove the dom and it's attached events
+                // since events attached in a dom are not compared
+                // and is not replaced.
+                key(format!("row_{}", self.index)),
                 classes_flag([("frozen_row", self.is_frozen)]),
                 styles([("height", px(Self::row_height()))]),
                 onclick(|_| Msg::Click),
@@ -71,6 +79,12 @@ impl RowView {
         li(
             [
                 class("row"),
+                // IMPORTANT: key is needed here to avoid sauron
+                // reusing dom elements of similar rows, this is needed
+                // so as to complete remove the dom and it's attached events
+                // since events attached in a dom are not compared
+                // and is not replaced.
+                key(format!("row_{}", self.index)),
                 class("frozen_column"),
                 classes_flag([("frozen_row", self.is_frozen)]),
                 styles([("height", px(Self::row_height()))]),

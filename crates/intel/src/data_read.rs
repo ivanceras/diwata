@@ -7,6 +7,7 @@ use crate::{
         Order,
         RecordDetail,
         Sort,
+        QueryResult,
     },
     error::IntelError,
     query_builder::Query,
@@ -57,27 +58,37 @@ pub fn execute_sql_query<'a>(
     tables: &'a [Table],
     windows: &'a [Window],
     sql: String,
-) -> Result<(Window, Rows), DbError> {
+) -> Result<QueryResult, DbError> {
     let dialect = GenericSqlDialect {};
     let ast = Parser::parse_sql(&dialect, sql.to_string());
     println!("{:#?}", ast);
     let window = if let Ok(ast) = ast {
-        assert_eq!(ast.len(), 1, "Only 1 statement for now");
-        if let Some(table_name) = query_parser::extract_table_name(&ast[0]) {
-            let table_name = TableName::from(&table_name);
-            let table = table_intel::get_table(&table_name, tables);
-            println!("matching table: {:?}", table);
-            let window = window::find_window(&table_name, windows).map(Clone::clone);
-            println!("matching window: {:?}", window);
-            window.expect("Expecting a matched window")
-        } else {
-            panic!("must have a table");
+        if ast.len() > 0 {
+            if let Some(table_name) = query_parser::extract_table_name(&ast[0]) {
+                let table_name = TableName::from(&table_name);
+                let table = table_intel::get_table(&table_name, tables);
+                let window = window::find_window(&table_name, windows).map(Clone::clone);
+                window
+            } else {
+               None 
+            }
+        }else{
+            println!("Warning: there are {} statements", ast.len());
+            None
         }
     } else {
-        panic!("Error parsing sql");
+        None 
     };
     let rows = dm.execute_sql_with_return(&sql, &[])?;
-    Ok((window, rows))
+    let mut rows_iter = rows.iter();
+    let query_result = if rows_iter.len() == 1{
+        println!("Only 1 record, handle this...");
+        let dao = rows_iter.next().expect("Expecting 1 record");
+        QueryResult::with_record_detail(window, RecordDetail::from_dao(dao))
+    }else{
+        QueryResult::with_rows(window, rows)
+    };
+    Ok(query_result)
 }
 
 /// get data for the window
