@@ -44,6 +44,8 @@ rust-nightly:
       - cd -
       - cd ../ && git clone https://github.com/ivanceras/sauron
       - cd -
+      - cd ../ && git clone https://github.com/ivanceras/sqlparser-rs
+      - cd -
 
   script:
       - cargo test --all

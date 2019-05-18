@@ -20,6 +20,8 @@ before_script:
   - cd -
   - cd ../ && git clone https://github.com/ivanceras/sauron
   - cd -
+  - cd ../ && git clone https://github.com/ivanceras/sqlparser-rs
+  - cd -
 
 
   
