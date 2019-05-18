@@ -8,10 +8,13 @@ use rustorm::{
     Column,
     Table,
 };
-use serde_derive::Serialize;
+use serde::{
+    Deserialize,
+    Serialize,
+};
 
 #[allow(unused)]
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum Widget {
     Textbox,
     IntegerTextbox,
@@ -79,7 +82,7 @@ pub enum Widget {
 
 /// contains the widget
 /// and the dropdown data
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ControlWidget {
     pub widget: Widget,
 
@@ -104,14 +107,14 @@ pub struct ControlWidget {
     pub alignment: Alignment,
 }
 
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Serialize,Deserialize,  Clone)]
 pub enum Alignment {
     Left,
     Right,
     Center,
 }
 
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Serialize,Deserialize,  Clone)]
 pub enum Dropdown {
     TableDropdown(DropdownInfo),
 }

@@ -10,9 +10,13 @@ use crate::{
     },
     error::IntelError,
     query_builder::Query,
+    query_parser,
     tab::Tab,
     table_intel,
-    window::Window,
+    window::{
+        self,
+        Window,
+    },
 };
 use rustorm::{
     types::SqlType,
@@ -27,9 +31,11 @@ use rustorm::{
     TableName,
     Value,
 };
+use sqlparser::{
+    dialect::GenericSqlDialect,
+    sqlparser::Parser,
+};
 use std::collections::BTreeMap;
-//use sqlparser::dialect::GenericSqlDialect;
-//use sqlparser::sqlparser::Parser;
 
 pub fn get_main_table<'a>(
     window: &Window,
@@ -46,17 +52,32 @@ pub fn get_database_name(
 }
 
 pub fn execute_sql_query<'a>(
-    _em: &EntityManager,
+    em: &EntityManager,
     dm: &DaoManager,
-    _tables: &'a [Table],
+    tables: &'a [Table],
+    windows: &'a [Window],
     sql: String,
-) -> Result<Rows, DbError> {
-    /*
-    let dialect = GenericSqlDialect{};
-    let ast = Parser::parse_sql(&dialect, sql);
+) -> Result<(Option<Window>, Rows), DbError> {
+    let dialect = GenericSqlDialect {};
+    let ast = Parser::parse_sql(&dialect, sql.to_string());
     println!("{:#?}", ast);
-    */
-    dm.execute_sql_with_return(&sql, &[])
+    let window = if let Ok(ast) = ast {
+        assert_eq!(ast.len(), 1, "Only 1 statement for now");
+        if let Some(table_name) = query_parser::extract_table_name(&ast[0]) {
+            let table_name = TableName::from(&table_name);
+            let table = table_intel::get_table(&table_name, tables);
+            println!("matching table: {:?}", table);
+            let window = window::find_window(&table_name, windows).map(Clone::clone);
+            println!("matching window: {:?}", window);
+            window
+        } else {
+            None
+        }
+    } else {
+        None
+    };
+    let rows = dm.execute_sql_with_return(&sql, &[])?;
+    Ok((window, rows))
 }
 
 /// get data for the window

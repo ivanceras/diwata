@@ -1,4 +1,4 @@
-#![deny(warnings)]
+//#![deny(warnings)]
 #![deny(clippy::all)]
 mod reference;
 pub mod widget;
@@ -11,6 +11,7 @@ pub mod data_read;
 pub mod error;
 pub mod field;
 mod query_builder;
+mod query_parser;
 pub mod tab;
 pub mod table_intel;
 pub mod window;

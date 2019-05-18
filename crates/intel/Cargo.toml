@@ -16,7 +16,7 @@ bigdecimal = "0.0.14"
 url = "1.5"
 rustorm_dao = "0.3"
 rustorm =  {version = "0.13", optional = true}
-sqlparser = "0.3.1"
+sqlparser = { path = "../../../sqlparser-rs" }
 
 
 [features]

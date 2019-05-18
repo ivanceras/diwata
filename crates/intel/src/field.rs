@@ -14,9 +14,12 @@ use rustorm::{
     ColumnName,
     Table,
 };
-use serde_derive::Serialize;
+use serde::{
+    Deserialize,
+    Serialize,
+};
 
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Field {
     /// name of the field, derive from column name
     pub name: String,
@@ -31,7 +34,7 @@ pub struct Field {
     pub control_widget: ControlWidget,
 }
 
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum ColumnDetail {
     Simple(ColumnName, SqlType),
     Compound(Vec<(ColumnName, SqlType)>),

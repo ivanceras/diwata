@@ -24,7 +24,7 @@ use serde::{
     Serialize,
 };
 
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Serialize, Clone, Deserialize)]
 pub struct Window {
     /// maps to main table name
     pub name: String,
@@ -226,6 +226,9 @@ pub fn derive_all_windows(tables: &[Table]) -> Vec<Window> {
     all_windows
 }
 
+/// Stricly matching the tablename for the window to find.
+/// TableName should have a schema specified in it, in order to find the matching
+/// window
 pub fn get_window<'t>(
     table_name: &TableName,
     windows: &'t [Window],
@@ -233,6 +236,24 @@ pub fn get_window<'t>(
     windows
         .iter()
         .find(|w| w.main_tab.table_name == *table_name)
+}
+
+/// Attempt to find exact window matching the table name with
+/// schema and table_name.
+/// If there is none it will try to match only the name of the table
+/// as the case for public.<table_name> for tables under public schema
+pub fn find_window<'t>(
+    table_name: &TableName,
+    windows: &'t [Window],
+) -> Option<&'t Window> {
+    match get_window(table_name, windows) {
+        Some(window) => Some(window),
+        None => {
+            windows
+                .iter()
+                .find(|w| w.main_tab.table_name.name == *table_name.name)
+        }
+    }
 }
 
 #[cfg(test)]

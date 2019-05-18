@@ -16,9 +16,12 @@ use rustorm::{
     Column,
     Table,
 };
-use serde_derive::Serialize;
+use serde::{
+    Deserialize,
+    Serialize,
+};
 
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Serialize, Clone, Deserialize)]
 pub struct Tab {
     pub name: String,
     pub description: Option<String>,
@@ -33,7 +36,7 @@ pub struct Tab {
 /// an indirect connection to this record
 /// must have an option to remove/show from the list
 /// async loaded?
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct IndirectTab {
     pub linker: TableName,
     pub tab: Tab,
