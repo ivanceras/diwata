@@ -277,7 +277,6 @@ impl WindowView {
         self.toolbar_view.query.to_string()
     }
 
-
     /// Important: set the data rows first before setting the frozen data
     pub fn set_window_data(&mut self, window_data: WindowData) {
         let WindowData {

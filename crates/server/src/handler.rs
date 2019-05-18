@@ -349,6 +349,7 @@ fn handle_sql_query(
         &context.em,
         &context.dm,
         &context.tables,
+        &context.windows,
         fields.sql,
     )?;
     Ok(rows)

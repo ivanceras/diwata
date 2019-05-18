@@ -12,8 +12,7 @@ pub struct Page {
     pub total_records: usize,
 }
 
-impl Page{
-
+impl Page {
     fn from_rows(rows: Rows) -> Self {
         Page {
             page: 1,
@@ -41,8 +40,7 @@ pub struct WindowData {
     pub indirect_tab_frozen_data: Vec<FrozenData>,
 }
 
-impl WindowData{
-
+impl WindowData {
     pub fn from_rows(rows: Rows) -> Self {
         WindowData {
             main_tab_data: vec![Page::from_rows(rows)],
@@ -50,8 +48,6 @@ impl WindowData{
         }
     }
 }
-
-
 
 #[derive(Default, Clone)]
 pub struct FrozenData {

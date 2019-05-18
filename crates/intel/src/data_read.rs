@@ -57,7 +57,7 @@ pub fn execute_sql_query<'a>(
     tables: &'a [Table],
     windows: &'a [Window],
     sql: String,
-) -> Result<(Option<Window>, Rows), DbError> {
+) -> Result<(Window, Rows), DbError> {
     let dialect = GenericSqlDialect {};
     let ast = Parser::parse_sql(&dialect, sql.to_string());
     println!("{:#?}", ast);
@@ -69,12 +69,12 @@ pub fn execute_sql_query<'a>(
             println!("matching table: {:?}", table);
             let window = window::find_window(&table_name, windows).map(Clone::clone);
             println!("matching window: {:?}", window);
-            window
+            window.expect("Expecting a matched window")
         } else {
-            None
+            panic!("must have a table");
         }
     } else {
-        None
+        panic!("Error parsing sql");
     };
     let rows = dm.execute_sql_with_return(&sql, &[])?;
     Ok((window, rows))
