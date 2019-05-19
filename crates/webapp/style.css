@@ -284,6 +284,7 @@ ol, ul, li {
     border: 1px solid #ccc;
     margin: 10px;
     padding-left: 10px;
+    box-shadow: 0 1px 6px rgba(57,73,76,0.35);
 }
 .tab{
 }
