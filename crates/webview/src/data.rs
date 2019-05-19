@@ -1,7 +1,5 @@
 use data_table::{DataRow, Value};
-use diwata_intel::Rows;
-use diwata_intel::data_container::RecordDetail;
-use diwata_intel::Dao;
+use diwata_intel::{data_container::RecordDetail, Dao, Rows};
 
 /// Page a collection of rows
 /// also shows the total records from the table source
@@ -36,7 +34,7 @@ impl Page {
 /// TODO: ensure the alignment of column and data
 fn data_row_from_dao(dao: Dao) -> DataRow {
     let mut values = vec![];
-    for (k, v) in dao.0.into_iter(){
+    for (k, v) in dao.0.into_iter() {
         values.push(v);
     }
     values
@@ -71,7 +69,7 @@ impl WindowData {
     }
 
     pub fn from_record_detail(record_detail: RecordDetail) -> Self {
-        WindowData{
+        WindowData {
             main_tab_data: vec![Page::from_dao(record_detail.record)],
             //TODO: also set the related records here
             ..Default::default()

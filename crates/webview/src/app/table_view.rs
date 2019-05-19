@@ -267,7 +267,11 @@ impl TableView {
     /// The rest of the columns and move in any direction
     fn view_normal_rows(&self) -> Node<Msg> {
         // can move: left, right, up, down
-        sauron::log!("In view normal rows: There are {} row_views in {}", self.row_views.len(), self.name);
+        sauron::log!(
+            "In view normal rows: There are {} row_views in {}",
+            self.row_views.len(),
+            self.name
+        );
         ol(
             [
                 class("normal_rows"),
@@ -313,10 +317,11 @@ impl Component<Msg> for TableView {
     /// A grid of 2x2  containing 4 major parts of the table
     fn view(&self) -> Node<Msg> {
         main(
-            [class("table"),
-            // to ensure no reusing of table view when replaced with
-            // another table
-             key(format!("table_{}",self.name)),
+            [
+                class("table"),
+                // to ensure no reusing of table view when replaced with
+                // another table
+                key(format!("table_{}", self.name)),
             ],
             [
                 // TOP-LEFT: Content 1

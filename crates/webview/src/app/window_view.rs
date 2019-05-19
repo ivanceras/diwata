@@ -96,7 +96,7 @@ impl Component<Msg> for WindowView {
                 class("window"),
                 // to ensure no reusing of window view when replaced with
                 // another window, such as when the user changed the sql query and run it
-                 key(format!("window_{}",self.name)),
+                key(format!("window_{}", self.name)),
                 styles_flag([("display", "none", !self.is_visible)]),
             ],
             [
@@ -278,9 +278,9 @@ impl WindowView {
 
     pub fn sql_query(&self) -> Option<String> {
         let sql = &self.toolbar_view.sql_query;
-        if sql.trim().is_empty(){
+        if sql.trim().is_empty() {
             None
-        }else{
+        } else {
             Some(sql.to_string())
         }
     }

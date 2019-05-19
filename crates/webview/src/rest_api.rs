@@ -1,8 +1,7 @@
 use crate::app::{App, Msg};
-use diwata_intel::{Rows,Window};
+use diwata_intel::{data_container::QueryResult, Rows, Window};
 use sauron::{Cmd, Http};
 use wasm_bindgen::JsValue;
-use diwata_intel::data_container::QueryResult;
 
 pub fn fetch_window_list() -> Cmd<App, Msg> {
     let url = "http://localhost:8000/windows";

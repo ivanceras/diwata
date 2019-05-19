@@ -149,8 +149,8 @@ impl Component<Msg> for TabView {
             [
                 class("tab_view"),
                 // to ensure no reusing of tab view when replaced with
-                // another tab 
-                 key(format!("tab_{}",self.name)),
+                // another tab
+                key(format!("tab_{}", self.name)),
                 classes_flag([("in_detail_view", self.in_detail_view())]),
                 styles_flag([("display", "none", !self.is_visible)]),
             ],
