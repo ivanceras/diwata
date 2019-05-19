@@ -1,4 +1,4 @@
-#![deny(warnings)]
+//#![deny(warnings)]
 #![deny(clippy::all)]
 
 #[macro_use]
@@ -11,11 +11,11 @@ pub use global::{
 };
 pub use handler::Server;
 
-pub mod context;
 mod credentials;
 pub mod error;
 mod global;
 pub mod handler;
+pub mod session;
 
 pub fn start() -> Result<(), ServiceError> {
     handler::run()?;

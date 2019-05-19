@@ -5,6 +5,7 @@ use crate::{
 };
 use diwata_intel::{
     cache,
+    Context,
     Window,
 };
 use rustorm::{
@@ -13,49 +14,40 @@ use rustorm::{
     Table,
 };
 
-pub struct Context {
-    pub em: EntityManager,
-    pub dm: DaoManager,
-    pub tables: Vec<Table>,
-    pub windows: Vec<Window>,
-}
-
-impl Context {
-    pub fn create(
-        credentials: Result<Credentials, ServiceError>,
-    ) -> Result<Self, ServiceError> {
-        let dm = global::get_pool_dm()?;
-        let em = global::get_pool_em()?;
-        let is_login_required = global::is_login_required()?;
-        if is_login_required {
-            set_session_credentials(&credentials?, &em)?;
-        }
-
-        let active_em = if is_login_required {
-            global::get_pool_session_em()?
-        } else {
-            em
-        };
-        let active_dm = if is_login_required {
-            global::get_pool_session_dm()?
-        } else {
-            dm
-        };
-        let db_url = if is_login_required {
-            global::get_role_db_url()?
-        } else {
-            global::get_db_url()?
-        };
-        let mut cache_pool = cache::CACHE_POOL.lock().unwrap();
-        let windows = cache_pool.get_cached_windows(&active_em, &db_url)?;
-        let tables = cache_pool.get_cached_tables(&active_em, &db_url)?;
-        Ok(Context {
-            em: active_em,
-            dm: active_dm,
-            tables,
-            windows,
-        })
+pub fn create_context(
+    credentials: Result<Credentials, ServiceError>,
+) -> Result<Context, ServiceError> {
+    let dm = global::get_pool_dm()?;
+    let em = global::get_pool_em()?;
+    let is_login_required = global::is_login_required()?;
+    if is_login_required {
+        set_session_credentials(&credentials?, &em)?;
     }
+
+    let active_em = if is_login_required {
+        global::get_pool_session_em()?
+    } else {
+        em
+    };
+    let active_dm = if is_login_required {
+        global::get_pool_session_dm()?
+    } else {
+        dm
+    };
+    let db_url = if is_login_required {
+        global::get_role_db_url()?
+    } else {
+        global::get_db_url()?
+    };
+    let mut cache_pool = cache::CACHE_POOL.lock().unwrap();
+    let windows = cache_pool.get_cached_windows(&active_em, &db_url)?;
+    let tables = cache_pool.get_cached_tables(&active_em, &db_url)?;
+    Ok(Context {
+        em: active_em,
+        dm: active_dm,
+        tables,
+        windows,
+    })
 }
 
 /// set the session user for the database connection

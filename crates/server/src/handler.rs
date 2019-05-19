@@ -22,17 +22,15 @@ use hyper::{
 };
 
 use crate::{
-    context::Context,
     credentials::Credentials,
     error::ServiceError,
     global,
+    session,
 };
 use diwata_intel::{
     data_container::{
-        Filter,
         RecordChangeset,
         SaveContainer,
-        Sort,
     },
     data_modify,
     data_read,
@@ -124,34 +122,8 @@ pub fn handle_route(
         handle_static(req, tail)
     } else if head == "windows" {
         create_response(handle_windows(req))
-    } else if head == "window" {
-        create_response(handle_window(req, tail))
     } else if head == "sql" {
         create_response(handle_sql_query(req, tail))
-    } else if head == "data" {
-        create_response(handle_data(req, tail))
-    } else if head == "select" {
-        create_response(handle_select(req, tail))
-    } else if head == "has_many_select" {
-        create_response(handle_has_many(req, tail))
-    } else if head == "indirect_select" {
-        create_response(handle_indirect(req, tail))
-    } else if head == "lookup" {
-        create_response(handle_lookup(req, tail))
-    } else if head == "lookup_all" {
-        create_response(handle_lookup_all(req, tail))
-    } else if head == "test" {
-        create_response(handle_test(req))
-    } else if head == "is_login_required" {
-        create_response(handle_login_required(req))
-    } else if head == "database_name" {
-        create_response(handle_database_name(req))
-    } else if head == "delete" {
-        return handle_delete(req, tail);
-    } else if head == "record_changeset" {
-        return handle_record_changeset(req, tail);
-    } else if head == "tab_changeset" {
-        return handle_tab_changeset(req);
     } else {
         handle_error(req, StatusCode::NotFound, "Page not found".to_owned())
     };
@@ -216,7 +188,7 @@ fn handle_windows(req: Request) -> Result<impl Serialize, ServiceError> {
     require_credentials(&req)?;
     let credentials: Result<Credentials, ServiceError> =
         TryFrom::try_from(&req);
-    let context = Context::create(credentials)?;
+    let context = session::create_context(credentials)?;
     let is_login_required = global::is_login_required()?;
     let db_url = if is_login_required {
         global::get_role_db_url()?
@@ -230,104 +202,6 @@ fn handle_windows(req: Request) -> Result<impl Serialize, ServiceError> {
     Ok(ret)
 }
 
-fn handle_window(
-    req: Request,
-    tail: &[&str],
-) -> Result<impl Serialize, ServiceError> {
-    require_credentials(&req)?;
-    let table_name = &tail[0];
-    let credentials: Result<Credentials, ServiceError> =
-        TryFrom::try_from(&req);
-    let context = Context::create(credentials)?;
-    let table_name = TableName::from(&table_name);
-    let window = window::get_window(&table_name, &context.windows);
-    match window {
-        Some(window) => Ok(window.to_owned()),
-        None => Err(ServiceError::NotFound),
-    }
-}
-
-///
-/// /data/<table_name>/page/<page>/filter/<filter>/sort/<sort>/
-fn handle_data(
-    req: Request,
-    path: &[&str],
-) -> Result<impl Serialize, ServiceError> {
-    require_credentials(&req)?;
-    let table_name = path[0];
-    let tail = &path[1..];
-    let key_value: Vec<(&str, &str)> =
-        tail.chunks(2).map(|chunk| (chunk[0], chunk[1])).collect();
-    let mut page = 1;
-    let mut filter_str = None;
-    let mut sort_str = None;
-    for (k, v) in key_value {
-        if k == "page" {
-            page = v.parse().unwrap();
-        } else if k == "filter" {
-            filter_str = Some(v);
-        } else if k == "sort" {
-            sort_str = Some(v);
-        }
-    }
-    let credentials: Result<Credentials, ServiceError> =
-        TryFrom::try_from(&req);
-    let context = Context::create(credentials)?;
-    let table_name = TableName::from(&table_name);
-    let window = window::get_window(&table_name, &context.windows);
-    let filter = filter_str.map(Filter::from);
-    let sort = sort_str.map(Sort::from);
-    match window {
-        Some(window) => {
-            let rows = data_read::get_maintable_data(
-                &context.em,
-                &context.dm,
-                &context.tables,
-                &window,
-                filter,
-                sort,
-                page,
-                global::PAGE_SIZE,
-            )?;
-            Ok(rows)
-        }
-        None => Err(ServiceError::NotFound),
-    }
-}
-
-///
-/// /select/<table_name>/<record_id>
-fn handle_select(
-    req: Request,
-    path: &[&str],
-) -> Result<impl Serialize, ServiceError> {
-    require_credentials(&req)?;
-    let table_name = path[0];
-    let record_id = path[1];
-    let table_name = TableName::from(&table_name);
-    let credentials: Result<Credentials, ServiceError> =
-        TryFrom::try_from(&req);
-    let context = Context::create(credentials)?;
-    let window = window::get_window(&table_name, &context.windows);
-    match window {
-        Some(window) => {
-            let dao = data_read::get_selected_record_detail(
-                &context.em,
-                &context.dm,
-                &context.tables,
-                &window,
-                &record_id,
-                global::PAGE_SIZE,
-            )?;
-            match dao {
-                Some(dao) => Ok(dao),
-                None => Err(ServiceError::NotFound),
-            }
-        }
-        None => Err(ServiceError::NotFound),
-    }
-}
-
 /// /sql?sql=query
 fn handle_sql_query(
     req: Request,
@@ -336,7 +210,7 @@ fn handle_sql_query(
     require_credentials(&req)?;
     let credentials: Result<Credentials, ServiceError> =
         TryFrom::try_from(&req);
-    let context = Context::create(credentials)?;
+    let context = session::create_context(credentials)?;
     let query = req.query().expect("Expecting a query");
     #[derive(Debug, Deserialize)]
     struct SqlQuery {
@@ -346,355 +220,16 @@ fn handle_sql_query(
         .map_err(|e| ServiceError::GenericError(e.to_string()))?;
     println!("fields: {:#?}", fields);
     let rows = data_read::execute_sql_query(
-        &context.em,
-        &context.dm,
-        &context.tables,
-        &context.windows,
+        &context,
         fields.sql,
     )?;
     Ok(rows)
-}
-
-///
-///
-///  /has_many_select/<table_name>/<record_id>/<has_many_table>/page/<page>/filter/<filter>/sort/<sort>
-fn handle_has_many(
-    req: Request,
-    path: &[&str],
-) -> Result<impl Serialize, ServiceError> {
-    require_credentials(&req)?;
-    let table_name = path[0];
-    let record_id = path[1];
-    let has_many_table = path[2];
-    let tail = &path[3..];
-    let key_value: Vec<(&str, &str)> =
-        tail.chunks(2).map(|chunk| (chunk[0], chunk[1])).collect();
-    let mut page = 1;
-    let mut filter_str = None;
-    let mut sort_str = None;
-    for (k, v) in key_value {
-        if k == "page" {
-            page = v.parse().unwrap();
-        } else if k == "filter" {
-            filter_str = Some(v);
-        } else if k == "sort" {
-            sort_str = Some(v);
-        }
-    }
-    let filter = filter_str.map(Filter::from);
-    let sort = sort_str.map(Sort::from);
-    let credentials: Result<Credentials, ServiceError> =
-        TryFrom::try_from(&req);
-    let context = Context::create(credentials)?;
-    let table_name = TableName::from(&table_name);
-    let window = window::get_window(&table_name, &context.windows);
-    let has_many_table_name = TableName::from(&has_many_table);
-    match window {
-        Some(window) => {
-            let main_table = data_read::get_main_table(window, &context.tables);
-            assert!(main_table.is_some());
-            let main_table = main_table.unwrap();
-            let has_many_tab =
-                tab::find_tab(&window.has_many_tabs, &has_many_table_name);
-            match has_many_tab {
-                Some(has_many_tab) => {
-                    let rows = data_read::get_has_many_records_service(
-                        &context.em,
-                        &context.dm,
-                        &context.tables,
-                        &main_table,
-                        &record_id,
-                        has_many_tab,
-                        filter,
-                        sort,
-                        global::PAGE_SIZE,
-                        page,
-                    )?;
-                    Ok(rows)
-                }
-                None => Err(ServiceError::NotFound),
-            }
-        }
-        None => Err(ServiceError::NotFound),
-    }
-}
-
-///
-///
-///  /indirect_select/<table_name>/<record_id>/<indirect_table>/page/<page>/filter/<filter>/sort/<sort>
-fn handle_indirect(
-    req: Request,
-    path: &[&str],
-) -> Result<impl Serialize, ServiceError> {
-    require_credentials(&req)?;
-    let table_name = path[0];
-    let record_id = path[1];
-    let indirect_table = path[2];
-    let tail = &path[3..];
-    let key_value: Vec<(&str, &str)> =
-        tail.chunks(2).map(|chunk| (chunk[0], chunk[1])).collect();
-    let mut page = 1;
-    let mut filter_str = None;
-    let mut sort_str = None;
-    for (k, v) in key_value {
-        if k == "page" {
-            page = v.parse().unwrap();
-        } else if k == "filter" {
-            filter_str = Some(v);
-        } else if k == "sort" {
-            sort_str = Some(v);
-        }
-    }
-    let filter = filter_str.map(Filter::from);
-    let sort = sort_str.map(Sort::from);
-    let credentials: Result<Credentials, ServiceError> =
-        TryFrom::try_from(&req);
-    let context = Context::create(credentials)?;
-    let table_name = TableName::from(&table_name);
-    let window = window::get_window(&table_name, &context.windows);
-    let indirect_table_name = TableName::from(&indirect_table);
-    match window {
-        Some(window) => {
-            let main_table = data_read::get_main_table(window, &context.tables);
-            assert!(main_table.is_some());
-            let main_table = main_table.unwrap();
-
-            let indirect_tab: Option<&IndirectTab> =
-                window.indirect_tabs.iter().find(|indirect_tab| {
-                    indirect_tab.tab.table_name == indirect_table_name
-                });
-
-            match indirect_tab {
-                Some(ref indirect_tab) => {
-                    let rows = data_read::get_indirect_records_service(
-                        &context.em,
-                        &context.dm,
-                        &context.tables,
-                        &main_table,
-                        &record_id,
-                        &indirect_tab.tab,
-                        &indirect_tab.linker,
-                        filter,
-                        sort,
-                        global::PAGE_SIZE,
-                        page,
-                    )?;
-                    Ok(rows)
-                }
-                None => Err(ServiceError::NotFound),
-            }
-        }
-        None => Err(ServiceError::NotFound),
-    }
-}
-
-/// retrieve the lookup data of this table at next page
-/// Usually the first page of the lookup data is preloaded with the window that
-/// may display them in order for the user to see something when clicking on the dropdown list.
-/// When the user scrolls to the bottom of the dropdown, a http request is done to retrieve the
-/// next page. All other lookup that points to the same table is also updated
-fn handle_lookup(
-    req: Request,
-    path: &[&str],
-) -> Result<impl Serialize, ServiceError> {
-    require_credentials(&req)?;
-    let table_name = path[0];
-    let page: u32 = path[1].parse().unwrap();
-    let credentials: Result<Credentials, ServiceError> =
-        TryFrom::try_from(&req);
-    let context = Context::create(credentials)?;
-
-    let table_name = TableName::from(&table_name);
-    let window = window::get_window(&table_name, &context.windows);
-    match window {
-        Some(window) => {
-            let rows = data_read::get_lookup_data_of_tab(
-                &context.em,
-                &context.dm,
-                &context.tables,
-                &window.main_tab,
-                global::PAGE_SIZE,
-                page,
-            )?;
-            Ok(rows)
-        }
-        None => Err(ServiceError::NotFound),
-    }
-}
-
-/// retrieve the first page of all lookup data
-/// used in this window
-/// Note: window is identified by it's table name of the main tab
-fn handle_lookup_all(
-    req: Request,
-    path: &[&str],
-) -> Result<impl Serialize, ServiceError> {
-    require_credentials(&req)?;
-    let table_name = path[0];
-    let credentials: Result<Credentials, ServiceError> =
-        TryFrom::try_from(&req);
-    let context = Context::create(credentials)?;
-    let table_name = TableName::from(&table_name);
-    let window = window::get_window(&table_name, &context.windows);
-    match window {
-        Some(window) => {
-            let lookup = data_read::get_all_lookup_for_window(
-                &context.em,
-                &context.dm,
-                &context.tables,
-                &window,
-                global::PAGE_SIZE,
-            )?;
-            Ok(lookup)
-        }
-        None => Err(ServiceError::NotFound),
-    }
-}
-
-// https://stackoverflow.com/questions/43419974/how-do-i-read-the-entire-body-of-a-tokio-based-hyper-request?rq=1
-// https://hyper.rs/guides/server/echo/
-fn handle_delete(
-    req: Request,
-    path: &[&str],
-) -> Box<Future<Item = Response, Error = Error>> {
-    let is_cred_ok = is_credentials_ok(&req);
-
-    let credentials: Result<Credentials, ServiceError> =
-        TryFrom::try_from(&req);
-    let context = Context::create(credentials).unwrap();
-
-    let table_name = path[0].to_string();
-    let f = req.body().concat2().map(move |chunk| {
-        let result = if is_cred_ok {
-            let body = chunk.into_iter().collect::<Vec<u8>>();
-            let body_str = String::from_utf8(body.clone()).unwrap();
-            let record_ids: Vec<String> =
-                serde_json::from_str(&body_str).unwrap();
-            delete_records(&context, &table_name, &record_ids)
-        } else {
-            Err(ServiceError::RequiredCredentialsNotFound)
-        };
-        create_response(result)
-    });
-    Box::new(f)
-}
-
-fn handle_record_changeset(
-    req: Request,
-    path: &[&str],
-) -> Box<Future<Item = Response, Error = Error>> {
-    let is_cred_ok = is_credentials_ok(&req);
-
-    let credentials: Result<Credentials, ServiceError> =
-        TryFrom::try_from(&req);
-    let context = Context::create(credentials).unwrap();
-
-    let table_name = path[0].to_string();
-    let f = req.body().concat2().map(move |chunk| {
-        let result = if is_cred_ok {
-            let body = chunk.into_iter().collect::<Vec<u8>>();
-            let body_str = String::from_utf8(body).unwrap();
-            let changeset: Result<RecordChangeset, _> =
-                serde_json::from_str(&body_str);
-            let changeset = changeset.unwrap_or_else(|_| {
-                panic!("unable to serialize from json {}", body_str)
-            });
-            update_record_changeset(&context, &table_name, &changeset)
-        } else {
-            Err(ServiceError::RequiredCredentialsNotFound)
-        };
-        create_response(result)
-    });
-    Box::new(f)
 }
 
 fn is_credentials_ok(req: &Request) -> bool {
     match require_credentials(&req) {
         Ok(()) => true,
         Err(_) => false,
-    }
-}
-
-fn handle_tab_changeset(
-    req: Request,
-) -> Box<Future<Item = Response, Error = Error>> {
-    let is_cred_ok = is_credentials_ok(&req);
-    let credentials: Result<Credentials, ServiceError> =
-        TryFrom::try_from(&req);
-    let context = Context::create(credentials).unwrap();
-
-    let f = req.body().concat2().map(move |chunk| {
-        let result = if is_cred_ok {
-            let body = chunk.into_iter().collect::<Vec<u8>>();
-            let body_str = String::from_utf8(body).unwrap();
-            let container: SaveContainer =
-                serde_json::from_str(&body_str).unwrap();
-            update_tab_changeset(&context, &container)
-        } else {
-            Err(ServiceError::RequiredCredentialsNotFound)
-        };
-        create_response(result)
-    });
-    Box::new(f)
-}
-
-fn delete_records(
-    context: &Context,
-    table_name: &str,
-    record_ids: &[String],
-) -> Result<Rows, ServiceError> {
-    let table_name = TableName::from(&table_name);
-    let window = window::get_window(&table_name, &context.windows);
-    match window {
-        Some(window) => {
-            let main_table = data_read::get_main_table(window, &context.tables);
-            assert!(main_table.is_some());
-            let main_table = main_table.unwrap();
-            println!(
-                "delete these records: {:?} from table: {:?}",
-                record_ids, table_name
-            );
-            let rows = data_modify::delete_records(
-                &context.dm,
-                &main_table,
-                &record_ids,
-            )?;
-            Ok(rows)
-        }
-        None => Err(ServiceError::NotFound),
-    }
-}
-
-fn update_tab_changeset(
-    context: &Context,
-    container: &SaveContainer,
-) -> Result<(), ServiceError> {
-    data_modify::save_container(&context.dm, &context.tables, &container)?;
-    Ok(())
-}
-
-fn update_record_changeset(
-    context: &Context,
-    table_name: &str,
-    changeset: &RecordChangeset,
-) -> Result<(), ServiceError> {
-    let table_name = TableName::from(&table_name);
-    let window = window::get_window(&table_name, &context.windows);
-    match window {
-        Some(window) => {
-            let table = data_read::get_main_table(window, &context.tables);
-            assert!(table.is_some());
-            let table = table.unwrap();
-            data_modify::save_changeset(
-                &context.dm,
-                &context.tables,
-                window,
-                &table,
-                changeset,
-            )?;
-            Ok(())
-        }
-        None => Err(ServiceError::NotFound),
     }
 }
 
