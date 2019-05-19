@@ -1,3 +1,5 @@
+use crate::Window;
+use either::Either;
 use rustorm::{
     ColumnName,
     Dao,
@@ -8,8 +10,6 @@ use serde::{
     Deserialize,
     Serialize,
 };
-use crate::Window;
-use either::Either;
 
 /// Holds the result for a sql query
 /// If there are multiple records
@@ -19,28 +19,30 @@ use either::Either;
 /// Then that record is retrieved and it's additional details as well.
 /// such as 1:1 records and related records in has_many and indirect table
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct QueryResult{
+pub struct QueryResult {
     pub window: Option<Window>,
-    pub record: Either<Rows, RecordDetail>
+    pub record: Either<Rows, RecordDetail>,
 }
 
 impl QueryResult {
-
     /// When there are multiple results of records
     pub fn with_rows(window: Option<Window>, rows: Rows) -> Self {
-        QueryResult{
+        QueryResult {
             window,
-            record:Either::Left(rows),
+            record: Either::Left(rows),
         }
     }
+
     /// When there is only 1 record
-    pub fn with_record_detail(window: Option<Window>, record_detail: RecordDetail) -> Self {
-        QueryResult{
+    pub fn with_record_detail(
+        window: Option<Window>,
+        record_detail: RecordDetail,
+    ) -> Self {
+        QueryResult {
             window,
             record: Either::Right(record_detail),
         }
     }
-
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
@@ -48,13 +50,13 @@ pub struct RecordDetail {
     pub record: Dao,
     pub one_ones: Vec<(TableName, Option<Dao>)>,
     pub has_many: Vec<(TableName, Rows)>,
+    // NOTE: indirect vec(linker_tablename, indirect_tablename, records)
     pub indirect: Vec<(TableName, TableName, Rows)>,
 }
 
-impl RecordDetail{
-
+impl RecordDetail {
     pub fn from_dao(dao: Dao) -> Self {
-        RecordDetail{
+        RecordDetail {
             record: dao,
             ..Default::default()
         }
@@ -102,113 +104,11 @@ pub struct Lookup(pub Vec<(TableName, Rows)>);
 
 /// the displayable column name, serves as identifier to human vision
 /// this would be name, title, first_name - lastname
-#[derive(Debug, Serialize,Deserialize,  Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct IdentifierDisplay {
     pub columns: Vec<ColumnName>,
     pub pk: Vec<ColumnName>,
     pub separator: Option<String>,
-}
-
-/// a limited condition statement, just needed for the simple usecase
-pub struct Condition {
-    pub left: ColumnName,
-    pub right: String,
-}
-impl From<&str> for Condition {
-    //TODO: verify if the column is really a column of the involved tables otherwise SQL injection
-    //is possible
-    fn from(s: &str) -> Self {
-        let splinters: Vec<&str> = s.split('=').collect();
-        assert_eq!(splinters.len(), 2);
-        let column = splinters[0];
-        let value = splinters[1].to_string();
-        let column_name = ColumnName::from(column);
-        Condition {
-            left: column_name,
-            right: value,
-        }
-    }
-}
-
-/// a limited filter structure which is used for the simple usecase of the client
-/// all conditions are AND together, and the operator depends on the data type of the column name
-/// String will be ILIKE '%?'
-/// Date will be in between
-/// number will text_cast then ilike
-pub struct Filter {
-    pub conditions: Vec<Condition>,
-}
-impl From<&str> for Filter {
-    fn from(s: &str) -> Self {
-        let splinters: Vec<&str> = s.split('&').collect();
-        let mut conditions = vec![];
-        for splinter in splinters.iter() {
-            let cond = Condition::from(*splinter);
-            conditions.push(cond);
-        }
-        Filter { conditions }
-    }
-}
-
-pub struct Order {
-    pub column_name: ColumnName,
-    pub direction: Direction,
-}
-
-impl From<&str> for Order {
-    fn from(s: &str) -> Self {
-        let splinters: Vec<&str> = s.split('.').collect();
-        let len = splinters.len();
-        let mut cols = splinters.clone();
-        let dir = cols.split_off(len - 1);
-        let direction = if dir.len() == 1 {
-            let dir = dir[0];
-            match dir {
-                "asc" => Some(Direction::Asc),
-                "desc" => Some(Direction::Desc),
-                _ => None,
-            }
-        } else {
-            None
-        };
-        let column = cols.join(".");
-        let column_name = ColumnName::from(&column);
-        match direction {
-            Some(direction) => {
-                Order {
-                    column_name,
-                    direction,
-                }
-            }
-            None => {
-                Order {
-                    column_name: ColumnName::from(&splinters.join(".")),
-                    direction: Direction::Asc,
-                }
-            }
-        }
-    }
-}
-
-#[derive(PartialEq)]
-pub enum Direction {
-    Asc,
-    Desc,
-}
-
-pub struct Sort {
-    pub orders: Vec<Order>,
-}
-impl From<&str> for Sort {
-    fn from(s: &str) -> Self {
-        let splinters: Vec<&str> = s.split(',').collect();
-        let mut orders = vec![];
-        for splinter in splinters.iter() {
-            let order: Order = (*splinter).into();
-            orders.push(order);
-        }
-        Sort { orders }
-    }
 }
 
 #[cfg(test)]

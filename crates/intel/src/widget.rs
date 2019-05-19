@@ -107,14 +107,14 @@ pub struct ControlWidget {
     pub alignment: Alignment,
 }
 
-#[derive(Debug, Serialize,Deserialize,  Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum Alignment {
     Left,
     Right,
     Center,
 }
 
-#[derive(Debug, Serialize,Deserialize,  Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum Dropdown {
     TableDropdown(DropdownInfo),
 }

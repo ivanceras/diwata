@@ -1,9 +1,5 @@
 use crate::{
     common,
-    data_container::{
-        Direction,
-        Sort,
-    },
     tab::Tab,
     table_intel,
 };
@@ -165,6 +161,7 @@ impl Query {
         self.append(&format!("\nFROM {} \n", table_name.safe_complete_name()));
     }
 
+    /*
     pub fn set_sort(&mut self, sort: Sort) {
         if !sort.orders.is_empty() {
             self.append("ORDER BY ");
@@ -185,6 +182,7 @@ impl Query {
             }
         }
     }
+    */
 
     pub fn set_page(&mut self, page: u32, page_size: u32) {
         self.append(&format!("\nLIMIT {} ", page_size));
