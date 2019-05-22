@@ -5,6 +5,6 @@ authors = ["Jovansonlee Cesar <ivanceras@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-sqlparser = "0.3.0"
+sqlparser = { path = "../sqlparser-rs" }
 csv = "1.0.2"
 rustorm = "0.13.0"
