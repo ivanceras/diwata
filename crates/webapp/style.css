@@ -119,6 +119,7 @@ ol, ul, li {
 
 .window_links_and_window_views{
     padding-top: 10px;
+    margin-left: 20px;
 }
 
 .window {
@@ -166,6 +167,7 @@ ol, ul, li {
     border-top-right-radius: 4px;
     border-bottom-right-radius: 4px;
     border-bottom-left-radius: 4px;
+    box-shadow: 0 1px 6px rgba(57,73,76,0.35);
 }
 
 .toolbar_and_query_view{

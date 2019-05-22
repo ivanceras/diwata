@@ -13,3 +13,6 @@
 [submodule "crates/dota-sql"]
 	path = crates/dota-sql
 	url = https://ivanceras@github.com/ivanceras/dota-sql.git
+[submodule "crates/sqlparser-rs"]
+	path = crates/sqlparser-rs
+	url = https://ivanceras@github.com/ivanceras/sqlparser-rs.git

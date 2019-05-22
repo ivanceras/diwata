@@ -128,7 +128,7 @@ mod tests {
         assert!(window.is_some());
         let window = window.unwrap();
         let data =
-            get_maintable_data(&em, &dm, &tables, &window, None, None, 200, 1);
+            get_first_page(&em, &dm, &tables, &window, 20);
         println!("data: {:#?}", data);
         assert!(data.is_ok());
     }
