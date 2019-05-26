@@ -1,2 +1,2 @@
-web: ./target/release/diwata
+web: ./target/release/diwata_server --db-url=$DATABASE_URL
 
