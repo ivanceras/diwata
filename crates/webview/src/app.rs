@@ -24,6 +24,7 @@ mod window_view;
 #[allow(clippy::large_enum_variant)]
 pub enum Msg {
     ActivateWindow(usize),
+    RemoveWindow(usize),
     WindowMsg(usize, window_view::Msg),
     BrowserResized(i32, i32),
     Tick,
@@ -99,6 +100,12 @@ impl App {
         self.update_active_window();
     }
 
+    fn remove_window(&mut self, index: usize) {
+        self.window_views.remove(index);
+        //TODO: activate the last opened one
+        self.activate_window(0);
+    }
+
     fn setup_window_resize_listener(&self) -> Cmd<App, Msg> {
         Browser::onresize(Msg::BrowserResized)
     }
@@ -116,6 +123,10 @@ impl Component<Msg> for App {
         match msg {
             Msg::ActivateWindow(index) => {
                 self.activate_window(index);
+                Cmd::none()
+            }
+            Msg::RemoveWindow(index) => {
+                self.remove_window(index);
                 Cmd::none()
             }
             //FIXME: This is managed here since Mapping in Cmd is not yet solved/supported
@@ -293,7 +304,9 @@ impl Component<Msg> for App {
                                                     classes_flag([("active", window.is_visible)]),
                                                     onclick(move |_| Msg::ActivateWindow(index)),
                                                 ],
-                                                [text(&window.name)],
+                                                [text(&window.name),
+                                                button([class("window_close_btn"), onclick(move|_|Msg::RemoveWindow(index))], [text("x")])
+                                                ]
                                             )
                                         })
                                         .collect::<Vec<Node<Msg>>>(),

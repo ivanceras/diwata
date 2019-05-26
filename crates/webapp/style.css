@@ -1,5 +1,5 @@
 /* CSS reset */
-body,div,dl,dt,dd,ul,ol,li,h1,h2,h3,h4,h5,h6,pre,form,fieldset,input,textarea,p,blockquote,th,td { 
+body,div,dl,dt,dd,ul,ol,li,h1,h2,h3,h4,h5,h6,pre,form,fieldset,input,textarea,p,blockquote,th,td {
     margin:0;
     padding:0;
 }
@@ -11,7 +11,7 @@ table {
     border-collapse:collapse;
     border-spacing:0;
 }
-fieldset,img { 
+fieldset,img {
     border:0;
 }
 input{
@@ -161,7 +161,7 @@ ol, ul, li {
     display: flex;
     flex-direction: row;
     background-color: #f5f5f4;
-    border-color: #888; 
+    border-color: #888;
     border-style: solid;
     border-width: 0 1px 1px 1px;
     border-top-right-radius: 4px;
@@ -251,7 +251,7 @@ ol, ul, li {
 .tab_links.active{
     background-color: #f5f5f4;
     /*Makes the active tab connects with the container */
-    margin-bottom: -1px; 
+    margin-bottom: -1px;
 }
 
 .has_many_tabs_link {
@@ -451,7 +451,7 @@ input.column_filter[type="text"]{
     width: 30px;
 }
 
-/*ol in table_view, listing of normal_rows 
+/*ol in table_view, listing of normal_rows
  * can move: left, right, up, down */
 .normal_rows{
     display: flex;
@@ -474,7 +474,7 @@ input.column_filter[type="text"]{
 .normal_rows, .frozen_columns_container {
 }
 
-/* li, a row in the frozen column 
+/* li, a row in the frozen column
  * the height should align the .row  */
 .frozen_column_row {
 }
