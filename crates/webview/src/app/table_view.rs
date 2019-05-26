@@ -67,8 +67,6 @@ impl TableView {
     /// replace all the data with a new data row
     /// TODO: also update the freeze_columns for each row_views
     pub fn set_data_rows(&mut self, data_row: Vec<DataRow>) {
-        sauron::log!("Setting data row in table_view: {:#?}", data_row);
-        sauron::log!("There are {} data_row", data_row.len());
         self.row_views = data_row
             .into_iter()
             .enumerate()
@@ -267,11 +265,6 @@ impl TableView {
     /// The rest of the columns and move in any direction
     fn view_normal_rows(&self) -> Node<Msg> {
         // can move: left, right, up, down
-        sauron::log!(
-            "In view normal rows: There are {} row_views in {}",
-            self.row_views.len(),
-            self.name
-        );
         ol(
             [
                 class("normal_rows"),

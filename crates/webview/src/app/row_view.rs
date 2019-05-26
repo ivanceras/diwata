@@ -22,8 +22,6 @@ pub struct RowView {
 
 impl RowView {
     pub fn new(index: usize, data_rows: DataRow, data_columns: &[DataColumn]) -> Self {
-        sauron::log!("data_rows: {}", data_rows.len());
-        sauron::log!("data_columns: {}", data_columns.len());
         RowView {
             index,
             fields: data_rows
@@ -37,7 +35,6 @@ impl RowView {
     }
 
     pub fn freeze_columns(&mut self, columns: Vec<usize>) {
-        sauron::log!("row view freeze columns: {:?}", columns);
         self.frozen_fields = columns;
         self.update_frozen_column_fields();
     }

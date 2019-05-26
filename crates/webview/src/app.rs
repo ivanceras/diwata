@@ -30,6 +30,7 @@ pub enum Msg {
     WindowListMsg(window_list_view::Msg),
     FetchWindowList(Result<Vec<GroupedWindow>, JsValue>),
     ReceivedWindowQueryResult(usize, Result<QueryResult, JsValue>),
+    ReceivedWindowData(Result<QueryResult, JsValue>),
 }
 
 pub struct App {
@@ -149,6 +150,12 @@ impl Component<Msg> for App {
                 sauron::log("Ticking");
                 Cmd::none()
             }
+            Msg::WindowListMsg(window_list_view::Msg::ClickedWindow(table_name)) => {
+                sauron::log!("fetching data for {}", table_name.complete_name());
+                rest_api::fetch_window_data(&table_name, move |window_rows| {
+                    Msg::ReceivedWindowData(window_rows)
+                })
+            }
             Msg::WindowListMsg(window_list_msg) => {
                 self.window_list_view.update(window_list_msg);
                 Cmd::none()
@@ -163,9 +170,51 @@ impl Component<Msg> for App {
                 Cmd::none()
             }
 
-            // FIXME: Also return the window, since the table
-            // in the select from can be anything other than
-            // the window's current main table.
+            Msg::ReceivedWindowData(query_result) => {
+                match query_result{
+                    Ok(query_result) => {
+                        if let Some(window) = query_result.window {
+                        let window_clone = window.clone();
+                        let sql_query = format!("SELECT * FROM {}", window.table_name().complete_name());
+                        query_result
+                            .record
+                            .map_left(|rows| {
+                                let mut new_window = WindowView::new(
+                                    window_clone,
+                                    self.browser_width,
+                                    self.browser_height,
+                                );
+                                let mut window_data = WindowData::from_rows(rows);
+                                window_data.sql_query = Some(sql_query.to_string());
+                                // set the previous sql query
+                                new_window.set_window_data(window_data);
+                                // replace the previous window
+                                self.window_views.push(new_window);
+                                let index = self.window_views.len();
+                                self.activate_window(index-1);
+                            })
+                            .map_right(|record_detail| {
+                                let mut new_window =
+                                    WindowView::new(window, self.browser_width, self.browser_height);
+                                let mut window_data = WindowData::from_record_detail(record_detail);
+                                window_data.sql_query = Some(sql_query.to_string());
+                                new_window.set_window_data(window_data);
+                                self.window_views.push(new_window);
+                                let index = self.window_views.len();
+                                self.activate_window(index-1);
+                                });
+                        } else {
+                            sauron::log!("No window returned in query result");
+                        }
+                        Cmd::none()
+                    }
+                    Err(err) => {
+                        sauron::log!("error fetching window data: {:?}", err);
+                        Cmd::none()
+                    }
+                }
+            }
+
             Msg::ReceivedWindowQueryResult(index, Ok(query_result)) => {
                 sauron::log!("Received window query result: {:#?}", query_result.record);
                 if let Some(window) = query_result.window {

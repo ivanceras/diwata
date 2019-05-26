@@ -123,6 +123,10 @@ impl Window {
                 indirect_tab.tab.has_column_name(column_name)
             })
     }
+
+    pub fn table_name(&self) -> TableName{
+        self.main_tab.table_name.clone()
+    }
 }
 
 fn has_repeating_tab(

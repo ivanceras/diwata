@@ -1,5 +1,5 @@
 use crate::app::{App, Msg};
-use diwata_intel::{data_container::QueryResult, Rows, Window};
+use diwata_intel::{data_container::QueryResult, Rows, Window, TableName};
 use sauron::{Cmd, Http};
 use wasm_bindgen::JsValue;
 
@@ -25,4 +25,12 @@ where
         }
     };
     Http::fetch_with_text_response_decoder(&url, text_decoder, msg_receiver)
+}
+
+pub fn fetch_window_data<F>(table_name: &TableName, msg_receiver: F) -> Cmd<App, Msg>
+where
+    F: Fn(Result<QueryResult, JsValue>) -> Msg + Clone + 'static,
+{
+    let sql = format!("SELECT * FROM {} LIMIT 40",table_name.complete_name());
+    execute_sql_query(sql, msg_receiver)
 }

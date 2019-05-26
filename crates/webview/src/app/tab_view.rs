@@ -56,7 +56,6 @@ impl TabView {
     }
 
     pub fn freeze_columns(&mut self, columns: Vec<usize>) {
-        sauron::log!("freeze columns: {:?}", columns);
         self.table_view.freeze_columns(columns);
     }
     pub fn set_frozen_data(&mut self, frozen_data: FrozenData) {
@@ -111,10 +110,6 @@ impl TabView {
     /// check whether to be displayed in detail view if this
     /// a one one tab with only 1 record
     fn update_view(&mut self) {
-        sauron::log!(
-            "update view when set in is_one_on with: {}",
-            self.is_one_one
-        );
         if self.is_one_one {
             if self.table_view.row_views.len() == 1 {
                 sauron::log!("Succeed one_one_tab");
