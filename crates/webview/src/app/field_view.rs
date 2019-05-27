@@ -54,7 +54,7 @@ impl FieldView {
             Value::Float(v) => input([r#type("number"), classes, value(v.to_string())], []),
             Value::Double(v) => input([r#type("number"), classes, value(v.to_string())], []),
             Value::BigDecimal(v) => input([r#type("number"), classes, value(v.to_string())], []),
-            Value::Timestamp(v) => input([r#type("date"), classes, value(v.to_rfc3339())], []),
+            Value::Timestamp(v) => input([r#type("date"), classes, value(v.format("%Y-%m-%d").to_string())], []),
             Value::Date(v) => input([r#type("date"), classes, value(v.format("%Y-%m-%d").to_string())], []),
             _ => {
                 sauron::log!("todo for: {:?}", self.value);
