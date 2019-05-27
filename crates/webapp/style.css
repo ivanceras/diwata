@@ -17,7 +17,6 @@ fieldset,img {
 input{
     border:1px solid #b0b0b0;
     padding:3px 5px 4px;
-    color:#979797;
     width:190px;
 }
 address,caption,cite,code,dfn,th,var {
@@ -505,7 +504,8 @@ input.column_filter[type="text"]{
 .value{
 }
 
-input.value[type="text"]{
+input.value[type="text"], input.value[type="number"], input.value[type="date"]
+{
     border: 0;
     border-bottom: 1px solid #ccc;
 }

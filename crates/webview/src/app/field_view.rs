@@ -36,6 +36,32 @@ impl FieldView {
     pub fn set_is_frozen_column(&mut self, frozen: bool) {
         self.is_frozen_column = frozen;
     }
+
+    fn view_value(&self) -> Node<Msg> {
+        let classes = classes_flag([
+                        ("value", true),
+                        ("frozen_row", self.is_frozen_row),
+                        ("frozen_column", self.is_frozen_column),
+                    ]);
+        match &self.value{
+            Value::Nil => input([r#type("text"), classes, value("")], []),
+            Value::Text(v) => input([r#type("text"), classes, value(v)], []),
+            Value::Bool(v) => input([r#type("checkbox"), classes], []),
+            Value::Tinyint(v) => input([r#type("number"), classes, value(v.to_string())], []),
+            Value::Smallint(v) => input([r#type("number"), classes, value(v.to_string())], []),
+            Value::Int(v) => input([r#type("number"), classes, value(v.to_string())], []),
+            Value::Bigint(v) => input([r#type("number"), classes, value(v.to_string())], []),
+            Value::Float(v) => input([r#type("number"), classes, value(v.to_string())], []),
+            Value::Double(v) => input([r#type("number"), classes, value(v.to_string())], []),
+            Value::BigDecimal(v) => input([r#type("number"), classes, value(v.to_string())], []),
+            Value::Timestamp(v) => input([r#type("date"), classes, value(v.to_rfc3339())], []),
+            Value::Date(v) => input([r#type("date"), classes, value(v.format("%Y-%m-%d").to_string())], []),
+            _ => {
+                sauron::log!("todo for: {:?}", self.value);
+                text("unknown")
+            }
+        }
+    }
 }
 
 impl Component<Msg> for FieldView {
@@ -56,19 +82,7 @@ impl Component<Msg> for FieldView {
                     ("frozen_column", self.is_frozen_column),
                 ]),
             ],
-            [input(
-                [
-                    r#type("text"),
-                    class("value"),
-                    classes_flag([
-                        ("frozen_row", self.is_frozen_row),
-                        ("frozen_column", self.is_frozen_column),
-                    ]),
-                    onchange(|input| Msg::ChangeValue(input.value)),
-                    value(format!("{:?}", self.value)),
-                ],
-                [],
-            )],
+            [self.view_value()]
         )
     }
 }
