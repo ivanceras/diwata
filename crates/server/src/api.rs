@@ -41,6 +41,7 @@ fn require_credentials(req: &HttpRequest) -> Result<(), ServiceError> {
 }
 
 
+// FIXME: learn how to do custom error in actix
 pub fn windows(
     req: HttpRequest,
 ) -> impl Future<Item = HttpResponse, Error = Error> {
@@ -65,6 +66,7 @@ pub fn windows(
         })
 }
 
+// FIXME: learn how to do custom error in actix
 pub fn sql(
     req: HttpRequest,
 ) -> impl Future<Item = HttpResponse, Error = Error> {
