@@ -49,7 +49,7 @@ pub fn get_database_name(
     em.get_database_name()
 }
 
-pub fn execute_sql_query<'a>(
+pub fn execute_sql_query(
     context: &Context,
     sql: String,
 ) -> Result<QueryResult, DbError> {
