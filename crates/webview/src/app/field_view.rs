@@ -39,11 +39,11 @@ impl FieldView {
 
     fn view_value(&self) -> Node<Msg> {
         let classes = classes_flag([
-                        ("value", true),
-                        ("frozen_row", self.is_frozen_row),
-                        ("frozen_column", self.is_frozen_column),
-                    ]);
-        match &self.value{
+            ("value", true),
+            ("frozen_row", self.is_frozen_row),
+            ("frozen_column", self.is_frozen_column),
+        ]);
+        match &self.value {
             Value::Nil => input([r#type("text"), classes, value("")], []),
             Value::Text(v) => input([r#type("text"), classes, value(v)], []),
             Value::Bool(v) => input([r#type("checkbox"), classes], []),
@@ -54,8 +54,22 @@ impl FieldView {
             Value::Float(v) => input([r#type("number"), classes, value(v.to_string())], []),
             Value::Double(v) => input([r#type("number"), classes, value(v.to_string())], []),
             Value::BigDecimal(v) => input([r#type("number"), classes, value(v.to_string())], []),
-            Value::Timestamp(v) => input([r#type("date"), classes, value(v.format("%Y-%m-%d").to_string())], []),
-            Value::Date(v) => input([r#type("date"), classes, value(v.format("%Y-%m-%d").to_string())], []),
+            Value::Timestamp(v) => input(
+                [
+                    r#type("date"),
+                    classes,
+                    value(v.format("%Y-%m-%d").to_string()),
+                ],
+                [],
+            ),
+            Value::Date(v) => input(
+                [
+                    r#type("date"),
+                    classes,
+                    value(v.format("%Y-%m-%d").to_string()),
+                ],
+                [],
+            ),
             _ => {
                 sauron::log!("todo for: {:?}", self.value);
                 text("unknown")
@@ -82,7 +96,7 @@ impl Component<Msg> for FieldView {
                     ("frozen_column", self.is_frozen_column),
                 ]),
             ],
-            [self.view_value()]
+            [self.view_value()],
         )
     }
 }

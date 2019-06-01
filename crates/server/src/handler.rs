@@ -38,7 +38,6 @@ use diwata_intel::{
     window,
     IndirectTab,
 };
-use hyper::server::Http;
 use log::*;
 use ron;
 use rustorm::{

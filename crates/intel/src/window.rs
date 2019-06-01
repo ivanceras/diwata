@@ -124,7 +124,7 @@ impl Window {
             })
     }
 
-    pub fn table_name(&self) -> TableName{
+    pub fn table_name(&self) -> TableName {
         self.main_tab.table_name.clone()
     }
 }

@@ -1,6 +1,5 @@
 use crate::{assets, widgets};
-use diwata_intel::window::GroupedWindow;
-use diwata_intel::TableName;
+use diwata_intel::{window::GroupedWindow, TableName};
 use sauron::{
     html::{attributes::*, events::*, *},
     Cmd, Component, Node,
@@ -89,14 +88,22 @@ impl Component<Msg> for WindowListView {
                                             .window_names
                                             .iter()
                                             .map(|win_name| {
-                                                let table_name:TableName = win_name.table_name.clone();
+                                                let table_name: TableName =
+                                                    win_name.table_name.clone();
                                                 li(
                                                     [key(table_name.complete_name())],
                                                     [a(
                                                         [
-                                                            href(format!("#{}", &table_name.complete_name())),
+                                                            href(format!(
+                                                                "#{}",
+                                                                &table_name.complete_name()
+                                                            )),
                                                             class("window_list_link"),
-                                                            onclick(move |_|Msg::ClickedWindow(table_name.clone())),
+                                                            onclick(move |_| {
+                                                                Msg::ClickedWindow(
+                                                                    table_name.clone(),
+                                                                )
+                                                            }),
                                                         ],
                                                         [
                                                             span(

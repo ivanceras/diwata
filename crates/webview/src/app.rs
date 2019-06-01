@@ -182,37 +182,42 @@ impl Component<Msg> for App {
             }
 
             Msg::ReceivedWindowData(query_result) => {
-                match query_result{
+                match query_result {
                     Ok(query_result) => {
                         if let Some(window) = query_result.window {
-                        let window_clone = window.clone();
-                        let sql_query = format!("SELECT * FROM {}", window.table_name().complete_name());
-                        query_result
-                            .record
-                            .map_left(|rows| {
-                                let mut new_window = WindowView::new(
-                                    window_clone,
-                                    self.browser_width,
-                                    self.browser_height,
-                                );
-                                let mut window_data = WindowData::from_rows(rows);
-                                window_data.sql_query = Some(sql_query.to_string());
-                                // set the previous sql query
-                                new_window.set_window_data(window_data);
-                                // replace the previous window
-                                self.window_views.push(new_window);
-                                let index = self.window_views.len();
-                                self.activate_window(index-1);
-                            })
-                            .map_right(|record_detail| {
-                                let mut new_window =
-                                    WindowView::new(window, self.browser_width, self.browser_height);
-                                let mut window_data = WindowData::from_record_detail(record_detail);
-                                window_data.sql_query = Some(sql_query.to_string());
-                                new_window.set_window_data(window_data);
-                                self.window_views.push(new_window);
-                                let index = self.window_views.len();
-                                self.activate_window(index-1);
+                            let window_clone = window.clone();
+                            let sql_query =
+                                format!("SELECT * FROM {}", window.table_name().complete_name());
+                            query_result
+                                .record
+                                .map_left(|rows| {
+                                    let mut new_window = WindowView::new(
+                                        window_clone,
+                                        self.browser_width,
+                                        self.browser_height,
+                                    );
+                                    let mut window_data = WindowData::from_rows(rows);
+                                    window_data.sql_query = Some(sql_query.to_string());
+                                    // set the previous sql query
+                                    new_window.set_window_data(window_data);
+                                    // replace the previous window
+                                    self.window_views.push(new_window);
+                                    let index = self.window_views.len();
+                                    self.activate_window(index - 1);
+                                })
+                                .map_right(|record_detail| {
+                                    let mut new_window = WindowView::new(
+                                        window,
+                                        self.browser_width,
+                                        self.browser_height,
+                                    );
+                                    let mut window_data =
+                                        WindowData::from_record_detail(record_detail);
+                                    window_data.sql_query = Some(sql_query.to_string());
+                                    new_window.set_window_data(window_data);
+                                    self.window_views.push(new_window);
+                                    let index = self.window_views.len();
+                                    self.activate_window(index - 1);
                                 });
                         } else {
                             sauron::log!("No window returned in query result");
@@ -304,9 +309,18 @@ impl Component<Msg> for App {
                                                     classes_flag([("active", window.is_visible)]),
                                                     onclick(move |_| Msg::ActivateWindow(index)),
                                                 ],
-                                                [text(&window.name),
-                                                button([class("window_close_btn"), onclick(move|_|Msg::RemoveWindow(index))], [text("x")])
-                                                ]
+                                                [
+                                                    text(&window.name),
+                                                    button(
+                                                        [
+                                                            class("window_close_btn"),
+                                                            onclick(move |_| {
+                                                                Msg::RemoveWindow(index)
+                                                            }),
+                                                        ],
+                                                        [text("x")],
+                                                    ),
+                                                ],
                                             )
                                         })
                                         .collect::<Vec<Node<Msg>>>(),

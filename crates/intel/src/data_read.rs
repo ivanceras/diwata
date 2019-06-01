@@ -61,8 +61,10 @@ pub fn execute_sql_query<'a>(
             if let Some(table_name) = query_parser::extract_table_name(&ast[0])
             {
                 let table_name = TableName::from(&table_name);
-                let table = table_intel::get_table(&table_name, &context.tables);
-                window::find_window(&table_name, &context.windows).map(Clone::clone)
+                let table =
+                    table_intel::get_table(&table_name, &context.tables);
+                window::find_window(&table_name, &context.windows)
+                    .map(Clone::clone)
             } else {
                 None
             }
@@ -127,8 +129,7 @@ mod tests {
         let window = window::get_window(&table_name, &windows);
         assert!(window.is_some());
         let window = window.unwrap();
-        let data =
-            get_first_page(&em, &dm, &tables, &window, 20);
+        let data = get_first_page(&em, &dm, &tables, &window, 20);
         println!("data: {:#?}", data);
         assert!(data.is_ok());
     }
