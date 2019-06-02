@@ -1,4 +1,4 @@
-#!/bin.sh
+#!/bin/sh
 set -v
 if cd crates/webapp && wasm-pack build --target no-modules --release; then
     cd -

@@ -48,6 +48,7 @@ impl FieldView {
         match &self.value {
             Value::Nil => input([r#type("text"), classes, value("")], []),
             Value::Text(v) => input([r#type("text"), classes, value(v)], []),
+            Value::Uuid(v) => input([r#type("text"), classes, value(v.to_string())], []),
             Value::Bool(v) => input([r#type("checkbox"), classes], []),
             Value::Tinyint(v) => input([r#type("number"), classes, value(v.to_string())], []),
             Value::Smallint(v) => input([r#type("number"), classes, value(v.to_string())], []),

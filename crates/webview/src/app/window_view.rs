@@ -136,7 +136,7 @@ impl Component<Msg> for WindowView {
                                         .enumerate()
                                         .map(|(index, tab)| {
                                             details(
-                                                [class("one_one_tab")],
+                                                [class("one_one_tab"), open(true)],
                                                 [
                                                     sauron::html::summary([], [text(&tab.name)]),
                                                     TabView::view(tab).map(move |tab_msg| {
