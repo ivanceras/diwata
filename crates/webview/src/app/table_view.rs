@@ -61,6 +61,7 @@ impl TableView {
             description: field.description.clone(),
             tags: vec![],
             data_type: field.get_data_type().clone(),
+            is_primary: field.is_primary,
         }
     }
 

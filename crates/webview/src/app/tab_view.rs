@@ -8,7 +8,7 @@ use crate::{
 };
 use data_table::DataRow;
 
-use diwata_intel::Tab;
+use diwata_intel::{Tab, TableName};
 use sauron::{
     html::{attributes::*, *},
     Cmd, Component, Node,
@@ -22,8 +22,9 @@ pub enum Msg {
 
 pub struct TabView {
     pub name: String,
+    pub table_name: TableName,
     detail_view: DetailView,
-    table_view: TableView,
+    pub table_view: TableView,
     pub is_visible: bool,
     /// one_one_tab should only contain at most 1 datarow and is on detail view
     is_one_one: bool,
@@ -33,6 +34,7 @@ impl TabView {
     pub fn new(tab: Tab) -> Self {
         TabView {
             name: tab.name.clone(),
+            table_name: tab.table_name.clone(),
             table_view: TableView::from_tab(tab),
             detail_view: DetailView::new(),
             is_visible: true,
@@ -129,15 +131,17 @@ impl Component<Msg> for TabView {
         match msg {
             Msg::TableMsg(table_view::Msg::RowMsg(row_index, row_view::Msg::DoubleClick)) => {
                 self.show_detail_view(row_index);
+                Cmd::none()
             }
             Msg::TableMsg(table_msg) => {
                 self.table_view.update(table_msg);
+                Cmd::none()
             }
             Msg::DetailViewMsg(detail_msg) => {
                 self.detail_view.update(detail_msg);
+                Cmd::none()
             }
         }
-        Cmd::none()
     }
     fn view(&self) -> Node<Msg> {
         section(

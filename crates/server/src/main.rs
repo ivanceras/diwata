@@ -57,8 +57,17 @@ fn main() -> io::Result<()> {
             .wrap(Logger::default())
             .wrap(error_handlers)
             .service(web::resource("/").route(web::get().to_async(page::index)))
-            .service(web::resource("/sql/").route(web::get().to_async(api::sql)))
-            .service(web::resource("/windows").route(web::get().to_async(api::windows)))
+            .service(
+                web::resource("/sql/").route(web::get().to_async(api::sql)),
+            )
+            .service(
+                web::resource("/windows")
+                    .route(web::get().to_async(api::windows)),
+            )
+            .service(
+                web::resource("/record_detail/{table_name}/")
+                    .route(web::get().to_async(api::record_detail)),
+            )
             .service(fs::Files::new("/webapp", "crates/webapp/"))
     };
 

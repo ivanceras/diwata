@@ -20,7 +20,7 @@ use std::{
 };
 use uuid::Uuid;
 
-pub fn calc_offset(page: u32, page_size: u32) -> u32 {
+pub fn calc_offset(page: usize, page_size: usize) -> usize {
     (page - 1) * page_size
 }
 

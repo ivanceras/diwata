@@ -20,7 +20,6 @@ cfg-if = "0.1.2"
 diwata_intel = { version = "0.1.2", features = ["with-rustorm", "with-postgres"] }
 rustorm =  {version = "0.13", features = ["with-postgres"]}
 ron = "0.5.1"
-serde_urlencoded = "0.5.5"
 actix-web = "1.0.0-beta.5"
 actix-files = "0.1.0-beta.4"
 actix-session = "0.1.0-beta.4"

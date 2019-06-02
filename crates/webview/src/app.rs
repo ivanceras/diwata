@@ -1,5 +1,7 @@
 use crate::{data::WindowData, rest_api};
-use diwata_intel::{data_container::QueryResult, window::GroupedWindow, Rows, Window};
+use diwata_intel::{
+    data_container::QueryResult, window::GroupedWindow, RecordDetail, Rows, Window,
+};
 use sauron::{
     html::{attributes::*, events::*, *},
     Browser, Cmd, Component, Dispatch, Http, Node,
@@ -32,6 +34,7 @@ pub enum Msg {
     FetchWindowList(Result<Vec<GroupedWindow>, JsValue>),
     ReceivedWindowQueryResult(usize, Result<QueryResult, JsValue>),
     ReceivedWindowData(Result<QueryResult, JsValue>),
+    ReceivedWindowMainTabDetail(usize, Result<RecordDetail, JsValue>),
 }
 
 pub struct App {
@@ -129,12 +132,36 @@ impl Component<Msg> for App {
                 self.remove_window(index);
                 Cmd::none()
             }
+
+            Msg::WindowMsg(
+                window_index,
+                window_view::Msg::MainTabMsg(tab_view::Msg::TableMsg(table_view::Msg::RowMsg(
+                    row_index,
+                    row_view::Msg::DoubleClick,
+                ))),
+            ) => {
+                sauron::log!("Row {} is dblclicked", row_index);
+                let window_msg = window_view::Msg::MainTabMsg(tab_view::Msg::TableMsg(
+                    table_view::Msg::RowMsg(row_index, row_view::Msg::DoubleClick),
+                ));
+                let window_view = &mut self.window_views[window_index];
+                window_view.update(window_msg);
+                let main_tab_view = &window_view.main_tab;
+                let table_name = &main_tab_view.table_name;
+                let dao = &main_tab_view.table_view.row_views[row_index].primary_dao();
+                rest_api::retrieve_detail_for_main_tab(
+                    window_index,
+                    table_name,
+                    dao,
+                    move |detail| Msg::ReceivedWindowMainTabDetail(window_index, detail),
+                )
+            }
             //FIXME: This is managed here since Mapping in Cmd is not yet solved/supported
             Msg::WindowMsg(index, window_view::Msg::ToolbarMsg(toolbar_view::Msg::RunQuery)) => {
                 let sql = self.window_views[index].sql_query();
                 if let Some(sql) = sql {
                     sauron::log!("In app.rs Run the query: {}", sql);
-                    rest_api::execute_sql_query(sql, move |window_rows| {
+                    rest_api::execute_sql_query(&sql, move |window_rows| {
                         Msg::ReceivedWindowQueryResult(index, window_rows)
                     })
                 } else {
@@ -267,6 +294,14 @@ impl Component<Msg> for App {
             }
             Msg::ReceivedWindowQueryResult(index, Err(err)) => {
                 sauron::log!("Error retrieveing records from sql query");
+                Cmd::none()
+            }
+            Msg::ReceivedWindowMainTabDetail(window_index, Ok(record_detail)) => {
+                sauron::log!("Got window main tab detail: {:#?}", record_detail);
+                Cmd::none()
+            }
+            Msg::ReceivedWindowMainTabDetail(window_index, Err(record_detail)) => {
+                sauron::log!("Error retrieveing window main tab detail..");
                 Cmd::none()
             }
         }

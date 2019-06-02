@@ -6,6 +6,7 @@ use crate::{
 use diwata_intel::{
     cache,
     Context,
+    TableName,
     Window,
 };
 use rustorm::{
@@ -13,6 +14,7 @@ use rustorm::{
     EntityManager,
     Table,
 };
+use std::collections::HashMap;
 
 pub fn create_context(
     credentials: Result<Credentials, ServiceError>,
@@ -45,9 +47,25 @@ pub fn create_context(
     Ok(Context {
         em: active_em,
         dm: active_dm,
-        tables,
-        windows,
+        tables: to_hashmap_tables(tables),
+        windows: to_hashmap_windows(windows),
     })
+}
+
+fn to_hashmap_tables(tables: Vec<Table>) -> HashMap<TableName, Table> {
+    let mut hash = HashMap::new();
+    for table in tables {
+        hash.insert(table.name.clone(), table);
+    }
+    hash
+}
+
+fn to_hashmap_windows(windows: Vec<Window>) -> HashMap<TableName, Window> {
+    let mut hash = HashMap::new();
+    for win in windows {
+        hash.insert(win.main_tab.table_name.clone(), win);
+    }
+    hash
 }
 
 /// set the session user for the database connection

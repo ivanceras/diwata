@@ -18,12 +18,13 @@ pub struct DataTable {
 }
 
 /// the name of field and the type
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct DataColumn {
     pub name: String,
     pub description: Option<String>,
     pub tags: Vec<String>,
     pub data_type: Type,
+    pub is_primary: bool,
 }
 
 impl DataColumn {

@@ -1,7 +1,9 @@
 use diwata_intel::error::IntelError;
 use rustorm::error::DbError;
-use std::error::Error;
-use std::fmt;
+use std::{
+    error::Error,
+    fmt,
+};
 
 #[derive(Debug)]
 pub enum ServiceError {
@@ -15,12 +17,10 @@ pub enum ServiceError {
     RequiredCredentialsNotFound,
 }
 
-impl Error for ServiceError{
-}
+impl Error for ServiceError {}
 
-impl fmt::Display for ServiceError{
-
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result{
+impl fmt::Display for ServiceError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{:#?}", self)
     }
 }

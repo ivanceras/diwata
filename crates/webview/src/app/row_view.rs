@@ -1,5 +1,6 @@
 use crate::app::field_view::{self, FieldView};
 use data_table::{DataColumn, DataRow};
+use diwata_intel::Dao;
 use sauron::{
     html::{attributes::*, events::*, *},
     Cmd, Component, Node,
@@ -32,6 +33,20 @@ impl RowView {
             frozen_fields: vec![],
             is_frozen: false,
         }
+    }
+
+    /// return the primary columns value pair
+    pub fn primary_dao(&self) -> Dao {
+        self.fields
+            .iter()
+            .filter(|field| field.borrow().column.is_primary)
+            .fold(Dao::new(), |mut dao, field_view| {
+                let field = field_view.borrow();
+                let column = &field.column.name;
+                let value = &field.value;
+                dao.insert(column, value.clone());
+                dao
+            })
     }
 
     pub fn freeze_columns(&mut self, columns: Vec<usize>) {

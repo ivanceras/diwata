@@ -26,20 +26,20 @@ pub struct QueryResult {
 
 impl QueryResult {
     /// When there are multiple results of records
-    pub fn with_rows(window: Option<Window>, rows: Rows) -> Self {
+    pub fn with_rows(window: Option<&Window>, rows: Rows) -> Self {
         QueryResult {
-            window,
+            window: window.map(Clone::clone),
             record: Either::Left(rows),
         }
     }
 
     /// When there is only 1 record
     pub fn with_record_detail(
-        window: Option<Window>,
+        window: Option<&Window>,
         record_detail: RecordDetail,
     ) -> Self {
         QueryResult {
-            window,
+            window: window.map(Clone::clone),
             record: Either::Right(record_detail),
         }
     }

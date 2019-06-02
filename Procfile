@@ -1,2 +1,2 @@
-web: ./target/release/diwata_server --db-url=$DATABASE_URL --port=$PORT
+web: DATABASE_URL=$DATABASE_URL PORT=$PORT ./target/release/diwata_server
 

@@ -233,7 +233,7 @@ pub fn derive_all_windows(tables: &[Table]) -> Vec<Window> {
 /// Stricly matching the tablename for the window to find.
 /// TableName should have a schema specified in it, in order to find the matching
 /// window
-pub fn get_window<'t>(
+fn get_window<'t>(
     table_name: &TableName,
     windows: &'t [Window],
 ) -> Option<&'t Window> {
@@ -246,7 +246,7 @@ pub fn get_window<'t>(
 /// schema and table_name.
 /// If there is none it will try to match only the name of the table
 /// as the case for public.<table_name> for tables under public schema
-pub fn find_window<'t>(
+fn find_window<'t>(
     table_name: &TableName,
     windows: &'t [Window],
 ) -> Option<&'t Window> {

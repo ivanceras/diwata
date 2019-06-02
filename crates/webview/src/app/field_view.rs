@@ -11,7 +11,8 @@ pub enum Msg {
 
 #[derive(Clone)]
 pub struct FieldView {
-    value: Value,
+    pub column: DataColumn,
+    pub value: Value,
     /// is part of a frozen row, serves no
     /// other purposed other than coloring in css style
     is_frozen_row: bool,
@@ -24,6 +25,7 @@ impl FieldView {
     pub fn new(value: Value, column: &DataColumn) -> Self {
         FieldView {
             value,
+            column: column.clone(),
             is_frozen_row: false,
             is_frozen_column: false,
         }

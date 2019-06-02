@@ -1,2 +1,6 @@
+#!/bin.sh
 set -v
-DATABASE_URL=postgres://postgres:p0stgr3s@localhost:5432/sakila PORT=8000 cargo run -p diwata_server
+if cd crates/webapp && wasm-pack build --target no-modules --release; then
+    cd -
+    DATABASE_URL=postgres://postgres:p0stgr3s@localhost:5432/sakila PORT=8000 cargo run -p diwata_server
+fi

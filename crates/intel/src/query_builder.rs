@@ -2,6 +2,7 @@ use crate::{
     common,
     tab::Tab,
     table_intel,
+    Context,
 };
 use rustorm::{
     types::SqlType,
@@ -15,16 +16,22 @@ use rustorm::{
 };
 use std::collections::BTreeMap;
 
-pub struct Query {
+pub struct Query<'c> {
+    context: &'c Context,
     sql: String,
+    from_table: Vec<TableName>,
+    joined_tables: Vec<TableName>,
     pub params: Vec<Value>,
     column_datatypes: BTreeMap<String, SqlType>,
 }
 
-impl Query {
-    pub fn new() -> Self {
+impl<'c> Query<'c> {
+    pub fn new(context: &'c Context) -> Self {
         Query {
+            context,
             sql: String::new(),
+            from_table: vec![],
+            joined_tables: vec![],
             params: vec![],
             column_datatypes: BTreeMap::new(),
         }
@@ -34,10 +41,10 @@ impl Query {
         self.sql += s;
     }
 
-    pub fn add_param(&mut self, p: Value) {
+    pub fn add_param(&mut self, p: &Value) {
         let params_len = self.params.len();
         self.append(&format!("${} ", params_len + 1));
-        self.params.push(p);
+        self.params.push(p.clone());
     }
 
     pub fn select(&mut self) {
@@ -71,94 +78,61 @@ impl Query {
         }
     }
 
-    // inlcude in the select the display columns of the lookup tables for each of the
-    // fields on each tab, the source table of the field display are left joined in this query
-    pub fn enumerate_display_columns(&mut self, tab: &Tab, tables: &[Table]) {
-        for field in &tab.fields {
-            let dropdown_info = field.get_dropdown_info();
-            if let Some(ref dropdown_info) = dropdown_info {
-                let source_tablename = &dropdown_info.source.name;
-
-                let source_table =
-                    table_intel::get_table(&dropdown_info.source, tables);
-                assert!(source_table.is_some());
-                let source_table = source_table.unwrap();
-                self.add_table_datatypes(source_table);
-                if let Some(field_first_column) = &field.first_column_name() {
-                    let field_column_name = &field_first_column.name;
-                    let source_table_rename =
-                        format!("{}_{}", field_column_name, source_tablename);
-                    for display_column in &dropdown_info.display.columns {
-                        let display_column_name = &display_column.name;
-                        let rename = format!(
-                            "{}.{}.{}",
-                            field_column_name,
-                            source_tablename,
-                            display_column_name
-                        );
-                        self.append(&format!(
-                            ", {}.{} as \"{}\" ",
-                            source_table_rename, display_column_name, rename
-                        ));
-                    }
-                }
-            }
-        }
-    }
-
-    /// left join the table that is looked up by the fields, so as to be able to retrieve the
-    /// identifiable column values
-    pub fn left_join_display_source(&mut self, tab: &Tab, tables: &[Table]) {
-        let main_table = table_intel::get_table(&tab.table_name, tables)
-            .expect("must have table");
-        for field in &tab.fields {
-            let dropdown_info = field.get_dropdown_info();
-            if let Some(ref dropdown_info) = dropdown_info {
-                let source_tablename = &dropdown_info.source.name;
-                let source_table =
-                    table_intel::get_table(&dropdown_info.source, tables);
-                assert!(source_table.is_some());
-                let source_table = source_table.unwrap();
-                let source_pk = source_table.get_primary_column_names();
-                if let Some(field_first_column) = field.first_column_name() {
-                    let field_column_name = &field_first_column.name;
-                    let field_column_names = field.column_names();
-                    let source_table_rename =
-                        format!("{}_{}", field_column_name, source_tablename);
-                    let local_foreign_pair = main_table
-                        .get_local_foreign_columns_pair_to_table(
-                            &source_table.name,
-                        );
-                    println!("local foreign pair: {:?}", local_foreign_pair);
-                    assert_eq!(source_pk.len(), field_column_names.len());
-                    self.append(&format!(
-                        "\nLEFT JOIN {} AS {} ",
-                        &source_table.safe_complete_name(),
-                        source_table_rename
-                    ));
-                    for (i, (local_column, source_column)) in
-                        local_foreign_pair.iter().enumerate()
-                    {
-                        if i == 0 {
-                            self.append("\nON ");
-                        } else {
-                            self.append("\nAND ");
-                        }
-                        self.append(&format!(
-                            "{}.{} = {}.{} ",
-                            source_table_rename,
-                            source_column.name,
-                            main_table.name.name,
-                            local_column.name
-                        ));
-                    }
-                }
-            }
-        }
-    }
-
     pub fn from(&mut self, table_name: &TableName) {
+        self.from_table.push(table_name.clone());
         self.append(&format!("\nFROM {} \n", table_name.safe_complete_name()));
+    }
+
+    pub fn left_join(&mut self, join_to: &TableName, join_table: &TableName) {
+        assert!(!self.from_table.is_empty());
+        assert!(
+            self.from_table.contains(join_to)
+                || self.joined_tables.contains(join_to)
+        );
+        let join_to = self
+            .context
+            .get_table(join_to)
+            .expect("should have a table");
+        let join_table = self
+            .context
+            .get_table(join_table)
+            .expect("Shoul have a table");
+        let local_foreign_pair =
+            join_table.get_local_foreign_columns_pair_to_table(&join_to.name);
+        self.append(&format!("LEFT JOIN {} ", join_table.complete_name()));
+
+
+        self.joined_tables.push(join_table.name.clone());
+
+        for (local, foreign) in local_foreign_pair {
+            self.append(&format!(
+                "ON {}.{} = {}.{} ",
+                join_table.name.name,
+                local.complete_name(),
+                join_to.name.name,
+                foreign.complete_name()
+            ));
+        }
+
+        let local_foreign_pair2 = join_to.get_local_foreign_columns_pair_to_table(&join_table.name);
+
+        for (local, foreign) in local_foreign_pair2 {
+            self.append(&format!(
+                "ON {}.{} = {}.{} ",
+                join_to.name.name,
+                local.complete_name(),
+                join_table.name.name,
+                foreign.complete_name()
+            ));
+        }
+    }
+
+    pub fn add_dao_filter(&mut self, table_name: &TableName, dao: &Dao) {
+        self.append("WHERE ");
+        for (column, value) in dao.0.iter() {
+            self.append(&format!("{}.{} = ", table_name.name, column));
+            self.add_param(value);
+        }
     }
 
     /*
@@ -184,12 +158,16 @@ impl Query {
     }
     */
 
-    pub fn set_page(&mut self, page: u32, page_size: u32) {
-        self.append(&format!("\nLIMIT {} ", page_size));
+    pub fn set_page(&mut self, page: usize, page_size: usize) {
+        self.set_limit(page_size);
         self.append(&format!(
             "OFFSET {} ",
             common::calc_offset(page, page_size)
         ));
+    }
+
+    pub fn set_limit(&mut self, page_size: usize) {
+        self.append(&format!("\nLIMIT {} ", page_size));
     }
 
     pub fn collect_rows(&self, dm: &DaoManager) -> Result<Rows, DbError> {
@@ -211,5 +189,13 @@ impl Query {
         let record = dm.execute_sql_with_maybe_one_return(&self.sql, &bparams);
         record
             .map(|r| r.map(|o| common::cast_record(o, &self.column_datatypes)))
+    }
+
+    pub fn collect_one_record(&self, dm: &DaoManager) -> Result<Dao, DbError> {
+        println!("SQL: {}", self.sql);
+        println!("params: {:?}", self.params);
+        let bparams: Vec<&Value> = self.params.iter().collect();
+        let record = dm.execute_sql_with_one_return(&self.sql, &bparams)?;
+        Ok(common::cast_record(record, &self.column_datatypes))
     }
 }

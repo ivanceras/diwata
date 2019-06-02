@@ -35,6 +35,8 @@ use sqlparser::{
 };
 use std::collections::BTreeMap;
 
+mod detail_record;
+
 pub fn get_main_table<'a>(
     window: &Window,
     tables: &'a [Table],
@@ -49,9 +51,22 @@ pub fn get_database_name(
     em.get_database_name()
 }
 
+pub fn fetch_detail(
+    context: &Context,
+    table_name: &TableName,
+    primary_dao: &Dao,
+) -> Result<RecordDetail, IntelError> {
+    detail_record::get_selected_record_detail(
+        context,
+        table_name,
+        primary_dao,
+        40,
+    )
+}
+
 pub fn execute_sql_query(
     context: &Context,
-    sql: String,
+    sql: &str,
 ) -> Result<QueryResult, DbError> {
     let dialect = GenericSqlDialect {};
     let ast = Parser::parse_sql(&dialect, sql.to_string());
@@ -61,10 +76,7 @@ pub fn execute_sql_query(
             if let Some(table_name) = query_parser::extract_table_name(&ast[0])
             {
                 let table_name = TableName::from(&table_name);
-                let table =
-                    table_intel::get_table(&table_name, &context.tables);
-                window::find_window(&table_name, &context.windows)
-                    .map(Clone::clone)
+                context.find_window(&table_name)
             } else {
                 None
             }
@@ -90,6 +102,7 @@ pub fn execute_sql_query(
 }
 
 /// get the first page of this window
+/// also get the data of the linked table
 pub fn get_first_page(
     em: &EntityManager,
     dm: &DaoManager,

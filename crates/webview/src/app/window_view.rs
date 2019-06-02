@@ -18,7 +18,7 @@ use wasm_bindgen::JsValue;
 
 pub struct WindowView {
     pub name: String,
-    main_tab: TabView,
+    pub main_tab: TabView,
     one_one_tabs: Vec<TabView>,
     has_many_tabs: Vec<TabView>,
     indirect_tabs: Vec<(TableName, TabView)>,
