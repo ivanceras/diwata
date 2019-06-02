@@ -85,6 +85,7 @@ pub fn get_selected_record_detail(
     }
 
     Ok(RecordDetail {
+        window: window.clone(),
         record,
         one_ones: one_one_records,
         has_many: has_many_records,

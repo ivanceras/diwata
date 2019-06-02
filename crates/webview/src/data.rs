@@ -48,7 +48,7 @@ pub struct WindowData {
     /// pages can be scrolled to and fro
     /// and sometimes unloaded for performance puposed
     pub main_tab_data: Vec<Page>,
-    pub one_one_tab_data: Vec<DataRow>,
+    pub one_one_tab_data: Vec<Option<DataRow>>,
     /// Vector of pages for each has_many_tab
     pub has_many_tab_data: Vec<Vec<Page>>,
     /// Vector of pages for each indirect_tab
@@ -71,10 +71,26 @@ impl WindowData {
     pub fn from_record_detail(record_detail: RecordDetail) -> Self {
         WindowData {
             main_tab_data: vec![Page::from_dao(record_detail.record)],
-            //TODO: also set the related records here
+            one_one_tab_data: record_detail.one_ones.into_iter()
+                    .fold(vec![], |mut acc, (_table_name, row)|{
+                        acc.push(row.map(data_row_from_dao));
+                        acc
+                    }),
+            has_many_tab_data: record_detail.has_many.into_iter()
+                .fold(vec![], |mut acc, (_table_name, rows)| {
+                    acc.push(vec![Page::from_rows(rows)]);
+                    acc
+                }),
+            indirect_tab_data: record_detail.indirect.into_iter()
+                .fold(vec![], |mut acc, (_linker, _table_name, rows)|{
+                    acc.push(vec![Page::from_rows(rows)]);
+                    acc
+                }),
             ..Default::default()
         }
     }
+
+
 }
 
 #[derive(Default, Clone)]
@@ -94,7 +110,7 @@ pub fn make_sample_window_data() -> WindowData {
     WindowData {
         sql_query: Some("select * from placeholder".to_string()),
         main_tab_data: vec![make_sample_page()],
-        one_one_tab_data: vec![make_sample_row(0), make_sample_row(1)],
+        one_one_tab_data: vec![Some(make_sample_row(0)), Some(make_sample_row(1))],
         has_many_tab_data: vec![vec![make_sample_page()]],
         indirect_tab_data: vec![vec![make_sample_page()]],
         main_tab_frozen_data: make_sample_frozen_data(),

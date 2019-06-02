@@ -103,6 +103,10 @@ impl App {
         self.update_active_window();
     }
 
+    fn activate_last_added_window(&mut self) {
+        self.activate_window(self.window_views.len() - 1);
+    }
+
     fn remove_window(&mut self, index: usize) {
         self.window_views.remove(index);
         //TODO: activate the last opened one
@@ -230,7 +234,7 @@ impl Component<Msg> for App {
                                     // replace the previous window
                                     self.window_views.push(new_window);
                                     let index = self.window_views.len();
-                                    self.activate_window(index - 1);
+                                    self.activate_last_added_window();
                                 })
                                 .map_right(|record_detail| {
                                     let mut new_window = WindowView::new(
@@ -244,7 +248,7 @@ impl Component<Msg> for App {
                                     new_window.set_window_data(window_data);
                                     self.window_views.push(new_window);
                                     let index = self.window_views.len();
-                                    self.activate_window(index - 1);
+                                    self.activate_last_added_window();
                                 });
                         } else {
                             sauron::log!("No window returned in query result");
@@ -298,6 +302,17 @@ impl Component<Msg> for App {
             }
             Msg::ReceivedWindowMainTabDetail(window_index, Ok(record_detail)) => {
                 sauron::log!("Got window main tab detail: {:#?}", record_detail);
+                let detail_window = record_detail.window.clone();
+                let window_data = WindowData::from_record_detail(record_detail);
+                let mut new_window = WindowView::new(
+                    detail_window,
+                    self.browser_width,
+                    self.browser_height,
+                );
+                sauron::log!("setting new window window data..");
+                new_window.set_window_data(window_data);
+                sauron::log!("adding new window");
+                self.window_views[window_index] = new_window;
                 Cmd::none()
             }
             Msg::ReceivedWindowMainTabDetail(window_index, Err(record_detail)) => {

@@ -92,9 +92,7 @@ pub fn execute_sql_query(
     let query_result = if rows_iter.len() == 1 {
         println!("Only 1 record, handle this...");
         let dao = rows_iter.next().expect("Expecting 1 record");
-        //TODO: Also fetch the related record of this row based on the tab defined in has_many and
-        // indirect tabs
-        QueryResult::with_record_detail(window, RecordDetail::from_dao(dao))
+        panic!();
     } else {
         QueryResult::with_rows(window, rows)
     };

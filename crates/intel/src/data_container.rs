@@ -45,8 +45,9 @@ impl QueryResult {
     }
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RecordDetail {
+    pub window: Window,
     pub record: Dao,
     pub one_ones: Vec<(TableName, Option<Dao>)>,
     pub has_many: Vec<(TableName, Rows)>,
@@ -54,14 +55,6 @@ pub struct RecordDetail {
     pub indirect: Vec<(TableName, TableName, Rows)>,
 }
 
-impl RecordDetail {
-    pub fn from_dao(dao: Dao) -> Self {
-        RecordDetail {
-            record: dao,
-            ..Default::default()
-        }
-    }
-}
 
 #[derive(Debug, Deserialize, Serialize)]
 pub enum RecordAction {

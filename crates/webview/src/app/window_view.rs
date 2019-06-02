@@ -287,6 +287,7 @@ impl WindowView {
 
     /// Important: set the data rows first before setting the frozen data
     pub fn set_window_data(&mut self, window_data: WindowData) {
+        sauron::log!("In setting window data");
         let WindowData {
             sql_query,
             main_tab_data,
@@ -300,26 +301,28 @@ impl WindowView {
             indirect_tab_frozen_data,
         } = window_data;
 
+        sauron::log!("set sql query");
         self.toolbar_view.set_sql_query(sql_query);
         self.main_tab.set_pages(main_tab_data);
         self.main_tab.set_frozen_data(main_tab_frozen_data);
 
+        sauron::log!("Setting one_one");
         // one one tab should only have 1 row
         for (index, row) in one_one_tab_data.into_iter().enumerate() {
-            self.one_one_tabs[index].set_data_rows(vec![row]);
+            self.one_one_tabs[index].set_one_one_record(row);
         }
 
+        sauron::log!("Setting has_many");
         for (index, pages) in has_many_tab_data.into_iter().enumerate() {
             self.has_many_tabs[index].set_pages(pages);
-            self.has_many_tabs[index].set_frozen_data(has_many_tab_frozen_data[index].clone());
         }
 
+        sauron::log!("Setting indirect");
         for (index, pages) in indirect_tab_data.into_iter().enumerate() {
             self.indirect_tabs[index].1.set_pages(pages);
-            self.indirect_tabs[index]
-                .1
-                .set_frozen_data(indirect_tab_frozen_data[index].clone());
         }
+        sauron::log!("done setting window data");
+
     }
 
     fn update_active_has_many_or_indirect_tab(&mut self) {
