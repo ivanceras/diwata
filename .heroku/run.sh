@@ -3,6 +3,7 @@ if ! type cargo > /dev/null; then
     echo $HOME
     source $HOME/.cargo/env
     ls -la
+    ls -ls $HOME/.cargo/bin
 fi
 
 export RUSTUP_HOME="$CACHE_DIR/multirust"
