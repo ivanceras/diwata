@@ -1,7 +1,12 @@
 if ! type cargo > /dev/null; then
     curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain nightly -y
 fi
-# Install wasm-pack if it isn't installed yet
+
+export RUSTUP_HOME="$CACHE_DIR/multirust"
+export CARGO_HOME="$CACHE_DIR/cargo"
+
+PATH="\$CARGO_HOME/bin:\$PATH"
+
 if ! type wasm-pack > /dev/null; then
     cargo install wasm-pack
 fi
