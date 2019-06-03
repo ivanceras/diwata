@@ -55,7 +55,6 @@ pub struct RecordDetail {
     pub indirect: Vec<(TableName, TableName, Rows)>,
 }
 
-
 #[derive(Debug, Deserialize, Serialize)]
 pub enum RecordAction {
     Unlink,

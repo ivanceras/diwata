@@ -322,7 +322,6 @@ impl WindowView {
             self.indirect_tabs[index].1.set_pages(pages);
         }
         sauron::log!("done setting window data");
-
     }
 
     fn update_active_has_many_or_indirect_tab(&mut self) {

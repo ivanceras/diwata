@@ -496,6 +496,17 @@ input.column_filter[type="text"]{
     border-right: 1px solid #ccc;
 }
 
+.field_view.in_detail{
+    display: flex;
+    flex-direction: row;
+}
+
+.in_detail_column{
+    width: 200px;
+    text-align: right;
+    margin-right: 5px;
+}
+
 /* dashed border when in frozen column */
 .field_view.frozen_column{
     border-right: 1px dashed #ccc;

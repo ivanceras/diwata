@@ -304,11 +304,8 @@ impl Component<Msg> for App {
                 sauron::log!("Got window main tab detail: {:#?}", record_detail);
                 let detail_window = record_detail.window.clone();
                 let window_data = WindowData::from_record_detail(record_detail);
-                let mut new_window = WindowView::new(
-                    detail_window,
-                    self.browser_width,
-                    self.browser_height,
-                );
+                let mut new_window =
+                    WindowView::new(detail_window, self.browser_width, self.browser_height);
                 sauron::log!("setting new window window data..");
                 new_window.set_window_data(window_data);
                 sauron::log!("adding new window");

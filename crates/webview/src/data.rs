@@ -71,26 +71,30 @@ impl WindowData {
     pub fn from_record_detail(record_detail: RecordDetail) -> Self {
         WindowData {
             main_tab_data: vec![Page::from_dao(record_detail.record)],
-            one_one_tab_data: record_detail.one_ones.into_iter()
-                    .fold(vec![], |mut acc, (_table_name, row)|{
-                        acc.push(row.map(data_row_from_dao));
-                        acc
-                    }),
-            has_many_tab_data: record_detail.has_many.into_iter()
-                .fold(vec![], |mut acc, (_table_name, rows)| {
+            one_one_tab_data: record_detail.one_ones.into_iter().fold(
+                vec![],
+                |mut acc, (_table_name, row)| {
+                    acc.push(row.map(data_row_from_dao));
+                    acc
+                },
+            ),
+            has_many_tab_data: record_detail.has_many.into_iter().fold(
+                vec![],
+                |mut acc, (_table_name, rows)| {
                     acc.push(vec![Page::from_rows(rows)]);
                     acc
-                }),
-            indirect_tab_data: record_detail.indirect.into_iter()
-                .fold(vec![], |mut acc, (_linker, _table_name, rows)|{
+                },
+            ),
+            indirect_tab_data: record_detail.indirect.into_iter().fold(
+                vec![],
+                |mut acc, (_linker, _table_name, rows)| {
                     acc.push(vec![Page::from_rows(rows)]);
                     acc
-                }),
+                },
+            ),
             ..Default::default()
         }
     }
-
-
 }
 
 #[derive(Default, Clone)]

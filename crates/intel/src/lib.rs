@@ -22,10 +22,12 @@ pub use data_container::RecordDetail;
 pub use field::Field;
 pub use rustorm::{
     types::SqlType,
+    Array,
     ColumnName,
     Dao,
     Rows,
     TableName,
+    Value,
 };
 pub use tab::{
     IndirectTab,

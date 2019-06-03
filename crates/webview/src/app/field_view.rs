@@ -1,4 +1,5 @@
-use data_table::{DataColumn, Value};
+use data_table::{DataColumn, Type};
+use diwata_intel::{Array, Value};
 use sauron::{
     html::{attributes::*, events::*, *},
     Cmd, Component, Node,
@@ -46,8 +47,12 @@ impl FieldView {
             ("frozen_column", self.is_frozen_column),
         ]);
         match &self.value {
-            Value::Nil => input([r#type("text"), classes, value("")], []),
+            Value::Nil => match self.column.data_type {
+                Type::Bool => input([r#type("checkbox"), classes], []),
+                _ => input([r#type("text"), classes, value("")], []),
+            },
             Value::Text(v) => input([r#type("text"), classes, value(v)], []),
+            Value::Json(v) => input([r#type("text"), classes, value(v)], []),
             Value::Uuid(v) => input([r#type("text"), classes, value(v.to_string())], []),
             Value::Bool(v) => input([r#type("checkbox"), classes], []),
             Value::Tinyint(v) => input([r#type("number"), classes, value(v.to_string())], []),
@@ -57,6 +62,23 @@ impl FieldView {
             Value::Float(v) => input([r#type("number"), classes, value(v.to_string())], []),
             Value::Double(v) => input([r#type("number"), classes, value(v.to_string())], []),
             Value::BigDecimal(v) => input([r#type("number"), classes, value(v.to_string())], []),
+            Value::ImageUri(v) => img([src(v), classes], []),
+            Value::Array(Array::Text(v)) => {
+                input([r#type("text"), classes, value(v.join(","))], [])
+            }
+            Value::Array(Array::Float(v)) => input(
+                [
+                    r#type("text"),
+                    classes,
+                    value(
+                        v.iter()
+                            .map(ToString::to_string)
+                            .collect::<Vec<String>>()
+                            .join(","),
+                    ),
+                ],
+                [],
+            ),
             Value::Timestamp(v) => input(
                 [
                     r#type("date"),
@@ -79,6 +101,22 @@ impl FieldView {
             }
         }
     }
+
+    pub fn view_in_detail(&self) -> Node<Msg> {
+        div(
+            [
+                class("field_view in_detail"),
+                classes_flag([
+                    ("frozen_row", self.is_frozen_row),
+                    ("frozen_column", self.is_frozen_column),
+                ]),
+            ],
+            [
+                label([class("in_detail_column")], [text(&self.column.name)]),
+                self.view_value(),
+            ],
+        )
+    }
 }
 
 impl Component<Msg> for FieldView {
@@ -90,6 +128,7 @@ impl Component<Msg> for FieldView {
             }
         }
     }
+    /// when viewed as row
     fn view(&self) -> Node<Msg> {
         div(
             [

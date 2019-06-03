@@ -61,22 +61,19 @@ impl Component<Msg> for DetailView {
                 class("detail_view"),
                 styles_flag([("display", "none", !self.is_visible)]),
             ],
-            [
-                text(format!("Detailed view {:?}", self.row_index)),
-                section(
-                    [class("detail_view_grid")],
-                    self.fields
-                        .iter()
-                        .enumerate()
-                        .map(|(index, field)| {
-                            field
-                                .borrow()
-                                .view()
-                                .map(move |field_msg| Msg::FieldMsg(index, field_msg))
-                        })
-                        .collect::<Vec<Node<Msg>>>(),
-                ),
-            ],
+            [section(
+                [class("detail_view_grid")],
+                self.fields
+                    .iter()
+                    .enumerate()
+                    .map(|(index, field)| {
+                        field
+                            .borrow()
+                            .view_in_detail()
+                            .map(move |field_msg| Msg::FieldMsg(index, field_msg))
+                    })
+                    .collect::<Vec<Node<Msg>>>(),
+            )],
         )
     }
 }

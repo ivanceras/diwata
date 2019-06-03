@@ -101,7 +101,6 @@ impl<'c> Query<'c> {
             join_table.get_local_foreign_columns_pair_to_table(&join_to.name);
         self.append(&format!("LEFT JOIN {} ", join_table.complete_name()));
 
-
         self.joined_tables.push(join_table.name.clone());
 
         for (local, foreign) in local_foreign_pair {
@@ -114,7 +113,8 @@ impl<'c> Query<'c> {
             ));
         }
 
-        let local_foreign_pair2 = join_to.get_local_foreign_columns_pair_to_table(&join_table.name);
+        let local_foreign_pair2 =
+            join_to.get_local_foreign_columns_pair_to_table(&join_table.name);
 
         for (local, foreign) in local_foreign_pair2 {
             self.append(&format!(

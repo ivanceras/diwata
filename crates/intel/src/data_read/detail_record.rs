@@ -147,7 +147,6 @@ fn get_indirect_records(
     primary_dao: &Dao,
     page_size: usize,
 ) -> Result<Rows, IntelError> {
-
     let indirect_table = context
         .get_table(indirect_table_name)
         .expect("table should exist");
