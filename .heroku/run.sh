@@ -9,7 +9,8 @@ fi
 export RUSTUP_HOME="$CACHE_DIR/multirust"
 export CARGO_HOME="$CACHE_DIR/cargo"
 
-PATH="\$CARGO_HOME/bin:\$PATH"
+export PATH="$CARGO_HOME/bin:$PATH"
+echo $PATH
 
 if ! type wasm-pack > /dev/null; then
     cargo install wasm-pack
