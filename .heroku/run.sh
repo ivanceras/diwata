@@ -12,6 +12,8 @@ export CARGO_HOME="$CACHE_DIR/cargo"
 export PATH="$CARGO_HOME/bin:$PATH"
 echo $PATH
 
+rustup default nightly
+
 if ! type wasm-pack > /dev/null; then
     cargo install wasm-pack
 fi
