@@ -1,5 +1,8 @@
 if ! type cargo > /dev/null; then
     curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain nightly -y
+    echo $HOME
+    source $HOME/.cargo/env
+    ls -la
 fi
 
 export RUSTUP_HOME="$CACHE_DIR/multirust"
