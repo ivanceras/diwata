@@ -13,6 +13,7 @@ export PATH="$CARGO_HOME/bin:$PATH"
 echo $PATH
 
 rustup default nightly
+rustup target add wasm32-unknown-unknown
 
 if ! type wasm-pack > /dev/null; then
     cargo install wasm-pack
