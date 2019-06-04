@@ -22,7 +22,7 @@ mod toolbar_view;
 mod window_list_view;
 mod window_view;
 
-pub type Cmd = sauron::Cmd<App,Msg>;
+pub type Cmd = sauron::Cmd<App, Msg>;
 
 #[derive(Debug, Clone)]
 #[allow(clippy::large_enum_variant)]
@@ -59,8 +59,10 @@ impl App {
         let mut app = App {
             window_views: windows
                 .into_iter()
-                .zip( window_data.iter())
-                .map(|(window,window_data)| WindowView::new(window, &window_data, browser_width, browser_height))
+                .zip(window_data.iter())
+                .map(|(window, window_data)| {
+                    WindowView::new(window, &window_data, browser_width, browser_height)
+                })
                 .collect(),
             window_data,
             window_list_view: WindowListView::new(window_list),
@@ -164,11 +166,9 @@ impl Component<Msg> for App {
 
                 let table_name = &main_tab_view.table_name;
                 let dao = &main_tab_view.table_view.row_views[row_index].primary_dao();
-                rest_api::retrieve_detail_for_main_tab(
-                    table_name,
-                    dao,
-                    move |detail| Msg::ReceivedWindowMainTabDetail(window_index, row_index, detail),
-                )
+                rest_api::retrieve_detail_for_main_tab(table_name, dao, move |detail| {
+                    Msg::ReceivedWindowMainTabDetail(window_index, row_index, detail)
+                })
             }
 
             Msg::WindowMsg(index, window_view::Msg::ToolbarMsg(toolbar_view::Msg::RunQuery)) => {
@@ -183,9 +183,7 @@ impl Component<Msg> for App {
                     Cmd::none()
                 }
             }
-            Msg::WindowMsg(index, window_msg) => {
-                self.window_views[index].update(window_msg)
-            }
+            Msg::WindowMsg(index, window_msg) => self.window_views[index].update(window_msg),
             Msg::BrowserResized(width, height) => {
                 sauron::log!("Browser is resized to: {}, {}", width, height);
                 self.browser_width = width;
@@ -228,41 +226,20 @@ impl Component<Msg> for App {
                             let window_clone = window.clone();
                             let sql_query =
                                 format!("SELECT * FROM {}", window.table_name().complete_name());
-                            query_result
-                                .record
-                                .map_left(|rows| {
-                                    let mut window_data = WindowData::from_rows(rows);
-                                    window_data.sql_query = Some(sql_query.to_string());
-                                    let mut new_window = WindowView::new(
-                                        window_clone,
-                                        &window_data,
-                                        self.browser_width,
-                                        self.browser_height,
-                                    );
-                                    // set the previous sql query
-                                    // new_window.set_window_data(window_data);
-                                    // replace the previous window
-                                    self.window_data.push(window_data);
-                                    self.window_views.push(new_window);
-                                    self.activate_last_added_window();
-                                })
-                                .map_right(|record_detail| {
-                                    /*
-                                    let mut window_data =
-                                        WindowData::from_record_detail(record_detail);
-
-                                    let mut new_window = WindowView::new(
-                                        window,
-                                        &window_data,
-                                        self.browser_width,
-                                        self.browser_height,
-                                    );
-
-                                    self.window_views.push(new_window);
-                                    self.window_data.push(window_data);
-                                    self.activate_last_added_window();
-                                    */
-                                });
+                            let mut window_data = WindowData::from_rows(query_result.rows);
+                            window_data.sql_query = Some(sql_query.to_string());
+                            let mut new_window = WindowView::new(
+                                window_clone,
+                                &window_data,
+                                self.browser_width,
+                                self.browser_height,
+                            );
+                            // set the previous sql query
+                            // new_window.set_window_data(window_data);
+                            // replace the previous window
+                            self.window_data.push(window_data);
+                            self.window_views.push(new_window);
+                            self.activate_last_added_window();
                         } else {
                             sauron::log!("No window returned in query result");
                         }
@@ -276,36 +253,20 @@ impl Component<Msg> for App {
             }
 
             Msg::ReceivedWindowQueryResult(index, Ok(query_result)) => {
-                sauron::log!("Received window query result: {:#?}", query_result.record);
                 if let Some(window) = query_result.window {
                     let window_clone = window.clone();
-                    query_result
-                        .record
-                        .map_left(|rows| {
-                            let window_data = WindowData::from_rows(rows);
-                            //replace the data on this window index
-                            let mut new_window = WindowView::new(
-                                window_clone,
-                                &window_data,
-                                self.browser_width,
-                                self.browser_height,
-                            );
-                            self.window_data[index] = window_data;
-                            // set the previous sql query
-                            // replace the previous window
-                            self.window_views[index] = new_window;
-                        })
-                        .map_right(|record_detail| {
-                            /*
-                            let mut window_data = &mut self.window_data[index];
-                            window_data.set_record_detail(record_detail);
-
-                            let mut new_window =
-                                WindowView::new(window, window_data, self.browser_width, self.browser_height);
-
-                            self.window_views[index] = new_window;
-                            */
-                        });
+                    let window_data = WindowData::from_rows(query_result.rows);
+                    //replace the data on this window index
+                    let mut new_window = WindowView::new(
+                        window_clone,
+                        &window_data,
+                        self.browser_width,
+                        self.browser_height,
+                    );
+                    self.window_data[index] = window_data;
+                    // set the previous sql query
+                    // replace the previous window
+                    self.window_views[index] = new_window;
                 } else {
                     sauron::log!("No window returned in query result");
                 }
@@ -320,8 +281,12 @@ impl Component<Msg> for App {
                 let detail_window = record_detail.window.clone();
                 let window_data = &mut self.window_data[window_index];
                 window_data.set_record_detail(record_detail);
-                let mut new_window =
-                    WindowView::new(detail_window, &window_data, self.browser_width, self.browser_height);
+                let mut new_window = WindowView::new(
+                    detail_window,
+                    &window_data,
+                    self.browser_width,
+                    self.browser_height,
+                );
                 new_window.show_main_tab_detail_view(row_index);
 
                 self.window_views[window_index] = new_window;

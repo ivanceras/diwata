@@ -21,7 +21,7 @@ use serde::{
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QueryResult {
     pub window: Option<Window>,
-    pub record: Either<Rows, RecordDetail>,
+    pub rows: Rows,
 }
 
 impl QueryResult {
@@ -29,18 +29,7 @@ impl QueryResult {
     pub fn with_rows(window: Option<&Window>, rows: Rows) -> Self {
         QueryResult {
             window: window.map(Clone::clone),
-            record: Either::Left(rows),
-        }
-    }
-
-    /// When there is only 1 record
-    pub fn with_record_detail(
-        window: Option<&Window>,
-        record_detail: RecordDetail,
-    ) -> Self {
-        QueryResult {
-            window: window.map(Clone::clone),
-            record: Either::Right(record_detail),
+            rows,
         }
     }
 }

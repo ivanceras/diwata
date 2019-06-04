@@ -4,7 +4,8 @@ use sauron::{
 };
 
 use crate::{
-    app::{self,
+    app::{
+        self,
         tab_view::{self, TabView},
         toolbar_view::{self, ToolbarView},
     },
@@ -13,7 +14,7 @@ use crate::{
 };
 use data_table::DataRow;
 use diwata_intel::{TableName, Window};
-use sauron::{Http};
+use sauron::Http;
 use wasm_bindgen::JsValue;
 
 pub struct WindowView {
@@ -246,7 +247,12 @@ impl WindowView {
 }
 
 impl WindowView {
-    pub fn new(window: Window, window_data: &WindowData, browser_width: i32, browser_height: i32) -> Self {
+    pub fn new(
+        window: Window,
+        window_data: &WindowData,
+        browser_width: i32,
+        browser_height: i32,
+    ) -> Self {
         let mut window_view = WindowView {
             name: window.name,
             main_tab: TabView::new(window.main_tab),

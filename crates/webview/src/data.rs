@@ -70,29 +70,31 @@ impl WindowData {
         }
     }
 
-    pub fn set_record_detail(&mut self, record_detail: RecordDetail){
-            self.record_detail =  Some(record_detail.clone());
-            self.one_one_tab_data = record_detail.one_ones.into_iter().fold(
-                vec![],
-                |mut acc, (_table_name, row)| {
+    pub fn set_record_detail(&mut self, record_detail: RecordDetail) {
+        self.record_detail = Some(record_detail.clone());
+        self.one_one_tab_data =
+            record_detail
+                .one_ones
+                .into_iter()
+                .fold(vec![], |mut acc, (_table_name, row)| {
                     acc.push(row.map(data_row_from_dao));
                     acc
-                },
-            );
-            self.has_many_tab_data = record_detail.has_many.into_iter().fold(
-                vec![],
-                |mut acc, (_table_name, rows)| {
+                });
+        self.has_many_tab_data =
+            record_detail
+                .has_many
+                .into_iter()
+                .fold(vec![], |mut acc, (_table_name, rows)| {
                     acc.push(vec![Page::from_rows(rows)]);
                     acc
-                },
-            );
-            self.indirect_tab_data = record_detail.indirect.into_iter().fold(
-                vec![],
-                |mut acc, (_linker, _table_name, rows)| {
-                    acc.push(vec![Page::from_rows(rows)]);
-                    acc
-                },
-            );
+                });
+        self.indirect_tab_data = record_detail.indirect.into_iter().fold(
+            vec![],
+            |mut acc, (_linker, _table_name, rows)| {
+                acc.push(vec![Page::from_rows(rows)]);
+                acc
+            },
+        );
     }
 }
 

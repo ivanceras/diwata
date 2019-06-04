@@ -1,4 +1,7 @@
-use crate::app::field_view::{self, FieldView};
+use crate::app::{
+    self,
+    field_view::{self, FieldView},
+};
 use data_table::{DataColumn, DataRow};
 use diwata_intel::Dao;
 use sauron::{
@@ -6,7 +9,6 @@ use sauron::{
     Component, Node,
 };
 use std::{cell::RefCell, rc::Rc};
-use crate::app;
 
 #[derive(Debug, Clone)]
 pub enum Msg {
@@ -160,9 +162,7 @@ impl RowView {
                 self.fields[field_index].borrow_mut().update(field_msg);
                 app::Cmd::none()
             }
-            Msg::DoubleClick => {
-                app::Cmd::none()
-            }
+            Msg::DoubleClick => app::Cmd::none(),
             Msg::Click => app::Cmd::none(),
         }
     }

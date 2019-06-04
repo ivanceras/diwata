@@ -1,6 +1,7 @@
 //#![deny(warnings)]
 #![deny(clippy::all)]
 use app::{App, Msg};
+use data::WindowData;
 use diwata_intel::{
     field::ColumnDetail,
     widget::{Alignment, ControlWidget, Widget},
@@ -11,7 +12,6 @@ use sauron::{Dispatch, Program};
 use std::rc::Rc;
 use wasm_bindgen::{self, prelude::*, JsCast, JsValue};
 use web_sys::Response;
-use data::WindowData;
 
 mod app;
 mod assets;

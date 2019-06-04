@@ -1,5 +1,6 @@
 use crate::{
-    app::{self,
+    app::{
+        self,
         detail_view::{self, DetailView},
         row_view,
         table_view::{self, TableView},
