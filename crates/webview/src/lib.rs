@@ -26,13 +26,13 @@ pub fn setup_program(initial_state: &str) -> Rc<Program<App, Msg>> {
     let root_node = sauron::document()
         .get_element_by_id("web-app")
         .expect("Unable to get hold of root-node");
-    let app = make_app(initial_state);
+    let app_data: AppData =
+        ron::de::from_str(initial_state).expect("unable to deserialize app_data");
+    let app = make_app(app_data);
     Program::new_replace_mount(app, &root_node)
 }
 
-pub fn make_app(initial_state: &str) -> App {
-    let app_data: AppData =
-        ron::de::from_str(initial_state).expect("unable to deserialize app_data");
+pub fn make_app(app_data: AppData) -> App {
     let (window_width, window_height) = get_window_size();
     let mut app = App::new(app_data, window_width, window_height);
     app

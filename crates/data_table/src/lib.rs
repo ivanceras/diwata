@@ -119,36 +119,42 @@ java,8,medium,true,large,jdk
                 data_type: Type::Text,
                 description: None,
                 tags: vec![],
+                is_primary: false,
             },
             DataColumn {
                 name: "compiler".into(),
                 data_type: Type::Text,
                 description: None,
                 tags: vec![],
+                is_primary: false,
             },
             DataColumn {
                 name: "speed".into(),
                 data_type: Type::Text,
                 description: None,
                 tags: vec![],
+                is_primary: false,
             },
             DataColumn {
                 name: "vm".into(),
                 data_type: Type::Text,
                 description: None,
                 tags: vec![],
+                is_primary: false,
             },
             DataColumn {
                 name: "size".into(),
                 data_type: Type::Text,
                 description: None,
                 tags: vec![],
+                is_primary: false,
             },
             DataColumn {
                 name: "version".into(),
                 data_type: Type::Int,
                 description: None,
                 tags: vec![],
+                is_primary: false,
             },
         ];
         let dataview = DataTable::from_csv(columns, csv);

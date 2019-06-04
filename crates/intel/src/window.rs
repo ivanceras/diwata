@@ -286,18 +286,4 @@ mod tests {
         assert_eq!(win.indirect_tabs[0].tab.table_name.name, "review");
     }
 
-    #[test]
-    fn grouped_windows() {
-        let db_url = "postgres://postgres:p0stgr3s@localhost:5432/bazaar_v8";
-        let mut pool = Pool::new();
-        let em = pool.em(db_url);
-        assert!(em.is_ok());
-        let em = em.unwrap();
-        let tables = em.get_all_tables().unwrap();
-        let grouped_windows = get_grouped_windows(&em, &tables);
-        assert!(grouped_windows.is_ok());
-        let grouped_windows = grouped_windows.unwrap();
-        println!("grouped windows: {:#?}", grouped_windows);
-        assert_eq!(grouped_windows.len(), 4);
-    }
 }
