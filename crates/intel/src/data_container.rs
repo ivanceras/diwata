@@ -17,16 +17,16 @@ use serde::{
 
 pub type DataRow = Vec<Value>;
 
-#[derive(Default,Serialize, Deserialize)]
+#[derive(Default, Serialize, Deserialize)]
 pub struct AppData {
-    pub window_list: Vec<GroupedWindow>,
+    pub grouped_window: Vec<GroupedWindow>,
     pub windows: Vec<Window>,
     pub window_data: Vec<WindowData>,
 }
 
 /// Page a collection of rows
 /// also shows the total records from the table source
-#[derive(Default,Serialize, Deserialize)]
+#[derive(Default, Serialize, Deserialize)]
 pub struct Page {
     /// page number
     pub page: usize,
@@ -119,7 +119,7 @@ impl WindowData {
     }
 }
 
-#[derive(Default, Clone,Serialize, Deserialize)]
+#[derive(Default, Clone, Serialize, Deserialize)]
 pub struct FrozenData {
     pub frozen_rows: Vec<usize>,
     pub frozen_columns: Vec<usize>,

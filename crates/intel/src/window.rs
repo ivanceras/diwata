@@ -155,50 +155,6 @@ pub struct GroupedWindow {
     pub window_names: Vec<WindowName>,
 }
 
-pub fn get_grouped_windows_using_cache(
-    em: &EntityManager,
-    db_url: &str,
-) -> Result<Vec<GroupedWindow>, IntelError> {
-    let mut cache_pool = cache::CACHE_POOL.lock().unwrap();
-    let tables = cache_pool.get_cached_tables(em, db_url)?;
-    let grouped_window = get_grouped_windows(em, &tables)?;
-    Ok(grouped_window)
-}
-
-/// get all the schema content and convert to grouped window
-/// for displaying as a list in the client side
-/// filter out tablenames that are not window
-fn get_grouped_windows(
-    em: &EntityManager,
-    tables: &[Table],
-) -> Result<Vec<GroupedWindow>, DbError> {
-    let schema_content: Vec<SchemaContent> = em.get_grouped_tables()?;
-    let mut grouped_windows: Vec<GroupedWindow> =
-        Vec::with_capacity(schema_content.len());
-    for sc in schema_content {
-        let mut window_names =
-            Vec::with_capacity(sc.tablenames.len() + sc.views.len());
-        for table_name in sc.tablenames.iter().chain(sc.views.iter()) {
-            let table = table_intel::get_table(&table_name, tables);
-            if let Some(table) = table {
-                let table_intel = TableIntel(table);
-                if table_intel.is_window(tables) {
-                    window_names.push(WindowName {
-                        name: table_name.name.to_string(),
-                        table_name: table_name.to_owned(),
-                        is_view: table.is_view,
-                    })
-                }
-            }
-        }
-        grouped_windows.push(GroupedWindow {
-            group: sc.schema.to_string(),
-            window_names,
-        });
-    }
-    Ok(grouped_windows)
-}
-
 /// extract all the tables and create a window object for each that can
 /// be a window, cache them for later use, so as not to keeping redoing
 /// analytical and calculations

@@ -5,6 +5,7 @@ use crate::{
         Lookup,
         QueryResult,
         RecordDetail,
+        WindowData,
     },
     error::IntelError,
     query_builder::Query,
@@ -84,10 +85,26 @@ pub fn execute_sql_query(
     Ok(QueryResult::with_rows(window, rows))
 }
 
-pub fn retrieve_app_data(context: &Context) -> Result<AppData, DbError> {
+fn fetch_main_table_data(
+    context: &Context,
+    table_name: &TableName,
+) -> Result<Rows, IntelError> {
+    let sql = format!("SELECT * FROM {} LIMIT 40", table_name.complete_name());
+    let rows = context.dm.execute_sql_with_return(&sql, &[])?;
+    Ok(rows)
+}
+
+pub fn retrieve_app_data(context: &Context) -> Result<AppData, IntelError> {
+    let grouped_window = context.grouped_window.clone();
+    let first_table_name = &grouped_window[0].window_names[0].table_name;
+    let first_window = context
+        .get_window(first_table_name)
+        .expect("expecting a window");
+    let rows = fetch_main_table_data(context, first_table_name)?;
+    let first_window_data = WindowData::from_rows(rows);
     Ok(AppData {
-        window_list: vec![],
-        windows: vec![],
-        window_data: vec![],
+        grouped_window,
+        windows: vec![first_window.clone()],
+        window_data: vec![first_window_data],
     })
 }

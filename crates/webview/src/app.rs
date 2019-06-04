@@ -62,7 +62,7 @@ impl App {
                 })
                 .collect(),
             window_data: app_data.window_data,
-            window_list_view: WindowListView::new(app_data.window_list),
+            window_list_view: WindowListView::new(app_data.grouped_window),
             active_window: 0,
             browser_width,
             browser_height,
@@ -122,7 +122,7 @@ impl App {
 impl Component<Msg> for App {
     fn init(&self) -> Cmd {
         Cmd::batch(vec![
-            rest_api::fetch_window_list(),
+            //rest_api::fetch_window_list(),
             self.setup_window_resize_listener(),
         ])
     }

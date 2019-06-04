@@ -66,7 +66,7 @@ fn get_session_db_url_value() -> Result<Option<String>, ServiceError> {
     }
 }
 
-pub fn get_db_url() -> Result<String, ServiceError> {
+fn get_db_url_internal() -> Result<String, ServiceError> {
     match get_db_url_value() {
         Ok(db_url) => {
             if let Some(ref db_url) = db_url {
@@ -79,7 +79,15 @@ pub fn get_db_url() -> Result<String, ServiceError> {
     }
 }
 
-pub fn get_role_db_url() -> Result<String, ServiceError> {
+pub fn get_db_url() -> Result<String, ServiceError> {
+    if is_login_required()? {
+        get_role_db_url()
+    } else {
+        get_db_url_internal()
+    }
+}
+
+fn get_role_db_url() -> Result<String, ServiceError> {
     match get_role_db_url_value() {
         Ok(db_url) => {
             if let Some(ref db_url) = db_url {

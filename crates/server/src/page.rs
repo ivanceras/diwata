@@ -1,9 +1,9 @@
 use crate::{
+    api,
     credentials::Credentials,
     error::ServiceError,
     global,
     session,
-    api,
 };
 use actix_files::NamedFile;
 use actix_web::{
@@ -16,11 +16,15 @@ use actix_web::{
     Responder,
     Result,
 };
-use diwata_intel::{data_read,Context};
+use diwata_intel::{
+    data_read,
+    Context,
+};
 use futures::future::{
     self,
     Future,
 };
+use ron;
 use sauron::{
     html::{
         attributes::*,
@@ -34,7 +38,6 @@ use serde::{
     Serialize,
 };
 use std::convert::TryFrom;
-use ron;
 
 fn get_index_html(context: &Context) -> String {
     let app_data = data_read::retrieve_app_data(context)

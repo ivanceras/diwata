@@ -54,16 +54,8 @@ pub fn windows(
         TryFrom::try_from(&req);
 
     web::block(move || {
-        let context = session::create_context(credentials)
-            .expect("unable to create context");
-        let is_login_required = global::is_login_required().unwrap();
-        let db_url = if is_login_required {
-            global::get_role_db_url().unwrap()
-        } else {
-            global::get_db_url().unwrap()
-        };
-        window::get_grouped_windows_using_cache(&context.em, &db_url)
-            .map_err(|err| ServiceError::IntelError(err))
+        let context = session::create_context(credentials);
+        context.map(|context| context.grouped_window)
     })
     .from_err()
     .then(move |rows| {

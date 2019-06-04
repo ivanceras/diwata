@@ -146,7 +146,7 @@ impl Component<Msg> for ToolbarView {
                 header(
                     [class("toolbar")],
                     [
-                        widgets::quick_find(26, oninput(|input| Msg::ChangeQuickFind(input.value))),
+                        widgets::quick_find(35, oninput(|input| Msg::ChangeQuickFind(input.value))),
                         button([], [text("Create new record")]),
                         button([], [text("Insert new record")]),
                         button([], [text("Save")]),

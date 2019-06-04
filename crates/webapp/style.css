@@ -370,7 +370,8 @@ ol, ul, li {
 }
 input.column_filter[type="text"]{
     width: 160px;
-    height: 15px;
+    height: 24px;
+    padding: 0;
     border-color: #aaa;
     border-width: 1px 1px 1px 1px;
     border-style: solid;
@@ -527,6 +528,7 @@ input.value[type="checkbox"]
     border: 0;
     border-bottom: 1px solid #ccc;
     width: 200px;
+    padding: 3px 5px 3px 5px;
 }
 
 

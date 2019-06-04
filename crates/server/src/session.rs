@@ -5,11 +5,20 @@ use crate::{
 };
 use diwata_intel::{
     cache,
+    table_intel::{
+        self,
+        TableIntel,
+    },
+    window::{
+        GroupedWindow,
+        WindowName,
+    },
     Context,
     TableName,
     Window,
 };
 use rustorm::{
+    table::SchemaContent,
     DaoManager,
     EntityManager,
     Table,
@@ -36,20 +45,53 @@ pub fn create_context(
     } else {
         dm
     };
-    let db_url = if is_login_required {
-        global::get_role_db_url()?
-    } else {
-        global::get_db_url()?
-    };
+    let db_url = global::get_db_url()?;
+
     let mut cache_pool = cache::CACHE_POOL.lock().unwrap();
     let windows = cache_pool.get_cached_windows(&active_em, &db_url)?;
     let tables = cache_pool.get_cached_tables(&active_em, &db_url)?;
+    let grouped_window = get_grouped_windows(&active_em, &tables)?;
     Ok(Context {
         em: active_em,
         dm: active_dm,
         tables: to_hashmap_tables(tables),
         windows: to_hashmap_windows(windows),
+        grouped_window,
     })
+}
+
+/// get all the schema content and convert to grouped window
+/// for displaying as a list in the client side
+/// filter out tablenames that are not window
+fn get_grouped_windows(
+    em: &EntityManager,
+    tables: &[Table],
+) -> Result<Vec<GroupedWindow>, ServiceError> {
+    let schema_content: Vec<SchemaContent> = em.get_grouped_tables()?;
+    let mut grouped_windows: Vec<GroupedWindow> =
+        Vec::with_capacity(schema_content.len());
+    for sc in schema_content {
+        let mut window_names =
+            Vec::with_capacity(sc.tablenames.len() + sc.views.len());
+        for table_name in sc.tablenames.iter().chain(sc.views.iter()) {
+            let table = table_intel::get_table(&table_name, tables);
+            if let Some(table) = table {
+                let table_intel = TableIntel(table);
+                if table_intel.is_window(tables) {
+                    window_names.push(WindowName {
+                        name: table_name.name.to_string(),
+                        table_name: table_name.to_owned(),
+                        is_view: table.is_view,
+                    })
+                }
+            }
+        }
+        grouped_windows.push(GroupedWindow {
+            group: sc.schema.to_string(),
+            window_names,
+        });
+    }
+    Ok(grouped_windows)
 }
 
 fn to_hashmap_tables(tables: Vec<Table>) -> HashMap<TableName, Table> {

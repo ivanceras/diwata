@@ -1,4 +1,7 @@
-use crate::Window;
+use crate::{
+    window::GroupedWindow,
+    Window,
+};
 use rustorm::{
     DaoManager,
     EntityManager,
@@ -12,6 +15,7 @@ pub struct Context {
     pub dm: DaoManager,
     pub tables: HashMap<TableName, Table>,
     pub windows: HashMap<TableName, Window>,
+    pub grouped_window: Vec<GroupedWindow>,
 }
 
 impl Context {
