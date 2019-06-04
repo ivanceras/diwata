@@ -24,7 +24,7 @@ use serde::{
 };
 use std::convert::TryFrom;
 
-fn require_credentials(req: &HttpRequest) -> Result<(), ServiceError> {
+pub fn require_credentials(req: &HttpRequest) -> Result<(), ServiceError> {
     let is_required = global::is_login_required().unwrap();
 
     if is_required {
@@ -52,16 +52,16 @@ pub fn windows(
     require_credentials(&req).expect("Should have credentials");
     let credentials: Result<Credentials, ServiceError> =
         TryFrom::try_from(&req);
-    let context =
-        session::create_context(credentials).expect("unable to create context");
-    let is_login_required = global::is_login_required().unwrap();
-    let db_url = if is_login_required {
-        global::get_role_db_url().unwrap()
-    } else {
-        global::get_db_url().unwrap()
-    };
 
     web::block(move || {
+        let context = session::create_context(credentials)
+            .expect("unable to create context");
+        let is_login_required = global::is_login_required().unwrap();
+        let db_url = if is_login_required {
+            global::get_role_db_url().unwrap()
+        } else {
+            global::get_db_url().unwrap()
+        };
         window::get_grouped_windows_using_cache(&context.em, &db_url)
             .map_err(|err| ServiceError::IntelError(err))
     })
@@ -92,22 +92,24 @@ pub fn sql(
     require_credentials(&req).expect("Should have credentials");
     let credentials: Result<Credentials, ServiceError> =
         TryFrom::try_from(&req);
-    let context =
-        session::create_context(credentials).expect("unable to create context");
 
-    web::block(move || data_read::execute_sql_query(&context, &sql_param.sql))
-        .from_err()
-        .then(move |rows| {
-            match rows {
-                Ok(rows) => {
-                    Ok(HttpResponse::Ok().body(
-                        ron::ser::to_string(&rows)
-                            .expect("unable to serialize to ron"),
-                    ))
-                }
-                Err(e) => Err(e),
+    web::block(move || {
+        let context = session::create_context(credentials)
+            .expect("unable to create context");
+        data_read::execute_sql_query(&context, &sql_param.sql)
+    })
+    .from_err()
+    .then(move |rows| {
+        match rows {
+            Ok(rows) => {
+                Ok(HttpResponse::Ok().body(
+                    ron::ser::to_string(&rows)
+                        .expect("unable to serialize to ron"),
+                ))
             }
-        })
+            Err(e) => Err(e),
+        }
+    })
 }
 
 #[derive(Debug, Deserialize)]
@@ -123,13 +125,13 @@ pub fn record_detail(
     require_credentials(&req).expect("Should have credentials");
     let credentials: Result<Credentials, ServiceError> =
         TryFrom::try_from(&req);
-    let context =
-        session::create_context(credentials).expect("unable to create context");
-    let table_name = TableName::from(&table_name_param.to_string());
-    let dao: Dao =
-        ron::de::from_str(&dao_param.dao).expect("Unable to deserialize dao");
 
     web::block(move || {
+        let context = session::create_context(credentials)
+            .expect("unable to create context");
+        let table_name = TableName::from(&table_name_param.to_string());
+        let dao: Dao = ron::de::from_str(&dao_param.dao)
+            .expect("Unable to deserialize dao");
         let detail = data_read::fetch_detail(&context, &table_name, &dao);
         println!("detail: {:#?}", detail);
         detail

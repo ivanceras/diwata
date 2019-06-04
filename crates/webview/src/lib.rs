@@ -1,8 +1,8 @@
 //#![deny(warnings)]
 #![deny(clippy::all)]
 use app::{App, Msg};
-use data::WindowData;
 use diwata_intel::{
+    data_container::{AppData, WindowData},
     field::ColumnDetail,
     widget::{Alignment, ControlWidget, Widget},
     window::{GroupedWindow, WindowName},
@@ -32,7 +32,7 @@ pub fn setup_program(initial_state: &str) -> Rc<Program<App, Msg>> {
 
 pub fn make_app() -> App {
     let (window_width, window_height) = get_window_size();
-    let mut app = App::new(vec![], vec![], vec![], window_width, window_height);
+    let mut app = App::new(AppData::default(), window_width, window_height);
     app
 }
 

@@ -1,6 +1,7 @@
 use crate::{
     common,
     data_container::{
+        AppData,
         Lookup,
         QueryResult,
         RecordDetail,
@@ -36,7 +37,6 @@ use sqlparser::{
 use std::collections::BTreeMap;
 
 mod detail_record;
-
 
 pub fn get_database_name(
     em: &EntityManager,
@@ -84,4 +84,10 @@ pub fn execute_sql_query(
     Ok(QueryResult::with_rows(window, rows))
 }
 
-
+pub fn retrieve_app_data(context: &Context) -> Result<AppData, DbError> {
+    Ok(AppData {
+        window_list: vec![],
+        windows: vec![],
+        window_data: vec![],
+    })
+}

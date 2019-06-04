@@ -18,7 +18,10 @@ pub mod table_intel;
 pub mod window;
 
 pub use context::Context;
-pub use data_container::RecordDetail;
+pub use data_container::{
+    DataRow,
+    RecordDetail,
+};
 pub use field::Field;
 pub use rustorm::{
     types::SqlType,

@@ -1,6 +1,8 @@
-use crate::{data::WindowData, rest_api};
+use crate::rest_api;
 use diwata_intel::{
-    data_container::QueryResult, window::GroupedWindow, RecordDetail, Rows, Window,
+    data_container::{AppData, QueryResult, WindowData},
+    window::GroupedWindow,
+    RecordDetail, Rows, Window,
 };
 use sauron::{
     html::{attributes::*, events::*, *},
@@ -49,23 +51,18 @@ pub struct App {
 }
 
 impl App {
-    pub fn new(
-        window_list: Vec<GroupedWindow>,
-        windows: Vec<Window>,
-        window_data: Vec<WindowData>,
-        browser_width: i32,
-        browser_height: i32,
-    ) -> App {
+    pub fn new(app_data: AppData, browser_width: i32, browser_height: i32) -> App {
         let mut app = App {
-            window_views: windows
+            window_views: app_data
+                .windows
                 .into_iter()
-                .zip(window_data.iter())
+                .zip(app_data.window_data.iter())
                 .map(|(window, window_data)| {
                     WindowView::new(window, &window_data, browser_width, browser_height)
                 })
                 .collect(),
-            window_data,
-            window_list_view: WindowListView::new(window_list),
+            window_data: app_data.window_data,
+            window_list_view: WindowListView::new(app_data.window_list),
             active_window: 0,
             browser_width,
             browser_height,
@@ -74,12 +71,6 @@ impl App {
         app.update_size_allocation();
         app
     }
-
-    /*
-    pub fn set_window_data(&mut self, index: usize, window_data: WindowData) {
-        self.window_views[index].set_window_data(window_data);
-    }
-    */
 
     fn update_size_allocation(&mut self) {
         let window_list_size = self.calculate_window_list_size();
@@ -288,9 +279,8 @@ impl Component<Msg> for App {
                     self.browser_height,
                 );
                 new_window.show_main_tab_detail_view(row_index);
-
+                new_window.update_size_allocation();
                 self.window_views[window_index] = new_window;
-
                 Cmd::none()
             }
             Msg::ReceivedWindowMainTabDetail(_window_index, _row_index, Err(record_detail)) => {

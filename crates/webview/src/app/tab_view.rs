@@ -1,13 +1,13 @@
-use crate::{
-    app::{
-        self,
-        detail_view::{self, DetailView},
-        row_view,
-        table_view::{self, TableView},
-    },
-    data::{FrozenData, Page},
+use crate::app::{
+    self,
+    detail_view::{self, DetailView},
+    row_view,
+    table_view::{self, TableView},
 };
-use data_table::DataRow;
+use diwata_intel::{
+    data_container::{FrozenData, Page},
+    DataRow,
+};
 
 use diwata_intel::{Tab, TableName};
 use sauron::{

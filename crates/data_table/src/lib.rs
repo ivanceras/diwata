@@ -5,10 +5,9 @@ pub use rustorm::{
     Value,
 };
 
+use diwata_intel::DataRow;
 use rustorm::common;
 use sqlparser::sqlast::ASTNode;
-
-pub type DataRow = Vec<Value>;
 
 /// A generic representation of rows that resembles homogeneos rows in a table
 #[derive(Debug)]

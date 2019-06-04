@@ -2,8 +2,8 @@ use crate::app::{
     self,
     field_view::{self, FieldView},
 };
-use data_table::{DataColumn, DataRow};
-use diwata_intel::Dao;
+use data_table::DataColumn;
+use diwata_intel::{Dao, DataRow};
 use sauron::{
     html::{attributes::*, events::*, *},
     Component, Node,

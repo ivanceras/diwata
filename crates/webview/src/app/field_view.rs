@@ -230,6 +230,7 @@ impl Component<Msg> for FieldView {
         div(
             [
                 class("field_view"),
+                //styles([("width", px(200))]),
                 classes_flag([
                     ("frozen_row", self.is_frozen_row),
                     ("frozen_column", self.is_frozen_column),

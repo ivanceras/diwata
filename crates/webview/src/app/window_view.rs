@@ -10,10 +10,10 @@ use crate::{
         toolbar_view::{self, ToolbarView},
     },
     assets,
-    data::WindowData,
 };
-use data_table::DataRow;
-use diwata_intel::{TableName, Window};
+use diwata_intel::{DataRow, TableName, Window};
+
+use diwata_intel::data_container::WindowData;
 use sauron::Http;
 use wasm_bindgen::JsValue;
 
@@ -457,7 +457,7 @@ impl WindowView {
     }
 
     /// TODO: also call this when detail view is closed to recalculate the sizes
-    fn update_size_allocation(&mut self) {
+    pub fn update_size_allocation(&mut self) {
         let calculated_main_table_size = self.calculate_main_table_size();
         let calculated_related_tabs_size = self.calculate_related_tabs_size();
 

@@ -1,13 +1,12 @@
 use crate::app::{self, column_view::ColumnView, row_view::RowView};
 use data_table::DataColumn;
-use diwata_intel::{Field, Tab};
+use diwata_intel::{DataRow, Field, Tab};
 use sauron::{
     html::{attributes::*, events::*, *},
     Component, Node,
 };
 
 use crate::app::{column_view, row_view};
-use data_table::DataRow;
 
 #[derive(Debug, Clone)]
 pub enum Msg {

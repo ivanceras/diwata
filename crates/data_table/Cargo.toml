@@ -8,3 +8,4 @@ edition = "2018"
 sqlparser = { path = "../sqlparser-rs" }
 csv = "1.0.2"
 rustorm = "0.13.0"
+diwata_intel = "0.1.2"
