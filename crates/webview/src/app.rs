@@ -4,7 +4,7 @@ use diwata_intel::{
 };
 use sauron::{
     html::{attributes::*, events::*, *},
-    Browser, Cmd, Component, Dispatch, Http, Node,
+    Browser, Component, Dispatch, Http, Node,
 };
 use std::rc::Rc;
 use wasm_bindgen::{closure::Closure, JsCast, JsValue};
@@ -22,6 +22,8 @@ mod toolbar_view;
 mod window_list_view;
 mod window_view;
 
+pub type Cmd = sauron::Cmd<App,Msg>;
+
 #[derive(Debug, Clone)]
 #[allow(clippy::large_enum_variant)]
 pub enum Msg {
@@ -34,11 +36,12 @@ pub enum Msg {
     FetchWindowList(Result<Vec<GroupedWindow>, JsValue>),
     ReceivedWindowQueryResult(usize, Result<QueryResult, JsValue>),
     ReceivedWindowData(Result<QueryResult, JsValue>),
-    ReceivedWindowMainTabDetail(usize, Result<RecordDetail, JsValue>),
+    ReceivedWindowMainTabDetail(usize, usize, Result<RecordDetail, JsValue>),
 }
 
 pub struct App {
     window_views: Vec<WindowView>,
+    window_data: Vec<WindowData>,
     active_window: usize,
     browser_height: i32,
     browser_width: i32,
@@ -49,14 +52,17 @@ impl App {
     pub fn new(
         window_list: Vec<GroupedWindow>,
         windows: Vec<Window>,
+        window_data: Vec<WindowData>,
         browser_width: i32,
         browser_height: i32,
     ) -> App {
         let mut app = App {
             window_views: windows
                 .into_iter()
-                .map(|window| WindowView::new(window, browser_width, browser_height))
+                .zip( window_data.iter())
+                .map(|(window,window_data)| WindowView::new(window, &window_data, browser_width, browser_height))
                 .collect(),
+            window_data,
             window_list_view: WindowListView::new(window_list),
             active_window: 0,
             browser_width,
@@ -67,9 +73,11 @@ impl App {
         app
     }
 
+    /*
     pub fn set_window_data(&mut self, index: usize, window_data: WindowData) {
         self.window_views[index].set_window_data(window_data);
     }
+    */
 
     fn update_size_allocation(&mut self) {
         let window_list_size = self.calculate_window_list_size();
@@ -113,20 +121,20 @@ impl App {
         self.activate_window(0);
     }
 
-    fn setup_window_resize_listener(&self) -> Cmd<App, Msg> {
+    fn setup_window_resize_listener(&self) -> Cmd {
         Browser::onresize(Msg::BrowserResized)
     }
 }
 
 impl Component<Msg> for App {
-    fn init(&self) -> Cmd<Self, Msg> {
+    fn init(&self) -> Cmd {
         Cmd::batch(vec![
             rest_api::fetch_window_list(),
             self.setup_window_resize_listener(),
         ])
     }
 
-    fn update(&mut self, msg: Msg) -> Cmd<Self, Msg> {
+    fn update(&mut self, msg: Msg) -> Cmd {
         match msg {
             Msg::ActivateWindow(index) => {
                 self.activate_window(index);
@@ -150,17 +158,19 @@ impl Component<Msg> for App {
                 ));
                 let window_view = &mut self.window_views[window_index];
                 window_view.update(window_msg);
-                let main_tab_view = &window_view.main_tab;
+                let main_tab_view = &mut window_view.main_tab;
+                // show the row first, while the detail is loading
+                main_tab_view.show_detail_view(row_index);
+
                 let table_name = &main_tab_view.table_name;
                 let dao = &main_tab_view.table_view.row_views[row_index].primary_dao();
                 rest_api::retrieve_detail_for_main_tab(
-                    window_index,
                     table_name,
                     dao,
-                    move |detail| Msg::ReceivedWindowMainTabDetail(window_index, detail),
+                    move |detail| Msg::ReceivedWindowMainTabDetail(window_index, row_index, detail),
                 )
             }
-            //FIXME: This is managed here since Mapping in Cmd is not yet solved/supported
+
             Msg::WindowMsg(index, window_view::Msg::ToolbarMsg(toolbar_view::Msg::RunQuery)) => {
                 let sql = self.window_views[index].sql_query();
                 if let Some(sql) = sql {
@@ -174,8 +184,7 @@ impl Component<Msg> for App {
                 }
             }
             Msg::WindowMsg(index, window_msg) => {
-                self.window_views[index].update(window_msg);
-                Cmd::none()
+                self.window_views[index].update(window_msg)
             }
             Msg::BrowserResized(width, height) => {
                 sauron::log!("Browser is resized to: {}, {}", width, height);
@@ -222,33 +231,37 @@ impl Component<Msg> for App {
                             query_result
                                 .record
                                 .map_left(|rows| {
+                                    let mut window_data = WindowData::from_rows(rows);
+                                    window_data.sql_query = Some(sql_query.to_string());
                                     let mut new_window = WindowView::new(
                                         window_clone,
+                                        &window_data,
                                         self.browser_width,
                                         self.browser_height,
                                     );
-                                    let mut window_data = WindowData::from_rows(rows);
-                                    window_data.sql_query = Some(sql_query.to_string());
                                     // set the previous sql query
-                                    new_window.set_window_data(window_data);
+                                    // new_window.set_window_data(window_data);
                                     // replace the previous window
+                                    self.window_data.push(window_data);
                                     self.window_views.push(new_window);
-                                    let index = self.window_views.len();
                                     self.activate_last_added_window();
                                 })
                                 .map_right(|record_detail| {
+                                    /*
+                                    let mut window_data =
+                                        WindowData::from_record_detail(record_detail);
+
                                     let mut new_window = WindowView::new(
                                         window,
+                                        &window_data,
                                         self.browser_width,
                                         self.browser_height,
                                     );
-                                    let mut window_data =
-                                        WindowData::from_record_detail(record_detail);
-                                    window_data.sql_query = Some(sql_query.to_string());
-                                    new_window.set_window_data(window_data);
+
                                     self.window_views.push(new_window);
-                                    let index = self.window_views.len();
+                                    self.window_data.push(window_data);
                                     self.activate_last_added_window();
+                                    */
                                 });
                         } else {
                             sauron::log!("No window returned in query result");
@@ -269,27 +282,29 @@ impl Component<Msg> for App {
                     query_result
                         .record
                         .map_left(|rows| {
-                            let sql_query = self.window_views[index].sql_query();
+                            let window_data = WindowData::from_rows(rows);
+                            //replace the data on this window index
                             let mut new_window = WindowView::new(
                                 window_clone,
+                                &window_data,
                                 self.browser_width,
                                 self.browser_height,
                             );
-                            let mut window_data = WindowData::from_rows(rows);
-                            window_data.sql_query = sql_query;
+                            self.window_data[index] = window_data;
                             // set the previous sql query
-                            new_window.set_window_data(window_data);
                             // replace the previous window
                             self.window_views[index] = new_window;
                         })
                         .map_right(|record_detail| {
-                            let sql_query = self.window_views[index].sql_query();
+                            /*
+                            let mut window_data = &mut self.window_data[index];
+                            window_data.set_record_detail(record_detail);
+
                             let mut new_window =
-                                WindowView::new(window, self.browser_width, self.browser_height);
-                            let mut window_data = WindowData::from_record_detail(record_detail);
-                            window_data.sql_query = sql_query;
-                            new_window.set_window_data(window_data);
+                                WindowView::new(window, window_data, self.browser_width, self.browser_height);
+
                             self.window_views[index] = new_window;
+                            */
                         });
                 } else {
                     sauron::log!("No window returned in query result");
@@ -300,19 +315,20 @@ impl Component<Msg> for App {
                 sauron::log!("Error retrieveing records from sql query");
                 Cmd::none()
             }
-            Msg::ReceivedWindowMainTabDetail(window_index, Ok(record_detail)) => {
+            Msg::ReceivedWindowMainTabDetail(window_index, row_index, Ok(record_detail)) => {
                 sauron::log!("Got window main tab detail: {:#?}", record_detail);
                 let detail_window = record_detail.window.clone();
-                let window_data = WindowData::from_record_detail(record_detail);
+                let window_data = &mut self.window_data[window_index];
+                window_data.set_record_detail(record_detail);
                 let mut new_window =
-                    WindowView::new(detail_window, self.browser_width, self.browser_height);
-                sauron::log!("setting new window window data..");
-                new_window.set_window_data(window_data);
-                sauron::log!("adding new window");
+                    WindowView::new(detail_window, &window_data, self.browser_width, self.browser_height);
+                new_window.show_main_tab_detail_view(row_index);
+
                 self.window_views[window_index] = new_window;
+
                 Cmd::none()
             }
-            Msg::ReceivedWindowMainTabDetail(window_index, Err(record_detail)) => {
+            Msg::ReceivedWindowMainTabDetail(_window_index, _row_index, Err(record_detail)) => {
                 sauron::log!("Error retrieveing window main tab detail..");
                 Cmd::none()
             }

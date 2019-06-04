@@ -4,7 +4,7 @@ use sauron::{
 };
 
 use crate::{
-    app::{
+    app::{self,
         tab_view::{self, TabView},
         toolbar_view::{self, ToolbarView},
     },
@@ -13,7 +13,7 @@ use crate::{
 };
 use data_table::DataRow;
 use diwata_intel::{TableName, Window};
-use sauron::{Cmd, Http};
+use sauron::{Http};
 use wasm_bindgen::JsValue;
 
 pub struct WindowView {
@@ -43,54 +43,55 @@ pub enum Msg {
     CloseDetailView,
 }
 
-impl Component<Msg> for WindowView {
-    fn update(&mut self, msg: Msg) -> Cmd<Self, Msg> {
+impl WindowView {
+    pub fn update(&mut self, msg: Msg) -> app::Cmd {
         match msg {
             Msg::MainTabMsg(tab_msg) => {
                 self.main_tab.update(tab_msg);
                 self.update_size_allocation();
-                Cmd::none()
+                app::Cmd::none()
             }
             Msg::OneOneTabMsg(index, tab_msg) => {
                 self.one_one_tabs[index].update(tab_msg);
-                Cmd::none()
+                app::Cmd::none()
             }
             Msg::HasManyTabMsg(index, tab_msg) => {
                 self.has_many_tabs[index].update(tab_msg);
-                Cmd::none()
+                app::Cmd::none()
             }
             Msg::IndirectTabMsg(index, (_table_name, tab_msg)) => {
                 self.indirect_tabs[index].1.update(tab_msg);
-                Cmd::none()
+                app::Cmd::none()
             }
             Msg::ShowHasManyTab(index) => {
                 self.activate_has_many_tab(index);
-                Cmd::none()
+                app::Cmd::none()
             }
             Msg::ShowIndirectTab(index) => {
                 self.activate_indirect_tab(index);
-                Cmd::none()
+                app::Cmd::none()
             }
             Msg::BrowserResized(width, height) => {
                 sauron::log!("resized: {},{}", width, height);
                 self.browser_width = width;
                 self.browser_height = height;
                 self.update_size_allocation();
-                Cmd::none()
+                app::Cmd::none()
             }
             Msg::ToolbarMsg(toolbar_msg) => {
                 self.toolbar_view.update(toolbar_msg);
                 self.update_size_allocation();
-                Cmd::none()
+                app::Cmd::none()
             }
             Msg::CloseDetailView => {
                 self.close_detail_view();
                 self.update_size_allocation();
-                Cmd::none()
+                app::Cmd::none()
             }
         }
     }
-    fn view(&self) -> Node<Msg> {
+
+    pub fn view(&self) -> Node<Msg> {
         main(
             [
                 class("window"),
@@ -245,7 +246,7 @@ impl Component<Msg> for WindowView {
 }
 
 impl WindowView {
-    pub fn new(window: Window, browser_width: i32, browser_height: i32) -> Self {
+    pub fn new(window: Window, window_data: &WindowData, browser_width: i32, browser_height: i32) -> Self {
         let mut window_view = WindowView {
             name: window.name,
             main_tab: TabView::new(window.main_tab),
@@ -271,6 +272,7 @@ impl WindowView {
             browser_height,
             toolbar_view: ToolbarView::new(),
         };
+        window_view.set_window_data(window_data);
         window_view.update_active_has_many_or_indirect_tab();
         window_view.update_size_allocation();
         window_view
@@ -286,11 +288,12 @@ impl WindowView {
     }
 
     /// Important: set the data rows first before setting the frozen data
-    pub fn set_window_data(&mut self, window_data: WindowData) {
+    pub fn set_window_data(&mut self, window_data: &WindowData) {
         sauron::log!("In setting window data");
         let WindowData {
             sql_query,
             main_tab_data,
+            record_detail,
             main_tab_frozen_data,
             one_one_tab_data,
 
@@ -322,6 +325,10 @@ impl WindowView {
             self.indirect_tabs[index].1.set_pages(pages);
         }
         sauron::log!("done setting window data");
+    }
+
+    pub fn show_main_tab_detail_view(&mut self, row_index: usize) {
+        self.main_tab.show_detail_view(row_index)
     }
 
     fn update_active_has_many_or_indirect_tab(&mut self) {

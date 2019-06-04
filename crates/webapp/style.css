@@ -466,6 +466,9 @@ input.column_filter[type="text"]{
 .row{
     background-color: #fff;
 }
+.row.modified{
+    background-color: papayawhip;
+}
 
 
 /* values in .normal_rows and .frozen_columns_container should be the same
@@ -512,7 +515,8 @@ input.column_filter[type="text"]{
     border-right: 1px dashed #ccc;
 }
 
-.value{
+.value.modified{
+    background-color: papayawhip;
 }
 
 input.value[type="text"], input.value[type="number"], input.value[type="date"]

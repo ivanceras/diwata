@@ -1,5 +1,5 @@
 use crate::{
-    app::{
+    app::{self,
         detail_view::{self, DetailView},
         row_view,
         table_view::{self, TableView},
@@ -11,7 +11,7 @@ use data_table::DataRow;
 use diwata_intel::{Tab, TableName};
 use sauron::{
     html::{attributes::*, *},
-    Cmd, Component, Node,
+    Component, Node,
 };
 
 #[derive(Debug, Clone)]
@@ -42,35 +42,35 @@ impl TabView {
         }
     }
 
-    pub fn set_pages(&mut self, pages: Vec<Page>) {
+    pub fn set_pages(&mut self, pages: &Vec<Page>) {
         for page in pages {
-            self.set_data_rows(page.rows);
+            self.set_data_rows(&page.rows);
         }
     }
 
     /// this is a one one tab and should have only 1 record
-    pub fn set_one_one_record(&mut self, data_row: Option<DataRow>) {
+    pub fn set_one_one_record(&mut self, data_row: &Option<DataRow>) {
         //assert!(self.is_one_one);
         if let Some(data_row) = data_row {
-            self.set_data_rows(vec![data_row]);
+            self.set_data_rows(&vec![data_row.to_owned()]);
         }
     }
 
-    pub fn set_data_rows(&mut self, data_row: Vec<DataRow>) {
-        self.table_view.set_data_rows(data_row);
+    pub fn set_data_rows(&mut self, data_row: &Vec<DataRow>) {
+        self.table_view.set_data_rows(&data_row);
         self.update_view();
     }
 
-    pub fn freeze_rows(&mut self, rows: Vec<usize>) {
+    pub fn freeze_rows(&mut self, rows: &Vec<usize>) {
         self.table_view.freeze_rows(rows);
     }
 
-    pub fn freeze_columns(&mut self, columns: Vec<usize>) {
+    pub fn freeze_columns(&mut self, columns: &Vec<usize>) {
         self.table_view.freeze_columns(columns);
     }
-    pub fn set_frozen_data(&mut self, frozen_data: FrozenData) {
-        self.freeze_rows(frozen_data.frozen_rows);
-        self.freeze_columns(frozen_data.frozen_columns);
+    pub fn set_frozen_data(&mut self, frozen_data: &FrozenData) {
+        self.freeze_rows(&frozen_data.frozen_rows);
+        self.freeze_columns(&frozen_data.frozen_columns);
     }
 
     pub fn show(&mut self) {
@@ -80,7 +80,7 @@ impl TabView {
         self.is_visible = false;
     }
 
-    fn show_detail_view(&mut self, row_index: usize) {
+    pub fn show_detail_view(&mut self, row_index: usize) {
         self.detail_view.show();
         let fields = &self.table_view.row_views[row_index].fields;
         self.detail_view.set_fields(fields);
@@ -132,26 +132,25 @@ impl TabView {
             }
         }
     }
-}
-
-impl Component<Msg> for TabView {
-    fn update(&mut self, msg: Msg) -> Cmd<Self, Msg> {
+    pub fn update(&mut self, msg: Msg) -> app::Cmd {
         match msg {
+            /*
             Msg::TableMsg(table_view::Msg::RowMsg(row_index, row_view::Msg::DoubleClick)) => {
-                self.show_detail_view(row_index);
-                Cmd::none()
+                //self.show_detail_view(row_index);
+                app::Cmd::none()
             }
+            */
             Msg::TableMsg(table_msg) => {
                 self.table_view.update(table_msg);
-                Cmd::none()
+                app::Cmd::none()
             }
             Msg::DetailViewMsg(detail_msg) => {
                 self.detail_view.update(detail_msg);
-                Cmd::none()
+                app::Cmd::none()
             }
         }
     }
-    fn view(&self) -> Node<Msg> {
+    pub fn view(&self) -> Node<Msg> {
         section(
             [
                 class("tab_view"),

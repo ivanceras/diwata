@@ -11,6 +11,7 @@ use sauron::{Dispatch, Program};
 use std::rc::Rc;
 use wasm_bindgen::{self, prelude::*, JsCast, JsValue};
 use web_sys::Response;
+use data::WindowData;
 
 mod app;
 mod assets;
@@ -30,15 +31,8 @@ pub fn setup_program(initial_state: &str) -> Rc<Program<App, Msg>> {
 }
 
 pub fn make_app() -> App {
-    let windows: Vec<Window> = vec![
-        sample_window("Window1"),
-        sample_window("Window2"),
-        sample_window("Window3"),
-    ];
-    let window_list: Vec<GroupedWindow> = make_sample_window_list();
     let (window_width, window_height) = get_window_size();
-    let mut app = App::new(window_list, windows, window_width, window_height);
-    app.set_window_data(0, crate::data::make_sample_window_data());
+    let mut app = App::new(vec![], vec![], vec![], window_width, window_height);
     app
 }
 

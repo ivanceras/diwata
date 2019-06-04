@@ -3,9 +3,10 @@ use data_table::{DataColumn, DataRow};
 use diwata_intel::Dao;
 use sauron::{
     html::{attributes::*, events::*, *},
-    Cmd, Component, Node,
+    Component, Node,
 };
 use std::{cell::RefCell, rc::Rc};
+use crate::app;
 
 #[derive(Debug, Clone)]
 pub enum Msg {
@@ -22,7 +23,7 @@ pub struct RowView {
 }
 
 impl RowView {
-    pub fn new(index: usize, data_rows: DataRow, data_columns: &[DataColumn]) -> Self {
+    pub fn new(index: usize, data_rows: &DataRow, data_columns: &[DataColumn]) -> Self {
         RowView {
             index,
             fields: data_rows
@@ -33,6 +34,11 @@ impl RowView {
             frozen_fields: vec![],
             is_frozen: false,
         }
+    }
+
+    /// is value of any field modified
+    pub fn is_changed(&self) -> bool {
+        self.fields.iter().any(|field| field.borrow().is_changed())
     }
 
     /// return the primary columns value pair
@@ -67,7 +73,10 @@ impl RowView {
                 // since events attached in a dom are not compared
                 // and is not replaced.
                 key(format!("row_{}", self.index)),
-                classes_flag([("frozen_row", self.is_frozen)]),
+                classes_flag([
+                    ("frozen_row", self.is_frozen),
+                    ("modified", self.is_changed()),
+                ]),
                 styles([("height", px(Self::row_height()))]),
                 onclick(|_| Msg::Click),
                 ondblclick(|_| Msg::DoubleClick),
@@ -97,8 +106,11 @@ impl RowView {
                 // since events attached in a dom are not compared
                 // and is not replaced.
                 key(format!("row_{}", self.index)),
-                class("frozen_column"),
-                classes_flag([("frozen_row", self.is_frozen)]),
+                class("frozen_column"), // The only difference in view_with_filter
+                classes_flag([
+                    ("frozen_row", self.is_frozen),
+                    ("modified", self.is_changed()),
+                ]),
                 styles([("height", px(Self::row_height()))]),
                 onclick(|_| Msg::Click),
                 ondblclick(|_| Msg::DoubleClick),
@@ -141,14 +153,21 @@ impl RowView {
             }
         })
     }
-}
 
-impl Component<Msg> for RowView {
-    fn update(&mut self, _msg: Msg) -> Cmd<Self, Msg> {
-        Cmd::none()
+    pub fn update(&mut self, msg: Msg) -> app::Cmd {
+        match msg {
+            Msg::FieldMsg(field_index, field_msg) => {
+                self.fields[field_index].borrow_mut().update(field_msg);
+                app::Cmd::none()
+            }
+            Msg::DoubleClick => {
+                app::Cmd::none()
+            }
+            Msg::Click => app::Cmd::none(),
+        }
     }
 
-    fn view(&self) -> Node<Msg> {
+    pub fn view(&self) -> Node<Msg> {
         self.view_with_filter(|(index, _field)| !self.frozen_fields.contains(index))
     }
 }

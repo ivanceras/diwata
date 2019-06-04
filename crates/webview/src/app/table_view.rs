@@ -1,9 +1,9 @@
-use crate::app::{column_view::ColumnView, row_view::RowView};
+use crate::app::{self, column_view::ColumnView, row_view::RowView};
 use data_table::DataColumn;
 use diwata_intel::{Field, Tab};
 use sauron::{
     html::{attributes::*, events::*, *},
-    Cmd, Component, Node,
+    Component, Node,
 };
 
 use crate::app::{column_view, row_view};
@@ -67,7 +67,7 @@ impl TableView {
 
     /// replace all the data with a new data row
     /// TODO: also update the freeze_columns for each row_views
-    pub fn set_data_rows(&mut self, data_row: Vec<DataRow>) {
+    pub fn set_data_rows(&mut self, data_row: &Vec<DataRow>) {
         self.row_views = data_row
             .into_iter()
             .enumerate()
@@ -76,8 +76,8 @@ impl TableView {
         self.update_freeze_columns();
     }
 
-    pub fn freeze_rows(&mut self, rows: Vec<usize>) {
-        self.frozen_rows = rows;
+    pub fn freeze_rows(&mut self, rows: &Vec<usize>) {
+        self.frozen_rows = rows.clone();
         self.update_frozen_rows();
     }
 
@@ -112,7 +112,7 @@ impl TableView {
             .for_each(|row_view| row_view.freeze_columns(frozen_columns.clone()))
     }
 
-    pub fn freeze_columns(&mut self, columns: Vec<usize>) {
+    pub fn freeze_columns(&mut self, columns: &Vec<usize>) {
         self.frozen_columns = columns.clone();
         self.update_freeze_columns();
     }
@@ -289,10 +289,8 @@ impl TableView {
                 .collect::<Vec<Node<Msg>>>(),
         )
     }
-}
 
-impl Component<Msg> for TableView {
-    fn update(&mut self, msg: Msg) -> Cmd<Self, Msg> {
+    pub fn update(&mut self, msg: Msg) -> app::Cmd {
         match msg {
             Msg::RowMsg(row_index, row_msg) => {
                 self.row_views[row_index].update(row_msg);
@@ -305,11 +303,11 @@ impl Component<Msg> for TableView {
                 self.scroll_left = scroll_left;
             }
         }
-        Cmd::none()
+        app::Cmd::none()
     }
 
     /// A grid of 2x2  containing 4 major parts of the table
-    fn view(&self) -> Node<Msg> {
+    pub fn view(&self) -> Node<Msg> {
         main(
             [
                 class("table"),

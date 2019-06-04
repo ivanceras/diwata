@@ -37,9 +37,9 @@ impl ToolbarView {
         }
     }
 
-    pub fn set_sql_query(&mut self, sql_query: Option<String>) {
+    pub fn set_sql_query(&mut self, sql_query: &Option<String>) {
         if let Some(sql_query) = sql_query {
-            self.sql_query = sql_query;
+            self.sql_query = sql_query.to_owned();
         }
     }
 

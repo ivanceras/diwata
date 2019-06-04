@@ -36,7 +36,6 @@ where
 }
 
 pub fn retrieve_detail_for_main_tab<F>(
-    window_index: usize,
     table: &TableName,
     dao: &Dao,
     msg_receiver: F,
@@ -44,11 +43,6 @@ pub fn retrieve_detail_for_main_tab<F>(
 where
     F: Fn(Result<RecordDetail, JsValue>) -> Msg + Clone + 'static,
 {
-    sauron::log!(
-        "retrieve data for window {} on main tab: {}",
-        window_index,
-        table.complete_name()
-    );
     sauron::log!("dao: {:#?}", dao);
     let dao_string = ron::ser::to_string(dao).expect("Unable to serialize dao");
     sauron::log!("dao_string: {}", dao_string);
