@@ -20,8 +20,8 @@ exclude = [
 "rustorm:0.13.0" = { path = "crates/rustorm" }
 "diwata_intel:0.1.2" = { path = "crates/intel" }
 
-#"sauron:0.7.0" = { path = "../sauron" }
-#"sauron_vdom:0.7.0"= { path = "../sauron/crates/sauron_vdom" }
-"sauron:0.7.0" = { git = "https://github.com/ivanceras/sauron.git" }
-"sauron_vdom:0.7.0" = { git = "https://github.com/ivanceras/sauron.git" }
+"sauron:0.7.0" = { path = "../sauron" }
+"sauron_vdom:0.7.0"= { path = "../sauron/crates/sauron_vdom" }
+#"sauron:0.7.0" = { git = "https://github.com/ivanceras/sauron.git" }
+#"sauron_vdom:0.7.0" = { git = "https://github.com/ivanceras/sauron.git" }
 

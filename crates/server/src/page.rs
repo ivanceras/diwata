@@ -19,6 +19,7 @@ use actix_web::{
 use diwata_intel::{
     data_read,
     Context,
+    TableName,
 };
 use futures::future::{
     self,
@@ -39,8 +40,8 @@ use serde::{
 };
 use std::convert::TryFrom;
 
-fn get_index_html(context: &Context) -> String {
-    let app_data = data_read::retrieve_app_data(context)
+fn get_index_html(context: &Context, table_name: Option<TableName>) -> String {
+    let app_data = data_read::retrieve_app_data(context, table_name)
         .expect("there should be app data");
     let app_data_serialized =
         ron::ser::to_string(&app_data).expect("unable to serialize to ron");
@@ -120,13 +121,39 @@ pub fn index(
         TryFrom::try_from(&req);
     let context =
         session::create_context(credentials).expect("unable to create context");
-    let index_html = get_index_html(&context);
+    let index_html = get_index_html(&context, None);
     future::ok(
         HttpResponse::Ok()
             .content_type("text/html")
             .body(index_html),
     )
 }
+
+pub fn index_with_table(
+    req: HttpRequest,
+    table_name_param: web::Path<(String)>,
+) -> impl Future<Item = HttpResponse, Error = Error> {
+    println!("{:?}", req);
+    api::require_credentials(&req).expect("Should have credentials");
+    let credentials: Result<Credentials, ServiceError> =
+        TryFrom::try_from(&req);
+    let context =
+        session::create_context(credentials).expect("unable to create context");
+    let table_name_str = table_name_param.to_string();
+    let table_name = if !table_name_str.is_empty(){
+        Some(TableName::from(&table_name_str))
+    }else{
+        println!("There is no table name specified!");
+        None
+    };
+    let index_html = get_index_html(&context, table_name);
+    future::ok(
+        HttpResponse::Ok()
+            .content_type("text/html")
+            .body(index_html),
+    )
+}
+
 
 pub fn bad_request<B>(
     res: dev::ServiceResponse<B>,

@@ -109,13 +109,18 @@ fn fetch_main_table_data(
     Ok(rows)
 }
 
-pub fn retrieve_app_data(context: &Context) -> Result<AppData, IntelError> {
+pub fn retrieve_app_data(context: &Context, table_name: Option<TableName>) -> Result<AppData, IntelError> {
     let grouped_window = context.grouped_window.clone();
-    let first_table_name = &grouped_window[0].window_names[0].table_name;
+    println!("table_name: {:#?}", table_name);
+    let retrieve_table_name = if let Some(ref table_name) = &table_name{
+        table_name
+    }else{
+        &grouped_window[0].window_names[0].table_name
+    };
     let first_window = context
-        .get_window(first_table_name)
+        .get_window(retrieve_table_name)
         .expect("expecting a window");
-    let rows = fetch_main_table_data(context, first_table_name)?;
+    let rows = fetch_main_table_data(context, retrieve_table_name)?;
     let first_window_data = WindowData::from_rows(rows);
     Ok(AppData {
         grouped_window,

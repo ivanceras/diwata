@@ -4,6 +4,7 @@ use sauron::{
     html::{attributes::*, events::*, *},
     Cmd, Component, Node,
 };
+use wasm_bindgen::JsValue;
 
 #[derive(Debug, Clone)]
 pub enum Msg {
@@ -95,7 +96,7 @@ impl Component<Msg> for WindowListView {
                                                     [a(
                                                         [
                                                             href(format!(
-                                                                "#{}",
+                                                                "/{}",
                                                                 &table_name.complete_name()
                                                             )),
                                                             class("window_list_link"),

@@ -57,6 +57,7 @@ fn main() -> io::Result<()> {
             .wrap(Logger::default())
             .wrap(error_handlers)
             .service(web::resource("/").route(web::get().to_async(page::index)))
+            .service(web::resource("/{table_name}").route(web::get().to_async(page::index_with_table)))
             .service(
                 web::resource("/sql/").route(web::get().to_async(api::sql)),
             )
