@@ -36,12 +36,13 @@ pub fn fetch_detail(
     context: &Context,
     table_name: &TableName,
     primary_dao: &Dao,
+    page_size: usize
 ) -> Result<RecordDetail, IntelError> {
     detail_record::get_selected_record_detail(
         context,
         table_name,
         primary_dao,
-        40,
+        page_size,
     )
 }
 
@@ -76,27 +77,29 @@ pub fn execute_sql_query(
 pub fn get_window_main_table_data(
     context: &Context,
     table_name: &TableName,
+    page_size: usize,
 ) -> Result<QueryResult, IntelError> {
     let window = context.get_window(table_name);
-    let rows = fetch_main_table_data(context, table_name)?;
+    let rows = fetch_main_table_data(context, table_name, page_size)?;
     Ok(QueryResult::with_rows(window, rows))
 }
 
 fn fetch_main_table_data(
     context: &Context,
     table_name: &TableName,
+    page_size: usize,
 ) -> Result<Rows, IntelError> {
     let mut query = Query::new(context);
     query.select();
     let main_table = context.get_table(table_name).expect("there should be table");
     query.enumerate_columns(&main_table);
     query.from(table_name);
-    query.set_limit(40);
+    query.set_limit(page_size);
     let rows = query.collect_rows()?;
     Ok(rows)
 }
 
-pub fn retrieve_app_data(context: &Context, table_name: Option<TableName>) -> Result<AppData, IntelError> {
+pub fn retrieve_app_data(context: &Context, table_name: Option<TableName>, page_size: usize) -> Result<AppData, IntelError> {
     let grouped_window = context.grouped_window.clone();
     println!("table_name: {:#?}", table_name);
     let retrieve_table_name = if let Some(ref table_name) = &table_name{
@@ -107,7 +110,7 @@ pub fn retrieve_app_data(context: &Context, table_name: Option<TableName>) -> Re
     let first_window = context
         .get_window(retrieve_table_name)
         .expect("expecting a window");
-    let rows = fetch_main_table_data(context, retrieve_table_name)?;
+    let rows = fetch_main_table_data(context, retrieve_table_name, page_size)?;
     let first_window_data = WindowData::from_rows(rows);
     Ok(AppData {
         grouped_window,

@@ -1,8 +1,5 @@
-//#![deny(warnings)]
+#![deny(warnings)]
 #![deny(clippy::all)]
-
-#[macro_use]
-extern crate structopt_derive;
 
 pub use error::ServiceError;
 pub use global::{
@@ -47,6 +44,7 @@ pub fn start() -> io::Result<()> {
     let port = env::var("PORT").expect("PORT must be set");
     println!("PORT: {}", port);
     global::set_db_url(&database_url).expect("unable to set global db_url");
+    global::precache().expect("unable to precache");
     let app = move || {
 
         let error_handlers = ErrorHandlers::new()

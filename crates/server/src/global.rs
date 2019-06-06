@@ -13,7 +13,7 @@ use std::sync::{
 };
 use url::Url;
 
-pub static PAGE_SIZE: u32 = 40;
+pub static PAGE_SIZE: usize = 40;
 
 lazy_static! {
     // the configured db url upon instantiaing the app

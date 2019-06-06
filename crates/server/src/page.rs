@@ -1,5 +1,6 @@
 use crate::{
     api,
+    global,
     credentials::Credentials,
     error::ServiceError,
     session,
@@ -37,7 +38,7 @@ use sauron::{
 use std::convert::TryFrom;
 
 fn get_index_html(context: &Context, table_name: Option<TableName>) -> String {
-    let app_data = data_read::retrieve_app_data(context, table_name)
+    let app_data = data_read::retrieve_app_data(context, table_name, global::PAGE_SIZE)
         .expect("there should be app data");
     let app_data_serialized =
         ron::ser::to_string(&app_data).expect("unable to serialize to ron");
