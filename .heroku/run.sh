@@ -1,5 +1,5 @@
 uname -a
-apt install libsqlite3-dev --yes
+sudo apt install libsqlite3-dev --yes
 if ! type cargo > /dev/null; then
     curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain nightly --yes
     echo $HOME
