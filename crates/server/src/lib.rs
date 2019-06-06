@@ -25,12 +25,12 @@ use actix_web::{
 
 use dotenv::dotenv;
 
+mod api;
 mod credentials;
 pub mod error;
 mod global;
-pub mod session;
-mod api;
 mod page;
+pub mod session;
 
 pub fn start() -> io::Result<()> {
     dotenv().ok();
@@ -38,7 +38,7 @@ pub fn start() -> io::Result<()> {
     env::set_var("RUST_LOG", "diwata_server=debug,actix_web=info");
     env_logger::init();
 
-    let database_url:String =
+    let database_url: String =
         env::var("DATABASE_URL").expect("DATABASE_URL must be set");
     println!("DATABASE_URL: {}", database_url);
     let port = env::var("PORT").expect("PORT must be set");
@@ -46,7 +46,6 @@ pub fn start() -> io::Result<()> {
     global::set_db_url(&database_url).expect("unable to set global db_url");
     global::precache().expect("unable to precache");
     let app = move || {
-
         let error_handlers = ErrorHandlers::new()
             .handler(
                 http::StatusCode::INTERNAL_SERVER_ERROR,
@@ -58,7 +57,10 @@ pub fn start() -> io::Result<()> {
             .wrap(Logger::default())
             .wrap(error_handlers)
             .service(web::resource("/").route(web::get().to_async(page::index)))
-            .service(web::resource("/{table_name}").route(web::get().to_async(page::index_with_table)))
+            .service(
+                web::resource("/{table_name}")
+                    .route(web::get().to_async(page::index_with_table)),
+            )
             .service(
                 web::resource("/sql/").route(web::get().to_async(api::sql)),
             )

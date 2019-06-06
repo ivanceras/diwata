@@ -180,7 +180,6 @@ pub fn derive_all_windows(tables: &[Table]) -> Vec<Window> {
     all_windows
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -16,9 +16,7 @@ use diwata_intel::{
     TableName,
 };
 use futures::future::Future;
-use serde::{
-    Deserialize,
-};
+use serde::Deserialize;
 use std::convert::TryFrom;
 
 pub fn require_credentials(req: &HttpRequest) -> Result<(), ServiceError> {
@@ -121,7 +119,12 @@ pub fn record_detail(
         let table_name = TableName::from(&table_name_param.to_string());
         let dao: Dao = ron::de::from_str(&dao_param.dao)
             .expect("Unable to deserialize dao");
-        let detail = data_read::fetch_detail(&context, &table_name, &dao, global::PAGE_SIZE);
+        let detail = data_read::fetch_detail(
+            &context,
+            &table_name,
+            &dao,
+            global::PAGE_SIZE,
+        );
         println!("detail: {:#?}", detail);
         detail
     })
@@ -151,7 +154,11 @@ pub fn main_data(
         let context = session::create_context(credentials)
             .expect("unable to create context");
         let table_name = TableName::from(&table_name_param.to_string());
-        let res = data_read::get_window_main_table_data(&context, &table_name, global::PAGE_SIZE);
+        let res = data_read::get_window_main_table_data(
+            &context,
+            &table_name,
+            global::PAGE_SIZE,
+        );
         res
     })
     .from_err()

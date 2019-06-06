@@ -1,8 +1,6 @@
 use crate::error::ServiceError;
 use actix_web::HttpRequest;
-use std::{
-    convert::TryFrom,
-};
+use std::convert::TryFrom;
 
 pub struct Credentials {
     pub username: String,

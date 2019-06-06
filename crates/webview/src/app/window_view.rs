@@ -15,8 +15,6 @@ use diwata_intel::{TableName, Window};
 
 use diwata_intel::data_container::WindowData;
 
-
-
 pub struct WindowView {
     pub name: String,
     pub main_tab: TabView,
@@ -374,11 +372,11 @@ impl WindowView {
 
     /// show the first has_many tab if there is one, otherwise show the first indirect tab
     fn activate_first_related_tab(&mut self) {
-        if !self.has_many_tabs.is_empty(){
+        if !self.has_many_tabs.is_empty() {
             self.activate_has_many_tab(0);
-        }else if !self.indirect_tabs.is_empty(){
+        } else if !self.indirect_tabs.is_empty() {
             self.activate_indirect_tab(0);
-        }else{
+        } else {
             sauron::log!("There is no related tab to activate");
         }
     }

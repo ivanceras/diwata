@@ -1,8 +1,8 @@
 use crate::{
     api,
-    global,
     credentials::Credentials,
     error::ServiceError,
+    global,
     session,
 };
 use actix_files::NamedFile;
@@ -38,8 +38,9 @@ use sauron::{
 use std::convert::TryFrom;
 
 fn get_index_html(context: &Context, table_name: Option<TableName>) -> String {
-    let app_data = data_read::retrieve_app_data(context, table_name, global::PAGE_SIZE)
-        .expect("there should be app data");
+    let app_data =
+        data_read::retrieve_app_data(context, table_name, global::PAGE_SIZE)
+            .expect("there should be app data");
     let app_data_serialized =
         ron::ser::to_string(&app_data).expect("unable to serialize to ron");
     let view: Node<()> = html_extra::html(
@@ -80,8 +81,19 @@ fn get_index_html(context: &Context, table_name: Option<TableName>) -> String {
                 [style("margin: 0; padding: 0; width: 100%; height: 100%;")],
                 [
                     div(
-                        [id("web-app"), style("width: 100%; height: 100%; text-align:center")],
-                        [img([src("/webapp/img/loading.svg"), style("margin: auto auto;")], [])],
+                        [
+                            id("web-app"),
+                            style(
+                                "width: 100%; height: 100%; text-align:center",
+                            ),
+                        ],
+                        [img(
+                            [
+                                src("/webapp/img/loading.svg"),
+                                style("margin: auto auto;"),
+                            ],
+                            [],
+                        )],
                     ),
                     script([src("/webapp/pkg/webapp.js")], []),
                     script(
@@ -98,7 +110,8 @@ fn get_index_html(context: &Context, table_name: Option<TableName>) -> String {
                     script(
                         [],
                         [text(format!(
-                            "window.initial_state = String.raw`{}`", app_data_serialized
+                            "window.initial_state = String.raw`{}`",
+                            app_data_serialized
                         ))],
                     ),
                 ],
@@ -136,9 +149,9 @@ pub fn index_with_table(
     let context =
         session::create_context(credentials).expect("unable to create context");
     let table_name_str = table_name_param.to_string();
-    let table_name = if !table_name_str.is_empty(){
+    let table_name = if !table_name_str.is_empty() {
         Some(TableName::from(&table_name_str))
-    }else{
+    } else {
         println!("There is no table name specified!");
         None
     };
@@ -149,7 +162,6 @@ pub fn index_with_table(
             .body(index_html),
     )
 }
-
 
 pub fn bad_request<B>(
     res: dev::ServiceResponse<B>,

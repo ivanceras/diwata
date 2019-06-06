@@ -178,13 +178,14 @@ impl<'c> Query<'c> {
         result.map(|rows| common::cast_rows(rows, &self.column_datatypes))
     }
 
-    pub fn collect_maybe_record(
-        &self,
-    ) -> Result<Option<Dao>, DbError> {
+    pub fn collect_maybe_record(&self) -> Result<Option<Dao>, DbError> {
         println!("SQL: {}", self.sql);
         println!("params: {:?}", self.params);
         let bparams: Vec<&Value> = self.params.iter().collect();
-        let record = self.context.dm.execute_sql_with_maybe_one_return(&self.sql, &bparams);
+        let record = self
+            .context
+            .dm
+            .execute_sql_with_maybe_one_return(&self.sql, &bparams);
         record
             .map(|r| r.map(|o| common::cast_record(o, &self.column_datatypes)))
     }
@@ -193,7 +194,10 @@ impl<'c> Query<'c> {
         println!("SQL: {}", self.sql);
         println!("params: {:?}", self.params);
         let bparams: Vec<&Value> = self.params.iter().collect();
-        let record = self.context.dm.execute_sql_with_one_return(&self.sql, &bparams)?;
+        let record = self
+            .context
+            .dm
+            .execute_sql_with_one_return(&self.sql, &bparams)?;
         Ok(common::cast_record(record, &self.column_datatypes))
     }
 }

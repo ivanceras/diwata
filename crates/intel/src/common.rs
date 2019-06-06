@@ -1,7 +1,5 @@
 //! provides data service for window
-use crate::{
-    error::IntelError,
-};
+use crate::error::IntelError;
 use bigdecimal::BigDecimal;
 use rustorm::{
     common,
@@ -66,7 +64,6 @@ pub fn cast_record(
     }
     new_rec
 }
-
 
 /// extract record id from comma separated value
 pub fn extract_record_id<'a>(
@@ -138,4 +135,3 @@ pub fn extract_record_id<'a>(
     }
     Ok(record_id)
 }
-

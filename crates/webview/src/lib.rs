@@ -2,16 +2,14 @@
 #![deny(clippy::all)]
 use app::{App, Msg};
 use diwata_intel::{
-    data_container::{AppData},
+    data_container::AppData,
     field::ColumnDetail,
     widget::{Alignment, ControlWidget, Widget},
     window::{GroupedWindow, WindowName},
     ColumnName, Field, IndirectTab, SqlType, Tab, TableName, Window,
 };
-use sauron::{Program};
+use sauron::Program;
 use std::rc::Rc;
-
-
 
 mod app;
 mod assets;

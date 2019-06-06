@@ -23,7 +23,6 @@ use sqlparser::{
     sqlparser::Parser,
 };
 
-
 mod detail_record;
 
 pub fn get_database_name(
@@ -36,7 +35,7 @@ pub fn fetch_detail(
     context: &Context,
     table_name: &TableName,
     primary_dao: &Dao,
-    page_size: usize
+    page_size: usize,
 ) -> Result<RecordDetail, IntelError> {
     detail_record::get_selected_record_detail(
         context,
@@ -73,7 +72,6 @@ pub fn execute_sql_query(
     Ok(QueryResult::with_rows(window, rows))
 }
 
-
 pub fn get_window_main_table_data(
     context: &Context,
     table_name: &TableName,
@@ -91,7 +89,9 @@ fn fetch_main_table_data(
 ) -> Result<Rows, IntelError> {
     let mut query = Query::new(context);
     query.select();
-    let main_table = context.get_table(table_name).expect("there should be table");
+    let main_table = context
+        .get_table(table_name)
+        .expect("there should be table");
     query.enumerate_columns(&main_table);
     query.from(table_name);
     query.set_limit(page_size);
@@ -99,12 +99,16 @@ fn fetch_main_table_data(
     Ok(rows)
 }
 
-pub fn retrieve_app_data(context: &Context, table_name: Option<TableName>, page_size: usize) -> Result<AppData, IntelError> {
+pub fn retrieve_app_data(
+    context: &Context,
+    table_name: Option<TableName>,
+    page_size: usize,
+) -> Result<AppData, IntelError> {
     let grouped_window = context.grouped_window.clone();
     println!("table_name: {:#?}", table_name);
-    let retrieve_table_name = if let Some(ref table_name) = &table_name{
+    let retrieve_table_name = if let Some(ref table_name) = &table_name {
         table_name
-    }else{
+    } else {
         &grouped_window[0].window_names[0].table_name
     };
     let first_window = context

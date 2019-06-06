@@ -1,8 +1,8 @@
-extern crate webview;
 extern crate diwata_intel;
+extern crate webview;
 
-use sauron::Component;
 use diwata_intel::data_container::AppData;
+use sauron::Component;
 
 fn main() {
     let app = webview::make_app(AppData::default());

@@ -71,9 +71,12 @@ impl Tab {
     /// The arrangement of fields are changed from the original arrangement in the table columns
     /// causing a misalignment in the display
     fn derive_fields(table: &Table, _tables: &[Table]) -> Vec<Field> {
-        table.columns.iter().map(|col|Field::from_column(table, col)).collect()
+        table
+            .columns
+            .iter()
+            .map(|col| Field::from_column(table, col))
+            .collect()
     }
-
 
     pub fn derive_dropdowninfo(table: &Table) -> Option<DropdownInfo> {
         match Self::derive_display(table) {
@@ -175,8 +178,6 @@ impl Tab {
             pk: pk.clone(),
         })
     }
-
-
 
     pub fn get_display_columns(&self) -> Vec<&ColumnName> {
         match self.display {

@@ -44,7 +44,6 @@ impl Page {
             total_records: rows.count.unwrap_or(0),
         }
     }
-
 }
 
 /// Convert the dao into a vec of value

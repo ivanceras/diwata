@@ -5,7 +5,6 @@ use sauron::{
     Cmd, Component, Node,
 };
 
-
 #[derive(Debug, Clone)]
 pub enum Msg {
     ChangeSearch(String),
