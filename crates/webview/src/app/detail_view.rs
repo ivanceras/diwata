@@ -1,6 +1,6 @@
 use crate::app::field_view::{self, FieldView};
 use sauron::{
-    html::{attributes::*, events::*, *},
+    html::{attributes::*, *},
     Cmd, Component, Node,
 };
 use std::{cell::RefCell, rc::Rc};

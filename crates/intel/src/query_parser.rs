@@ -1,6 +1,5 @@
 use sqlparser::{
     sqlast::*,
-    sqlparser::Parser,
 };
 
 pub(in crate) fn extract_table_name(

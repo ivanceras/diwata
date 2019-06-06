@@ -1,5 +1,4 @@
 use rustorm::{
-    table::ForeignKey,
     ColumnName,
     TableName,
 };
@@ -10,7 +9,6 @@ use crate::{
         IdentifierDisplay,
     },
     field::Field,
-    table_intel,
 };
 use rustorm::{
     Column,
@@ -72,7 +70,7 @@ impl Tab {
 
     /// The arrangement of fields are changed from the original arrangement in the table columns
     /// causing a misalignment in the display
-    fn derive_fields(table: &Table, tables: &[Table]) -> Vec<Field> {
+    fn derive_fields(table: &Table, _tables: &[Table]) -> Vec<Field> {
         table.columns.iter().map(|col|Field::from_column(table, col)).collect()
     }
 

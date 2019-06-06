@@ -12,15 +12,12 @@ use actix_web::{
 };
 use diwata_intel::{
     data_read,
-    error::IntelError,
-    window,
     Dao,
     TableName,
 };
 use futures::future::Future;
 use serde::{
     Deserialize,
-    Serialize,
 };
 use std::convert::TryFrom;
 

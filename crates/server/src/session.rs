@@ -19,7 +19,6 @@ use diwata_intel::{
 };
 use rustorm::{
     table::SchemaContent,
-    DaoManager,
     EntityManager,
     Table,
 };

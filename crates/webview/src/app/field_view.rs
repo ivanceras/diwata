@@ -94,7 +94,7 @@ impl FieldView {
                 ],
                 [],
             ),
-            Value::Bool(v) => input([r#type("checkbox"), classes], []),
+            Value::Bool(_v) => input([r#type("checkbox"), classes], []),
             Value::Tinyint(v) => input(
                 [
                     r#type("number"),

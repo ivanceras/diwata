@@ -25,7 +25,7 @@ use actix_web::{
     App,
     HttpServer,
 };
-use rustorm::Pool;
+
 use dotenv::dotenv;
 
 mod credentials;

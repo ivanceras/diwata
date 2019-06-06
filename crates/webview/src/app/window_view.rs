@@ -11,11 +11,11 @@ use crate::{
     },
     assets,
 };
-use diwata_intel::{DataRow, TableName, Window};
+use diwata_intel::{TableName, Window};
 
 use diwata_intel::data_container::WindowData;
-use sauron::Http;
-use wasm_bindgen::JsValue;
+
+
 
 pub struct WindowView {
     pub name: String,
@@ -300,15 +300,15 @@ impl WindowView {
         let WindowData {
             sql_query,
             main_tab_data,
-            record_detail,
+            record_detail: _,
             main_tab_frozen_data,
             one_one_tab_data,
 
             has_many_tab_data,
-            has_many_tab_frozen_data,
+            has_many_tab_frozen_data: _,
 
             indirect_tab_data,
-            indirect_tab_frozen_data,
+            indirect_tab_frozen_data: _,
         } = window_data;
 
         sauron::log!("set sql query");

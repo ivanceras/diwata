@@ -2,7 +2,6 @@ use crate::error::ServiceError;
 use actix_web::HttpRequest;
 use std::{
     convert::TryFrom,
-    fmt,
 };
 
 pub struct Credentials {

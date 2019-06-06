@@ -2,7 +2,7 @@ use crate::{
     window::GroupedWindow,
     Window,
 };
-use either::Either;
+
 use rustorm::{
     ColumnName,
     Dao,
@@ -58,7 +58,7 @@ impl Page {
 /// TODO: ensure the alignment of column and data
 fn data_row_from_dao(dao: Dao) -> DataRow {
     let mut values = vec![];
-    for (k, v) in dao.0.into_iter() {
+    for (_k, v) in dao.0.into_iter() {
         values.push(v);
     }
     values

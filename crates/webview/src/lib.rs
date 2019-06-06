@@ -2,16 +2,16 @@
 #![deny(clippy::all)]
 use app::{App, Msg};
 use diwata_intel::{
-    data_container::{AppData, WindowData},
+    data_container::{AppData},
     field::ColumnDetail,
     widget::{Alignment, ControlWidget, Widget},
     window::{GroupedWindow, WindowName},
     ColumnName, Field, IndirectTab, SqlType, Tab, TableName, Window,
 };
-use sauron::{Dispatch, Program};
+use sauron::{Program};
 use std::rc::Rc;
-use wasm_bindgen::{self, prelude::*, JsCast, JsValue};
-use web_sys::Response;
+
+
 
 mod app;
 mod assets;
@@ -34,7 +34,7 @@ pub fn setup_program(initial_state: &str) -> Rc<Program<App, Msg>> {
 
 pub fn make_app(app_data: AppData) -> App {
     let (window_width, window_height) = get_window_size();
-    let mut app = App::new(app_data, window_width, window_height);
+    let app = App::new(app_data, window_width, window_height);
     app
 }
 

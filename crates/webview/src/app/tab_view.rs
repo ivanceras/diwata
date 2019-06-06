@@ -1,7 +1,6 @@
 use crate::app::{
     self,
     detail_view::{self, DetailView},
-    row_view,
     table_view::{self, TableView},
 };
 use diwata_intel::{

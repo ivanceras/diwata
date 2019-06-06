@@ -4,7 +4,7 @@ use sauron::{
     html::{attributes::*, events::*, *},
     Cmd, Component, Node,
 };
-use wasm_bindgen::JsValue;
+
 
 #[derive(Debug, Clone)]
 pub enum Msg {

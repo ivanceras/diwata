@@ -1,13 +1,10 @@
 use crate::{
     common,
-    tab::Tab,
-    table_intel,
     Context,
 };
 use rustorm::{
     types::SqlType,
     Dao,
-    DaoManager,
     DbError,
     Rows,
     Table,

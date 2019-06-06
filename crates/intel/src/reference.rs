@@ -184,7 +184,7 @@ impl Reference {
                 // 4 choices, radio group
                 // 5 or more it will be a dropdownlist
                 match choices.len() {
-                    1...4 => Widget::Radiogroup(choices.to_owned()),
+                    1..=4 => Widget::Radiogroup(choices.to_owned()),
                     _ => Widget::FixDropdown(choices.to_owned()),
                 }
             }

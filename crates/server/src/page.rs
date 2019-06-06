@@ -2,7 +2,6 @@ use crate::{
     api,
     credentials::Credentials,
     error::ServiceError,
-    global,
     session,
 };
 use actix_files::NamedFile;
@@ -34,10 +33,7 @@ use sauron::{
     html_extra,
     Node,
 };
-use serde::{
-    Deserialize,
-    Serialize,
-};
+
 use std::convert::TryFrom;
 
 fn get_index_html(context: &Context, table_name: Option<TableName>) -> String {

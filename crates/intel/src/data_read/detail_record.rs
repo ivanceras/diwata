@@ -4,12 +4,9 @@ use crate::{
     query_builder::Query,
     Context,
     TableName,
-    Window,
 };
 use rustorm::{
     Dao,
-    DaoManager,
-    EntityManager,
     Rows,
     Table,
 };

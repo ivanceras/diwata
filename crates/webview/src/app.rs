@@ -2,15 +2,15 @@ use crate::rest_api;
 use diwata_intel::{
     data_container::{AppData, QueryResult, WindowData},
     window::GroupedWindow,
-    RecordDetail, Rows, Window,
+    RecordDetail,
 };
 use sauron::{
     html::{attributes::*, events::*, *},
-    Browser, Component, Dispatch, Http, Node,
+    Browser, Component, Node,
 };
-use std::rc::Rc;
-use wasm_bindgen::{closure::Closure, JsCast, JsValue};
-use web_sys::Response;
+
+use wasm_bindgen::{JsValue};
+
 use window_list_view::WindowListView;
 use window_view::WindowView;
 
@@ -221,7 +221,7 @@ impl Component<Msg> for App {
                                 format!("SELECT * FROM {}", window.table_name().complete_name());
                             let mut window_data = WindowData::from_rows(query_result.rows);
                             window_data.sql_query = Some(sql_query.to_string());
-                            let mut new_window = WindowView::new(
+                            let new_window = WindowView::new(
                                 window_clone,
                                 &window_data,
                                 self.browser_width,
@@ -250,7 +250,7 @@ impl Component<Msg> for App {
                     let window_clone = window.clone();
                     let window_data = WindowData::from_rows(query_result.rows);
                     //replace the data on this window index
-                    let mut new_window = WindowView::new(
+                    let new_window = WindowView::new(
                         window_clone,
                         &window_data,
                         self.browser_width,
@@ -265,7 +265,7 @@ impl Component<Msg> for App {
                 }
                 Cmd::none()
             }
-            Msg::ReceivedWindowQueryResult(index, Err(err)) => {
+            Msg::ReceivedWindowQueryResult(_index, Err(_err)) => {
                 sauron::log!("Error retrieveing records from sql query");
                 Cmd::none()
             }
@@ -285,7 +285,7 @@ impl Component<Msg> for App {
                 self.window_views[window_index] = new_window;
                 Cmd::none()
             }
-            Msg::ReceivedWindowMainTabDetail(_window_index, _row_index, Err(record_detail)) => {
+            Msg::ReceivedWindowMainTabDetail(_window_index, _row_index, Err(_record_detail)) => {
                 sauron::log!("Error retrieveing window main tab detail..");
                 Cmd::none()
             }
