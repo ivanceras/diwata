@@ -101,8 +101,7 @@ fn get_index_html(context: &Context, table_name: Option<TableName>) -> String {
                     script(
                         [],
                         [text(format!(
-                            "window.initial_state = '{}'",
-                            app_data_serialized
+                            "window.initial_state = String.raw`{}`", app_data_serialized
                         ))],
                     ),
                 ],

@@ -67,6 +67,7 @@ impl<'c> Query<'c> {
                 self.append(&format!("::{} ", cast.name()));
             }
         }
+        self.add_table_datatypes(table);
     }
 
     /// add the data types of table columns that are not part of the main tables

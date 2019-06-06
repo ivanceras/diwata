@@ -67,6 +67,15 @@ impl FieldView {
                 ],
                 [],
             ),
+            Value::Char(v) => input(
+                [
+                    r#type("text"),
+                    classes,
+                    value(v.to_string()),
+                    onchange(|input| Msg::TextChange(input.value)),
+                ],
+                [],
+            ),
             Value::Json(v) => input(
                 [
                     r#type("text"),

@@ -70,12 +70,12 @@ impl Tab {
         }
     }
 
+    /// The arrangement of fields are changed from the original arrangement in the table columns
+    /// causing a misalignment in the display
     fn derive_fields(table: &Table, tables: &[Table]) -> Vec<Field> {
-        let mut fields = Vec::with_capacity(table.columns.len());
-        fields.extend(Self::derive_simple_fields(table));
-        fields.extend(Self::derive_foreign_fields(table, tables));
-        fields
+        table.columns.iter().map(|col|Field::from_column(table, col)).collect()
     }
+
 
     pub fn derive_dropdowninfo(table: &Table) -> Option<DropdownInfo> {
         match Self::derive_display(table) {
@@ -178,54 +178,7 @@ impl Tab {
         })
     }
 
-    fn derive_simple_fields(table: &Table) -> Vec<Field> {
-        let columns: &Vec<Column> = &table.columns;
-        let foreign_column_names: Vec<&ColumnName> =
-            table.get_foreign_column_names();
-        let plain_columns: Vec<&Column> = columns
-            .iter()
-            .filter(|c| !foreign_column_names.contains(&&c.name))
-            .collect();
-        let mut fields: Vec<Field> = Vec::with_capacity(plain_columns.len());
-        for pc in plain_columns {
-            let field = Field::from_column(table, pc);
-            fields.push(field)
-        }
-        fields
-    }
 
-    /// derive the foreign field based on the referring column to the foreign table
-    /// if no local column of this table has privilege then it is not included
-    fn derive_foreign_fields(
-        table: &Table,
-        all_tables: &[Table],
-    ) -> Vec<Field> {
-        let foreign_keys: Vec<&ForeignKey> = table.get_foreign_keys();
-        let mut fields: Vec<Field> = Vec::with_capacity(foreign_keys.len());
-        for fk in foreign_keys {
-            let mut columns: Vec<&Column> =
-                Vec::with_capacity(fk.columns.len());
-            for fc in &fk.columns {
-                if let Some(col) = table.get_column(fc) {
-                    columns.push(col);
-                }
-            }
-            let foreign_table =
-                table_intel::get_table(&fk.foreign_table, all_tables);
-            if let Some(foreign_table) = foreign_table {
-                if !columns.is_empty() {
-                    // don't add the foreign field if there is no referring local column to the table: ie revoked privilege
-                    let field = Field::from_has_one_table(
-                        table,
-                        &columns,
-                        foreign_table,
-                    );
-                    fields.push(field);
-                }
-            }
-        }
-        fields
-    }
 
     pub fn get_display_columns(&self) -> Vec<&ColumnName> {
         match self.display {
