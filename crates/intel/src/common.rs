@@ -1,8 +1,6 @@
 //! provides data service for window
 use crate::{
     error::IntelError,
-    tab::Tab,
-    window::Window,
 };
 use bigdecimal::BigDecimal;
 use rustorm::{
@@ -10,7 +8,6 @@ use rustorm::{
     types::SqlType,
     ColumnName,
     Dao,
-    DbError,
     Rows,
     Value,
 };
@@ -20,6 +17,7 @@ use std::{
 };
 use uuid::Uuid;
 
+#[allow(unused)]
 pub fn calc_offset(page: usize, page_size: usize) -> usize {
     (page - 1) * page_size
 }
@@ -69,34 +67,6 @@ pub fn cast_record(
     new_rec
 }
 
-//that belong to this window, otherwise raise a SQL injection attempt error
-pub fn validate_column(
-    column_name: &ColumnName,
-    window: &Window,
-) -> Result<(), DbError> {
-    if window.has_column_name(column_name) {
-        Ok(())
-    } else {
-        Err(DbError::SqlInjectionAttempt(format!(
-            "Column:'{}' does not exist",
-            column_name.complete_name()
-        )))
-    }
-}
-
-pub fn validate_tab_column(
-    column_name: &ColumnName,
-    tab: &Tab,
-) -> Result<(), DbError> {
-    if tab.has_column_name(column_name) {
-        Ok(())
-    } else {
-        Err(DbError::SqlInjectionAttempt(format!(
-            "Column:'{}' does not exist",
-            column_name.complete_name()
-        )))
-    }
-}
 
 /// extract record id from comma separated value
 pub fn extract_record_id<'a>(
@@ -169,31 +139,3 @@ pub fn extract_record_id<'a>(
     Ok(record_id)
 }
 
-/// get the value which matches the column name and cast the value to the required data type
-/// supported casting:
-/// Int -> SmallInt
-pub fn find_value<'a>(
-    needle: &ColumnName,
-    record_id: &'a [(&ColumnName, Value)],
-    required_type: &SqlType,
-) -> Option<Value> {
-    record_id
-        .iter()
-        .find(|&&(ref column_name, _)| *column_name == needle)
-        .map(|&(_, ref value)| common::cast_type(value, required_type))
-}
-
-/// convert Vec<Dao> to Rows
-#[allow(unused)]
-pub fn records_to_rows(columns: &[String], records: Vec<Dao>) -> Rows {
-    let mut rows = Rows::new(columns.to_vec());
-    for record in records {
-        let mut values = vec![];
-        for col in columns.iter() {
-            let value = record.get_value(&col).expect("Expecting value here");
-            values.push(value.clone());
-        }
-        rows.push(values);
-    }
-    rows
-}

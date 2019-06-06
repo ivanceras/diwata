@@ -45,13 +45,6 @@ impl Page {
         }
     }
 
-    fn from_dao(dao: Dao) -> Self {
-        Page {
-            page: 1,
-            rows: vec![data_row_from_dao(dao)],
-            total_records: 1,
-        }
-    }
 }
 
 /// Convert the dao into a vec of value
