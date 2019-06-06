@@ -191,6 +191,15 @@ impl FieldView {
                 ],
                 [],
             ),
+            Value::DateTime(v) => input(
+                [
+                    r#type("date"),
+                    classes,
+                    value(v.format("%Y-%m-%d").to_string()),
+                    onchange(|input| Msg::TextChange(input.value)),
+                ],
+                [],
+            ),
             _ => {
                 sauron::log!("todo for: {:?}", self.value);
                 text("unknown")
