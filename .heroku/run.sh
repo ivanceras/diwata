@@ -24,4 +24,4 @@ if cd crates/webapp && wasm-pack build --target no-modules --release; then
     cd -
 fi
 
-cargo build --release -p diwata_server
+cargo build --release --bin diwata
