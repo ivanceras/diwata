@@ -13,17 +13,12 @@ Diwata is a database interface for PostgreSQL with the goal of being usable, use
 
 ## Quick local demo setup using sqlite sakila.db
 
-```
+```sh
 git clone https://github.com/ivanceras/diwata
 cd diwata
 git submodule update --init --recursive
-cargo install wasm-pack
-wget https://github.com/ivanceras/sakila/raw/master/sqlite-sakila-db/sakila.db
-cd crates/webapp
-wasm-pack build --target no-modules --release
-cd -
-DATABASE_URL=sqlite://sakila.db PORT=8000 cargo run -p diwata_server
-open http://localhost:8000
+./run_sqlite_sakila.sh
+open http://localhost:9000
 ```
 
 ## Features
