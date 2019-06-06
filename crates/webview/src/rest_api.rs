@@ -1,13 +1,7 @@
 use crate::app::{App, Msg};
-use diwata_intel::{data_container::QueryResult, Dao, RecordDetail, Rows, TableName, Window};
+use diwata_intel::{data_container::QueryResult, Dao, RecordDetail, TableName};
 use sauron::{Cmd, Http};
 use wasm_bindgen::JsValue;
-
-pub fn fetch_window_list() -> Cmd<App, Msg> {
-    let url = "/windows";
-    let text_decoder = |v: String| ron::de::from_str(&v).expect("Unable to decode ron data");
-    Http::fetch_with_text_response_decoder(url, text_decoder, Msg::FetchWindowList)
-}
 
 pub fn execute_sql_query<F>(sql: &str, msg_receiver: F) -> Cmd<App, Msg>
 where

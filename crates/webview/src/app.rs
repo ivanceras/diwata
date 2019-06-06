@@ -193,11 +193,9 @@ impl Component<Msg> for App {
             Msg::WindowListMsg(window_list_view::Msg::ClickedWindow(table_name)) => {
                 sauron::log!("fetching data for {}", table_name.complete_name());
                 let url = format!("/{}", table_name.complete_name());
-                sauron::history().replace_state_with_url(
-                    &JsValue::NULL,
-                    &table_name.complete_name(),
-                    Some(&url),
-                );
+                sauron::history()
+                    .replace_state_with_url(&JsValue::NULL, &table_name.complete_name(), Some(&url))
+                    .expect("unable to replace state with url");
                 rest_api::fetch_window_data(&table_name, move |window_rows| {
                     Msg::ReceivedWindowData(window_rows)
                 })
