@@ -1,20 +1,30 @@
-# Diwata 
+# Diwata
 
-## Warning: A rewrite is currently on-going, the repo is not currently working.
 
 Diwata is a database interface for PostgreSQL with the goal of being usable, user-friendly with its basic and advanced functionality be discoverable by the user.
-Goal of diwata is to be a replacement of back-end admin without explicitly writing the code for it.
-It is content aware, and renders records as it sees fits.
-An attempt to create back-end to end all back-ends.
 
 [![](https://travis-ci.org/ivanceras/diwata.svg?branch=master)](https://travis-ci.org/ivanceras/diwata)
 [![Backers on Open Collective](https://opencollective.com/diwata/backers/badge.svg)](#backers)
- [![Sponsors on Open Collective](https://opencollective.com/diwata/sponsors/badge.svg)](#sponsors) 
+ [![Sponsors on Open Collective](https://opencollective.com/diwata/sponsors/badge.svg)](#sponsors)
 
-![](https://raw.githubusercontent.com/ivanceras/diwata/master/diwata1.png)
-![](https://github.com/ivanceras/ivanceras.github.io/blob/master/diwata/diwata3.png)
-![](https://github.com/ivanceras/ivanceras.github.io/blob/master/diwata/diwata4.png)
+## Demo
+[sakila database in heroku](http://diwata.herokuapp.com/)
 
+
+## Quick local demo setup using sqlite sakila.db
+
+```
+git clone https://github.com/ivanceras/diwata
+cd diwata
+git submodule update --init --recursive
+cargo install wasm-pack
+wget https://github.com/ivanceras/sakila/raw/master/sqlite-sakila-db/sakila.db
+cd crates/webapp
+wasm-pack build --target no-modules --release
+cd -
+DATABASE_URL=sqlite://sakila.db PORT=8000 cargo run -p diwata_server
+open http://localhost:8000
+```
 
 ## Features
 - Automatic display of direct and indirect linked record
@@ -24,111 +34,26 @@ An attempt to create back-end to end all back-ends.
 - Diplay descriptive referred records. (ie: Instead of displaying the foreign_key value integer or uuid, display the referred records in such a way it is distinguisable by the user)
 - Well integrated with the browsers, clickable tables, records and tabs can be openned in a new window and displays the data as though clicking on it.
 
-Freeze row
-![](https://raw.githubusercontent.com/ivanceras/ivanceras.github.io/master/diwata/diwata-freeze-row.gif)
-Freeze column
-![](https://raw.githubusercontent.com/ivanceras/ivanceras.github.io/master/diwata/diwata-freeze-column.gif)
-
-Distinguisable referred record in a dropdown
-![](https://raw.githubusercontent.com/ivanceras/ivanceras.github.io/master/diwata/meaningful-dropdown.gif)
-
-Dynamic toolbar displaying the exact information of what the button actually does
-![](https://raw.githubusercontent.com/ivanceras/ivanceras.github.io/master/diwata/dynamic-toolbar.gif)
-
-Navigating through the apps and opening other window in another browser window/tab is seamless
-![](https://raw.githubusercontent.com/ivanceras/ivanceras.github.io/master/diwata/seamless-url-navigation.gif)
-
-Binary data detected as images would be rendered as such
-![](https://raw.githubusercontent.com/ivanceras/ivanceras.github.io/master/diwata/image-render.gif)
-
-
-
-## Quickstart
-If you have an existing postgresql database, you can quickly open it using the app by:
-```sh
-curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain nightly
-cargo install diwata_cli
-diwata_cli --db-url postgres://user:passwd@localhost:5432/dbname -p 8000 --open
-```
-You can also open sqlite database.
-Download this [sqlite sample db](https://github.com/ivanceras/sakila/raw/master/sqlite-sakila-db/sakila.db)
-You can then open it by issuing the command
-```
-diwata_cli --db-url sqlite://sakila.db  -p 80001 --open
-```
-
-## Build from source
-
-### Needed Dependencies
-- rust nightly
-- elm v0.18 ( elm installation needed npm or yarn)
-- rsync  ( for fast syncing files over and over )
-- google-closure-compiler (optional, for release build)
-- sed (search and replace `app.js` with `app.min.js` in `index.html`
-- sakila database (for demo and testing) [1]
-- build-essential (for compiling c based dependencies such as sqlite-src)
-
-## Install Dependencies 
-```sh
-curl https://sh.rustup.rs -sSf | sh
-sudo apt install rsync build-essential pkg-config
-npm install -g elm@0.18
-npm install -g google-closure-compiler-js
-
-```
-
-
-Compile and run 
-```
-git clone https://github.com/ivanceras/diwata
-cd diwata
-git submodule update --init --recursive
-rustup self update && rustup update
-rustup override set nightly
-cd webclient && ./compile.sh && cd ..
-
-cargo run -p diwata -- --dburl <db_url>
-
-```
-Note: You need to use the latest nightly. 
-
-## Specify a database ( sakila database example )
-
-```
-cargo run -p diwata_server -- --dburl postgres://postgres:passwd@localhost:5432/sakila -p 8000
-```
-see `run.sh` for the accurate content of command
-
-Then visit http://localhost:8000/
-
-## Content Aware
-Using heristic method, diwata is able to infer the content of a table.
-- When it a column is a boolean it make sense to display it with a checkbox rather than just 'true' and 'false'.
-    Dates will be rendered with a dropdown calender.
-- Country lookup will be rendered with a dropdown list of country alongside their flags 
-- Images will be displayed in line when in grid view, and will be fully displayed when in card view
-- Attachments such as pdf,xls,csv,svg,md,txt,source codes will be rendered to their corresponding document editors
-- Urls are linked and clickable automatically
-- Embed common web objects: youtube videos, tweets, images, map locations
 
 ## Roadmap checklist:
-- [X] Infinite load-on-deman scrolling
-- [X] Meaningful dropdown lookup
+- [ ] Basic data display
+- [ ] Infinite load-on-deman scrolling
+- [ ] Meaningful dropdown lookup
 - [X] Seamless url-based navigation
-- [X] Delete records
-- [X] Update records
-- [X] Insert records
-- [X] Detail record update/insert, delete link detail records
-     [X] Filtering and searching on has_many and indirect records for detailed record
+- [ ] Delete records
+- [ ] Update records
+- [ ] Insert records
+- [ ] Detail record update/insert, delete link detail records
+     [ ] Filtering and searching on has_many and indirect records for detailed record
 - [ ] Undo update/delete records (upon deletion/modification, user have a grace period to undo the changes)
-- [X] Search and filter data
+- [ ] Search and filter data
 - [ ] Drag/Rearrange and resize columns
-- [X] Multi column sorting
+- [ ] Multi column sorting
 - [ ] Smart delete cascade messages
 - [ ] Error Handling/Error messages display
 - [ ] Advanced filtering, where user can type in the logic for filtering
 - [X] Display of images and file attachments
-- [X] Interactive/dynamic record count indicator for toolbar buttons
+- [ ] Interactive/dynamic record count indicator for toolbar buttons
 - [X] Loading indicators
 - [ ] Page transition animation
 - [X] Search/filter on tables
@@ -138,8 +63,6 @@ Using heristic method, diwata is able to infer the content of a table.
     - [ ] An interface for superusers to set user privileges for each tables
 - [ ] Row level security
     - [X] When the server is configured to require user login, the user will be forced to login
-
-## Next iteration development
 - [ ] Plugin and module system
 - [ ] Custom validation on field
 - [ ] Custom buttons for application specific functionality
@@ -164,7 +87,7 @@ This project exists thanks to all the people who contribute.
 
 ## Backers
 
-Thank you to all our backers! 🙏 [[Become a backer](https://opencollective.com/diwata#backer)]
+Please be a backer of this project! 🙏 [[Become a backer](https://opencollective.com/diwata#backer)]
 
 <a href="https://opencollective.com/diwata#backers" target="_blank"><img src="https://opencollective.com/diwata/backers.svg?width=890"></a>
 
