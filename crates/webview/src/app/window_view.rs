@@ -281,6 +281,7 @@ impl WindowView {
         window_view.set_window_data(window_data);
         window_view.update_active_has_many_or_indirect_tab();
         window_view.update_size_allocation();
+        window_view.activate_first_related_tab();
         window_view
     }
 
@@ -369,6 +370,17 @@ impl WindowView {
 
     pub fn show(&mut self) {
         self.is_visible = true;
+    }
+
+    /// show the first has_many tab if there is one, otherwise show the first indirect tab
+    fn activate_first_related_tab(&mut self) {
+        if !self.has_many_tabs.is_empty(){
+            self.activate_has_many_tab(0);
+        }else if !self.indirect_tabs.is_empty(){
+            self.activate_indirect_tab(0);
+        }else{
+            sauron::log!("There is no related tab to activate");
+        }
     }
 
     fn activate_has_many_tab(&mut self, index: usize) {

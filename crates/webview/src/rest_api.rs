@@ -31,8 +31,12 @@ pub fn fetch_window_data<F>(table_name: &TableName, msg_receiver: F) -> Cmd<App,
 where
     F: Fn(Result<QueryResult, JsValue>) -> Msg + Clone + 'static,
 {
-    let sql = format!("SELECT * FROM {} LIMIT 40", table_name.complete_name());
-    execute_sql_query(&sql, msg_receiver)
+    let url = format!(
+        "/main_data/{}/",
+        table_name.complete_name(),
+    );
+    let text_decoder = |v: String| ron::de::from_str(&v).expect("Unable to decode ron data");
+    Http::fetch_with_text_response_decoder(&url, text_decoder, msg_receiver)
 }
 
 pub fn retrieve_detail_for_main_tab<F>(

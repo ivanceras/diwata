@@ -65,6 +65,10 @@ fn main() -> io::Result<()> {
                     .route(web::get().to_async(api::windows)),
             )
             .service(
+                web::resource("/main_data/{table_name}/")
+                    .route(web::get().to_async(api::main_data)),
+            )
+            .service(
                 web::resource("/record_detail/{table_name}/")
                     .route(web::get().to_async(api::record_detail)),
             )

@@ -82,8 +82,8 @@ fn get_index_html(context: &Context) -> String {
                 [style("margin: 0; padding: 0; width: 100%; height: 100%;")],
                 [
                     div(
-                        [id("web-app"), style("width: 100%; height: 100%;")],
-                        [text("#HTML_INSERTED_HERE_BY_SERVER#")],
+                        [id("web-app"), style("width: 100%; height: 100%; text-align:center")],
+                        [img([src("/webapp/img/loading.svg"), style("margin: auto auto;")], [])],
                     ),
                     script([src("/webapp/pkg/webapp.js")], []),
                     script(

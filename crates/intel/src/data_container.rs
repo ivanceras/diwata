@@ -15,6 +15,7 @@ use serde::{
     Serialize,
 };
 
+/// an arranged value with respect  to the fields arrangement in tab
 pub type DataRow = Vec<Value>;
 
 #[derive(Default, Serialize, Deserialize)]

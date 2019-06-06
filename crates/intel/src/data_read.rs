@@ -85,12 +85,27 @@ pub fn execute_sql_query(
     Ok(QueryResult::with_rows(window, rows))
 }
 
+
+pub fn get_window_main_table_data(
+    context: &Context,
+    table_name: &TableName,
+) -> Result<QueryResult, IntelError> {
+    let window = context.get_window(table_name);
+    let rows = fetch_main_table_data(context, table_name)?;
+    Ok(QueryResult::with_rows(window, rows))
+}
+
 fn fetch_main_table_data(
     context: &Context,
     table_name: &TableName,
 ) -> Result<Rows, IntelError> {
-    let sql = format!("SELECT * FROM {} LIMIT 40", table_name.complete_name());
-    let rows = context.dm.execute_sql_with_return(&sql, &[])?;
+    let mut query = Query::new(context);
+    query.select();
+    let main_table = context.get_table(table_name).expect("there should be table");
+    query.enumerate_columns(&main_table);
+    query.from(table_name);
+    query.set_limit(40);
+    let rows = query.collect_rows()?;
     Ok(rows)
 }
 

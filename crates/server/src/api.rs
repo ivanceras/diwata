@@ -141,3 +141,32 @@ pub fn record_detail(
         }
     })
 }
+
+pub fn main_data(
+    req: HttpRequest,
+    table_name_param: web::Path<(String)>,
+) -> impl Future<Item = HttpResponse, Error = Error> {
+    require_credentials(&req).expect("Should have credentials");
+    let credentials: Result<Credentials, ServiceError> =
+        TryFrom::try_from(&req);
+
+    web::block(move || {
+        let context = session::create_context(credentials)
+            .expect("unable to create context");
+        let table_name = TableName::from(&table_name_param.to_string());
+        let res = data_read::get_window_main_table_data(&context, &table_name);
+        res
+    })
+    .from_err()
+    .then(move |res| {
+        match res {
+            Ok(res) => {
+                Ok(HttpResponse::Ok().body(
+                    ron::ser::to_string(&res)
+                        .expect("unable to serialize to ron"),
+                ))
+            }
+            Err(e) => Err(e),
+        }
+    })
+}

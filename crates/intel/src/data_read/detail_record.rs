@@ -34,7 +34,7 @@ pub fn get_selected_record_detail(
     query.from(&main_table.name);
     query.add_dao_filter(&main_table.name, primary_dao);
 
-    let record: Dao = query.collect_one_record(&context.dm)?;
+    let record: Dao = query.collect_one_record()?;
 
     println!("Getting one ones");
     let mut one_one_records: Vec<(TableName, Option<Dao>)> =
@@ -111,7 +111,7 @@ fn get_one_one_record(
     query.left_join(&main_table.name, &one_one_table.name);
     query.add_dao_filter(&main_table.name, &primary_dao);
     query.set_limit(page_size);
-    let one_one_record = query.collect_maybe_record(&context.dm)?;
+    let one_one_record = query.collect_maybe_record()?;
     Ok(one_one_record)
 }
 
@@ -134,7 +134,7 @@ fn get_has_many_records(
     query.left_join(&main_table.name, &has_many_table.name);
     query.add_dao_filter(&main_table.name, primary_dao);
     query.set_limit(page_size);
-    let mut rows = query.collect_rows(&context.dm)?;
+    let mut rows = query.collect_rows()?;
     rows.count = Some(context.em.get_total_records(&has_many_table.name)?);
     Ok(rows)
 }
@@ -160,7 +160,7 @@ fn get_indirect_records(
     query.left_join(&linker_table, &indirect_table.name);
     query.add_dao_filter(&main_table.name, primary_dao);
     query.set_limit(page_size);
-    let mut rows = query.collect_rows(&context.dm)?;
+    let mut rows = query.collect_rows()?;
     rows.count = Some(context.em.get_total_records(&indirect_table.name)?);
     Ok(rows)
 }
