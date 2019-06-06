@@ -1,6 +1,12 @@
 uname -a
-sudo apt install libsqlite3-dev -y
-apt install libsqlite3-dev -y
+echo "Installing sqlite3..."
+wget https://www.sqlite.org/2019/sqlite-autoconf-3280000.tar.gz
+tar xvfz sqlite-autoconf-3280000.tar.gz
+cd sqlite-autoconf-3280000
+./configure
+make
+make install
+
 if ! type cargo > /dev/null; then
     curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain nightly -y
     echo $HOME
