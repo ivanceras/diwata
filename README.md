@@ -51,13 +51,13 @@ open http://localhost:9000
 - [ ] Interactive/dynamic record count indicator for toolbar buttons
 - [X] Loading indicators
 - [ ] Page transition animation
-- [X] Search/filter on tables
+- [ ] Search/filter on tables
 - [ ] Table/Columns filtering based on privilege system.
     - [X] Display only tables that the user has privilege
     - [X] Display only columns that the user has privilege
     - [ ] An interface for superusers to set user privileges for each tables
 - [ ] Row level security
-    - [X] When the server is configured to require user login, the user will be forced to login
+    - [ ] When the server is configured to require user login, the user will be forced to login
 - [ ] Plugin and module system
 - [ ] Custom validation on field
 - [ ] Custom buttons for application specific functionality
