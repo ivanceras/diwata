@@ -23,5 +23,8 @@ fi
 if cd crates/webapp && wasm-pack build --target no-modules --release; then
     cd -
 fi
-
+pwd
+ls -la
+ls -la ./target
+ls -la ./target/release/
 cargo build --release
