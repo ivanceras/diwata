@@ -170,7 +170,6 @@ impl Field {
         }
     }
 
-
     pub fn has_column_name(&self, column_name: &ColumnName) -> bool {
         self.column_detail.has_column_name(column_name)
     }
