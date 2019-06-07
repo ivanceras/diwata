@@ -118,47 +118,6 @@ pub struct FrozenData {
     pub frozen_columns: Vec<usize>,
 }
 
-fn make_sample_frozen_data() -> FrozenData {
-    FrozenData {
-        frozen_rows: vec![0, 1],
-        frozen_columns: vec![0, 1],
-    }
-}
-
-pub fn make_sample_window_data() -> WindowData {
-    WindowData {
-        sql_query: Some("select * from placeholder".to_string()),
-        main_tab_data: vec![make_sample_page()],
-        one_one_tab_data: vec![
-            Some(make_sample_row(0)),
-            Some(make_sample_row(1)),
-        ],
-        record_detail: None,
-        has_many_tab_data: vec![vec![make_sample_page()]],
-        indirect_tab_data: vec![vec![make_sample_page()]],
-        main_tab_frozen_data: make_sample_frozen_data(),
-        has_many_tab_frozen_data: vec![make_sample_frozen_data()],
-        indirect_tab_frozen_data: vec![make_sample_frozen_data()],
-    }
-}
-
-pub fn make_sample_page() -> Page {
-    Page {
-        page: 0,
-        rows: make_sample_rows(),
-        total_records: 100,
-    }
-}
-
-pub fn make_sample_rows() -> Vec<DataRow> {
-    (0..40).map(make_sample_row).collect()
-}
-pub fn make_sample_row(row: usize) -> Vec<Value> {
-    (0..25)
-        .map(|n| Value::Text(format!("Row{}-Value{}", row, n)))
-        .collect()
-}
-
 /// Holds the result for a sql query
 /// If there are multiple records
 /// it will in Either::Left rows,

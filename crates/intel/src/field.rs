@@ -174,32 +174,3 @@ impl Field {
         self.column_detail.has_column_name(column_name)
     }
 }
-
-#[cfg(test)]
-
-mod test {
-
-    use super::*;
-    use rustorm::{
-        Pool,
-        TableName,
-    };
-
-    #[test]
-    fn user_id() {
-        let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
-        let mut pool = Pool::new();
-        let em = pool.em(db_url);
-        assert!(em.is_ok());
-        let em = em.unwrap();
-        let table_name = TableName::from("users");
-        let table = em.get_table(&table_name);
-        println!("table: {:#?}", table);
-        assert!(table.is_ok());
-        let table = table.unwrap();
-        let user_id = &table.columns[0];
-        let reference = Field::derive_reference(&table, user_id);
-        println!("reference: {:#?}", reference);
-        assert_eq!(reference, Some(Reference::PrimaryUserId));
-    }
-}
