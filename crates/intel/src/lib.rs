@@ -1,7 +1,5 @@
 #![deny(warnings)]
 #![deny(clippy::all)]
-mod reference;
-pub mod widget;
 
 pub mod cache;
 mod common;

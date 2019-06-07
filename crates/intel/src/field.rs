@@ -1,15 +1,6 @@
 use rustorm::Column;
 
-use crate::{
-    data_container::DropdownInfo,
-    reference::Reference,
-    widget::{
-        ControlWidget,
-        Dropdown,
-    },
-};
 use rustorm::{
-    column::Capacity,
     types::SqlType,
     ColumnName,
     Table,
@@ -30,8 +21,6 @@ pub struct Field {
     pub is_primary: bool,
     /// column name
     pub column_detail: ColumnDetail,
-    /// the control widget based on the api of intellisense
-    pub control_widget: ControlWidget,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -125,9 +114,6 @@ impl Field {
 
     /// derive field from supplied column
     pub fn from_column(table: &Table, column: &Column) -> Self {
-        let reference = Self::try_derive_reference(table, column);
-        let control_widget =
-            ControlWidget::derive_control_widget(column, &reference);
         let column_detail: ColumnDetail = ColumnDetail::from(column);
         let primary_columns = table.get_primary_column_names();
         let in_primary = primary_columns.contains(&&column.name);
@@ -137,18 +123,6 @@ impl Field {
             info: None,
             is_primary: in_primary,
             column_detail,
-            control_widget,
-        }
-    }
-
-    pub fn get_dropdown_info(&self) -> Option<&DropdownInfo> {
-        let control_widget = &self.control_widget;
-        let dropdown = &control_widget.dropdown;
-        match *dropdown {
-            Some(Dropdown::TableDropdown(ref dropdown_info)) => {
-                Some(dropdown_info)
-            }
-            None => None,
         }
     }
 
@@ -173,8 +147,6 @@ impl Field {
         columns: &[&Column],
         referred_table: &Table,
     ) -> Self {
-        let control_widget =
-            ControlWidget::from_has_one_table(columns, referred_table);
         let mut columns_comment = String::new();
         for column in columns {
             if let Some(ref comment) = column.comment {
@@ -195,187 +167,9 @@ impl Field {
             info: referred_table.comment.to_owned(),
             is_primary: in_primary,
             column_detail,
-            control_widget,
         }
     }
 
-    /// check to see if has a strict derive_reference
-    /// also try the derive_maybe_reference
-    fn try_derive_reference(
-        table: &Table,
-        column: &Column,
-    ) -> Option<Reference> {
-        match Self::derive_reference(table, column) {
-            Some(reference) => Some(reference),
-            None => Self::derive_maybe_reference(table, column),
-        }
-    }
-
-    /// derive reference from column using
-    /// - data_type
-    /// - sql_type, capacity
-    /// - column_name as clue
-    /// - actual value to verify if it matches the reference
-    #[allow(clippy::if_same_then_else)]
-    fn derive_reference(table: &Table, column: &Column) -> Option<Reference> {
-        let table_name = &column.table.name;
-        let column_name = &column.name.name;
-        let sql_type = &column.specification.sql_type;
-        let limit = column.specification.get_limit();
-        let capacity = &column.specification.capacity;
-        let is_autoincrement = column.is_autoincrement();
-        let default_is_generated_uuid = column.default_is_generated_uuid();
-        // if the column a password column
-        if sql_type == &SqlType::Varchar && column_name == "password" {
-            Some(Reference::Password)
-        } else if sql_type == &SqlType::Varchar && column_name == "name" {
-            Some(Reference::Name)
-        } else if sql_type == &SqlType::Varchar
-            && column_name == &format!("{}_name", table_name)
-        {
-            Some(Reference::Name)
-        } else if (sql_type == &SqlType::Varchar
-            || sql_type == &SqlType::Tinytext
-            || sql_type == &SqlType::Mediumtext
-            || sql_type == &SqlType::Text)
-            && column_name == "description"
-        {
-            Some(Reference::Description)
-        } else if sql_type == &SqlType::Array(Box::new(SqlType::Text))
-            && (column_name == "tag" || column_name == "tags")
-        {
-            Some(Reference::Tag)
-        } else if ((sql_type == &SqlType::Int || sql_type == &SqlType::Bigint)
-            && is_autoincrement)
-            && column_name == "user_id"
-            && (table_name == "users" || table_name == "user")
-        {
-            Some(Reference::PrimaryUserId)
-        } else if sql_type == &SqlType::Uuid
-            && default_is_generated_uuid
-            && column_name == "user_id"
-            && (table_name == "users" || table_name == "user")
-        {
-            Some(Reference::PrimaryUserUuid)
-        } else if sql_type == &SqlType::Uuid
-            && default_is_generated_uuid
-            && table.get_primary_column_names().contains(&&column.name)
-        {
-            Some(Reference::PrimaryUuid)
-        } else if table.get_primary_column_names().contains(&&column.name) {
-            Some(Reference::PrimaryField)
-        }
-        // if numeric range with 2 precision on decimal
-        else if sql_type == &SqlType::Numeric
-            && match *capacity {
-                Some(ref capacity) => {
-                    match *capacity {
-                        Capacity::Limit(_limit) => false,
-                        Capacity::Range(_whole, decimal) => decimal == 2,
-                    }
-                }
-                None => false,
-            }
-            && (column_name == "price" || column_name == "cost")
-        {
-            Some(Reference::Price)
-        }
-        // country name lookup only if
-        // it does not belong to a country table
-        else if sql_type == &SqlType::Varchar
-            && table_name != "country"
-            && (column_name == "country" || column_name == "country_name")
-        {
-            Some(Reference::CountryNameLookup)
-        } else if sql_type == &SqlType::Varchar
-            && table_name != "country"
-            && Some(2) == limit
-            && column_name == "country_code"
-        {
-            Some(Reference::CountryNameLookup)
-        } else if sql_type == &SqlType::Blob
-            || sql_type == &SqlType::Tinyblob
-            || sql_type == &SqlType::Mediumblob
-            || sql_type == &SqlType::Varbinary
-        {
-            Some(Reference::GenericBlob)
-        } else if (sql_type == &SqlType::TimestampTz
-            || sql_type == &SqlType::Timestamp)
-            && column_name == "created"
-        {
-            Some(Reference::Created)
-        } else if (sql_type == &SqlType::TimestampTz
-            || sql_type == &SqlType::Timestamp)
-            && (column_name == "updated" || column_name == "last_update")
-        {
-            Some(Reference::Updated)
-        } else if (sql_type == &SqlType::Uuid || sql_type == &SqlType::Int)
-            && (column_name == "created_by" || column_name == "createdby")
-        {
-            Some(Reference::CreatedBy)
-        } else if (sql_type == &SqlType::Uuid || sql_type == &SqlType::Int)
-            && (column_name == "updated_by" || column_name == "updatedby")
-        {
-            Some(Reference::UpdatedBy)
-        } else if sql_type == &SqlType::Bool
-            && (column_name == "is_active" || column_name == "active")
-        {
-            Some(Reference::IsActive)
-        } else if let SqlType::Enum(ref name, ref choices) = sql_type {
-            Some(Reference::Enum(name.to_string(), choices.to_vec()))
-        } else if let SqlType::Array(_) = sql_type {
-            Some(Reference::Tag)
-        } else {
-            None
-        }
-    }
-
-    /// derive reference but not really sure
-    #[allow(clippy::if_same_then_else)]
-    fn derive_maybe_reference(
-        _table: &Table,
-        column: &Column,
-    ) -> Option<Reference> {
-        let column_name = &column.name.name;
-        let sql_type = &column.specification.sql_type;
-        let capacity = &column.specification.capacity;
-        let limit = column.specification.get_limit();
-        //println!("sql type: {:?}", sql_type);
-        if sql_type == &SqlType::Char
-            || (sql_type == &SqlType::Varchar && limit == Some(1))
-        {
-            Some(Reference::Symbol)
-        } else if sql_type == &SqlType::Numeric
-            && match *capacity {
-                Some(ref capacity) => {
-                    match *capacity {
-                        Capacity::Limit(_limit) => false,
-                        Capacity::Range(_whole, decimal) => decimal == 2,
-                    }
-                }
-                None => false,
-            }
-            && (column_name.ends_with("_price")
-                || column_name.ends_with("_cost"))
-        {
-            Some(Reference::Price)
-        } else if (sql_type == &SqlType::Numeric
-            || sql_type == &SqlType::Double
-            || sql_type == &SqlType::Float)
-            && (column_name == "price" || column_name == "cost")
-        {
-            Some(Reference::Price)
-        } else if (sql_type == &SqlType::Numeric
-            || sql_type == &SqlType::Double
-            || sql_type == &SqlType::Float)
-            && (column_name.ends_with("price") || column_name.ends_with("cost"))
-        {
-            Some(Reference::Price)
-        } else {
-            //println!("column '{}' is not yet dealt with", column_name);
-            None
-        }
-    }
 
     pub fn has_column_name(&self, column_name: &ColumnName) -> bool {
         self.column_detail.has_column_name(column_name)
