@@ -95,7 +95,9 @@ fn fetch_main_table_data(
     query.enumerate_columns(&main_table);
     query.from(table_name);
     query.set_limit(page_size);
-    let rows = query.collect_rows()?;
+    let mut rows = query.collect_rows()?;
+    let row_count = context.em.get_total_records(table_name)?;
+    rows.count = Some(row_count);
     Ok(rows)
 }
 

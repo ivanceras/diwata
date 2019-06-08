@@ -42,22 +42,23 @@ impl TabView {
         }
     }
 
-    pub fn set_pages(&mut self, pages: &Vec<Page>) {
+    pub fn set_pages(&mut self, pages: &Vec<Page>, current_page: usize, total_records: usize) {
         for page in pages {
-            self.set_data_rows(&page.rows);
+            self.set_data_rows(&page.rows, current_page, total_records);
         }
     }
 
     /// this is a one one tab and should have only 1 record
-    pub fn set_one_one_record(&mut self, data_row: &Option<DataRow>) {
+    pub fn set_one_one_record(&mut self, data_row: &Option<DataRow>, total_rows: usize) {
         //assert!(self.is_one_one);
         if let Some(data_row) = data_row {
-            self.set_data_rows(&vec![data_row.to_owned()]);
+            // there should only be 1 record here
+            self.set_data_rows(&vec![data_row.to_owned()], 1, total_rows);
         }
     }
 
-    pub fn set_data_rows(&mut self, data_row: &Vec<DataRow>) {
-        self.table_view.set_data_rows(&data_row);
+    pub fn set_data_rows(&mut self, data_row: &Vec<DataRow>, current_page: usize, total_rows: usize) {
+        self.table_view.set_data_rows(&data_row, current_page, total_rows);
         self.update_view();
     }
 
@@ -134,15 +135,8 @@ impl TabView {
     }
     pub fn update(&mut self, msg: Msg) -> app::Cmd {
         match msg {
-            /*
-            Msg::TableMsg(table_view::Msg::RowMsg(row_index, row_view::Msg::DoubleClick)) => {
-                //self.show_detail_view(row_index);
-                app::Cmd::none()
-            }
-            */
             Msg::TableMsg(table_msg) => {
-                self.table_view.update(table_msg);
-                app::Cmd::none()
+                self.table_view.update(table_msg)
             }
             Msg::DetailViewMsg(detail_msg) => {
                 self.detail_view.update(detail_msg);

@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2018"
 
 [dependencies]
-sauron = {version = "0.7.0", features = ["measure"] }
+sauron = {version = "0.7.1", features = ["measure"] }
 data_table = { path = "../data_table" }
 # we uses the objects in diwata intel and in rustorm, but not the database objects
 diwata_intel = { path = "../intel" , features = ["with-rustorm"]}

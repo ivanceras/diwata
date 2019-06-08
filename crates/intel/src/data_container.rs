@@ -33,7 +33,6 @@ pub struct Page {
     pub page: usize,
     /// rows on this page
     pub rows: Vec<DataRow>,
-    pub total_records: usize,
 }
 
 impl Page {
@@ -41,7 +40,6 @@ impl Page {
         Page {
             page: 1,
             rows: rows.data,
-            total_records: rows.count.unwrap_or(0),
         }
     }
 }
@@ -64,13 +62,19 @@ pub struct WindowData {
     /// pages can be scrolled to and fro
     /// and sometimes unloaded for performance puposed
     pub main_tab_data: Vec<Page>,
+    pub main_tab_total_rows: usize,
+    /// current page of the main tab rows
+    pub main_tab_current_page: usize,
     /// Contains the main tab record detail when in detailed view
     pub record_detail: Option<RecordDetail>,
     pub one_one_tab_data: Vec<Option<DataRow>>,
     /// Vector of pages for each has_many_tab
     pub has_many_tab_data: Vec<Vec<Page>>,
+    /// current page of the has_many_tabs
+    pub has_many_tab_current_page: Vec<usize>,
     /// Vector of pages for each indirect_tab
     pub indirect_tab_data: Vec<Vec<Page>>,
+    pub indirect_tab_current_page: Vec<usize>,
 
     /// Frozen data for each of this tab
     pub main_tab_frozen_data: FrozenData,
@@ -80,7 +84,11 @@ pub struct WindowData {
 
 impl WindowData {
     pub fn from_rows(rows: Rows) -> Self {
+        if rows.count.is_none(){
+            println!("there is no row count ");
+        }
         WindowData {
+            main_tab_total_rows: rows.count.unwrap_or(0),
             main_tab_data: vec![Page::from_rows(rows)],
             ..Default::default()
         }
@@ -95,10 +103,24 @@ impl WindowData {
                 acc
             },
         );
+        self.has_many_tab_current_page = record_detail.has_many.iter().fold(
+            vec![],
+            |mut acc, (_table_name, rows)| {
+                acc.push(rows.count.unwrap_or(0));
+                acc
+            },
+        );
         self.has_many_tab_data = record_detail.has_many.into_iter().fold(
             vec![],
             |mut acc, (_table_name, rows)| {
                 acc.push(vec![Page::from_rows(rows)]);
+                acc
+            },
+        );
+        self.indirect_tab_current_page = record_detail.indirect.iter().fold(
+            vec![],
+            |mut acc, (_linker, _table_name, rows)| {
+                acc.push(rows.count.unwrap_or(0));
                 acc
             },
         );

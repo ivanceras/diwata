@@ -38,6 +38,7 @@ pub enum Msg {
     FetchWindowList(Result<Vec<GroupedWindow>, JsValue>),
     ReceivedWindowQueryResult(usize, Result<QueryResult, JsValue>),
     ReceivedWindowData(Result<QueryResult, JsValue>),
+    ReceivedWindowDataNextPage(usize, Result<QueryResult, JsValue>),
     ReceivedWindowMainTabDetail(usize, usize, Result<RecordDetail, JsValue>),
 }
 
@@ -245,6 +246,14 @@ impl Component<Msg> for App {
                         Cmd::none()
                     }
                 }
+            }
+            Msg::ReceivedWindowDataNextPage(page, Ok(query_result)) => {
+                sauron::log!("Got data for next page {}: {:#?}",page, query_result);
+                Cmd::none()
+            }
+            Msg::ReceivedWindowDataNextPage(page, Err(_e)) => {
+                sauron::log!("Error retrieving next page {}", page);
+                Cmd::none()
             }
 
             Msg::ReceivedWindowQueryResult(index, Ok(query_result)) => {

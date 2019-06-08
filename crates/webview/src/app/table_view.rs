@@ -1,6 +1,7 @@
 use crate::app::{self, column_view::ColumnView, row_view::RowView};
+use crate::rest_api;
 use data_table::DataColumn;
-use diwata_intel::{DataRow, Field, Tab};
+use diwata_intel::{DataRow, TableName, Field, Tab};
 use sauron::{
     html::{attributes::*, events::*, *},
     Component, Node,
@@ -16,7 +17,7 @@ pub enum Msg {
 }
 
 pub struct TableView {
-    pub name: String,
+    pub table_name: TableName,
     pub data_columns: Vec<DataColumn>,
     pub column_views: Vec<ColumnView>,
     pub row_views: Vec<RowView>,
@@ -27,13 +28,16 @@ pub struct TableView {
     scroll_left: i32,
     allocated_width: i32,
     allocated_height: i32,
+    /// the total number of rows count in the table
+    total_rows: usize,
+    current_page: usize,
 }
 
 impl TableView {
     pub fn from_tab(tab: Tab) -> Self {
         let data_columns = Self::fields_to_data_columns(&tab.fields);
         TableView {
-            name: tab.table_name.complete_name(),
+            table_name: tab.table_name.clone(),
             column_views: tab
                 .fields
                 .iter()
@@ -47,6 +51,8 @@ impl TableView {
             scroll_left: 0,
             allocated_width: 0,
             allocated_height: 0,
+            total_rows: 0,
+            current_page: 0,
         }
     }
 
@@ -66,13 +72,15 @@ impl TableView {
 
     /// replace all the data with a new data row
     /// TODO: also update the freeze_columns for each row_views
-    pub fn set_data_rows(&mut self, data_row: &Vec<DataRow>) {
+    pub fn set_data_rows(&mut self, data_row: &Vec<DataRow>, current_page: usize, total_rows: usize) {
         self.row_views = data_row
             .into_iter()
             .enumerate()
             .map(|(index, row)| RowView::new(index, row, &self.data_columns))
             .collect();
         self.update_freeze_columns();
+        self.total_rows = total_rows;
+        self.current_page = current_page;
     }
 
     pub fn freeze_rows(&mut self, rows: &Vec<usize>) {
@@ -150,6 +158,30 @@ impl TableView {
 
     pub fn calculate_needed_width_for_auxilliary_spaces(&self) -> i32 {
         80
+    }
+
+    /// calculate the height of the content
+    /// it rows * row_height
+    fn calculate_content_height(&self) -> i32 {
+        sauron::log!("row views: {}", self.row_views.len());
+        self.row_views.len() as i32 * RowView::row_height()
+    }
+
+    /// calculate the distance of the scrollbar
+    /// before hitting bottom
+    fn scrollbar_to_bottom(&self) -> i32 {
+        let content_height = self.calculate_content_height(); // scroll height
+        let row_container_height = self.calculate_normal_rows_height(); // client height
+        content_height - (self.scroll_top + row_container_height)
+    }
+
+    fn is_scrolled_near_bottom(&self) -> bool {
+        let scroll_bottom_allowance = 100;
+        self.scrollbar_to_bottom() <= scroll_bottom_allowance
+    }
+
+    fn is_scrolled_bottom(&self) -> bool {
+        self.scrollbar_to_bottom() <= 0
     }
 
     /// These are values in a row that is under the frozen columns
@@ -268,41 +300,53 @@ impl TableView {
         ol(
             [
                 class("normal_rows"),
-                {
-                    styles([
-                        ("width", px(self.calculate_normal_rows_width())),
-                        ("height", px(self.calculate_normal_rows_height())),
-                    ])
-                },
+                styles([
+                    ("width", px(self.calculate_normal_rows_width())),
+                    ("height", px(self.calculate_normal_rows_height())),
+                ]),
                 onscroll(Msg::Scrolled),
             ],
-            self.row_views
-                .iter()
-                .enumerate()
-                .filter(|(index, _row_view)| !self.frozen_rows.contains(&index))
-                .map(|(index, row_view)| {
-                    row_view
-                        .view()
-                        .map(move |row_msg| Msg::RowMsg(index, row_msg))
-                })
-                .collect::<Vec<Node<Msg>>>(),
-        )
+                self.row_views
+                    .iter()
+                    .enumerate()
+                    .filter(|(index, _row_view)| !self.frozen_rows.contains(&index))
+                    .map(|(index, row_view)| {
+                        row_view
+                            .view()
+                            .map(move |row_msg| Msg::RowMsg(index, row_msg))
+                    })
+                    .collect::<Vec<Node<Msg>>>(),
+            )
     }
+
 
     pub fn update(&mut self, msg: Msg) -> app::Cmd {
         match msg {
             Msg::RowMsg(row_index, row_msg) => {
                 self.row_views[row_index].update(row_msg);
+                app::Cmd::none()
             }
             Msg::ColumnMsg(column_index, column_msg) => {
                 self.column_views[column_index].update(column_msg);
+                app::Cmd::none()
             }
             Msg::Scrolled((scroll_top, scroll_left)) => {
                 self.scroll_top = scroll_top;
                 self.scroll_left = scroll_left;
+                sauron::log!("scrollbar to bottom : {}", self.scrollbar_to_bottom());
+                sauron::log!("is near scrolled bottom: {}", self.is_scrolled_near_bottom());
+                sauron::log!("is scrolled bottom: {}", self.is_scrolled_bottom());
+                // only in main table data
+                if self.is_scrolled_near_bottom(){
+                    let next_page = self.current_page + 1;
+                    rest_api::fetch_window_data_next_page(&self.table_name, next_page, move|result| {
+                        app::Msg::ReceivedWindowDataNextPage(next_page, result)
+                     })
+                }else{
+                    app::Cmd::none()
+                }
             }
         }
-        app::Cmd::none()
     }
 
     /// A grid of 2x2  containing 4 major parts of the table
@@ -312,7 +356,7 @@ impl TableView {
                 class("table"),
                 // to ensure no reusing of table view when replaced with
                 // another table
-                key(format!("table_{}", self.name)),
+                key(format!("table_{}", self.table_name.complete_name())),
             ],
             [
                 // TOP-LEFT: Content 1
@@ -324,7 +368,10 @@ impl TableView {
                         div(
                             [class("spacer_and_frozen_column_names")],
                             [
-                                div([class("spacer")], [input([r#type("checkbox")], [])]),
+                                div([class("spacer")], [
+                                    text(format!("{}/{}", self.row_views.len(), self.total_rows)),
+                                    input([r#type("checkbox"),
+                                    ], [])]),
                                 self.view_frozen_column_names(),
                             ],
                         ),

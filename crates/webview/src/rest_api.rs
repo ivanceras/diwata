@@ -30,6 +30,15 @@ where
     Http::fetch_with_text_response_decoder(&url, text_decoder, msg_receiver)
 }
 
+pub fn fetch_window_data_next_page<F>(table_name: &TableName, page: usize, msg_receiver: F) -> Cmd<App, Msg>
+where
+    F: Fn(Result<QueryResult, JsValue>) -> Msg + Clone + 'static,
+{
+    let url = format!("/main_data/{}/page/{}", table_name.complete_name(), page);
+    let text_decoder = |v: String| ron::de::from_str(&v).expect("Unable to decode ron data");
+    Http::fetch_with_text_response_decoder(&url, text_decoder, msg_receiver)
+}
+
 pub fn retrieve_detail_for_main_tab<F>(
     table: &TableName,
     dao: &Dao,

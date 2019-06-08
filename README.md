@@ -13,6 +13,8 @@ Diwata is a database interface for PostgreSQL with the goal of being usable, use
 
 ## Quick local demo setup using sqlite sakila.db
 
+Use the nightly compiler.
+
 ```sh
 git clone https://github.com/ivanceras/diwata
 cd diwata
