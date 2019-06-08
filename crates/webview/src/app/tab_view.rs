@@ -45,10 +45,10 @@ impl TabView {
     }
 
     pub fn set_pages(&mut self, pages: &Vec<Page>, current_page: usize, total_records: usize) {
-        let all_rows:Vec<DataRow> = pages.iter().fold(vec![], |mut acc, page|{
+        let all_rows: Vec<DataRow> = pages.iter().fold(vec![], |mut acc, page| {
             acc.extend(page.rows.clone());
             acc
-            });
+        });
         self.set_data_rows(&all_rows, current_page, total_records);
     }
     pub fn need_next_page(&self) -> bool {

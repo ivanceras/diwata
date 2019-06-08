@@ -97,7 +97,7 @@ impl WindowData {
         }
     }
 
-    pub fn add_main_data_page(&mut self, rows: Rows){
+    pub fn add_main_data_page(&mut self, rows: Rows) {
         sauron::log!("Added {} rows", rows.data.len());
         self.main_tab_data.push(Page::from_rows(rows));
     }

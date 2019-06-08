@@ -182,10 +182,16 @@ impl Component<Msg> for App {
                 let main_tab_current_page = self.window_data[window_index].main_tab_current_page;
                 let next_page = main_tab_current_page + 1;
                 main_tab.update(tab_msg);
-                sauron::log!("is a page request in flight: {}", self.is_page_request_in_flight);
-                if main_tab.need_next_page() && !self.is_page_request_in_flight{
+                sauron::log!(
+                    "is a page request in flight: {}",
+                    self.is_page_request_in_flight
+                );
+                if main_tab.need_next_page() && !self.is_page_request_in_flight {
                     self.is_page_request_in_flight = true;
-                    sauron::log!("---->>> is a page request in flight: {}", self.is_page_request_in_flight);
+                    sauron::log!(
+                        "---->>> is a page request in flight: {}",
+                        self.is_page_request_in_flight
+                    );
                     rest_api::fetch_window_data_next_page(
                         &main_tab.table_name,
                         next_page,
@@ -272,8 +278,8 @@ impl Component<Msg> for App {
             Msg::ReceivedWindowDataNextPage(window_index, page, Ok(query_result)) => {
                 sauron::log!("Got data for next page {}: {:#?}", page, query_result);
                 let window_data = &mut self.window_data[window_index];
-                    window_data.add_main_data_page(query_result.rows);
-                    window_data.main_tab_current_page = page;
+                window_data.add_main_data_page(query_result.rows);
+                window_data.main_tab_current_page = page;
                 self.window_views[window_index].set_window_data(window_data);
                 self.is_page_request_in_flight = false;
                 Cmd::none()
