@@ -27,7 +27,7 @@ pub struct AppData {
 
 /// Page a collection of rows
 /// also shows the total records from the table source
-#[derive(Default, Serialize, Deserialize)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct Page {
     /// page number
     pub page: usize,
@@ -55,7 +55,7 @@ fn data_row_from_dao(dao: Dao) -> DataRow {
 }
 
 /// Contains all the data for a window
-#[derive(Default, Serialize, Deserialize)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct WindowData {
     /// The sql query used to obtain this data,
     pub sql_query: Option<String>,
@@ -72,9 +72,11 @@ pub struct WindowData {
     pub has_many_tab_data: Vec<Vec<Page>>,
     /// current page of the has_many_tabs
     pub has_many_tab_current_page: Vec<usize>,
+    pub has_many_tab_total_rows: Vec<usize>,
     /// Vector of pages for each indirect_tab
     pub indirect_tab_data: Vec<Vec<Page>>,
     pub indirect_tab_current_page: Vec<usize>,
+    pub indirect_tab_total_rows: Vec<usize>,
 
     /// Frozen data for each of this tab
     pub main_tab_frozen_data: FrozenData,
@@ -84,14 +86,20 @@ pub struct WindowData {
 
 impl WindowData {
     pub fn from_rows(rows: Rows) -> Self {
-        if rows.count.is_none(){
+        if rows.count.is_none() {
             println!("there is no row count ");
         }
         WindowData {
             main_tab_total_rows: rows.count.unwrap_or(0),
+            main_tab_current_page: 1,
             main_tab_data: vec![Page::from_rows(rows)],
             ..Default::default()
         }
+    }
+
+    pub fn add_main_data_page(&mut self, rows: Rows){
+        sauron::log!("Added {} rows", rows.data.len());
+        self.main_tab_data.push(Page::from_rows(rows));
     }
 
     pub fn set_record_detail(&mut self, record_detail: RecordDetail) {
@@ -105,6 +113,14 @@ impl WindowData {
         );
         self.has_many_tab_current_page = record_detail.has_many.iter().fold(
             vec![],
+            |mut acc, (_table_name, _rows)| {
+                acc.push(1);
+                acc
+            },
+        );
+
+        self.has_many_tab_total_rows = record_detail.has_many.iter().fold(
+            vec![],
             |mut acc, (_table_name, rows)| {
                 acc.push(rows.count.unwrap_or(0));
                 acc
@@ -117,10 +133,18 @@ impl WindowData {
                 acc
             },
         );
-        self.indirect_tab_current_page = record_detail.indirect.iter().fold(
+        self.indirect_tab_total_rows = record_detail.indirect.iter().fold(
             vec![],
             |mut acc, (_linker, _table_name, rows)| {
                 acc.push(rows.count.unwrap_or(0));
+                acc
+            },
+        );
+
+        self.indirect_tab_current_page = record_detail.indirect.iter().fold(
+            vec![],
+            |mut acc, (_linker, _table_name, _rows)| {
+                acc.push(1);
                 acc
             },
         );
@@ -134,7 +158,7 @@ impl WindowData {
     }
 }
 
-#[derive(Default, Clone, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct FrozenData {
     pub frozen_rows: Vec<usize>,
     pub frozen_columns: Vec<usize>,

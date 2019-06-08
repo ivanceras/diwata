@@ -69,7 +69,7 @@ pub fn start() -> io::Result<()> {
                     .route(web::get().to_async(api::windows)),
             )
             .service(
-                web::resource("/main_data/{table_name}/")
+                web::resource("/main_data/{table_name}/page/{page}")
                     .route(web::get().to_async(api::main_data)),
             )
             .service(

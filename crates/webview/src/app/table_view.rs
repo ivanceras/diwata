@@ -1,7 +1,6 @@
 use crate::app::{self, column_view::ColumnView, row_view::RowView};
-use crate::rest_api;
 use data_table::DataColumn;
-use diwata_intel::{DataRow, TableName, Field, Tab};
+use diwata_intel::{DataRow, Field, Tab, TableName};
 use sauron::{
     html::{attributes::*, events::*, *},
     Component, Node,
@@ -52,7 +51,7 @@ impl TableView {
             allocated_width: 0,
             allocated_height: 0,
             total_rows: 0,
-            current_page: 0,
+            current_page: 1,
         }
     }
 
@@ -72,7 +71,12 @@ impl TableView {
 
     /// replace all the data with a new data row
     /// TODO: also update the freeze_columns for each row_views
-    pub fn set_data_rows(&mut self, data_row: &Vec<DataRow>, current_page: usize, total_rows: usize) {
+    pub fn set_data_rows(
+        &mut self,
+        data_row: &Vec<DataRow>,
+        current_page: usize,
+        total_rows: usize,
+    ) {
         self.row_views = data_row
             .into_iter()
             .enumerate()
@@ -306,19 +310,22 @@ impl TableView {
                 ]),
                 onscroll(Msg::Scrolled),
             ],
-                self.row_views
-                    .iter()
-                    .enumerate()
-                    .filter(|(index, _row_view)| !self.frozen_rows.contains(&index))
-                    .map(|(index, row_view)| {
-                        row_view
-                            .view()
-                            .map(move |row_msg| Msg::RowMsg(index, row_msg))
-                    })
-                    .collect::<Vec<Node<Msg>>>(),
-            )
+            self.row_views
+                .iter()
+                .enumerate()
+                .filter(|(index, _row_view)| !self.frozen_rows.contains(&index))
+                .map(|(index, row_view)| {
+                    row_view
+                        .view()
+                        .map(move |row_msg| Msg::RowMsg(index, row_msg))
+                })
+                .collect::<Vec<Node<Msg>>>(),
+        )
     }
 
+    pub fn need_next_page(&self) -> bool {
+        self.is_scrolled_near_bottom()
+    }
 
     pub fn update(&mut self, msg: Msg) -> app::Cmd {
         match msg {
@@ -334,17 +341,12 @@ impl TableView {
                 self.scroll_top = scroll_top;
                 self.scroll_left = scroll_left;
                 sauron::log!("scrollbar to bottom : {}", self.scrollbar_to_bottom());
-                sauron::log!("is near scrolled bottom: {}", self.is_scrolled_near_bottom());
+                sauron::log!(
+                    "is near scrolled bottom: {}",
+                    self.is_scrolled_near_bottom()
+                );
                 sauron::log!("is scrolled bottom: {}", self.is_scrolled_bottom());
-                // only in main table data
-                if self.is_scrolled_near_bottom(){
-                    let next_page = self.current_page + 1;
-                    rest_api::fetch_window_data_next_page(&self.table_name, next_page, move|result| {
-                        app::Msg::ReceivedWindowDataNextPage(next_page, result)
-                     })
-                }else{
-                    app::Cmd::none()
-                }
+                app::Cmd::none()
             }
         }
     }
@@ -368,10 +370,17 @@ impl TableView {
                         div(
                             [class("spacer_and_frozen_column_names")],
                             [
-                                div([class("spacer")], [
-                                    text(format!("{}/{}", self.row_views.len(), self.total_rows)),
-                                    input([r#type("checkbox"),
-                                    ], [])]),
+                                div(
+                                    [class("spacer")],
+                                    [
+                                        text(format!(
+                                            "{}/{}",
+                                            self.row_views.len(),
+                                            self.total_rows
+                                        )),
+                                        input([r#type("checkbox")], []),
+                                    ],
+                                ),
                                 self.view_frozen_column_names(),
                             ],
                         ),

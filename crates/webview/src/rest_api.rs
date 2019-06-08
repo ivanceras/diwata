@@ -30,7 +30,11 @@ where
     Http::fetch_with_text_response_decoder(&url, text_decoder, msg_receiver)
 }
 
-pub fn fetch_window_data_next_page<F>(table_name: &TableName, page: usize, msg_receiver: F) -> Cmd<App, Msg>
+pub fn fetch_window_data_next_page<F>(
+    table_name: &TableName,
+    page: usize,
+    msg_receiver: F,
+) -> Cmd<App, Msg>
 where
     F: Fn(Result<QueryResult, JsValue>) -> Msg + Clone + 'static,
 {

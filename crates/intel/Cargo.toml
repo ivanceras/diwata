@@ -18,6 +18,7 @@ rustorm_dao = "0.3"
 rustorm =  {version = "0.13", optional = true}
 sqlparser = { path = "../sqlparser-rs" }
 either = { version = "1.5", features = ["serde"] }
+sauron = {version = "0.7.1", features = ["measure"] }
 
 
 [features]

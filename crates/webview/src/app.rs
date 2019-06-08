@@ -38,7 +38,7 @@ pub enum Msg {
     FetchWindowList(Result<Vec<GroupedWindow>, JsValue>),
     ReceivedWindowQueryResult(usize, Result<QueryResult, JsValue>),
     ReceivedWindowData(Result<QueryResult, JsValue>),
-    ReceivedWindowDataNextPage(usize, Result<QueryResult, JsValue>),
+    ReceivedWindowDataNextPage(usize, usize, Result<QueryResult, JsValue>),
     ReceivedWindowMainTabDetail(usize, usize, Result<RecordDetail, JsValue>),
 }
 
@@ -49,6 +49,7 @@ pub struct App {
     browser_height: i32,
     browser_width: i32,
     window_list_view: WindowListView,
+    is_page_request_in_flight: bool,
 }
 
 impl App {
@@ -67,6 +68,7 @@ impl App {
             active_window: 0,
             browser_width,
             browser_height,
+            is_page_request_in_flight: false,
         };
         app.update_active_window();
         app.update_size_allocation();
@@ -175,6 +177,26 @@ impl Component<Msg> for App {
                     Cmd::none()
                 }
             }
+            Msg::WindowMsg(window_index, window_view::Msg::MainTabMsg(tab_msg)) => {
+                let main_tab = &mut self.window_views[window_index].main_tab;
+                let main_tab_current_page = self.window_data[window_index].main_tab_current_page;
+                let next_page = main_tab_current_page + 1;
+                main_tab.update(tab_msg);
+                sauron::log!("is a page request in flight: {}", self.is_page_request_in_flight);
+                if main_tab.need_next_page() && !self.is_page_request_in_flight{
+                    self.is_page_request_in_flight = true;
+                    sauron::log!("---->>> is a page request in flight: {}", self.is_page_request_in_flight);
+                    rest_api::fetch_window_data_next_page(
+                        &main_tab.table_name,
+                        next_page,
+                        move |query_result| {
+                            Msg::ReceivedWindowDataNextPage(window_index, next_page, query_result)
+                        },
+                    )
+                } else {
+                    Cmd::none()
+                }
+            }
             Msg::WindowMsg(index, window_msg) => self.window_views[index].update(window_msg),
             Msg::BrowserResized(width, height) => {
                 sauron::log!("Browser is resized to: {}, {}", width, height);
@@ -247,11 +269,16 @@ impl Component<Msg> for App {
                     }
                 }
             }
-            Msg::ReceivedWindowDataNextPage(page, Ok(query_result)) => {
-                sauron::log!("Got data for next page {}: {:#?}",page, query_result);
+            Msg::ReceivedWindowDataNextPage(window_index, page, Ok(query_result)) => {
+                sauron::log!("Got data for next page {}: {:#?}", page, query_result);
+                let window_data = &mut self.window_data[window_index];
+                    window_data.add_main_data_page(query_result.rows);
+                    window_data.main_tab_current_page = page;
+                self.window_views[window_index].set_window_data(window_data);
+                self.is_page_request_in_flight = false;
                 Cmd::none()
             }
-            Msg::ReceivedWindowDataNextPage(page, Err(_e)) => {
+            Msg::ReceivedWindowDataNextPage(_window_index, page, Err(_e)) => {
                 sauron::log!("Error retrieving next page {}", page);
                 Cmd::none()
             }
@@ -291,6 +318,7 @@ impl Component<Msg> for App {
                     self.browser_width,
                     self.browser_height,
                 );
+                sauron::log!("Window data: {:#?}", window_data);
                 new_window.show_main_tab_detail_view(row_index);
                 new_window.update_size_allocation();
                 self.window_views[window_index] = new_window;

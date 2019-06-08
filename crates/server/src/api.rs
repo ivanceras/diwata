@@ -144,7 +144,7 @@ pub fn record_detail(
 
 pub fn main_data(
     req: HttpRequest,
-    table_name_param: web::Path<(String)>,
+    param: web::Path<(String, usize)>,
 ) -> impl Future<Item = HttpResponse, Error = Error> {
     require_credentials(&req).expect("Should have credentials");
     let credentials: Result<Credentials, ServiceError> =
@@ -153,10 +153,11 @@ pub fn main_data(
     web::block(move || {
         let context = session::create_context(credentials)
             .expect("unable to create context");
-        let table_name = TableName::from(&table_name_param.to_string());
+        let table_name = TableName::from(&param.0);
         let res = data_read::get_window_main_table_data(
             &context,
             &table_name,
+            param.1,
             global::PAGE_SIZE,
         );
         res

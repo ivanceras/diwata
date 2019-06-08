@@ -298,24 +298,28 @@ impl WindowView {
         let WindowData {
             sql_query,
             main_tab_data,
-            main_tab_total_rows,
             main_tab_current_page,
+            main_tab_total_rows,
+
             record_detail: _,
             main_tab_frozen_data,
             one_one_tab_data,
 
             has_many_tab_data,
             has_many_tab_frozen_data: _,
-            has_many_tab_current_page,
+            has_many_tab_current_page: _,
+            has_many_tab_total_rows,
 
             indirect_tab_data,
             indirect_tab_frozen_data: _,
-            indirect_tab_current_page,
+            indirect_tab_current_page: _,
+            indirect_tab_total_rows,
         } = window_data;
 
         sauron::log!("set sql query");
         self.toolbar_view.set_sql_query(sql_query);
-        self.main_tab.set_pages(main_tab_data, *main_tab_current_page, *main_tab_total_rows);
+        self.main_tab
+            .set_pages(main_tab_data, *main_tab_current_page, *main_tab_total_rows);
         self.main_tab.set_frozen_data(main_tab_frozen_data);
 
         sauron::log!("Setting one_one");
@@ -326,12 +330,14 @@ impl WindowView {
 
         sauron::log!("Setting has_many");
         for (index, pages) in has_many_tab_data.into_iter().enumerate() {
-            self.has_many_tabs[index].set_pages(pages, has_many_tab_current_page[index], 0);
+            self.has_many_tabs[index].set_pages(pages, 0, has_many_tab_total_rows[index]);
         }
 
         sauron::log!("Setting indirect");
         for (index, pages) in indirect_tab_data.into_iter().enumerate() {
-            self.indirect_tabs[index].1.set_pages(pages, indirect_tab_current_page[index], 0);
+            self.indirect_tabs[index]
+                .1
+                .set_pages(pages, 0, indirect_tab_total_rows[index]);
         }
         sauron::log!("done setting window data");
     }

@@ -156,7 +156,6 @@ impl<'c> Query<'c> {
     }
     */
 
-    #[allow(unused)]
     pub fn set_page(&mut self, page: usize, page_size: usize) {
         self.set_limit(page_size);
         self.append(&format!(

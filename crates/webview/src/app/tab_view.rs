@@ -26,6 +26,8 @@ pub struct TabView {
     detail_view: DetailView,
     pub table_view: TableView,
     pub is_visible: bool,
+    /// is this a main tab
+    /// is a one_one tab
     /// one_one_tab should only contain at most 1 datarow and is on detail view
     is_one_one: bool,
 }
@@ -43,9 +45,14 @@ impl TabView {
     }
 
     pub fn set_pages(&mut self, pages: &Vec<Page>, current_page: usize, total_records: usize) {
-        for page in pages {
-            self.set_data_rows(&page.rows, current_page, total_records);
-        }
+        let all_rows:Vec<DataRow> = pages.iter().fold(vec![], |mut acc, page|{
+            acc.extend(page.rows.clone());
+            acc
+            });
+        self.set_data_rows(&all_rows, current_page, total_records);
+    }
+    pub fn need_next_page(&self) -> bool {
+        self.table_view.need_next_page()
     }
 
     /// this is a one one tab and should have only 1 record
@@ -57,8 +64,14 @@ impl TabView {
         }
     }
 
-    pub fn set_data_rows(&mut self, data_row: &Vec<DataRow>, current_page: usize, total_rows: usize) {
-        self.table_view.set_data_rows(&data_row, current_page, total_rows);
+    pub fn set_data_rows(
+        &mut self,
+        data_row: &Vec<DataRow>,
+        current_page: usize,
+        total_rows: usize,
+    ) {
+        self.table_view
+            .set_data_rows(&data_row, current_page, total_rows);
         self.update_view();
     }
 
@@ -135,9 +148,7 @@ impl TabView {
     }
     pub fn update(&mut self, msg: Msg) -> app::Cmd {
         match msg {
-            Msg::TableMsg(table_msg) => {
-                self.table_view.update(table_msg)
-            }
+            Msg::TableMsg(table_msg) => self.table_view.update(table_msg),
             Msg::DetailViewMsg(detail_msg) => {
                 self.detail_view.update(detail_msg);
                 app::Cmd::none()
