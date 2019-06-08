@@ -34,8 +34,8 @@ exclude = [
 "diwata_intel:0.1.2" = { path = "crates/intel" }
 "diwata_server:0.1.2" = { path = "crates/server" }
 
-#"sauron:0.7.0" = { path = "../sauron" }
-#"sauron_vdom:0.7.0"= { path = "../sauron/crates/sauron_vdom" }
-"sauron:0.7.1" = { git = "https://github.com/ivanceras/sauron.git" }
-"sauron_vdom:0.7.1" = { git = "https://github.com/ivanceras/sauron.git" }
+"sauron:0.7.1" = { path = "../sauron" }
+"sauron_vdom:0.7.1"= { path = "../sauron/crates/sauron_vdom" }
+#"sauron:0.7.1" = { git = "https://github.com/ivanceras/sauron.git" }
+#"sauron_vdom:0.7.1" = { git = "https://github.com/ivanceras/sauron.git" }
 

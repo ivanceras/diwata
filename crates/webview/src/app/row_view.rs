@@ -5,7 +5,7 @@ use crate::app::{
 use data_table::DataColumn;
 use diwata_intel::{Dao, DataRow};
 use sauron::{
-    html::{attributes::*, events::*, *},
+    html::{attributes::*, events::*, units::*, *},
     Component, Node,
 };
 use std::{cell::RefCell, rc::Rc};

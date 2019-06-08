@@ -8,6 +8,7 @@ use sauron::{
 #[derive(Debug, Clone)]
 pub enum Msg {
     TextChange(String),
+    PrimaryClicked,
 }
 
 #[derive(Clone)]
@@ -44,6 +45,28 @@ impl FieldView {
 
     pub fn set_is_frozen_column(&mut self, frozen: bool) {
         self.is_frozen_column = frozen;
+    }
+
+    fn view_value_as_primary(&self) -> Node<Msg> {
+        let classes = classes_flag([
+            ("value", true),
+            ("frozen_row", self.is_frozen_row),
+            ("frozen_column", self.is_frozen_column),
+        ]);
+        match &self.value {
+            Value::Int(v) => a(
+                [
+                    classes,
+                    onclick(|_| Msg::PrimaryClicked),
+                    href(format!("#{}", v)),
+                ],
+                [text(v.to_string())],
+            ),
+            _ => {
+                sauron::log!("todo primary: {:?}", self.value);
+                text("unknown")
+            }
+        }
     }
 
     fn view_value(&self) -> Node<Msg> {
@@ -227,7 +250,11 @@ impl FieldView {
             ],
             [
                 label([class("in_detail_column")], [text(&self.column.name)]),
-                self.view_value(),
+                if self.column.is_primary {
+                    self.view_value_as_primary()
+                } else {
+                    self.view_value()
+                },
             ],
         )
     }
@@ -239,6 +266,10 @@ impl Component<Msg> for FieldView {
         match msg {
             Msg::TextChange(value) => {
                 self.new_value = Value::Text(value);
+                Cmd::none()
+            }
+            Msg::PrimaryClicked => {
+                sauron::log!("Primary clicked");
                 Cmd::none()
             }
         }

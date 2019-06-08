@@ -1,6 +1,6 @@
 use crate::widgets;
 use sauron::{
-    html::{attributes::*, events::*, *},
+    html::{attributes::*, events::*, units::*, *},
     Cmd, Component, Node,
 };
 use sqlparser::{dialect::GenericSqlDialect, sqlparser::Parser};

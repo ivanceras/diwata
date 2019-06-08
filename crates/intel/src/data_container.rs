@@ -55,6 +55,12 @@ fn data_row_from_dao(dao: Dao) -> DataRow {
 }
 
 /// Contains all the data for a window
+/// FIXME: this needs to be more organized:
+/// we need to group tab_data, total_rows, current_page in a struct for
+/// each main_tab, has_many, and indirect_tab
+///
+/// next pages should be injected into the existing tab_view/table_view ui
+/// instead of recreating from window_data, to minimize discarding of previous row_views
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct WindowData {
     /// The sql query used to obtain this data,
@@ -66,6 +72,7 @@ pub struct WindowData {
     /// current page of the main tab rows
     pub main_tab_current_page: usize,
     /// Contains the main tab record detail when in detailed view
+    /// FIXME: record detail is only using Dao
     pub record_detail: Option<RecordDetail>,
     pub one_one_tab_data: Vec<Option<DataRow>>,
     /// Vector of pages for each has_many_tab

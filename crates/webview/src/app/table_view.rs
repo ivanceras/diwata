@@ -2,7 +2,7 @@ use crate::app::{self, column_view::ColumnView, row_view::RowView};
 use data_table::DataColumn;
 use diwata_intel::{DataRow, Field, Tab, TableName};
 use sauron::{
-    html::{attributes::*, events::*, *},
+    html::{attributes::*, events::*, units::*, *},
     Component, Node,
 };
 

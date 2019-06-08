@@ -1,5 +1,5 @@
 use sauron::{
-    html::attributes::*,
+    html::{attributes::*, units::*},
     svg::{attributes::*, *},
     Node,
 };
