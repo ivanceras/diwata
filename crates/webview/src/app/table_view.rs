@@ -200,7 +200,6 @@ impl TableView {
     /// (content_height - scroll_top, (content_height - scroll_top + container_height))
     fn scroll_position_range(&self) -> (i32, i32) {
         let row_container_height = self.calculate_normal_rows_height();
-        sauron::log!("row_container_height: {}", row_container_height);
         (self.scroll_top, self.scroll_top + row_container_height)
     }
 
@@ -389,13 +388,6 @@ impl TableView {
             Msg::Scrolled((scroll_top, scroll_left)) => {
                 self.scroll_top = scroll_top;
                 self.scroll_left = scroll_left;
-                sauron::log!("scrollbar to bottom : {}", self.scrollbar_to_bottom());
-                sauron::log!(
-                    "is near scrolled bottom: {}",
-                    self.is_scrolled_near_bottom()
-                );
-                sauron::log!("is scrolled bottom: {}", self.is_scrolled_bottom());
-                sauron::log!("visible page: {}", self.visible_page());
                 let visible_page = self.visible_page();
                 if self.visible_page != visible_page {
                     self.visible_page = visible_page;
@@ -409,7 +401,6 @@ impl TableView {
     fn update_visible_pages(&mut self) {
         let visible_page = self.visible_page();
         let visible_pages = vec![visible_page - 1, visible_page, visible_page + 1];
-        sauron::log!("visible pages: {:?}", visible_pages);
         self.page_views
             .iter_mut()
             .enumerate()
