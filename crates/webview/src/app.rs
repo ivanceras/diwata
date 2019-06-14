@@ -17,6 +17,7 @@ use window_view::WindowView;
 mod column_view;
 mod detail_view;
 mod field_view;
+mod page_view;
 mod row_view;
 mod tab_view;
 mod table_view;
@@ -143,15 +144,19 @@ impl Component<Msg> for App {
 
             Msg::WindowMsg(
                 window_index,
-                window_view::Msg::MainTabMsg(tab_view::Msg::TableMsg(table_view::Msg::RowMsg(
-                    row_index,
-                    row_view::Msg::DoubleClick,
+                window_view::Msg::MainTabMsg(tab_view::Msg::TableMsg(table_view::Msg::PageMsg(
+                    page_index,
+                    page_view::Msg::RowMsg(row_index, row_view::Msg::DoubleClick),
                 ))),
             ) => {
                 sauron::log!("Row {} is dblclicked", row_index);
                 let window_msg = window_view::Msg::MainTabMsg(tab_view::Msg::TableMsg(
-                    table_view::Msg::RowMsg(row_index, row_view::Msg::DoubleClick),
+                    table_view::Msg::PageMsg(
+                        page_index,
+                        page_view::Msg::RowMsg(row_index, row_view::Msg::DoubleClick),
+                    ),
                 ));
+
                 let window_view = &mut self.window_views[window_index];
                 window_view.update(window_msg);
                 let main_tab_view = &mut window_view.main_tab;
@@ -159,7 +164,7 @@ impl Component<Msg> for App {
                 main_tab_view.show_detail_view(row_index);
 
                 let table_name = &main_tab_view.table_name;
-                let dao = &main_tab_view.table_view.row_views[row_index].primary_dao();
+                let dao = &main_tab_view.table_view.get_row_primary_dao(row_index);
                 rest_api::retrieve_detail_for_main_tab(table_name, dao, move |detail| {
                     Msg::ReceivedWindowMainTabDetail(window_index, row_index, detail)
                 })

@@ -61,6 +61,8 @@ fn data_row_from_dao(dao: Dao) -> DataRow {
 ///
 /// next pages should be injected into the existing tab_view/table_view ui
 /// instead of recreating from window_data, to minimize discarding of previous row_views
+///
+/// also include the sorts and paging information
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct WindowData {
     /// The sql query used to obtain this data,

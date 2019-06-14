@@ -18,7 +18,7 @@ pub enum Msg {
 }
 
 pub struct RowView {
-    index: usize,
+    pub index: usize,
     pub fields: Vec<Rc<RefCell<FieldView>>>,
     frozen_fields: Vec<usize>,
     is_frozen: bool,

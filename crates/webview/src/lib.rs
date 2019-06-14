@@ -1,4 +1,4 @@
-#![deny(warnings)]
+//#![deny(warnings)]
 #![deny(clippy::all)]
 use app::{App, Msg};
 use diwata_intel::data_container::AppData;

@@ -320,7 +320,7 @@ impl WindowView {
         self.toolbar_view.set_sql_query(sql_query);
         self.main_tab
             .set_pages(main_tab_data, *main_tab_current_page, *main_tab_total_rows);
-        self.main_tab.set_frozen_data(main_tab_frozen_data);
+        //self.main_tab.set_frozen_data(main_tab_frozen_data);
 
         sauron::log!("Setting one_one");
         // one one tab should only have 1 row

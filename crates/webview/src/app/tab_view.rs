@@ -45,11 +45,8 @@ impl TabView {
     }
 
     pub fn set_pages(&mut self, pages: &Vec<Page>, current_page: usize, total_records: usize) {
-        let all_rows: Vec<DataRow> = pages.iter().fold(vec![], |mut acc, page| {
-            acc.extend(page.rows.clone());
-            acc
-        });
-        self.set_data_rows(&all_rows, current_page, total_records);
+        self.table_view
+            .set_pages(pages, current_page, total_records);
     }
     pub fn need_next_page(&self) -> bool {
         self.table_view.need_next_page()
@@ -60,21 +57,10 @@ impl TabView {
         //assert!(self.is_one_one);
         if let Some(data_row) = data_row {
             // there should only be 1 record here
-            self.set_data_rows(&vec![data_row.to_owned()], 1, total_rows);
         }
     }
 
-    pub fn set_data_rows(
-        &mut self,
-        data_row: &Vec<DataRow>,
-        current_page: usize,
-        total_rows: usize,
-    ) {
-        self.table_view
-            .set_data_rows(&data_row, current_page, total_rows);
-        self.update_view();
-    }
-
+    /*
     pub fn freeze_rows(&mut self, rows: &Vec<usize>) {
         self.table_view.freeze_rows(rows);
     }
@@ -86,6 +72,7 @@ impl TabView {
         self.freeze_rows(&frozen_data.frozen_rows);
         self.freeze_columns(&frozen_data.frozen_columns);
     }
+    */
 
     pub fn show(&mut self) {
         self.is_visible = true;
@@ -96,7 +83,7 @@ impl TabView {
 
     pub fn show_detail_view(&mut self, row_index: usize) {
         self.detail_view.show();
-        let fields = &self.table_view.row_views[row_index].fields;
+        let fields = &self.table_view.get_fields(row_index);
         self.detail_view.set_fields(fields);
         self.detail_view.set_row(row_index);
     }
@@ -135,13 +122,13 @@ impl TabView {
     /// a one one tab with only 1 record
     fn update_view(&mut self) {
         if self.is_one_one {
-            if self.table_view.row_views.len() == 1 {
+            if self.table_view.page_views.len() == 1 {
                 sauron::log!("Succeed one_one_tab");
                 self.show_detail_view(0);
             } else {
                 sauron::log!(
                     "There should be 1 data row in one_one_tab, got{} ",
-                    self.table_view.row_views.len()
+                    self.table_view.page_views.len()
                 );
             }
         }
