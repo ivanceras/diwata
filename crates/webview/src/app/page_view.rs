@@ -58,6 +58,10 @@ impl PageView {
         self.row_views.iter().find(|row| row.index == row_index)
     }
 
+    pub fn row_count(&self) -> usize {
+        self.row_views.len()
+    }
+
     fn fields_to_data_columns(fields: &[Field]) -> Vec<DataColumn> {
         fields.iter().map(Self::field_to_data_column).collect()
     }
@@ -190,9 +194,7 @@ impl PageView {
     pub fn view(&self) -> Node<Msg> {
         if self.is_visible {
             ol(
-                [class("page"),
-                 key(format!("page_{}", self.current_page)),
-                ],
+                [class("page"), key(format!("page_{}", self.current_page))],
                 self.row_views
                     .iter()
                     .enumerate()

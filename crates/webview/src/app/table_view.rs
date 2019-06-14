@@ -62,6 +62,13 @@ impl TableView {
         }
     }
 
+    fn row_count(&self) -> usize {
+        self.page_views.iter().fold(0, |mut acc, page_view| {
+            acc += page_view.row_count();
+            acc
+        })
+    }
+
     pub fn set_pages(&mut self, pages: &Vec<Page>, current_page: usize, total_records: usize) {
         self.page_views = pages
             .iter()
@@ -80,7 +87,9 @@ impl TableView {
     }
 
     fn get_row(&self, page_index: usize, row_index: usize) -> &RowView {
-        self.page_views[page_index].get_row(row_index).expect("expecting a row")
+        self.page_views[page_index]
+            .get_row(row_index)
+            .expect("expecting a row")
     }
 
     fn fields_to_data_columns(fields: &[Field]) -> Vec<DataColumn> {
@@ -198,9 +207,9 @@ impl TableView {
     fn visible_page(&self) -> usize {
         let (scroll_up, scroll_down) = self.scroll_position_range();
         let mut acc = 0;
-        for (i,page_view) in self.page_views.iter().enumerate(){
+        for (i, page_view) in self.page_views.iter().enumerate() {
             acc += page_view.height();
-            if acc  >= scroll_up{
+            if acc >= scroll_up {
                 return i + 1;
             }
         }
@@ -388,7 +397,7 @@ impl TableView {
                 sauron::log!("is scrolled bottom: {}", self.is_scrolled_bottom());
                 sauron::log!("visible page: {}", self.visible_page());
                 let visible_page = self.visible_page();
-                if self.visible_page != visible_page{
+                if self.visible_page != visible_page {
                     self.visible_page = visible_page;
                     self.update_visible_pages();
                 }
@@ -397,17 +406,20 @@ impl TableView {
         }
     }
 
-    fn update_visible_pages(&mut self){
+    fn update_visible_pages(&mut self) {
         let visible_page = self.visible_page();
         let visible_pages = vec![visible_page - 1, visible_page, visible_page + 1];
         sauron::log!("visible pages: {:?}", visible_pages);
-        self.page_views.iter_mut().enumerate().for_each(|(page_index, page_view)|{
-            if visible_pages.contains(&page_index){
-                page_view.set_visible(true)
-            }else{
-                page_view.set_visible(false);
-            }
-        });
+        self.page_views
+            .iter_mut()
+            .enumerate()
+            .for_each(|(page_index, page_view)| {
+                if visible_pages.contains(&page_index) {
+                    page_view.set_visible(true)
+                } else {
+                    page_view.set_visible(false);
+                }
+            });
     }
 
     /// A grid of 2x2  containing 4 major parts of the table
@@ -432,11 +444,7 @@ impl TableView {
                                 div(
                                     [class("spacer")],
                                     [
-                                        text(format!(
-                                            "{}/{}",
-                                            self.page_views.len(),
-                                            self.total_rows,
-                                        )),
+                                        text(format!("{}/{}", self.row_count(), self.total_rows,)),
                                         input([r#type("checkbox")], []),
                                     ],
                                 ),

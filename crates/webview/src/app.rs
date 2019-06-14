@@ -164,7 +164,9 @@ impl Component<Msg> for App {
                 main_tab_view.show_detail_view(page_index, row_index);
 
                 let table_name = &main_tab_view.table_name;
-                let dao = &main_tab_view.table_view.get_row_primary_dao(page_index, row_index);
+                let dao = &main_tab_view
+                    .table_view
+                    .get_row_primary_dao(page_index, row_index);
                 rest_api::retrieve_detail_for_main_tab(table_name, dao, move |detail| {
                     Msg::ReceivedWindowMainTabDetail(window_index, page_index, row_index, detail)
                 })
@@ -318,7 +320,12 @@ impl Component<Msg> for App {
                 sauron::log!("Error retrieveing records from sql query");
                 Cmd::none()
             }
-            Msg::ReceivedWindowMainTabDetail(window_index, page_index, row_index, Ok(record_detail)) => {
+            Msg::ReceivedWindowMainTabDetail(
+                window_index,
+                page_index,
+                row_index,
+                Ok(record_detail),
+            ) => {
                 sauron::log!("Got window main tab detail: {:#?}", record_detail);
                 let detail_window = record_detail.window.clone();
                 let window_data = &mut self.window_data[window_index];
@@ -335,7 +342,12 @@ impl Component<Msg> for App {
                 self.window_views[window_index] = new_window;
                 Cmd::none()
             }
-            Msg::ReceivedWindowMainTabDetail(_window_index, _page_index, _row_index, Err(_record_detail)) => {
+            Msg::ReceivedWindowMainTabDetail(
+                _window_index,
+                _page_index,
+                _row_index,
+                Err(_record_detail),
+            ) => {
                 sauron::log!("Error retrieveing window main tab detail..");
                 Cmd::none()
             }

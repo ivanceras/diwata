@@ -109,7 +109,9 @@ impl TabView {
     /// a one one tab with only 1 record
     fn update_view(&mut self) {
         if self.is_one_one {
-            if self.table_view.page_views.len() == 1 && self.table_view.page_views[0].row_views.len() == 1 {
+            if self.table_view.page_views.len() == 1
+                && self.table_view.page_views[0].row_views.len() == 1
+            {
                 sauron::log!("Succeed one_one_tab");
                 self.show_detail_view(0, 0);
             } else {
