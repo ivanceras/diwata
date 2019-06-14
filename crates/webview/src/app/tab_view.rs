@@ -81,11 +81,10 @@ impl TabView {
         self.is_visible = false;
     }
 
-    pub fn show_detail_view(&mut self, row_index: usize) {
+    pub fn show_detail_view(&mut self, page_index: usize, row_index: usize) {
         self.detail_view.show();
-        let fields = &self.table_view.get_fields(row_index);
+        let fields = &self.table_view.get_fields(page_index, row_index);
         self.detail_view.set_fields(fields);
-        self.detail_view.set_row(row_index);
     }
     /// Important NOTE: Don't remove views,
     /// just hide them, otherwise the DOM closures
@@ -95,18 +94,6 @@ impl TabView {
     }
     pub fn in_detail_view(&self) -> bool {
         self.detail_view.is_visible
-    }
-
-    /// calculate top of the clicked row, this will be used
-    /// as the basis of where the detail_view row animation starts
-    #[allow(unused)]
-    fn clicked_row_top(&self) -> i32 {
-        if let Some(row_index) = self.detail_view.row_index {
-            let row_height = 30;
-            (row_index as i32 * row_height) - self.table_view.scroll_top
-        } else {
-            0
-        }
     }
 
     pub fn set_table_size(&mut self, size: (i32, i32)) {
@@ -122,9 +109,9 @@ impl TabView {
     /// a one one tab with only 1 record
     fn update_view(&mut self) {
         if self.is_one_one {
-            if self.table_view.page_views.len() == 1 {
+            if self.table_view.page_views.len() == 1 && self.table_view.page_views[0].row_views.len() == 1 {
                 sauron::log!("Succeed one_one_tab");
-                self.show_detail_view(0);
+                self.show_detail_view(0, 0);
             } else {
                 sauron::log!(
                     "There should be 1 data row in one_one_tab, got{} ",

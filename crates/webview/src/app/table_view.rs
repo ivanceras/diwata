@@ -72,18 +72,15 @@ impl TableView {
         self.update_visible_pages();
     }
 
-    pub fn get_row_primary_dao(&self, row_index: usize) -> Dao {
-        self.get_row(row_index).primary_dao()
+    pub fn get_row_primary_dao(&self, page_index: usize, row_index: usize) -> Dao {
+        self.get_row(page_index, row_index).primary_dao()
     }
-    pub fn get_fields(&self, row_index: usize) -> &Vec<Rc<RefCell<FieldView>>> {
-        &self.get_row(row_index).fields
+    pub fn get_fields(&self, page_index: usize, row_index: usize) -> &Vec<Rc<RefCell<FieldView>>> {
+        &self.get_row(page_index, row_index).fields
     }
 
-    fn get_row(&self, row_index: usize) -> &RowView {
-        self.page_views
-            .iter()
-            .find_map(|page| page.get_row(row_index))
-            .expect("expecting a row_view")
+    fn get_row(&self, page_index: usize, row_index: usize) -> &RowView {
+        self.page_views[page_index].get_row(row_index).expect("expecting a row")
     }
 
     fn fields_to_data_columns(fields: &[Field]) -> Vec<DataColumn> {

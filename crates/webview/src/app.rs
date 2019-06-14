@@ -40,7 +40,7 @@ pub enum Msg {
     ReceivedWindowQueryResult(usize, Result<QueryResult, JsValue>),
     ReceivedWindowData(Result<QueryResult, JsValue>),
     ReceivedWindowDataNextPage(usize, usize, Result<QueryResult, JsValue>),
-    ReceivedWindowMainTabDetail(usize, usize, Result<RecordDetail, JsValue>),
+    ReceivedWindowMainTabDetail(usize, usize, usize, Result<RecordDetail, JsValue>),
 }
 
 pub struct App {
@@ -161,12 +161,12 @@ impl Component<Msg> for App {
                 window_view.update(window_msg);
                 let main_tab_view = &mut window_view.main_tab;
                 // show the row first, while the detail is loading
-                main_tab_view.show_detail_view(row_index);
+                main_tab_view.show_detail_view(page_index, row_index);
 
                 let table_name = &main_tab_view.table_name;
-                let dao = &main_tab_view.table_view.get_row_primary_dao(row_index);
+                let dao = &main_tab_view.table_view.get_row_primary_dao(page_index, row_index);
                 rest_api::retrieve_detail_for_main_tab(table_name, dao, move |detail| {
-                    Msg::ReceivedWindowMainTabDetail(window_index, row_index, detail)
+                    Msg::ReceivedWindowMainTabDetail(window_index, page_index, row_index, detail)
                 })
             }
 
@@ -318,7 +318,7 @@ impl Component<Msg> for App {
                 sauron::log!("Error retrieveing records from sql query");
                 Cmd::none()
             }
-            Msg::ReceivedWindowMainTabDetail(window_index, row_index, Ok(record_detail)) => {
+            Msg::ReceivedWindowMainTabDetail(window_index, page_index, row_index, Ok(record_detail)) => {
                 sauron::log!("Got window main tab detail: {:#?}", record_detail);
                 let detail_window = record_detail.window.clone();
                 let window_data = &mut self.window_data[window_index];
@@ -330,12 +330,12 @@ impl Component<Msg> for App {
                     self.browser_height,
                 );
                 sauron::log!("Window data: {:#?}", window_data);
-                new_window.show_main_tab_detail_view(row_index);
+                new_window.show_main_tab_detail_view(page_index, row_index);
                 new_window.update_size_allocation();
                 self.window_views[window_index] = new_window;
                 Cmd::none()
             }
-            Msg::ReceivedWindowMainTabDetail(_window_index, _row_index, Err(_record_detail)) => {
+            Msg::ReceivedWindowMainTabDetail(_window_index, _page_index, _row_index, Err(_record_detail)) => {
                 sauron::log!("Error retrieveing window main tab detail..");
                 Cmd::none()
             }

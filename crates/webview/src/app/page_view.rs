@@ -190,7 +190,9 @@ impl PageView {
     pub fn view(&self) -> Node<Msg> {
         if self.is_visible {
             ol(
-                [class("page")],
+                [class("page"),
+                 key(format!("page_{}", self.current_page)),
+                ],
                 self.row_views
                     .iter()
                     .enumerate()

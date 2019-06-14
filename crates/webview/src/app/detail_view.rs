@@ -16,7 +16,6 @@ pub enum Msg {
 pub struct DetailView {
     fields: Vec<Rc<RefCell<FieldView>>>,
     pub is_visible: bool,
-    pub row_index: Option<usize>,
 }
 
 impl DetailView {
@@ -24,7 +23,6 @@ impl DetailView {
         DetailView {
             fields: vec![],
             is_visible: false,
-            row_index: None,
         }
     }
 
@@ -34,10 +32,6 @@ impl DetailView {
 
     pub fn show(&mut self) {
         self.is_visible = true;
-    }
-
-    pub fn set_row(&mut self, row_index: usize) {
-        self.row_index = Some(row_index);
     }
 
     pub fn set_fields(&mut self, fields: &[Rc<RefCell<FieldView>>]) {

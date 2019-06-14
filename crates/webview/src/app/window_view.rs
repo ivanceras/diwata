@@ -342,8 +342,8 @@ impl WindowView {
         sauron::log!("done setting window data");
     }
 
-    pub fn show_main_tab_detail_view(&mut self, row_index: usize) {
-        self.main_tab.show_detail_view(row_index)
+    pub fn show_main_tab_detail_view(&mut self, page_index: usize, row_index: usize) {
+        self.main_tab.show_detail_view(page_index, row_index)
     }
 
     fn update_active_has_many_or_indirect_tab(&mut self) {
