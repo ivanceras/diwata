@@ -465,6 +465,13 @@ input.column_filter[type="text"]{
     width: 800px;
 }
 
+.page{
+}
+
+.page_holder{
+    flex-shrink:0;
+}
+
 .row{
     background-color: #fff;
 }

@@ -27,7 +27,8 @@ pub struct PageView {
     allocated_height: i32,
     /// the total number of rows count in the table
     total_rows: usize,
-    current_page: usize,
+    pub current_page: usize,
+    is_visible: bool,
 }
 
 impl PageView {
@@ -43,9 +44,14 @@ impl PageView {
             allocated_height: 0,
             total_rows: 0,
             current_page: 1,
+            is_visible: false,
         };
         page_view.set_page(page, 1, 1);
         page_view
+    }
+
+    pub fn set_visible(&mut self, is_visible: bool) {
+        self.is_visible = is_visible;
     }
 
     pub fn get_row(&self, row_index: usize) -> Option<&RowView> {
@@ -136,36 +142,6 @@ impl PageView {
         self.allocated_height = height;
     }
 
-    /// TODO: include the height of the frozen rows
-    pub fn calculate_normal_rows_size(&self) -> (i32, i32) {
-        let height = self.allocated_height
-            - self.frozen_row_height()
-            - self.calculate_needed_height_for_auxilliary_spaces();
-        let width = self.allocated_width
-            - self.frozen_column_width()
-            - self.calculate_needed_width_for_auxilliary_spaces();
-        let clamped_height = if height < 0 { 0 } else { height };
-        let clamped_width = if width < 0 { 0 } else { width };
-        (clamped_width, clamped_height)
-    }
-
-    fn calculate_normal_rows_height(&self) -> i32 {
-        self.calculate_normal_rows_size().1
-    }
-
-    fn calculate_normal_rows_width(&self) -> i32 {
-        self.calculate_normal_rows_size().0
-    }
-
-    /// height from the columns names, padding, margins and borders
-    pub fn calculate_needed_height_for_auxilliary_spaces(&self) -> i32 {
-        120
-    }
-
-    pub fn calculate_needed_width_for_auxilliary_spaces(&self) -> i32 {
-        80
-    }
-
     /// calculate the height of the content
     /// it rows * row_height
     pub fn height(&self) -> i32 {
@@ -203,23 +179,6 @@ impl PageView {
         )
     }
 
-    /// The rest of the columns and move in any direction
-    fn view_normal_rows(&self) -> Node<Msg> {
-        // can move: left, right, up, down
-        ol(
-            [],
-            self.row_views
-                .iter()
-                .enumerate()
-                .map(|(index, row_view)| {
-                    row_view
-                        .view()
-                        .map(move |row_msg| Msg::RowMsg(index, row_msg))
-                })
-                .collect::<Vec<Node<Msg>>>(),
-        )
-    }
-
     pub fn update(&mut self, msg: Msg) -> app::Cmd {
         match msg {
             Msg::RowMsg(row_index, row_msg) => app::Cmd::none(),
@@ -229,9 +188,27 @@ impl PageView {
 
     /// A grid of 2x2  containing 4 major parts of the table
     pub fn view(&self) -> Node<Msg> {
-        div(
-            [class(format!("total_rows: {}", self.row_views.len()))],
-            [text(self.row_views.len()), self.view_normal_rows()],
-        )
+        if self.is_visible {
+            ol(
+                [class("page")],
+                self.row_views
+                    .iter()
+                    .enumerate()
+                    .map(|(index, row_view)| {
+                        row_view
+                            .view()
+                            .map(move |row_msg| Msg::RowMsg(index, row_msg))
+                    })
+                    .collect::<Vec<Node<Msg>>>(),
+            )
+        } else {
+            div(
+                [
+                    class("page_holder"),
+                    styles([("width", "100%".to_string()), ("height", px(self.height()))]),
+                ],
+                [],
+            )
+        }
     }
 }

@@ -35,6 +35,7 @@ pub struct TableView {
     /// the total number of rows count in the table
     total_rows: usize,
     current_page: usize,
+    visible_page: usize,
 }
 
 impl TableView {
@@ -57,6 +58,7 @@ impl TableView {
             allocated_height: 0,
             total_rows: 0,
             current_page: 1,
+            visible_page: 0,
         }
     }
 
@@ -65,6 +67,9 @@ impl TableView {
             .iter()
             .map(|page| PageView::new(&self.data_columns, page))
             .collect();
+        self.total_rows = total_records;
+        self.current_page = current_page;
+        self.update_visible_pages();
     }
 
     pub fn get_row_primary_dao(&self, row_index: usize) -> Dao {
@@ -181,6 +186,28 @@ impl TableView {
             acc += page.height();
             acc
         })
+    }
+
+    /// calculate where is the position of the row_container
+    /// with respect to the content height
+    /// when the scroll position is in the bottom it will be
+    /// (content_height - scroll_top, (content_height - scroll_top + container_height))
+    fn scroll_position_range(&self) -> (i32, i32) {
+        let row_container_height = self.calculate_normal_rows_height();
+        sauron::log!("row_container_height: {}", row_container_height);
+        (self.scroll_top, self.scroll_top + row_container_height)
+    }
+
+    fn visible_page(&self) -> usize {
+        let (scroll_up, scroll_down) = self.scroll_position_range();
+        let mut acc = 0;
+        for (i,page_view) in self.page_views.iter().enumerate(){
+            acc += page_view.height();
+            if acc  >= scroll_up{
+                return i + 1;
+            }
+        }
+        0
     }
 
     /// calculate the distance of the scrollbar
@@ -320,7 +347,6 @@ impl TableView {
         ol(
             [
                 class("normal_rows"),
-                class(format!("total {}", self.page_views.len())),
                 styles([
                     ("width", px(self.calculate_normal_rows_width())),
                     ("height", px(self.calculate_normal_rows_height())),
@@ -363,9 +389,28 @@ impl TableView {
                     self.is_scrolled_near_bottom()
                 );
                 sauron::log!("is scrolled bottom: {}", self.is_scrolled_bottom());
+                sauron::log!("visible page: {}", self.visible_page());
+                let visible_page = self.visible_page();
+                if self.visible_page != visible_page{
+                    self.visible_page = visible_page;
+                    self.update_visible_pages();
+                }
                 app::Cmd::none()
             }
         }
+    }
+
+    fn update_visible_pages(&mut self){
+        let visible_page = self.visible_page();
+        let visible_pages = vec![visible_page - 1, visible_page, visible_page + 1];
+        sauron::log!("visible pages: {:?}", visible_pages);
+        self.page_views.iter_mut().enumerate().for_each(|(page_index, page_view)|{
+            if visible_pages.contains(&page_index){
+                page_view.set_visible(true)
+            }else{
+                page_view.set_visible(false);
+            }
+        });
     }
 
     /// A grid of 2x2  containing 4 major parts of the table
@@ -393,7 +438,7 @@ impl TableView {
                                         text(format!(
                                             "{}/{}",
                                             self.page_views.len(),
-                                            self.total_rows
+                                            self.total_rows,
                                         )),
                                         input([r#type("checkbox")], []),
                                     ],
