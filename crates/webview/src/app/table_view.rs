@@ -189,26 +189,16 @@ impl TableView {
     /// it rows * row_height
     fn calculate_content_height(&self) -> i32 {
         self.page_views.iter().fold(0, |mut acc, page| {
-            acc += page.height();
+            acc += page.page_height;
             acc
         })
     }
 
-    /// calculate where is the position of the row_container
-    /// with respect to the content height
-    /// when the scroll position is in the bottom it will be
-    /// (content_height - scroll_top, (content_height - scroll_top + container_height))
-    fn scroll_position_range(&self) -> (i32, i32) {
-        let row_container_height = self.calculate_normal_rows_height();
-        (self.scroll_top, self.scroll_top + row_container_height)
-    }
-
     fn visible_page(&self) -> usize {
-        let (scroll_up, scroll_down) = self.scroll_position_range();
         let mut acc = 0;
         for (i, page_view) in self.page_views.iter().enumerate() {
-            acc += page_view.height();
-            if acc >= scroll_up {
+            acc += page_view.page_height;
+            if acc >= self.scroll_top {
                 return i + 1;
             }
         }

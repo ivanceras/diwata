@@ -29,6 +29,7 @@ pub struct PageView {
     total_rows: usize,
     pub current_page: usize,
     is_visible: bool,
+    pub page_height: i32,
 }
 
 impl PageView {
@@ -45,6 +46,7 @@ impl PageView {
             total_rows: 0,
             current_page: 1,
             is_visible: false,
+            page_height: 0,
         };
         page_view.set_page(page, 1, 1);
         page_view
@@ -97,6 +99,7 @@ impl PageView {
         self.update_freeze_columns();
         self.total_rows = total_rows;
         self.current_page = current_page;
+        self.page_height = self.height();
     }
 
     pub fn freeze_rows(&mut self, rows: &Vec<usize>) {
@@ -148,7 +151,7 @@ impl PageView {
 
     /// calculate the height of the content
     /// it rows * row_height
-    pub fn height(&self) -> i32 {
+    fn height(&self) -> i32 {
         sauron::log!("row views: {}", self.row_views.len());
         self.row_views.len() as i32 * RowView::row_height()
     }
