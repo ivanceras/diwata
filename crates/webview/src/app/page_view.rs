@@ -158,6 +158,7 @@ impl PageView {
 
     /// These are values in a row that is under the frozen columns
     /// Can move up and down
+    /// frozen column, but not frozen_rows
     pub fn view_frozen_columns(&self) -> Node<Msg> {
         // can move up and down
         ol(
@@ -183,6 +184,7 @@ impl PageView {
         )
     }
 
+    /// frozen_row and frozen_columns
     pub fn view_immovable_frozen_columns(&self) -> Node<Msg> {
         ol(
             [],
@@ -199,6 +201,7 @@ impl PageView {
         )
     }
 
+    /// frozen rows but not frozen columns
     pub fn view_frozen_rows(&self) -> Node<Msg> {
         // can move left and right, but not up and down
         div(

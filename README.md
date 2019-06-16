@@ -34,7 +34,7 @@ open http://localhost:9000
 
 ## Roadmap checklist:
 - [ ] Basic data display
-- [ ] Infinite load-on-deman scrolling
+- [X] Infinite load-on-deman scrolling
 - [ ] Meaningful dropdown lookup
 - [X] Seamless url-based navigation
 - [ ] Delete records
