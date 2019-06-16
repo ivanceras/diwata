@@ -300,6 +300,10 @@ ol, ul, li {
     flex-direction: row;
 }
 
+.row_count_stat{
+    font-size: 8px;
+}
+
 
 /* ol, contains the frozen columns and their selection*/
 .immovable_frozen_columns {

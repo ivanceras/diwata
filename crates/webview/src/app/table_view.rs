@@ -394,7 +394,7 @@ impl TableView {
                                 div(
                                     [class("spacer")],
                                     [
-                                        text(format!("{}/{}", self.row_count(), self.total_rows,)),
+                                        div([class("row_count_stat")], [text(format!("{}/{}", self.row_count(), self.total_rows))]),
                                         input([r#type("checkbox")], []),
                                     ],
                                 ),
