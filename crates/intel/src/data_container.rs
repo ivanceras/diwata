@@ -102,6 +102,10 @@ impl WindowData {
             main_tab_total_rows: rows.count.unwrap_or(0),
             main_tab_current_page: 1,
             main_tab_data: vec![Page::from_rows(rows)],
+            main_tab_frozen_data: FrozenData {
+                frozen_rows: vec![(0, vec![0, 1, 2])],
+                frozen_columns: vec![0],
+            },
             ..Default::default()
         }
     }
@@ -169,7 +173,8 @@ impl WindowData {
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct FrozenData {
-    pub frozen_rows: Vec<usize>,
+    // page_index, Vec<row_index>
+    pub frozen_rows: Vec<(usize, Vec<usize>)>,
     pub frozen_columns: Vec<usize>,
 }
 

@@ -305,6 +305,10 @@ ol, ul, li {
 .immovable_frozen_columns {
     border-bottom: 1px dashed #ccc;
 }
+.immovable_frozen_column_row {
+    display: flex;
+    flex-direction: row;
+}
 
 .frozen_column_names{
 }
@@ -447,7 +451,7 @@ input.column_filter[type="text"]{
 }
 
 /* The selector checkbox */
-.selector_and_frozen_column_row > input, .spacer > input {
+input.selector[type="checkbox"]{
     width: 30px;
 }
 

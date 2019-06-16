@@ -60,8 +60,7 @@ impl TabView {
         }
     }
 
-    /*
-    pub fn freeze_rows(&mut self, rows: &Vec<usize>) {
+    pub fn freeze_rows(&mut self, rows: &Vec<(usize, Vec<usize>)>) {
         self.table_view.freeze_rows(rows);
     }
 
@@ -72,7 +71,6 @@ impl TabView {
         self.freeze_rows(&frozen_data.frozen_rows);
         self.freeze_columns(&frozen_data.frozen_columns);
     }
-    */
 
     pub fn show(&mut self) {
         self.is_visible = true;

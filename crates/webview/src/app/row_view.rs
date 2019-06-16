@@ -21,7 +21,7 @@ pub struct RowView {
     pub index: usize,
     pub fields: Vec<Rc<RefCell<FieldView>>>,
     frozen_fields: Vec<usize>,
-    is_frozen: bool,
+    pub is_frozen: bool,
 }
 
 impl RowView {
@@ -97,6 +97,29 @@ impl RowView {
         )
     }
 
+    pub fn view_immovable_frozen_columns(&self) -> Node<Msg> {
+        li(
+            [class("row"), styles([("height", px(Self::row_height()))])],
+            self.fields
+                .iter()
+                .enumerate()
+                .filter(|(index, field)| field.borrow().is_immovable())
+                .map(|(index, field)| {
+                    div(
+                        [class("immovable_frozen_column_row")],
+                        [
+                            input([r#type("checkbox"), class("selector")], []),
+                            field
+                                .borrow()
+                                .view()
+                                .map(move |field_msg| Msg::FieldMsg(index, field_msg)),
+                        ],
+                    )
+                })
+                .collect::<Vec<Node<Msg>>>(),
+        )
+    }
+
     /// frozen columns
     pub fn view_frozen_columns(&self) -> Node<Msg> {
         li(
@@ -120,7 +143,9 @@ impl RowView {
             self.fields
                 .iter()
                 .enumerate()
-                .filter(|(index, _field)| self.frozen_fields.contains(index))
+                .filter(|(index, field)| {
+                    field.borrow().is_frozen_column && !field.borrow().is_frozen_row
+                })
                 .map(|(index, field)| {
                     field
                         .borrow()
@@ -167,7 +192,13 @@ impl RowView {
         }
     }
 
+    pub fn view_frozen(&self) -> Node<Msg> {
+        self.view_with_filter(|(index, field)| {
+            field.borrow().is_frozen_row && !field.borrow().is_frozen_column
+        })
+    }
+
     pub fn view(&self) -> Node<Msg> {
-        self.view_with_filter(|(index, _field)| !self.frozen_fields.contains(index))
+        self.view_with_filter(|(index, field)| field.borrow().is_normal_field())
     }
 }

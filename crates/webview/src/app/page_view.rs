@@ -158,29 +158,59 @@ impl PageView {
 
     /// These are values in a row that is under the frozen columns
     /// Can move up and down
-    fn view_frozen_columns(&self) -> Node<Msg> {
+    pub fn view_frozen_columns(&self) -> Node<Msg> {
         // can move up and down
         ol(
-            [
-                class("frozen_columns"),
-                styles([("margin-top", px(-self.scroll_top))]),
-            ],
+            [],
             self.row_views
                 .iter()
                 .enumerate()
-                .filter(|(index, _row_view)| !self.frozen_rows.contains(index))
+                .filter(|(index, row_view)| !row_view.is_frozen)
                 .map(|(index, row_view)| {
                     // The checkbox selection and the rows of the frozen
                     // columns
                     div(
                         [class("selector_and_frozen_column_row")],
                         [
-                            input([r#type("checkbox")], []),
+                            input([r#type("checkbox"), class("selector")], []),
                             row_view
                                 .view_frozen_columns()
                                 .map(move |row_msg| Msg::RowMsg(index, row_msg)),
                         ],
                     )
+                })
+                .collect::<Vec<Node<Msg>>>(),
+        )
+    }
+
+    pub fn view_immovable_frozen_columns(&self) -> Node<Msg> {
+        ol(
+            [],
+            self.row_views
+                .iter()
+                .enumerate()
+                .filter(|(index, row_view)| row_view.is_frozen)
+                .map(|(index, row_view)| {
+                    row_view
+                        .view_immovable_frozen_columns()
+                        .map(move |row_msg| Msg::RowMsg(index, row_msg))
+                })
+                .collect::<Vec<Node<Msg>>>(),
+        )
+    }
+
+    pub fn view_frozen_rows(&self) -> Node<Msg> {
+        // can move left and right, but not up and down
+        div(
+            [class("frozen_page")],
+            self.row_views
+                .iter()
+                .enumerate()
+                .filter(|(index, row_view)| row_view.is_frozen)
+                .map(|(index, row_view)| {
+                    row_view
+                        .view_frozen()
+                        .map(move |row_msg| Msg::RowMsg(index, row_msg))
                 })
                 .collect::<Vec<Node<Msg>>>(),
         )
@@ -201,6 +231,7 @@ impl PageView {
                 self.row_views
                     .iter()
                     .enumerate()
+                    .filter(|(index, row_view)| !row_view.is_frozen)
                     .map(|(index, row_view)| {
                         row_view
                             .view()

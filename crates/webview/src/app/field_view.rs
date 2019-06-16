@@ -18,10 +18,10 @@ pub struct FieldView {
     pub new_value: Value,
     /// is part of a frozen row, serves no
     /// other purposed other than coloring in css style
-    is_frozen_row: bool,
+    pub is_frozen_row: bool,
     /// is part of a frozen column, serves no
     /// other puposed other than coloring in css style
-    is_frozen_column: bool,
+    pub is_frozen_column: bool,
 }
 
 impl FieldView {
@@ -33,6 +33,14 @@ impl FieldView {
             is_frozen_row: false,
             is_frozen_column: false,
         }
+    }
+
+    pub fn is_immovable(&self) -> bool {
+        self.is_frozen_row && self.is_frozen_column
+    }
+
+    pub fn is_normal_field(&self) -> bool {
+        !self.is_frozen_row && !self.is_frozen_column
     }
 
     pub fn is_changed(&self) -> bool {

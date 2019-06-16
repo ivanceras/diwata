@@ -26,7 +26,7 @@ pub struct TableView {
     pub column_views: Vec<ColumnView>,
     pub page_views: Vec<PageView>,
     /// Which columns of the rows are to be frozen on the left side of the table
-    frozen_rows: Vec<usize>,
+    frozen_rows: Vec<(usize, Vec<usize>)>,
     frozen_columns: Vec<usize>,
     pub scroll_top: i32,
     scroll_left: i32,
@@ -106,25 +106,16 @@ impl TableView {
         }
     }
 
-    /*
-    pub fn freeze_rows(&mut self, rows: &Vec<usize>) {
+    pub fn freeze_rows(&mut self, rows: &Vec<(usize, Vec<usize>)>) {
         self.frozen_rows = rows.clone();
         self.update_frozen_rows();
     }
 
     /// call this is frozen rows selection are changed
     fn update_frozen_rows(&mut self) {
-        let frozen_rows = &self.frozen_rows;
-        self.row_views
-            .iter_mut()
-            .enumerate()
-            .for_each(|(index, page_view)| {
-                if frozen_rows.contains(&index) {
-                    page_view.set_is_frozen(true)
-                } else {
-                    page_view.set_is_frozen(false)
-                }
-            })
+        for (page_index, rows) in &self.frozen_rows {
+            self.page_views[*page_index].freeze_rows(rows);
+        }
     }
 
     fn frozen_row_height(&self) -> i32 {
@@ -138,16 +129,15 @@ impl TableView {
     /// call these when new rows are set or added
     pub fn update_freeze_columns(&mut self) {
         let frozen_columns = self.frozen_columns.clone();
-        self.row_views
+        self.page_views
             .iter_mut()
-            .for_each(|page_view| page_view.freeze_columns(frozen_columns.clone()))
+            .for_each(|page_view| page_view.freeze_columns(&frozen_columns))
     }
 
     pub fn freeze_columns(&mut self, columns: &Vec<usize>) {
         self.frozen_columns = columns.clone();
         self.update_freeze_columns();
     }
-    */
 
     /// This is the allocated height set by the parent tab
     pub fn set_allocated_size(&mut self, (width, height): (i32, i32)) {
@@ -158,10 +148,10 @@ impl TableView {
     /// TODO: include the height of the frozen rows
     pub fn calculate_normal_rows_size(&self) -> (i32, i32) {
         let height = self.allocated_height
-            //- self.frozen_row_height()
+            - self.frozen_row_height()
             - self.calculate_needed_height_for_auxilliary_spaces();
         let width = self.allocated_width
-            //- self.frozen_column_width()
+            - self.frozen_column_width()
             - self.calculate_needed_width_for_auxilliary_spaces();
         let clamped_height = if height < 0 { 0 } else { height };
         let clamped_width = if width < 0 { 0 } else { width };
@@ -222,7 +212,6 @@ impl TableView {
         self.scrollbar_to_bottom() <= 0
     }
 
-    /*
     /// These are values in a row that is under the frozen columns
     /// Can move up and down
     fn view_frozen_columns(&self) -> Node<Msg> {
@@ -232,27 +221,17 @@ impl TableView {
                 class("frozen_columns"),
                 styles([("margin-top", px(-self.scroll_top))]),
             ],
-            self.row_views
+            self.page_views
                 .iter()
                 .enumerate()
-                .filter(|(index, _row_view)| !self.frozen_rows.contains(index))
                 .map(|(index, page_view)| {
-                    // The checkbox selection and the rows of the frozen
-                    // columns
-                    div(
-                        [class("selector_and_frozen_column_row")],
-                        [
-                            input([r#type("checkbox")], []),
-                            page_view
-                                .view_frozen_columns()
-                                .map(move |row_msg| Msg::RowMsg(index, row_msg)),
-                        ],
-                    )
+                    page_view
+                        .view_frozen_columns()
+                        .map(move |page_msg| Msg::PageMsg(index, page_msg))
                 })
                 .collect::<Vec<Node<Msg>>>(),
         )
     }
-    */
 
     /// These are the columns of the frozen columns.
     /// Since frozen, they can not move in any direction
@@ -292,26 +271,19 @@ impl TableView {
         )
     }
 
-    /*
     /// The rows are both frozen row and frozen column
     /// Therefore can not move in any direction
+    /// These are records that has its rows and columns both frozen
     fn view_immovable_frozen_columns(&self) -> Node<Msg> {
         ol(
             [class("immovable_frozen_columns")],
-            self.row_views
+            self.page_views
                 .iter()
                 .enumerate()
-                .filter(|(index, _row_view)| self.frozen_rows.contains(index))
                 .map(|(index, page_view)| {
-                    div(
-                        [class("selector_and_frozen_column_row")],
-                        [
-                            input([r#type("checkbox")], []),
-                            page_view
-                                .view_frozen_columns()
-                                .map(move |row_msg| Msg::RowMsg(index, row_msg)),
-                        ],
-                    )
+                    page_view
+                        .view_immovable_frozen_columns()
+                        .map(move |page_msg| Msg::PageMsg(index, page_msg))
                 })
                 .collect::<Vec<Node<Msg>>>(),
         )
@@ -322,19 +294,17 @@ impl TableView {
         // can move left and right, but not up and down
         ol(
             [class("frozen_rows")],
-            self.row_views
+            self.page_views
                 .iter()
                 .enumerate()
-                .filter(|(index, _row_view)| self.frozen_rows.contains(&index))
                 .map(|(index, page_view)| {
                     page_view
-                        .view()
-                        .map(move |row_msg| Msg::RowMsg(index, row_msg))
+                        .view_frozen_rows()
+                        .map(move |page_msg| Msg::PageMsg(index, page_msg))
                 })
                 .collect::<Vec<Node<Msg>>>(),
         )
     }
-    */
 
     /// The rest of the columns and move in any direction
     fn view_normal_rows(&self) -> Node<Msg> {
@@ -351,7 +321,6 @@ impl TableView {
             self.page_views
                 .iter()
                 .enumerate()
-                //.filter(|(index, _row_view)| !self.frozen_rows.contains(&index))
                 .map(|(index, page_view)| {
                     page_view
                         .view()
@@ -432,7 +401,7 @@ impl TableView {
                                 self.view_frozen_column_names(),
                             ],
                         ),
-                        //self.view_immovable_frozen_columns(),
+                        self.view_immovable_frozen_columns(),
                     ],
                 ),
                 // TOP-RIGHT: Content 2
@@ -449,7 +418,7 @@ impl TableView {
                         [
                             // can move left and right
                             self.view_normal_column_names(),
-                            /*self.view_frozen_rows(),*/
+                            self.view_frozen_rows(),
                         ],
                     )],
                 ),
@@ -460,7 +429,7 @@ impl TableView {
                         class("frozen_columns_container"),
                         styles([("height", px(self.calculate_normal_rows_height()))]),
                     ],
-                    [/*self.view_frozen_columns()*/],
+                    [self.view_frozen_columns()],
                 ),
                 // BOTTOM-RIGHT: Content 4
                 self.view_normal_rows(),
