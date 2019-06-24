@@ -8,12 +8,13 @@ use crate::app::{
 use data_table::DataColumn;
 use diwata_intel::{data_container::Page, Dao, DataRow, Field, Tab, TableName};
 use sauron::{
-    html::{attributes::*, events::*, units::*, *},
+    html::{attributes::*, events::*, units::*},
+    html_array::*,
     Component, Node,
 };
 use std::{cell::RefCell, rc::Rc};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Msg {
     ColumnMsg(usize, column_view::Msg),
     PageMsg(usize, page_view::Msg),

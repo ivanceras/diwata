@@ -29,8 +29,8 @@ use ron;
 use sauron::{
     html::{
         attributes::*,
-        *,
     },
+    html_array::*,
     html_extra,
     Node,
 };
@@ -44,8 +44,8 @@ fn get_index_html(context: &Context, table_name: Option<TableName>) -> String {
     let app_data_serialized =
         ron::ser::to_string(&app_data).expect("unable to serialize to ron");
     let view: Node<()> = html_extra::html(
-        [lang("en")],
-        [
+        vec![lang("en")],
+        vec![
             head(
                 [],
                 [
@@ -74,7 +74,7 @@ fn get_index_html(context: &Context, table_name: Option<TableName>) -> String {
                         ],
                         [],
                     ),
-                    html_extra::title([], [text("Diwata")]),
+                    html_extra::title(vec![], vec![text("Diwata")]),
                 ],
             ),
             body(

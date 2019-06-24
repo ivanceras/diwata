@@ -185,7 +185,7 @@ pub struct FrozenData {
 /// when the where clause specify a Primary_key = id
 /// Then that record is retrieved and it's additional details as well.
 /// such as 1:1 records and related records in has_many and indirect table
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub struct QueryResult {
     pub window: Option<Window>,
     pub rows: Rows,
@@ -201,7 +201,7 @@ impl QueryResult {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub struct RecordDetail {
     pub window: Window,
     pub record: Dao,
@@ -252,7 +252,7 @@ pub struct Lookup(pub Vec<(TableName, Rows)>);
 
 /// the displayable column name, serves as identifier to human vision
 /// this would be name, title, first_name - lastname
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug,PartialEq,  Serialize, Deserialize, Clone)]
 pub struct IdentifierDisplay {
     pub columns: Vec<ColumnName>,
     pub pk: Vec<ColumnName>,

@@ -1,6 +1,7 @@
 use sauron::{
     html::{attributes::*, units::*},
-    svg::{attributes::*, *},
+    svg::{attributes::*},
+    svg_array::*,
     Node,
 };
 

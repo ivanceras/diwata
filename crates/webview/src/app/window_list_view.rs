@@ -1,11 +1,12 @@
 use crate::{assets, widgets};
 use diwata_intel::{window::GroupedWindow, TableName};
 use sauron::{
-    html::{attributes::*, events::*, units::*, *},
+    html::{attributes::*, events::*, units::*},
     Cmd, Component, Node,
+    html_array::*,
 };
 
-#[derive(Debug, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Msg {
     ChangeSearch(String),
     ReceiveWindowList(Vec<GroupedWindow>),

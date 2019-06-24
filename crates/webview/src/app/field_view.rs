@@ -1,11 +1,12 @@
 use data_table::{DataColumn, Type};
 use diwata_intel::{Array, Value};
 use sauron::{
-    html::{attributes::*, events::*, *},
+    html::{attributes::*, events::*},
     Cmd, Component, Node,
+    html_array::*,
 };
 
-#[derive(Debug, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Msg {
     TextChange(String),
     PrimaryClicked,

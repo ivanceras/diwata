@@ -10,11 +10,12 @@ use diwata_intel::{
 
 use diwata_intel::{Tab, TableName};
 use sauron::{
-    html::{attributes::*, *},
+    html::{attributes::*},
     Component, Node,
+    html_array::*,
 };
 
-#[derive(Debug, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Msg {
     TableMsg(table_view::Msg),
     DetailViewMsg(detail_view::Msg),

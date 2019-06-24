@@ -2,14 +2,15 @@ use crate::app::{self, column_view::ColumnView, row_view::RowView};
 use data_table::DataColumn;
 use diwata_intel::{DataRow, Field, Tab};
 use sauron::{
-    html::{attributes::*, events::*, units::*, *},
+    html::{attributes::*, events::*, units::*},
     Component, Node,
+    html_array::*,
 };
 
 use crate::app::{column_view, row_view};
 use diwata_intel::data_container::Page;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Msg {
     ColumnMsg(usize, column_view::Msg),
     RowMsg(usize, row_view::Msg),

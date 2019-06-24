@@ -1,6 +1,7 @@
 use sauron::{
-    html::{attributes::*, events::*, units::*, *},
+    html::{attributes::*, events::*, units::*},
     Component, Node,
+    html_array::{self,*},
 };
 
 use crate::{
@@ -29,7 +30,7 @@ pub struct WindowView {
     toolbar_view: ToolbarView,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Msg {
     MainTabMsg(tab_view::Msg),
     OneOneTabMsg(usize, tab_view::Msg),
@@ -138,7 +139,7 @@ impl WindowView {
                                             details(
                                                 [class("one_one_tab"), open(true)],
                                                 [
-                                                    sauron::html::summary([], [text(&tab.name)]),
+                                                    html_array::summary([], [text(&tab.name)]),
                                                     TabView::view(tab).map(move |tab_msg| {
                                                         Msg::OneOneTabMsg(index, tab_msg)
                                                     }),

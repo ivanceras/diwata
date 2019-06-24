@@ -1,6 +1,7 @@
 use crate::assets;
 use sauron::{
-    html::{attributes::*, units::*, *},
+    html::{attributes::*, units::*},
+    html_array::*,
     Attribute, Node,
 };
 

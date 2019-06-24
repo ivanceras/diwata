@@ -18,7 +18,7 @@ use serde::{
     Serialize,
 };
 
-#[derive(Debug, Serialize, Clone, Deserialize)]
+#[derive(Debug, PartialEq, Serialize, Clone, Deserialize)]
 pub struct Window {
     /// maps to main table name
     pub name: String,
@@ -136,14 +136,14 @@ fn has_repeating_tab(
     matched > 1
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub struct WindowName {
     pub name: String,
     pub table_name: TableName,
     pub is_view: bool,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub struct GroupedWindow {
     pub group: String,
     pub window_names: Vec<WindowName>,

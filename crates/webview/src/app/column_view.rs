@@ -1,11 +1,12 @@
 use crate::{assets, widgets};
 use data_table::DataColumn;
 use sauron::{
-    html::{attributes::*, events::*, units::*, *},
+    html::{attributes::*, events::*, units::*},
+    html_array::*,
     Cmd, Component, Node,
 };
 
-#[derive(Debug, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Msg {
     ChangeSearch(String),
 }

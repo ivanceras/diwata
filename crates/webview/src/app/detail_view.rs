@@ -1,11 +1,12 @@
 use crate::app::field_view::{self, FieldView};
 use sauron::{
-    html::{attributes::*, *},
+    html::{attributes::*},
     Cmd, Component, Node,
+    html_array::*,
 };
 use std::{cell::RefCell, rc::Rc};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Msg {
     FieldMsg(usize, field_view::Msg),
 }

@@ -5,12 +5,13 @@ use crate::app::{
 use data_table::DataColumn;
 use diwata_intel::{Dao, DataRow};
 use sauron::{
-    html::{attributes::*, events::*, units::*, *},
+    html::{attributes::*, events::*, units::*},
     Component, Node,
+    html_array::*,
 };
 use std::{cell::RefCell, rc::Rc};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Msg {
     FieldMsg(usize, field_view::Msg),
     DoubleClick,

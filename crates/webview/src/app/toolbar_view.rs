@@ -1,11 +1,12 @@
 use crate::widgets;
 use sauron::{
-    html::{attributes::*, events::*, units::*, *},
+    html::{attributes::*, events::*, units::*},
     Cmd, Component, Node,
+    html_array::*,
 };
 use sqlparser::{dialect::GenericSqlDialect, sqlparser::Parser};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Msg {
     ToggleShowQuery,
     ToggleShowRelatedTabs,

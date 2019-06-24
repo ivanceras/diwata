@@ -5,7 +5,8 @@ use diwata_intel::{
     RecordDetail,
 };
 use sauron::{
-    html::{attributes::*, events::*, *},
+    html::{attributes::*, events::*},
+    html_array::*,
     Browser, Component, Node,
 };
 
@@ -27,7 +28,7 @@ mod window_view;
 
 pub type Cmd = sauron::Cmd<App, Msg>;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 #[allow(clippy::large_enum_variant)]
 pub enum Msg {
     ActivateWindow(usize),
