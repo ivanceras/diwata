@@ -252,7 +252,7 @@ pub struct Lookup(pub Vec<(TableName, Rows)>);
 
 /// the displayable column name, serves as identifier to human vision
 /// this would be name, title, first_name - lastname
-#[derive(Debug,PartialEq,  Serialize, Deserialize, Clone)]
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub struct IdentifierDisplay {
     pub columns: Vec<ColumnName>,
     pub pk: Vec<ColumnName>,

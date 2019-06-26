@@ -5,9 +5,8 @@ use crate::app::{
 use data_table::DataColumn;
 use diwata_intel::{Dao, DataRow};
 use sauron::{
-    html::{attributes::*, events::*, units::*},
+    html::{attributes::*, events::*, units::*, *},
     Component, Node,
-    html_array::*,
 };
 use std::{cell::RefCell, rc::Rc};
 
@@ -68,7 +67,7 @@ impl RowView {
         F: Fn(&(usize, &Rc<RefCell<FieldView>>)) -> bool,
     {
         li(
-            [
+            vec![
                 class("row"),
                 // IMPORTANT: key is needed here to avoid sauron
                 // reusing dom elements of similar rows, this is needed
@@ -76,11 +75,11 @@ impl RowView {
                 // since events attached in a dom are not compared
                 // and is not replaced.
                 key(format!("row_{}", self.index)),
-                classes_flag([
+                classes_flag(vec![
                     ("frozen_row", self.is_frozen),
                     ("modified", self.is_changed()),
                 ]),
-                styles([("height", px(Self::row_height()))]),
+                styles(vec![("height", px(Self::row_height()))]),
                 onclick(|_| Msg::Click),
                 ondblclick(|_| Msg::DoubleClick),
             ],
@@ -92,7 +91,7 @@ impl RowView {
                     field
                         .borrow()
                         .view()
-                        .map(move |field_msg| Msg::FieldMsg(index, field_msg))
+                        .map_msg(move |field_msg| Msg::FieldMsg(index, field_msg))
                 })
                 .collect::<Vec<Node<Msg>>>(),
         )
@@ -100,20 +99,23 @@ impl RowView {
 
     pub fn view_immovable_frozen_columns(&self) -> Node<Msg> {
         li(
-            [class("row"), styles([("height", px(Self::row_height()))])],
+            vec![
+                class("row"),
+                styles(vec![("height", px(Self::row_height()))]),
+            ],
             self.fields
                 .iter()
                 .enumerate()
                 .filter(|(index, field)| field.borrow().is_immovable())
                 .map(|(index, field)| {
                     div(
-                        [class("immovable_frozen_column_row")],
-                        [
-                            input([r#type("checkbox"), class("selector")], []),
+                        vec![class("immovable_frozen_column_row")],
+                        vec![
+                            input(vec![r#type("checkbox"), class("selector")], vec![]),
                             field
                                 .borrow()
                                 .view()
-                                .map(move |field_msg| Msg::FieldMsg(index, field_msg)),
+                                .map_msg(move |field_msg| Msg::FieldMsg(index, field_msg)),
                         ],
                     )
                 })
@@ -124,7 +126,7 @@ impl RowView {
     /// frozen columns
     pub fn view_frozen_columns(&self) -> Node<Msg> {
         li(
-            [
+            vec![
                 class("row"),
                 // IMPORTANT: key is needed here to avoid sauron
                 // reusing dom elements of similar rows, this is needed
@@ -133,11 +135,11 @@ impl RowView {
                 // and is not replaced.
                 key(format!("row_{}", self.index)),
                 class("frozen_column"), // The only difference in view_with_filter
-                classes_flag([
+                classes_flag(vec![
                     ("frozen_row", self.is_frozen),
                     ("modified", self.is_changed()),
                 ]),
-                styles([("height", px(Self::row_height()))]),
+                styles(vec![("height", px(Self::row_height()))]),
                 onclick(|_| Msg::Click),
                 ondblclick(|_| Msg::DoubleClick),
             ],
@@ -151,7 +153,7 @@ impl RowView {
                     field
                         .borrow()
                         .view()
-                        .map(move |field_msg| Msg::FieldMsg(index, field_msg))
+                        .map_msg(move |field_msg| Msg::FieldMsg(index, field_msg))
                 })
                 .collect::<Vec<Node<Msg>>>(),
         )

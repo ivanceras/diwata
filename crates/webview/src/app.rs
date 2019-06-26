@@ -5,8 +5,7 @@ use diwata_intel::{
     RecordDetail,
 };
 use sauron::{
-    html::{attributes::*, events::*},
-    html_array::*,
+    html::{attributes::*, events::*, *},
     Browser, Component, Node,
 };
 
@@ -358,50 +357,53 @@ impl Component<Msg> for App {
     fn view(&self) -> Node<Msg> {
         main(
             // GRID
-            [class("app")],
-            [
+            vec![class("app")],
+            vec![
                 section(
-                    [class("logo_and_window_list")],
-                    [
-                        header([class("logo")], []),
-                        self.window_list_view.view().map(Msg::WindowListMsg),
+                    vec![class("logo_and_window_list")],
+                    vec![
+                        header(vec![class("logo")], vec![]),
+                        self.window_list_view.view().map_msg(Msg::WindowListMsg),
                     ],
                 ),
                 section(
-                    [class("window_links_and_window_views")],
-                    [
+                    vec![class("window_links_and_window_views")],
+                    vec![
                         header(
-                            [class("window_links_and_logout")],
-                            [
+                            vec![class("window_links_and_logout")],
+                            vec![
                                 nav(
-                                    [class("logout")],
-                                    [
-                                        button([], [text("logout")]),
-                                        button([], [text("Connect to database..")]),
+                                    vec![class("logout")],
+                                    vec![
+                                        button(vec![], vec![text("logout")]),
+                                        button(vec![], vec![text("Connect to database..")]),
                                     ],
                                 ),
                                 nav(
-                                    [class("window_links")],
+                                    vec![class("window_links")],
                                     self.window_views
                                         .iter()
                                         .enumerate()
                                         .map(|(index, window)| {
                                             a(
-                                                [
+                                                vec![
                                                     class("tab_links"),
-                                                    classes_flag([("active", window.is_visible)]),
+                                                    classes_flag(vec![(
+                                                        "active",
+                                                        window.is_visible,
+                                                    )]),
                                                     onclick(move |_| Msg::ActivateWindow(index)),
                                                 ],
-                                                [
+                                                vec![
                                                     text(&window.name),
                                                     button(
-                                                        [
+                                                        vec![
                                                             class("window_close_btn"),
                                                             onclick(move |_| {
                                                                 Msg::RemoveWindow(index)
                                                             }),
                                                         ],
-                                                        [text("x")],
+                                                        vec![text("x")],
                                                     ),
                                                 ],
                                             )
@@ -411,14 +413,14 @@ impl Component<Msg> for App {
                             ],
                         ),
                         section(
-                            [class("window_views")],
+                            vec![class("window_views")],
                             self.window_views
                                 .iter()
                                 .enumerate()
                                 .map(|(index, window)| {
-                                    window
-                                        .view()
-                                        .map(move |window_msg| Msg::WindowMsg(index, window_msg))
+                                    window.view().map_msg(move |window_msg| {
+                                        Msg::WindowMsg(index, window_msg)
+                                    })
                                 })
                                 .collect::<Vec<Node<Msg>>>(),
                         ),

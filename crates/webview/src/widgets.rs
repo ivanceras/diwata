@@ -1,7 +1,6 @@
 use crate::assets;
 use sauron::{
-    html::{attributes::*, units::*},
-    html_array::*,
+    html::{attributes::*, units::*, *},
     Attribute, Node,
 };
 
@@ -10,13 +9,13 @@ where
     MSG: Clone,
 {
     div(
-        [class("search_icon_and_column_filter")],
-        [
+        vec![class("search_icon_and_column_filter")],
+        vec![
             div(
-                [class("search_icon")],
-                [assets::svg_search_icon(18, 18, "#888")],
+                vec![class("search_icon")],
+                vec![assets::svg_search_icon(18, 18, "#888")],
             ),
-            input([r#type("text"), class("column_filter"), event], []),
+            input(vec![r#type("text"), class("column_filter"), event], vec![]),
         ],
     )
 }
@@ -26,22 +25,22 @@ where
     MSG: Clone,
 {
     div(
-        [class("quick_find_widget")],
-        [
+        vec![class("quick_find_widget")],
+        vec![
             div(
-                [class("quick_search_icon")],
-                [assets::svg_search_icon(h, h, "#888")],
+                vec![class("quick_search_icon")],
+                vec![assets::svg_search_icon(h, h, "#888")],
             ),
             input(
-                [
+                vec![
                     r#type("text"),
                     class("quick_search_input"),
-                    styles([("height", px(h))]),
+                    styles(vec![("height", px(h))]),
                     event,
                 ],
-                [],
+                vec![],
             ),
-            button([class("quick_find_btn")], [text("Quick find")]),
+            button(vec![class("quick_find_btn")], vec![text("Quick find")]),
         ],
     )
 }

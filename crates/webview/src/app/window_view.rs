@@ -1,7 +1,6 @@
 use sauron::{
-    html::{attributes::*, events::*, units::*},
+    html::{self, attributes::*, events::*, units::*, *},
     Component, Node,
-    html_array::{self,*},
 };
 
 use crate::{
@@ -93,41 +92,41 @@ impl WindowView {
 
     pub fn view(&self) -> Node<Msg> {
         main(
-            [
+            vec![
                 class("window"),
                 // to ensure no reusing of window view when replaced with
                 // another window, such as when the user changed the sql query and run it
                 key(format!("window_{}", self.name)),
-                styles_flag([("display", "none", !self.is_visible)]),
+                styles_flag(vec![("display", "none", !self.is_visible)]),
             ],
-            [
+            vec![
                 header(
-                    [class("toolbar_view")],
-                    [self.toolbar_view.view().map(Msg::ToolbarMsg)],
+                    vec![class("toolbar_view")],
+                    vec![self.toolbar_view.view().map_msg(Msg::ToolbarMsg)],
                 ),
                 section(
-                    [class("main_tab_and_one_one_tabs_and_detail_close_btn")],
-                    [
+                    vec![class("main_tab_and_one_one_tabs_and_detail_close_btn")],
+                    vec![
                         section(
-                            [
+                            vec![
                                 class("main_tab_and_one_one_tabs"),
-                                styles([
+                                styles(vec![
                                     ("width", px(self.calculate_detail_window_width())),
                                     ("height", px(self.calculate_detail_window_height())),
                                 ]),
                                 // show only the scrollbar when in detailed view
                                 // to prevent double scrolling when table_view is shown
-                                styles_flag([("overflow", "auto", self.in_detail_view())]),
+                                styles_flag(vec![("overflow", "auto", self.in_detail_view())]),
                             ],
-                            [
+                            vec![
                                 section(
-                                    [class("main_tab")],
-                                    [self.main_tab.view().map(Msg::MainTabMsg)],
+                                    vec![class("main_tab")],
+                                    vec![self.main_tab.view().map_msg(Msg::MainTabMsg)],
                                 ),
                                 section(
-                                    [
+                                    vec![
                                         class("one_one_tabs"),
-                                        styles_flag([
+                                        styles_flag(vec![
                                             ("display", "flex", self.in_detail_view()),
                                             ("display", "none", !self.in_detail_view()),
                                         ]),
@@ -137,10 +136,10 @@ impl WindowView {
                                         .enumerate()
                                         .map(|(index, tab)| {
                                             details(
-                                                [class("one_one_tab"), open(true)],
-                                                [
-                                                    html_array::summary([], [text(&tab.name)]),
-                                                    TabView::view(tab).map(move |tab_msg| {
+                                                vec![class("one_one_tab"), open(true)],
+                                                vec![
+                                                    html::summary(vec![], vec![text(&tab.name)]),
+                                                    TabView::view(tab).map_msg(move |tab_msg| {
                                                         Msg::OneOneTabMsg(index, tab_msg)
                                                     }),
                                                 ],
@@ -151,54 +150,54 @@ impl WindowView {
                             ],
                         ),
                         div(
-                            [
+                            vec![
                                 class("close_detail_btn"),
-                                styles_flag([("display", "none", !self.in_detail_view())]),
+                                styles_flag(vec![("display", "none", !self.in_detail_view())]),
                                 onclick(|_| Msg::CloseDetailView),
                             ],
-                            [assets::close_button(48, 48, "#888")],
+                            vec![assets::close_button(48, 48, "#888")],
                         ),
                     ],
                 ),
                 section(
-                    [
+                    vec![
                         class("detail_row_related_records"),
-                        styles_flag([("display", "none", !self.is_show_related_tabs())]),
+                        styles_flag(vec![("display", "none", !self.is_show_related_tabs())]),
                     ],
-                    [
+                    vec![
                         header(
-                            [class("has_many_and_indirect_tabs_link")],
-                            [
+                            vec![class("has_many_and_indirect_tabs_link")],
+                            vec![
                                 nav(
-                                    [class("has_many_tabs_link")],
+                                    vec![class("has_many_tabs_link")],
                                     self.has_many_tabs
                                         .iter()
                                         .enumerate()
                                         .map(|(index, tab)| {
                                             a(
-                                                [
+                                                vec![
                                                     class("tab_links"),
-                                                    classes_flag([("active", tab.is_visible)]),
+                                                    classes_flag(vec![("active", tab.is_visible)]),
                                                     onclick(move |_| Msg::ShowHasManyTab(index)),
                                                 ],
-                                                [text(&tab.name)],
+                                                vec![text(&tab.name)],
                                             )
                                         })
                                         .collect::<Vec<Node<Msg>>>(),
                                 ),
                                 nav(
-                                    [class("indirect_tabs_link")],
+                                    vec![class("indirect_tabs_link")],
                                     self.indirect_tabs
                                         .iter()
                                         .enumerate()
                                         .map(|(index, (_table_name, tab))| {
                                             a(
-                                                [
+                                                vec![
                                                     class("tab_links"),
-                                                    classes_flag([("active", tab.is_visible)]),
+                                                    classes_flag(vec![("active", tab.is_visible)]),
                                                     onclick(move |_| Msg::ShowIndirectTab(index)),
                                                 ],
-                                                [text(&tab.name)],
+                                                vec![text(&tab.name)],
                                             )
                                         })
                                         .collect::<Vec<Node<Msg>>>(),
@@ -206,28 +205,28 @@ impl WindowView {
                             ],
                         ),
                         section(
-                            [class("has_many_and_indirect_tabs")],
-                            [
+                            vec![class("has_many_and_indirect_tabs")],
+                            vec![
                                 section(
-                                    [class("has_many_tabs")],
+                                    vec![class("has_many_tabs")],
                                     self.has_many_tabs
                                         .iter()
                                         .enumerate()
                                         .map(|(index, tab)| {
-                                            TabView::view(tab).map(move |tab_msg| {
+                                            TabView::view(tab).map_msg(move |tab_msg| {
                                                 Msg::HasManyTabMsg(index, tab_msg)
                                             })
                                         })
                                         .collect::<Vec<Node<Msg>>>(),
                                 ),
                                 section(
-                                    [class("indirect_tabs")],
+                                    vec![class("indirect_tabs")],
                                     self.indirect_tabs
                                         .iter()
                                         .enumerate()
                                         .map(|(index, (table_name, tab))| {
                                             let table_name = table_name.clone();
-                                            TabView::view(tab).map(move |tab_msg| {
+                                            TabView::view(tab).map_msg(move |tab_msg| {
                                                 Msg::IndirectTabMsg(
                                                     index,
                                                     (table_name.clone(), tab_msg),

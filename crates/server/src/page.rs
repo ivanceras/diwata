@@ -29,8 +29,8 @@ use ron;
 use sauron::{
     html::{
         attributes::*,
+        *,
     },
-    html_array::*,
     html_extra,
     Node,
 };
@@ -47,58 +47,60 @@ fn get_index_html(context: &Context, table_name: Option<TableName>) -> String {
         vec![lang("en")],
         vec![
             head(
-                [],
-                [
-                    meta([charset("UTF-8")], []),
+                vec![],
+                vec![
+                    meta(vec![charset("UTF-8")], vec![]),
                     meta(
-                        [
+                        vec![
                             name("viewport"),
                             content("width=device-width, initial-scale=1"),
                         ],
-                        [],
+                        vec![],
                     ),
                     link(
-                        [
+                        vec![
                             rel("stylesheet"),
                             r#type("text/css"),
                             href("/webapp/style.css"),
                         ],
-                        [],
+                        vec![],
                     ),
                     link(
-                        [
+                        vec![
                             rel("icon"),
                             r#type("image/png"),
                             href("/webapp/img/favicon-48x48.png"),
                             sizes("48x48"),
                         ],
-                        [],
+                        vec![],
                     ),
                     html_extra::title(vec![], vec![text("Diwata")]),
                 ],
             ),
             body(
-                [style("margin: 0; padding: 0; width: 100%; height: 100%;")],
-                [
+                vec![style(
+                    "margin: 0; padding: 0; width: 100%; height: 100%;",
+                )],
+                vec![
                     div(
-                        [
+                        vec![
                             id("web-app"),
                             style(
                                 "width: 100%; height: 100%; text-align:center",
                             ),
                         ],
-                        [img(
-                            [
+                        vec![img(
+                            vec![
                                 src("/webapp/img/loading.svg"),
                                 style("margin: auto auto;"),
                             ],
-                            [],
+                            vec![],
                         )],
                     ),
-                    script([src("/webapp/pkg/webapp.js")], []),
+                    script(vec![src("/webapp/pkg/webapp.js")], vec![]),
                     script(
-                        [r#type("module")],
-                        [text(
+                        vec![r#type("module")],
+                        vec![text(
                             "const { initialize } = wasm_bindgen;
         async function run() {
             await wasm_bindgen('/webapp/pkg/webapp_bg.wasm');
@@ -108,8 +110,8 @@ fn get_index_html(context: &Context, table_name: Option<TableName>) -> String {
                         )],
                     ),
                     script(
-                        [],
-                        [text(format!(
+                        vec![],
+                        vec![text(format!(
                             "window.initial_state = String.raw`{}`",
                             app_data_serialized
                         ))],

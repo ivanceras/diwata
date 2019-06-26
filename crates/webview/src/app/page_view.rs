@@ -2,9 +2,8 @@ use crate::app::{self, column_view::ColumnView, row_view::RowView};
 use data_table::DataColumn;
 use diwata_intel::{DataRow, Field, Tab};
 use sauron::{
-    html::{attributes::*, events::*, units::*},
+    html::{attributes::*, events::*, units::*, *},
     Component, Node,
-    html_array::*,
 };
 
 use crate::app::{column_view, row_view};
@@ -163,7 +162,7 @@ impl PageView {
     pub fn view_frozen_columns(&self) -> Node<Msg> {
         // can move up and down
         ol(
-            [],
+            vec![],
             self.row_views
                 .iter()
                 .enumerate()
@@ -172,12 +171,12 @@ impl PageView {
                     // The checkbox selection and the rows of the frozen
                     // columns
                     div(
-                        [class("selector_and_frozen_column_row")],
-                        [
-                            input([r#type("checkbox"), class("selector")], []),
+                        vec![class("selector_and_frozen_column_row")],
+                        vec![
+                            input(vec![r#type("checkbox"), class("selector")], vec![]),
                             row_view
                                 .view_frozen_columns()
-                                .map(move |row_msg| Msg::RowMsg(index, row_msg)),
+                                .map_msg(move |row_msg| Msg::RowMsg(index, row_msg)),
                         ],
                     )
                 })
@@ -188,7 +187,7 @@ impl PageView {
     /// frozen_row and frozen_columns
     pub fn view_immovable_frozen_columns(&self) -> Node<Msg> {
         ol(
-            [],
+            vec![],
             self.row_views
                 .iter()
                 .enumerate()
@@ -196,7 +195,7 @@ impl PageView {
                 .map(|(index, row_view)| {
                     row_view
                         .view_immovable_frozen_columns()
-                        .map(move |row_msg| Msg::RowMsg(index, row_msg))
+                        .map_msg(move |row_msg| Msg::RowMsg(index, row_msg))
                 })
                 .collect::<Vec<Node<Msg>>>(),
         )
@@ -206,7 +205,7 @@ impl PageView {
     pub fn view_frozen_rows(&self) -> Node<Msg> {
         // can move left and right, but not up and down
         div(
-            [class("frozen_page")],
+            vec![class("frozen_page")],
             self.row_views
                 .iter()
                 .enumerate()
@@ -214,7 +213,7 @@ impl PageView {
                 .map(|(index, row_view)| {
                     row_view
                         .view_frozen()
-                        .map(move |row_msg| Msg::RowMsg(index, row_msg))
+                        .map_msg(move |row_msg| Msg::RowMsg(index, row_msg))
                 })
                 .collect::<Vec<Node<Msg>>>(),
         )
@@ -231,7 +230,7 @@ impl PageView {
     pub fn view(&self) -> Node<Msg> {
         if self.is_visible {
             ol(
-                [class("page"), key(format!("page_{}", self.current_page))],
+                vec![class("page"), key(format!("page_{}", self.current_page))],
                 self.row_views
                     .iter()
                     .enumerate()
@@ -239,17 +238,20 @@ impl PageView {
                     .map(|(index, row_view)| {
                         row_view
                             .view()
-                            .map(move |row_msg| Msg::RowMsg(index, row_msg))
+                            .map_msg(move |row_msg| Msg::RowMsg(index, row_msg))
                     })
                     .collect::<Vec<Node<Msg>>>(),
             )
         } else {
             div(
-                [
+                vec![
                     class("page_holder"),
-                    styles([("width", "100%".to_string()), ("height", px(self.height()))]),
+                    styles(vec![
+                        ("width", "100%".to_string()),
+                        ("height", px(self.height())),
+                    ]),
                 ],
-                [],
+                vec![],
             )
         }
     }

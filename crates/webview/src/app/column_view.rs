@@ -1,8 +1,7 @@
 use crate::{assets, widgets};
 use data_table::DataColumn;
 use sauron::{
-    html::{attributes::*, events::*, units::*},
-    html_array::*,
+    html::{attributes::*, events::*, units::*, *},
     Cmd, Component, Node,
 };
 
@@ -39,21 +38,21 @@ impl Component<Msg> for ColumnView {
 
     fn view(&self) -> Node<Msg> {
         div(
-            [class("column_name_and_control")],
-            [
+            vec![class("column_name_and_control")],
+            vec![
                 div(
-                    [
+                    vec![
                         class("column_name_and_sort"),
-                        styles([("width", px(self.width)), ("height", px(self.height))]),
+                        styles(vec![("width", px(self.width)), ("height", px(self.height))]),
                     ],
-                    [
-                        div([class("column_name")], [text(&self.column.name)]),
-                        div([], [assets::sort_btn_asc(18, 18, "#888")]),
+                    vec![
+                        div(vec![class("column_name")], vec![text(&self.column.name)]),
+                        div(vec![], vec![assets::sort_btn_asc(18, 18, "#888")]),
                     ],
                 ),
                 div(
-                    [class("column_name_search_widget_container")],
-                    [widgets::search_widget(oninput(|input| {
+                    vec![class("column_name_search_widget_container")],
+                    vec![widgets::search_widget(oninput(|input| {
                         Msg::ChangeSearch(input.value)
                     }))],
                 ),

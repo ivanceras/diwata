@@ -1,8 +1,7 @@
 use crate::widgets;
 use sauron::{
-    html::{attributes::*, events::*, units::*},
+    html::{attributes::*, events::*, units::*, *},
     Cmd, Component, Node,
-    html_array::*,
 };
 use sqlparser::{dialect::GenericSqlDialect, sqlparser::Parser};
 
@@ -142,86 +141,82 @@ impl Component<Msg> for ToolbarView {
 
     fn view(&self) -> Node<Msg> {
         section(
-            [class("toolbar_and_query_view")],
-            [
+            vec![class("toolbar_and_query_view")],
+            vec![
                 header(
-                    [class("toolbar")],
-                    [
+                    vec![class("toolbar")],
+                    vec![
                         widgets::quick_find(35, oninput(|input| Msg::ChangeQuickFind(input.value))),
-                        button([], [text("Create new record")]),
-                        button([], [text("Insert new record")]),
-                        button([], [text("Save")]),
-                        button([], [text("Cancel")]),
-                        button([], [text("Delete")]),
-                        button([], [text("Refresh")]),
-                        button([], [text("Clear filter")]),
-                        button([], [text("Filter more..")]),
-                        button([], [text("Sort..")]),
-                        button([], [text("Export")]),
+                        button(vec![], vec![text("Create new record")]),
+                        button(vec![], vec![text("Insert new record")]),
+                        button(vec![], vec![text("Save")]),
+                        button(vec![], vec![text("Cancel")]),
+                        button(vec![], vec![text("Delete")]),
+                        button(vec![], vec![text("Refresh")]),
+                        button(vec![], vec![text("Clear filter")]),
+                        button(vec![], vec![text("Filter more..")]),
+                        button(vec![], vec![text("Sort..")]),
+                        button(vec![], vec![text("Export")]),
                         button(
-                            [onclick(|_| Msg::ToggleShowQuery)],
-                            [
-                                input([r#type("checkbox")], []).attributes(attrs_flag([(
-                                    "checked",
-                                    "checked",
-                                    self.show_query,
-                                )])),
+                            vec![onclick(|_| Msg::ToggleShowQuery)],
+                            vec![
+                                input(vec![r#type("checkbox")], vec![]).attributes(attrs_flag(
+                                    vec![("checked", "checked", self.show_query)],
+                                )),
                                 text("Show query"),
                             ],
                         ),
                         button(
-                            [onclick(|_| Msg::ToggleShowRelatedTabs)],
-                            [
-                                input([r#type("checkbox")], []).attributes(attrs_flag([(
-                                    "checked",
-                                    "checked",
-                                    self.show_related_tabs,
-                                )])),
+                            vec![onclick(|_| Msg::ToggleShowRelatedTabs)],
+                            vec![
+                                input(vec![r#type("checkbox")], vec![]).attributes(attrs_flag(
+                                    vec![("checked", "checked", self.show_related_tabs)],
+                                )),
                                 text("Show related records"),
                             ],
                         ),
                     ],
                 ),
                 section(
-                    [
+                    vec![
                         class("query_input"),
-                        styles_flag([("display", "none", !self.show_query)]),
+                        styles_flag(vec![("display", "none", !self.show_query)]),
                     ],
-                    [
+                    vec![
                         textarea(
-                            [
+                            vec![
                                 class("sql_input"),
                                 onchange(|input| Msg::QueryChanged(input.value)),
-                                styles([
+                                styles(vec![
                                     ("width", px(self.calculate_sql_input_width())),
                                     ("height", px(self.calculate_sql_input_height())),
                                 ]),
                                 value(&self.sql_query),
                                 placeholder("SELECT * "),
                             ],
-                            [],
+                            vec![],
                         ),
                         button(
-                            [
+                            vec![
                                 class("run_query"),
                                 onclick(|_| Msg::RunQuery),
-                                styles([
+                                styles(vec![
                                     ("width", px(self.run_query_button_width())),
                                     ("height", px(self.run_query_button_height())),
                                 ]),
                             ],
-                            [text("Run query")],
+                            vec![text("Run query")],
                         ),
                         textarea(
-                            [
+                            vec![
                                 class("parsed_sql"),
                                 readonly(true),
-                                styles([
+                                styles(vec![
                                     ("width", px(self.calculate_parsed_sql_width())),
                                     ("height", px(self.calculate_parsed_sql_height())),
                                 ]),
                             ],
-                            [text(&self.formatted_query)],
+                            vec![text(&self.formatted_query)],
                         ),
                     ],
                 ),

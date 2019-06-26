@@ -10,9 +10,8 @@ use diwata_intel::{
 
 use diwata_intel::{Tab, TableName};
 use sauron::{
-    html::{attributes::*},
+    html::{attributes::*, *},
     Component, Node,
-    html_array::*,
 };
 
 #[derive(Debug, PartialEq, Clone)]
@@ -132,32 +131,32 @@ impl TabView {
     }
     pub fn view(&self) -> Node<Msg> {
         section(
-            [
+            vec![
                 class("tab_view"),
                 // to ensure no reusing of tab view when replaced with
                 // another tab
                 key(format!("tab_{}", self.name)),
-                classes_flag([("in_detail_view", self.in_detail_view())]),
-                styles_flag([("display", "none", !self.is_visible)]),
+                classes_flag(vec![("in_detail_view", self.in_detail_view())]),
+                styles_flag(vec![("display", "none", !self.is_visible)]),
             ],
-            [
+            vec![
                 section(
-                    [
+                    vec![
                         class("detail_view_container"),
-                        //classes_flag([("animate_detail_view", self.detail_view.is_visible)]),
+                        //classes_flag(vec![("animate_detail_view", self.detail_view.is_visible)]),
                         // This is set here and extracted in attr(margin_top px) in css
                         // expand_detail_view animation
                         //attr("margin_top", self.clicked_row_top()),
-                        //styles([("margin-top", px(self.clicked_row_top()))]),
+                        //styles(vec![("margin-top", px(self.clicked_row_top()))]),
                     ],
-                    [self.detail_view.view().map(Msg::DetailViewMsg)],
+                    vec![self.detail_view.view().map_msg(Msg::DetailViewMsg)],
                 ),
                 section(
-                    [
+                    vec![
                         class("table_view"),
-                        styles_flag([("display", "none", self.detail_view.is_visible)]),
+                        styles_flag(vec![("display", "none", self.detail_view.is_visible)]),
                     ],
-                    [self.table_view.view().map(Msg::TableMsg)],
+                    vec![self.table_view.view().map_msg(Msg::TableMsg)],
                 ),
             ],
         )

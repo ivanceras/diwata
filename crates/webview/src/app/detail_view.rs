@@ -1,8 +1,7 @@
 use crate::app::field_view::{self, FieldView};
 use sauron::{
-    html::{attributes::*},
+    html::{attributes::*, *},
     Cmd, Component, Node,
-    html_array::*,
 };
 use std::{cell::RefCell, rc::Rc};
 
@@ -52,12 +51,12 @@ impl Component<Msg> for DetailView {
 
     fn view(&self) -> Node<Msg> {
         main(
-            [
+            vec![
                 class("detail_view"),
-                styles_flag([("display", "none", !self.is_visible)]),
+                styles_flag(vec![("display", "none", !self.is_visible)]),
             ],
-            [section(
-                [class("detail_view_grid")],
+            vec![section(
+                vec![class("detail_view_grid")],
                 self.fields
                     .iter()
                     .enumerate()
@@ -65,7 +64,7 @@ impl Component<Msg> for DetailView {
                         field
                             .borrow()
                             .view_in_detail()
-                            .map(move |field_msg| Msg::FieldMsg(index, field_msg))
+                            .map_msg(move |field_msg| Msg::FieldMsg(index, field_msg))
                     })
                     .collect::<Vec<Node<Msg>>>(),
             )],

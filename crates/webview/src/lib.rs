@@ -7,7 +7,6 @@ use std::rc::Rc;
 
 mod app;
 mod assets;
-mod data;
 mod rest_api;
 mod widgets;
 

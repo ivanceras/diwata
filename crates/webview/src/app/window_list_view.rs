@@ -1,9 +1,8 @@
 use crate::{assets, widgets};
 use diwata_intel::{window::GroupedWindow, TableName};
 use sauron::{
-    html::{attributes::*, events::*, units::*},
+    html::{attributes::*, events::*, units::*, *},
     Cmd, Component, Node,
-    html_array::*,
 };
 
 #[derive(Debug, PartialEq, Clone)]
@@ -60,18 +59,18 @@ impl Component<Msg> for WindowListView {
 
     fn view(&self) -> Node<Msg> {
         div(
-            [],
-            [
+            vec![],
+            vec![
                 section(
-                    [class("window_list_search")],
-                    [widgets::search_widget(oninput(|input| {
+                    vec![class("window_list_search")],
+                    vec![widgets::search_widget(oninput(|input| {
                         Msg::ChangeSearch(input.value)
                     }))],
                 ),
                 section(
-                    [
+                    vec![
                         class("window_list"),
-                        styles([
+                        styles(vec![
                             ("height", px(self.calculate_window_list_height())),
                             ("width", px(self.calculate_window_list_width())),
                         ]),
@@ -80,11 +79,14 @@ impl Component<Msg> for WindowListView {
                         .iter()
                         .map(|group| {
                             ul(
-                                [],
-                                [
-                                    li([class("window_list_group_name")], [text(&group.group)]),
+                                vec![],
+                                vec![
+                                    li(
+                                        vec![class("window_list_group_name")],
+                                        vec![text(&group.group)],
+                                    ),
                                     ul(
-                                        [],
+                                        vec![],
                                         group
                                             .window_names
                                             .iter()
@@ -92,9 +94,9 @@ impl Component<Msg> for WindowListView {
                                                 let table_name: TableName =
                                                     win_name.table_name.clone();
                                                 li(
-                                                    [key(table_name.complete_name())],
-                                                    [a(
-                                                        [
+                                                    vec![key(table_name.complete_name())],
+                                                    vec![a(
+                                                        vec![
                                                             href(format!(
                                                                 "/{}",
                                                                 &table_name.complete_name()
@@ -106,10 +108,10 @@ impl Component<Msg> for WindowListView {
                                                                 )
                                                             }),
                                                         ],
-                                                        [
+                                                        vec![
                                                             span(
-                                                                [class("table_icon")],
-                                                                [assets::svg_table_icon()],
+                                                                vec![class("table_icon")],
+                                                                vec![assets::svg_table_icon()],
                                                             ),
                                                             text(&win_name.name),
                                                         ],

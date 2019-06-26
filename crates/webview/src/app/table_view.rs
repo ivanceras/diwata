@@ -8,8 +8,7 @@ use crate::app::{
 use data_table::DataColumn;
 use diwata_intel::{data_container::Page, Dao, DataRow, Field, Tab, TableName};
 use sauron::{
-    html::{attributes::*, events::*, units::*},
-    html_array::*,
+    html::{attributes::*, events::*, units::*, *},
     Component, Node,
 };
 use std::{cell::RefCell, rc::Rc};
@@ -218,9 +217,9 @@ impl TableView {
     fn view_frozen_columns(&self) -> Node<Msg> {
         // can move up and down
         ol(
-            [
+            vec![
                 class("frozen_columns"),
-                styles([("margin-top", px(-self.scroll_top))]),
+                styles(vec![("margin-top", px(-self.scroll_top))]),
             ],
             self.page_views
                 .iter()
@@ -228,7 +227,7 @@ impl TableView {
                 .map(|(index, page_view)| {
                     page_view
                         .view_frozen_columns()
-                        .map(move |page_msg| Msg::PageMsg(index, page_msg))
+                        .map_msg(move |page_msg| Msg::PageMsg(index, page_msg))
                 })
                 .collect::<Vec<Node<Msg>>>(),
         )
@@ -240,7 +239,7 @@ impl TableView {
         // absolutely immovable frozen column and row
         // can not move in any direction
         header(
-            [class("frozen_column_names")],
+            vec![class("frozen_column_names")],
             self.column_views
                 .iter()
                 .enumerate()
@@ -248,7 +247,7 @@ impl TableView {
                 .map(|(index, column)| {
                     column
                         .view()
-                        .map(move |column_msg| Msg::ColumnMsg(index, column_msg))
+                        .map_msg(move |column_msg| Msg::ColumnMsg(index, column_msg))
                 })
                 .collect::<Vec<Node<Msg>>>(),
         )
@@ -258,7 +257,7 @@ impl TableView {
     /// can move left and right and always follows the alignment of the column of the normal rows
     fn view_normal_column_names(&self) -> Node<Msg> {
         header(
-            [class("normal_column_names")],
+            vec![class("normal_column_names")],
             self.column_views
                 .iter()
                 .enumerate()
@@ -266,7 +265,7 @@ impl TableView {
                 .map(|(index, column)| {
                     column
                         .view()
-                        .map(move |column_msg| Msg::ColumnMsg(index, column_msg))
+                        .map_msg(move |column_msg| Msg::ColumnMsg(index, column_msg))
                 })
                 .collect::<Vec<Node<Msg>>>(),
         )
@@ -277,14 +276,14 @@ impl TableView {
     /// These are records that has its rows and columns both frozen
     fn view_immovable_frozen_columns(&self) -> Node<Msg> {
         ol(
-            [class("immovable_frozen_columns")],
+            vec![class("immovable_frozen_columns")],
             self.page_views
                 .iter()
                 .enumerate()
                 .map(|(index, page_view)| {
                     page_view
                         .view_immovable_frozen_columns()
-                        .map(move |page_msg| Msg::PageMsg(index, page_msg))
+                        .map_msg(move |page_msg| Msg::PageMsg(index, page_msg))
                 })
                 .collect::<Vec<Node<Msg>>>(),
         )
@@ -294,14 +293,14 @@ impl TableView {
     fn view_frozen_rows(&self) -> Node<Msg> {
         // can move left and right, but not up and down
         ol(
-            [class("frozen_rows")],
+            vec![class("frozen_rows")],
             self.page_views
                 .iter()
                 .enumerate()
                 .map(|(index, page_view)| {
                     page_view
                         .view_frozen_rows()
-                        .map(move |page_msg| Msg::PageMsg(index, page_msg))
+                        .map_msg(move |page_msg| Msg::PageMsg(index, page_msg))
                 })
                 .collect::<Vec<Node<Msg>>>(),
         )
@@ -311,9 +310,9 @@ impl TableView {
     fn view_normal_rows(&self) -> Node<Msg> {
         // can move: left, right, up, down
         ol(
-            [
+            vec![
                 class("normal_rows"),
-                styles([
+                styles(vec![
                     ("width", px(self.calculate_normal_rows_width())),
                     ("height", px(self.calculate_normal_rows_height())),
                 ]),
@@ -325,7 +324,7 @@ impl TableView {
                 .map(|(index, page_view)| {
                     page_view
                         .view()
-                        .map(move |page_msg| Msg::PageMsg(index, page_msg))
+                        .map_msg(move |page_msg| Msg::PageMsg(index, page_msg))
                 })
                 .collect::<Vec<Node<Msg>>>(),
         )
@@ -376,27 +375,34 @@ impl TableView {
     /// A grid of 2x2  containing 4 major parts of the table
     pub fn view(&self) -> Node<Msg> {
         main(
-            [
+            vec![
                 class("table"),
                 // to ensure no reusing of table view when replaced with
                 // another table
                 key(format!("table_{}", self.table_name.complete_name())),
             ],
-            [
+            vec![
                 // TOP-LEFT: Content 1
                 section(
-                    [class(
+                    vec![class(
                         "spacer_and_frozen_column_names_and_immovable_frozen_columns",
                     )],
-                    [
+                    vec![
                         div(
-                            [class("spacer_and_frozen_column_names")],
-                            [
+                            vec![class("spacer_and_frozen_column_names")],
+                            vec![
                                 div(
-                                    [class("spacer")],
-                                    [
-                                        div([class("row_count_stat")], [text(format!("{}/{}", self.row_count(), self.total_rows))]),
-                                        input([r#type("checkbox")], []),
+                                    vec![class("spacer")],
+                                    vec![
+                                        div(
+                                            vec![class("row_count_stat")],
+                                            vec![text(format!(
+                                                "{}/{}",
+                                                self.row_count(),
+                                                self.total_rows
+                                            ))],
+                                        ),
+                                        input(vec![r#type("checkbox")], vec![]),
                                     ],
                                 ),
                                 self.view_frozen_column_names(),
@@ -407,16 +413,16 @@ impl TableView {
                 ),
                 // TOP-RIGHT: Content 2
                 section(
-                    [
+                    vec![
                         class("normal_column_names_and_frozen_rows_container"),
-                        styles([("width", px(self.calculate_normal_rows_width()))]),
+                        styles(vec![("width", px(self.calculate_normal_rows_width()))]),
                     ],
-                    [section(
-                        [
+                    vec![section(
+                        vec![
                             class("normal_column_names_and_frozen_rows"),
-                            styles([("margin-left", px(-self.scroll_left))]),
+                            styles(vec![("margin-left", px(-self.scroll_left))]),
                         ],
-                        [
+                        vec![
                             // can move left and right
                             self.view_normal_column_names(),
                             self.view_frozen_rows(),
@@ -426,11 +432,11 @@ impl TableView {
                 // BOTTOM-LEFT: Content 3
                 // needed to overflow hide the frozen columns when scrolled up and down
                 section(
-                    [
+                    vec![
                         class("frozen_columns_container"),
-                        styles([("height", px(self.calculate_normal_rows_height()))]),
+                        styles(vec![("height", px(self.calculate_normal_rows_height()))]),
                     ],
-                    [self.view_frozen_columns()],
+                    vec![self.view_frozen_columns()],
                 ),
                 // BOTTOM-RIGHT: Content 4
                 self.view_normal_rows(),

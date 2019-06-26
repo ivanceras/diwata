@@ -10,7 +10,7 @@ use serde::{
     Serialize,
 };
 
-#[derive(Debug,PartialEq,  Serialize, Deserialize, Clone)]
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub struct Field {
     /// name of the field, derive from column name
     pub name: String,
@@ -23,7 +23,7 @@ pub struct Field {
     pub column_detail: ColumnDetail,
 }
 
-#[derive(Debug,PartialEq,  Serialize, Deserialize, Clone)]
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub enum ColumnDetail {
     Simple(ColumnName, SqlType),
     Compound(Vec<(ColumnName, SqlType)>),

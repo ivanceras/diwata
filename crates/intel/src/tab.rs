@@ -19,7 +19,7 @@ use serde::{
     Serialize,
 };
 
-#[derive(Debug,PartialEq,  Serialize, Clone, Deserialize)]
+#[derive(Debug, PartialEq, Serialize, Clone, Deserialize)]
 pub struct Tab {
     pub name: String,
     pub description: Option<String>,
@@ -34,7 +34,7 @@ pub struct Tab {
 /// an indirect connection to this record
 /// must have an option to remove/show from the list
 /// async loaded?
-#[derive(Debug,PartialEq,  Serialize, Deserialize, Clone)]
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub struct IndirectTab {
     pub linker: TableName,
     pub tab: Tab,
