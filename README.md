@@ -10,6 +10,7 @@ Diwata is a database interface for PostgreSQL with the goal of being usable, use
 ## Demo
 [sakila database in heroku](http://diwata.herokuapp.com/)
 
+![](https://raw.githubusercontent.com/ivanceras/ivanceras.github.io/master/diwata/diwata-sauron2.gif)
 
 ## Quick local demo setup using sqlite sakila.db
 
