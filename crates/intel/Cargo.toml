@@ -14,8 +14,8 @@ lazy_static = "1.0.0"
 uuid = "0.5.1"
 bigdecimal = "0.0.14"
 url = "1.5"
-rustorm_dao = "0.3"
-rustorm =  {version = "0.13", optional = true}
+rustorm_dao = "0.4"
+rustorm =  {version = "0.14", optional = true}
 sqlparser = { path = "../sqlparser-rs" }
 either = { version = "1.5", features = ["serde"] }
 sauron = {version = "0.7.1", features = ["measure"] }
