@@ -573,7 +573,6 @@ fn insert_rows_to_table(
 fn are_all_nil(column: &str, rows: &Rows) -> bool {
     for dao in rows.iter() {
         if let Some(Value::Nil) = dao.get_value(column) {
-            ;
         } else {
             return false;
         }
@@ -770,7 +769,6 @@ fn upsert_one_one_record_to_table(
 
     for (i, one_one_pk) in one_one_primary_columns.iter().enumerate() {
         if i == 0 {
-            ;
         } else {
             sql += ", ";
         }
