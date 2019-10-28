@@ -7,5 +7,5 @@ edition = "2018"
 [dependencies]
 sqlparser = { path = "../sqlparser-rs" }
 csv = "1.0.2"
-rustorm = "0.14.0"
+rustorm = "0.15.2"
 diwata_intel = "0.1.2"
