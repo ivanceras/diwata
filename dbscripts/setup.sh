@@ -1,4 +1,11 @@
-psql -U postgres -h localhost -c 'DROP DATABASE sakila;'
+#!/bin/bash
+
+
+echo 'localhost:5432:sakila:postgres:p0stgr3s' >> $HOME/.pgpass
+echo 'localhost:5432:postgres:postgres:p0stgr3s' >> $HOME/.pgpass
+chmod 0600 $HOME/.pgpass
+
+psql -U postgres -h localhost -c 'DROP DATABASE IF EXISTS sakila;'
 psql -U postgres -h localhost -c 'CREATE DATABASE sakila;'
 psql -U postgres -h localhost -d sakila -f ./sakila/postgres-sakila-db/postgres-sakila-schema.sql
 psql -U postgres -h localhost -d sakila -f ./sakila/postgres-sakila-db/postgres-sakila-data.sql
