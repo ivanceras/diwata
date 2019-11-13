@@ -28,9 +28,9 @@ exclude = [
 
 
 [replace]
-"rustorm_dao:0.4.0" = { path = "crates/rustorm/crates/dao" }
-"rustorm_codegen:0.3.0" = { path = "crates/rustorm/crates/codegen" }
-"rustorm:0.14.0" = { path = "crates/rustorm" }
+"rustorm_dao:0.4.1" = { path = "crates/rustorm/crates/dao" }
+"rustorm_codegen:0.3.1" = { path = "crates/rustorm/crates/codegen" }
+"rustorm:0.15.2" = { path = "crates/rustorm" }
 "diwata_intel:0.1.2" = { path = "crates/intel" }
 "diwata_server:0.1.2" = { path = "crates/server" }
 
