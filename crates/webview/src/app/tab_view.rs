@@ -53,9 +53,9 @@ impl TabView {
     }
 
     /// this is a one one tab and should have only 1 record
-    pub fn set_one_one_record(&mut self, data_row: &Option<DataRow>, total_rows: usize) {
+    pub fn set_one_one_record(&mut self, data_row: &Option<DataRow>, _total_rows: usize) {
         //assert!(self.is_one_one);
-        if let Some(data_row) = data_row {
+        if let Some(_data_row) = data_row {
             // there should only be 1 record here
         }
     }

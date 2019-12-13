@@ -3,10 +3,10 @@ use crate::app::{
     column_view::{self, ColumnView},
     field_view::FieldView,
     page_view::{self, PageView},
-    row_view::{self, RowView},
+    row_view::RowView,
 };
 use data_table::DataColumn;
-use diwata_intel::{data_container::Page, Dao, DataRow, Field, Tab, TableName};
+use diwata_intel::{data_container::Page, Dao, Field, Tab, TableName};
 use sauron::{
     html::{attributes::*, events::*, units::*, *},
     Component, Node,
@@ -208,6 +208,7 @@ impl TableView {
         self.scrollbar_to_bottom() <= scroll_bottom_allowance
     }
 
+    #[allow(unused)]
     fn is_scrolled_bottom(&self) -> bool {
         self.scrollbar_to_bottom() <= 0
     }

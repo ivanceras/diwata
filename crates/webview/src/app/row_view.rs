@@ -106,7 +106,7 @@ impl RowView {
             self.fields
                 .iter()
                 .enumerate()
-                .filter(|(index, field)| field.borrow().is_immovable())
+                .filter(|(_index, field)| field.borrow().is_immovable())
                 .map(|(index, field)| {
                     div(
                         vec![class("immovable_frozen_column_row")],
@@ -146,7 +146,7 @@ impl RowView {
             self.fields
                 .iter()
                 .enumerate()
-                .filter(|(index, field)| {
+                .filter(|(_index, field)| {
                     field.borrow().is_frozen_column && !field.borrow().is_frozen_row
                 })
                 .map(|(index, field)| {
@@ -184,6 +184,7 @@ impl RowView {
         })
     }
 
+    #[allow(unused)]
     pub fn update(&mut self, msg: Msg) -> app::Cmd {
         match msg {
             Msg::FieldMsg(field_index, field_msg) => {
@@ -196,12 +197,12 @@ impl RowView {
     }
 
     pub fn view_frozen(&self) -> Node<Msg> {
-        self.view_with_filter(|(index, field)| {
+        self.view_with_filter(|(_index, field)| {
             field.borrow().is_frozen_row && !field.borrow().is_frozen_column
         })
     }
 
     pub fn view(&self) -> Node<Msg> {
-        self.view_with_filter(|(index, field)| field.borrow().is_normal_field())
+        self.view_with_filter(|(_index, field)| field.borrow().is_normal_field())
     }
 }

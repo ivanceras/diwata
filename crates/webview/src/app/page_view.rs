@@ -1,13 +1,10 @@
-use crate::app::{self, column_view::ColumnView, row_view::RowView};
+use crate::app::{self, column_view, row_view, row_view::RowView};
 use data_table::DataColumn;
-use diwata_intel::{DataRow, Field, Tab};
+use diwata_intel::{data_container::Page, DataRow, Field};
 use sauron::{
-    html::{attributes::*, events::*, units::*, *},
-    Component, Node,
+    html::{attributes::*, units::*, *},
+    Node,
 };
-
-use crate::app::{column_view, row_view};
-use diwata_intel::data_container::Page;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Msg {
@@ -22,8 +19,10 @@ pub struct PageView {
     frozen_rows: Vec<usize>,
     frozen_columns: Vec<usize>,
     pub scroll_top: i32,
+    #[allow(unused)]
     scroll_left: i32,
     allocated_width: i32,
+    #[allow(unused)]
     allocated_height: i32,
     /// the total number of rows count in the table
     total_rows: usize,
@@ -64,6 +63,7 @@ impl PageView {
         self.row_views.len()
     }
 
+    #[allow(unused)]
     fn fields_to_data_columns(fields: &[Field]) -> Vec<DataColumn> {
         fields.iter().map(Self::field_to_data_column).collect()
     }
@@ -122,10 +122,12 @@ impl PageView {
             })
     }
 
+    #[allow(unused)]
     fn frozen_row_height(&self) -> i32 {
         self.frozen_rows.len() as i32 * RowView::row_height() //use the actual row height
     }
 
+    #[allow(unused)]
     fn frozen_column_width(&self) -> i32 {
         self.frozen_columns.len() as i32 * 200 //use the actual column sizes for each frozen columns
     }
@@ -144,6 +146,7 @@ impl PageView {
     }
 
     /// This is the allocated height set by the parent tab
+    #[allow(unused)]
     pub fn set_allocated_size(&mut self, (width, height): (i32, i32)) {
         self.allocated_width = width;
         self.allocated_height = height;
@@ -166,7 +169,7 @@ impl PageView {
             self.row_views
                 .iter()
                 .enumerate()
-                .filter(|(index, row_view)| !row_view.is_frozen)
+                .filter(|(_index, row_view)| !row_view.is_frozen)
                 .map(|(index, row_view)| {
                     // The checkbox selection and the rows of the frozen
                     // columns
@@ -191,7 +194,7 @@ impl PageView {
             self.row_views
                 .iter()
                 .enumerate()
-                .filter(|(index, row_view)| row_view.is_frozen)
+                .filter(|(_index, row_view)| row_view.is_frozen)
                 .map(|(index, row_view)| {
                     row_view
                         .view_immovable_frozen_columns()
@@ -209,7 +212,7 @@ impl PageView {
             self.row_views
                 .iter()
                 .enumerate()
-                .filter(|(index, row_view)| row_view.is_frozen)
+                .filter(|(_index, row_view)| row_view.is_frozen)
                 .map(|(index, row_view)| {
                     row_view
                         .view_frozen()
@@ -221,8 +224,8 @@ impl PageView {
 
     pub fn update(&mut self, msg: Msg) -> app::Cmd {
         match msg {
-            Msg::RowMsg(row_index, row_msg) => app::Cmd::none(),
-            Msg::ColumnMsg(column_index, column_msg) => app::Cmd::none(),
+            Msg::RowMsg(_row_index, _row_msg) => app::Cmd::none(),
+            Msg::ColumnMsg(_column_index, _column_msg) => app::Cmd::none(),
         }
     }
 
@@ -234,7 +237,7 @@ impl PageView {
                 self.row_views
                     .iter()
                     .enumerate()
-                    .filter(|(index, row_view)| !row_view.is_frozen)
+                    .filter(|(_index, row_view)| !row_view.is_frozen)
                     .map(|(index, row_view)| {
                         row_view
                             .view()
