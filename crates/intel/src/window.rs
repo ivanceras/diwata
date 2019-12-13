@@ -197,5 +197,4 @@ mod tests {
         //assert_eq!(windows.len(), 12); // 12 when not including owned windows
         assert_eq!(windows.len(), 26); // 26 when owned tables can be windows too
     }
-
 }

@@ -102,7 +102,7 @@ impl Component<Msg> for WindowListView {
                                                                 &table_name.complete_name()
                                                             )),
                                                             class("window_list_link"),
-                                                            onclick(move |_| {
+                                                            onclick_with(true, true, move |_| {
                                                                 Msg::ClickedWindow(
                                                                     table_name.clone(),
                                                                 )
