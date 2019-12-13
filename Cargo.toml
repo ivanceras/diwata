@@ -14,7 +14,6 @@ with-sqlite = ["diwata_server/with-sqlite"]
 members = [
     "crates/intel",
     "crates/server",
-    "crates/text-client",
     "crates/data_table",
     "crates/webview",
     "crates/webapp",
@@ -36,6 +35,6 @@ exclude = [
 
 #"sauron:0.7.1" = { path = "../sauron", features = ["measure"] }
 #"sauron_vdom:0.7.1"= { path = "../sauron/crates/sauron_vdom" }
-"sauron:0.7.1" = { git = "https://github.com/ivanceras/sauron.git" }
-"sauron_vdom:0.7.1" = { git = "https://github.com/ivanceras/sauron.git" }
+#"sauron:0.7.1" = { git = "https://github.com/ivanceras/sauron.git" }
+#"sauron_vdom:0.7.1" = { git = "https://github.com/ivanceras/sauron.git" }
 

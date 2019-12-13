@@ -71,7 +71,7 @@ impl FieldView {
                 vec![text(v.to_string())],
             ),
             _ => {
-                sauron::log!("todo primary: {:?}", self.value);
+                trace!("todo primary: {:?}", self.value);
                 text("unknown")
             }
         }
@@ -241,7 +241,7 @@ impl FieldView {
                 vec![],
             ),
             _ => {
-                sauron::log!("todo for: {:?}", self.value);
+                trace!("todo for: {:?}", self.value);
                 text("unknown")
             }
         }
@@ -273,14 +273,14 @@ impl FieldView {
 
 impl Component<Msg> for FieldView {
     fn update(&mut self, msg: Msg) -> Cmd<Self, Msg> {
-        sauron::log!("field updated: {:?}", msg);
+        trace!("field updated: {:?}", msg);
         match msg {
             Msg::TextChange(value) => {
                 self.new_value = Value::Text(value);
                 Cmd::none()
             }
             Msg::PrimaryClicked => {
-                sauron::log!("Primary clicked");
+                trace!("Primary clicked");
                 Cmd::none()
             }
         }

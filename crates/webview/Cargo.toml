@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2018"
 
 [dependencies]
-sauron = {version = "0.7.1"}
+sauron = {version = "0.20.2"}
 data_table = { path = "../data_table" }
 # we uses the objects in diwata intel and in rustorm, but not the database objects
 diwata_intel = { path = "../intel" , features = ["with-rustorm"]}
@@ -16,6 +16,7 @@ wee_alloc = { version = "0.4.3", optional = true }
 ron = "0.5.1"
 sqlparser = { path = "../sqlparser-rs" }
 either = "1.5"
+log = "0.4.8"
 
 [dependencies.wasm-bindgen]
 version = "0.2.33"

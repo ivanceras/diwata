@@ -4,6 +4,8 @@ use app::{App, Msg};
 use diwata_intel::data_container::AppData;
 use sauron::Program;
 use std::rc::Rc;
+#[macro_use]
+extern crate log;
 
 mod app;
 mod assets;
@@ -13,7 +15,7 @@ mod widgets;
 pub fn setup_program(initial_state: &str) -> Rc<Program<App, Msg>> {
     #[cfg(feature = "console_error_panic_hook")]
     console_error_panic_hook::set_once();
-    sauron::log!("initial state: {}", initial_state);
+    trace!("initial state: {}", initial_state);
     let root_node = sauron::document()
         .get_element_by_id("web-app")
         .expect("Unable to get hold of root-node");

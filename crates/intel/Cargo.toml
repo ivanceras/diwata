@@ -19,6 +19,7 @@ rustorm =  {version = "0.15.2", optional = true}
 sqlparser = { path = "../sqlparser-rs" }
 either = { version = "1.5", features = ["serde"] }
 sauron = {version = "0.7.1", features = ["measure"] }
+log = "0.4.8"
 
 
 [features]

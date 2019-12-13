@@ -71,7 +71,7 @@ impl WindowView {
                 app::Cmd::none()
             }
             Msg::BrowserResized(width, height) => {
-                sauron::log!("resized: {},{}", width, height);
+                trace!("resized: {},{}", width, height);
                 self.browser_width = width;
                 self.browser_height = height;
                 self.update_size_allocation();
@@ -294,7 +294,7 @@ impl WindowView {
 
     /// Important: set the data rows first before setting the frozen data
     pub fn set_window_data(&mut self, window_data: &WindowData) {
-        sauron::log!("In setting window data");
+        trace!("In setting window data");
         let WindowData {
             sql_query,
             main_tab_data,
@@ -316,30 +316,30 @@ impl WindowView {
             indirect_tab_total_rows,
         } = window_data;
 
-        sauron::log!("set sql query");
+        trace!("set sql query");
         self.toolbar_view.set_sql_query(sql_query);
         self.main_tab
             .set_pages(main_tab_data, *main_tab_current_page, *main_tab_total_rows);
         self.main_tab.set_frozen_data(main_tab_frozen_data);
 
-        sauron::log!("Setting one_one");
+        trace!("Setting one_one");
         // one one tab should only have 1 row
         for (index, row) in one_one_tab_data.into_iter().enumerate() {
             self.one_one_tabs[index].set_one_one_record(row, 0);
         }
 
-        sauron::log!("Setting has_many");
+        trace!("Setting has_many");
         for (index, pages) in has_many_tab_data.into_iter().enumerate() {
             self.has_many_tabs[index].set_pages(pages, 0, has_many_tab_total_rows[index]);
         }
 
-        sauron::log!("Setting indirect");
+        trace!("Setting indirect");
         for (index, pages) in indirect_tab_data.into_iter().enumerate() {
             self.indirect_tabs[index]
                 .1
                 .set_pages(pages, 0, indirect_tab_total_rows[index]);
         }
-        sauron::log!("done setting window data");
+        trace!("done setting window data");
     }
 
     pub fn show_main_tab_detail_view(&mut self, page_index: usize, row_index: usize) {
@@ -387,7 +387,7 @@ impl WindowView {
         } else if !self.indirect_tabs.is_empty() {
             self.activate_indirect_tab(0);
         } else {
-            sauron::log!("There is no related tab to activate");
+            trace!("There is no related tab to activate");
         }
     }
 

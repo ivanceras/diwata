@@ -79,7 +79,7 @@ impl PageView {
     }
 
     pub fn set_page(&mut self, page: &Page, current_page: usize, total_rows: usize) {
-        sauron::log!("setting pages in page_view: {:#?}", page);
+        trace!("setting pages in page_view: {:#?}", page);
         self.set_data_rows(&page.rows, current_page, total_rows);
     }
 
@@ -152,7 +152,7 @@ impl PageView {
     /// calculate the height of the content
     /// it rows * row_height
     fn height(&self) -> i32 {
-        sauron::log!("row views: {}", self.row_views.len());
+        trace!("row views: {}", self.row_views.len());
         self.row_views.len() as i32 * RowView::row_height()
     }
 

@@ -1,6 +1,9 @@
 #![deny(warnings)]
 #![deny(clippy::all)]
 
+#[macro_use]
+extern crate log;
+
 pub mod cache;
 mod common;
 mod context;

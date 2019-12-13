@@ -117,10 +117,10 @@ impl Component<Msg> for ToolbarView {
             Msg::ToggleShowRelatedTabs => self.show_related_tabs = !self.show_related_tabs,
             Msg::ChangeQuickFind(search) => self.quick_find_search = search,
             Msg::QueryChanged(sql_query) => {
-                sauron::log!("Query is 1 changed to: {}", sql_query);
+                trace!("Query is 1 changed to: {}", sql_query);
                 self.sql_query = sql_query.to_string();
                 let dialect = GenericSqlDialect {};
-                sauron::log!("Using generaic dialect");
+                trace!("Using generaic dialect");
                 let statements = Parser::parse_sql(&dialect, sql_query);
                 if let Ok(statements) = statements {
                     self.formatted_query = statements
@@ -133,7 +133,7 @@ impl Component<Msg> for ToolbarView {
                 }
             }
             Msg::RunQuery => {
-                sauron::log!("Running sql_query: {}", self.sql_query);
+                trace!("Running sql_query: {}", self.sql_query);
             }
         }
         Cmd::none()
@@ -160,7 +160,7 @@ impl Component<Msg> for ToolbarView {
                         button(
                             vec![onclick(|_| Msg::ToggleShowQuery)],
                             vec![
-                                input(vec![r#type("checkbox")], vec![]).attributes(attrs_flag(
+                                input(vec![r#type("checkbox")], vec![]).add_attributes(attrs_flag(
                                     vec![("checked", "checked", self.show_query)],
                                 )),
                                 text("Show query"),
@@ -169,7 +169,7 @@ impl Component<Msg> for ToolbarView {
                         button(
                             vec![onclick(|_| Msg::ToggleShowRelatedTabs)],
                             vec![
-                                input(vec![r#type("checkbox")], vec![]).attributes(attrs_flag(
+                                input(vec![r#type("checkbox")], vec![]).add_attributes(attrs_flag(
                                     vec![("checked", "checked", self.show_related_tabs)],
                                 )),
                                 text("Show related records"),

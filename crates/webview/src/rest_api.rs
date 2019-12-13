@@ -13,7 +13,7 @@ where
         match value {
             Ok(value) => value,
             Err(e) => {
-                sauron::log!("Error: {}", e);
+                trace!("Error: {}", e);
                 panic!();
             }
         }
@@ -51,9 +51,9 @@ pub fn retrieve_detail_for_main_tab<F>(
 where
     F: Fn(Result<RecordDetail, JsValue>) -> Msg + Clone + 'static,
 {
-    sauron::log!("dao: {:#?}", dao);
+    trace!("dao: {:#?}", dao);
     let dao_string = ron::ser::to_string(dao).expect("Unable to serialize dao");
-    sauron::log!("dao_string: {}", dao_string);
+    trace!("dao_string: {}", dao_string);
     let url = format!(
         "/record_detail/{}/?dao={}",
         table.complete_name(),

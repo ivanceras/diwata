@@ -52,7 +52,7 @@ impl RowView {
                 let field = field_view.borrow();
                 let column = &field.column.name;
                 let value = &field.value;
-                dao.insert(column, value.clone());
+                dao.insert_value(column, &value);
                 dao
             })
     }

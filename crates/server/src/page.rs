@@ -142,7 +142,7 @@ pub fn index(
 
 pub fn index_with_table(
     req: HttpRequest,
-    table_name_param: web::Path<(String)>,
+    table_name_param: web::Path<String>,
 ) -> impl Future<Item = HttpResponse, Error = Error> {
     println!("{:?}", req);
     api::require_credentials(&req).expect("Should have credentials");

@@ -110,10 +110,10 @@ impl TabView {
             if self.table_view.page_views.len() == 1
                 && self.table_view.page_views[0].row_views.len() == 1
             {
-                sauron::log!("Succeed one_one_tab");
+                trace!("Succeed one_one_tab");
                 self.show_detail_view(0, 0);
             } else {
-                sauron::log!(
+                trace!(
                     "There should be 1 data row in one_one_tab, got{} ",
                     self.table_view.page_views.len()
                 );

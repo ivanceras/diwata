@@ -149,7 +149,7 @@ impl Component<Msg> for App {
                     page_view::Msg::RowMsg(row_index, row_view::Msg::DoubleClick),
                 ))),
             ) => {
-                sauron::log!("Row {} is dblclicked", row_index);
+                trace!("Row {} is dblclicked", row_index);
                 let window_msg = window_view::Msg::MainTabMsg(tab_view::Msg::TableMsg(
                     table_view::Msg::PageMsg(
                         page_index,
@@ -175,12 +175,12 @@ impl Component<Msg> for App {
             Msg::WindowMsg(index, window_view::Msg::ToolbarMsg(toolbar_view::Msg::RunQuery)) => {
                 let sql = self.window_views[index].sql_query();
                 if let Some(sql) = sql {
-                    sauron::log!("In app.rs Run the query: {}", sql);
+                    trace!("In app.rs Run the query: {}", sql);
                     rest_api::execute_sql_query(&sql, move |window_rows| {
                         Msg::ReceivedWindowQueryResult(index, window_rows)
                     })
                 } else {
-                    sauron::log!("Nothing to execute!");
+                    trace!("Nothing to execute!");
                     Cmd::none()
                 }
             }
@@ -189,13 +189,13 @@ impl Component<Msg> for App {
                 let main_tab_current_page = self.window_data[window_index].main_tab_current_page;
                 let next_page = main_tab_current_page + 1;
                 main_tab.update(tab_msg);
-                sauron::log!(
+                trace!(
                     "is a page request in flight: {}",
                     self.is_page_request_in_flight
                 );
                 if main_tab.need_next_page() && !self.is_page_request_in_flight {
                     self.is_page_request_in_flight = true;
-                    sauron::log!(
+                    trace!(
                         "---->>> is a page request in flight: {}",
                         self.is_page_request_in_flight
                     );
@@ -212,7 +212,7 @@ impl Component<Msg> for App {
             }
             Msg::WindowMsg(index, window_msg) => self.window_views[index].update(window_msg),
             Msg::BrowserResized(width, height) => {
-                sauron::log!("Browser is resized to: {}, {}", width, height);
+                trace!("Browser is resized to: {}, {}", width, height);
                 self.browser_width = width;
                 self.browser_height = height;
                 //also notify all opened windows with the resize;
@@ -223,11 +223,11 @@ impl Component<Msg> for App {
                 Cmd::none()
             }
             Msg::Tick => {
-                sauron::log("Ticking");
+                trace!("Ticking");
                 Cmd::none()
             }
             Msg::WindowListMsg(window_list_view::Msg::ClickedWindow(table_name)) => {
-                sauron::log!("fetching data for {}", table_name.complete_name());
+                trace!("fetching data for {}", table_name.complete_name());
                 let url = format!("/{}", table_name.complete_name());
                 sauron::history()
                     .replace_state_with_url(&JsValue::NULL, &table_name.complete_name(), Some(&url))
@@ -246,7 +246,7 @@ impl Component<Msg> for App {
                 Cmd::none()
             }
             Msg::FetchWindowList(Err(js_value)) => {
-                sauron::log!("There was an error fetching window list: {:#?}", js_value);
+                trace!("There was an error fetching window list: {:#?}", js_value);
                 Cmd::none()
             }
 
@@ -272,18 +272,18 @@ impl Component<Msg> for App {
                             self.window_views.push(new_window);
                             self.activate_last_added_window();
                         } else {
-                            sauron::log!("No window returned in query result");
+                            trace!("No window returned in query result");
                         }
                         Cmd::none()
                     }
                     Err(err) => {
-                        sauron::log!("error fetching window data: {:?}", err);
+                        trace!("error fetching window data: {:?}", err);
                         Cmd::none()
                     }
                 }
             }
             Msg::ReceivedWindowDataNextPage(window_index, page, Ok(query_result)) => {
-                sauron::log!("Got data for next page {}: {:#?}", page, query_result);
+                trace!("Got data for next page {}: {:#?}", page, query_result);
                 let window_data = &mut self.window_data[window_index];
                 window_data.add_main_data_page(query_result.rows);
                 window_data.main_tab_current_page = page;
@@ -292,7 +292,7 @@ impl Component<Msg> for App {
                 Cmd::none()
             }
             Msg::ReceivedWindowDataNextPage(_window_index, page, Err(_e)) => {
-                sauron::log!("Error retrieving next page {}", page);
+                trace!("Error retrieving next page {}", page);
                 Cmd::none()
             }
 
@@ -312,12 +312,12 @@ impl Component<Msg> for App {
                     // replace the previous window
                     self.window_views[index] = new_window;
                 } else {
-                    sauron::log!("No window returned in query result");
+                    trace!("No window returned in query result");
                 }
                 Cmd::none()
             }
             Msg::ReceivedWindowQueryResult(_index, Err(_err)) => {
-                sauron::log!("Error retrieveing records from sql query");
+                trace!("Error retrieveing records from sql query");
                 Cmd::none()
             }
             Msg::ReceivedWindowMainTabDetail(
@@ -326,7 +326,7 @@ impl Component<Msg> for App {
                 row_index,
                 Ok(record_detail),
             ) => {
-                sauron::log!("Got window main tab detail: {:#?}", record_detail);
+                trace!("Got window main tab detail: {:#?}", record_detail);
                 let detail_window = record_detail.window.clone();
                 let window_data = &mut self.window_data[window_index];
                 window_data.set_record_detail(record_detail);
@@ -336,7 +336,7 @@ impl Component<Msg> for App {
                     self.browser_width,
                     self.browser_height,
                 );
-                sauron::log!("Window data: {:#?}", window_data);
+                trace!("Window data: {:#?}", window_data);
                 new_window.show_main_tab_detail_view(page_index, row_index);
                 new_window.update_size_allocation();
                 self.window_views[window_index] = new_window;
@@ -348,7 +348,7 @@ impl Component<Msg> for App {
                 _row_index,
                 Err(_record_detail),
             ) => {
-                sauron::log!("Error retrieveing window main tab detail..");
+                trace!("Error retrieveing window main tab detail..");
                 Cmd::none()
             }
         }

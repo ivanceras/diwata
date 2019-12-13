@@ -106,7 +106,7 @@ pub struct DaoParam {
 
 pub fn record_detail(
     req: HttpRequest,
-    table_name_param: web::Path<(String)>,
+    table_name_param: web::Path<String>,
     dao_param: web::Query<DaoParam>,
 ) -> impl Future<Item = HttpResponse, Error = Error> {
     require_credentials(&req).expect("Should have credentials");

@@ -45,13 +45,13 @@ impl Component<Msg> for WindowListView {
     fn update(&mut self, msg: Msg) -> Cmd<Self, Msg> {
         match msg {
             Msg::ChangeSearch(search) => {
-                sauron::log!("searching for {}", search);
+                trace!("searching for {}", search);
             }
             Msg::ReceiveWindowList(window_list) => {
                 self.window_list = window_list;
             }
             Msg::ClickedWindow(table_name) => {
-                sauron::log!("Opening window: {}", table_name.complete_name());
+                trace!("Opening window: {}", table_name.complete_name());
             }
         }
         Cmd::none()
