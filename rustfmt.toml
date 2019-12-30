@@ -12,6 +12,7 @@ imports_layout = "Vertical"
 ## Default value is false, yet clipy keeps nagging on this
 use_field_init_shorthand = true
 
+
 ## also format macro
 format_macro_matchers = true
 force_multiline_blocks = true
