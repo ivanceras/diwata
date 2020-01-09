@@ -19,19 +19,20 @@ use diwata_intel::{
 };
 use rustorm::{
     table::SchemaContent,
+    DaoManager,
     EntityManager,
     Table,
 };
 use std::collections::HashMap;
 
-pub fn create_context(
-    credentials: Result<Credentials, ServiceError>,
-) -> Result<Context, ServiceError> {
-    let dm = global::get_pool_dm()?;
-    let em = global::get_pool_em()?;
+pub fn get_em_dm(
+    credentials: Option<Credentials>,
+) -> Result<(EntityManager, DaoManager), ServiceError> {
+    let mut dm = global::get_pool_dm()?;
+    let mut em = global::get_pool_em()?;
     let is_login_required = global::is_login_required()?;
     if is_login_required {
-        set_session_credentials(&credentials?, &em)?;
+        set_session_credentials(&credentials.unwrap(), &mut em)?;
     }
 
     let active_em = if is_login_required {
@@ -44,15 +45,21 @@ pub fn create_context(
     } else {
         dm
     };
+    Ok((active_em, active_dm))
+}
+
+pub fn create_context(
+    credentials: Option<Credentials>,
+) -> Result<Context, ServiceError> {
+    let (mut active_em, mut active_dm) = get_em_dm(credentials)?;
+    let mut cache_pool = cache::CACHE_POOL.lock().unwrap();
+
     let db_url = global::get_db_url()?;
 
-    let mut cache_pool = cache::CACHE_POOL.lock().unwrap();
-    let windows = cache_pool.get_cached_windows(&active_em, &db_url)?;
-    let tables = cache_pool.get_cached_tables(&active_em, &db_url)?;
-    let grouped_window = get_grouped_windows(&active_em, &tables)?;
+    let windows = cache_pool.get_cached_windows(&mut active_em, &db_url)?;
+    let tables = cache_pool.get_cached_tables(&mut active_em, &db_url)?;
+    let grouped_window = get_grouped_windows(&mut active_em, &tables)?;
     Ok(Context {
-        em: active_em,
-        dm: active_dm,
         tables: to_hashmap_tables(tables),
         windows: to_hashmap_windows(windows),
         grouped_window,
@@ -63,7 +70,7 @@ pub fn create_context(
 /// for displaying as a list in the client side
 /// filter out tablenames that are not window
 fn get_grouped_windows(
-    em: &EntityManager,
+    em: &mut EntityManager,
     tables: &[Table],
 ) -> Result<Vec<GroupedWindow>, ServiceError> {
     let schema_content: Vec<SchemaContent> = em.get_grouped_tables()?;
@@ -114,7 +121,7 @@ fn to_hashmap_windows(windows: Vec<Window>) -> HashMap<TableName, Window> {
 /// database previlege is imposed for the next database queries
 fn set_session_credentials(
     credentials: &Credentials,
-    em: &EntityManager,
+    em: &mut EntityManager,
 ) -> Result<(), ServiceError> {
     println!("------------->>>> SETTING SESSION CREDENTIALS");
     em.set_session_user(&credentials.username)?;

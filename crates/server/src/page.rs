@@ -26,6 +26,10 @@ use futures::future::{
     Future,
 };
 use ron;
+use rustorm::{
+    DaoManager,
+    EntityManager,
+};
 use sauron::{
     html::{
         attributes::*,
@@ -34,13 +38,22 @@ use sauron::{
     html_extra,
     Node,
 };
-
 use std::convert::TryFrom;
 
-fn get_index_html(context: &Context, table_name: Option<TableName>) -> String {
-    let app_data =
-        data_read::retrieve_app_data(context, table_name, global::PAGE_SIZE)
-            .expect("there should be app data");
+fn get_index_html(
+    context: &Context,
+    em: &mut EntityManager,
+    dm: &mut DaoManager,
+    table_name: Option<TableName>,
+) -> String {
+    let app_data = data_read::retrieve_app_data(
+        context,
+        em,
+        dm,
+        table_name,
+        global::PAGE_SIZE,
+    )
+    .expect("there should be app data");
     let app_data_serialized =
         ron::ser::to_string(&app_data).expect("unable to serialize to ron");
     let view: Node<()> = html_extra::html(
@@ -130,9 +143,14 @@ pub fn index(
     api::require_credentials(&req).expect("Should have credentials");
     let credentials: Result<Credentials, ServiceError> =
         TryFrom::try_from(&req);
-    let context =
-        session::create_context(credentials).expect("unable to create context");
-    let index_html = get_index_html(&context, None);
+
+    let credentials = credentials.ok();
+
+    let context = session::create_context(credentials.clone())
+        .expect("unable to create context");
+    let (mut em, mut dm) =
+        crate::session::get_em_dm(credentials).expect("must not error");
+    let index_html = get_index_html(&context, &mut em, &mut dm, None);
     future::ok(
         HttpResponse::Ok()
             .content_type("text/html")
@@ -148,8 +166,12 @@ pub fn index_with_table(
     api::require_credentials(&req).expect("Should have credentials");
     let credentials: Result<Credentials, ServiceError> =
         TryFrom::try_from(&req);
-    let context =
-        session::create_context(credentials).expect("unable to create context");
+
+    let credentials = credentials.ok();
+    let context = session::create_context(credentials.clone())
+        .expect("unable to create context");
+    let (mut em, mut dm) =
+        crate::session::get_em_dm(credentials).expect("must not error");
     let table_name_str = table_name_param.to_string();
     let table_name = if !table_name_str.is_empty() {
         Some(TableName::from(&table_name_str))
@@ -157,7 +179,7 @@ pub fn index_with_table(
         println!("There is no table name specified!");
         None
     };
-    let index_html = get_index_html(&context, table_name);
+    let index_html = get_index_html(&context, &mut em, &mut dm, table_name);
     future::ok(
         HttpResponse::Ok()
             .content_type("text/html")

@@ -7,6 +7,8 @@ use crate::{
 };
 use rustorm::{
     Dao,
+    DaoManager,
+    EntityManager,
     Rows,
     Table,
 };
@@ -14,22 +16,25 @@ use rustorm::{
 /// get the detail of the selected record data
 pub fn get_selected_record_detail(
     context: &Context,
+    em: &mut EntityManager,
+    dm: &mut DaoManager,
     table_name: &TableName,
     primary_dao: &Dao,
     page_size: usize,
 ) -> Result<RecordDetail, IntelError> {
-    let window = context
-        .get_window(table_name)
-        .expect("should have a window");
     let main_table =
         context.get_table(table_name).expect("should have a table");
 
-    let mut query = Query::new(context);
+    let mut query = Query::new(context, dm);
     query.add_table_datatypes(&main_table);
     query.select();
     query.enumerate_columns(&main_table);
     query.from(&main_table.name);
     query.add_dao_filter(&main_table.name, primary_dao);
+
+    let window = context
+        .get_window(table_name)
+        .expect("should have a window");
 
     let record: Dao = query.collect_one_record()?;
 
@@ -39,6 +44,8 @@ pub fn get_selected_record_detail(
     for one_one_tab in window.one_one_tabs.iter() {
         let one_record = get_one_one_record(
             context,
+            em,
+            dm,
             main_table,
             &one_one_tab.table_name,
             primary_dao,
@@ -53,6 +60,8 @@ pub fn get_selected_record_detail(
         println!("Getting has many");
         let many_record = get_has_many_records(
             context,
+            em,
+            dm,
             main_table,
             &has_many_tab.table_name,
             primary_dao,
@@ -68,6 +77,8 @@ pub fn get_selected_record_detail(
     for indirect_tab in window.indirect_tabs.iter() {
         let ind_records = get_indirect_records(
             context,
+            em,
+            dm,
             main_table,
             &indirect_tab.tab.table_name,
             &indirect_tab.linker,
@@ -92,15 +103,17 @@ pub fn get_selected_record_detail(
 
 fn get_one_one_record(
     context: &Context,
+    em: &mut EntityManager,
+    dm: &mut DaoManager,
     main_table: &Table,
     one_one_table_name: &TableName,
     primary_dao: &Dao,
     page_size: usize,
 ) -> Result<Option<Dao>, IntelError> {
+    let mut query = Query::new(context, dm);
     let one_one_table = context
         .get_table(one_one_table_name)
         .expect("should matched a table");
-    let mut query = Query::new(context);
     query.add_table_datatypes(&one_one_table);
     query.select();
     query.enumerate_columns(&one_one_table);
@@ -108,12 +121,15 @@ fn get_one_one_record(
     query.left_join(&main_table.name, &one_one_table.name);
     query.add_dao_filter(&main_table.name, &primary_dao);
     query.set_limit(page_size);
+
     let one_one_record = query.collect_maybe_record()?;
     Ok(one_one_record)
 }
 
 fn get_has_many_records(
     context: &Context,
+    em: &mut EntityManager,
+    dm: &mut DaoManager,
     main_table: &Table,
     has_many_table_name: &TableName,
     primary_dao: &Dao,
@@ -122,7 +138,7 @@ fn get_has_many_records(
     let has_many_table = context
         .get_table(has_many_table_name)
         .expect("table should exist");
-    let mut query = Query::new(context);
+    let mut query = Query::new(context, dm);
     query.select();
     query.enumerate_columns(&has_many_table);
 
@@ -132,12 +148,14 @@ fn get_has_many_records(
     query.add_dao_filter(&main_table.name, primary_dao);
     query.set_limit(page_size);
     let mut rows = query.collect_rows()?;
-    rows.count = Some(context.em.get_total_records(&has_many_table.name)?);
+    rows.count = Some(em.get_total_records(&has_many_table.name)?);
     Ok(rows)
 }
 
 fn get_indirect_records(
     context: &Context,
+    em: &mut EntityManager,
+    dm: &mut DaoManager,
     main_table: &Table,
     indirect_table_name: &TableName,
     linker_table: &TableName,
@@ -147,7 +165,7 @@ fn get_indirect_records(
     let indirect_table = context
         .get_table(indirect_table_name)
         .expect("table should exist");
-    let mut query = Query::new(context);
+    let mut query = Query::new(context, dm);
     query.select();
     query.enumerate_columns(&indirect_table);
 
@@ -158,6 +176,6 @@ fn get_indirect_records(
     query.add_dao_filter(&main_table.name, primary_dao);
     query.set_limit(page_size);
     let mut rows = query.collect_rows()?;
-    rows.count = Some(context.em.get_total_records(&indirect_table.name)?);
+    rows.count = Some(em.get_total_records(&indirect_table.name)?);
     Ok(rows)
 }

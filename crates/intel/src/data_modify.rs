@@ -32,7 +32,7 @@ use rustorm::{
 /// delete the records with the following record_ids
 /// return the total number of records deleted
 pub fn delete_records(
-    dm: &DaoManager,
+    dm: &mut DaoManager,
     main_table: &Table,
     record_ids: &[String],
 ) -> Result<Rows, IntelError> {
@@ -57,7 +57,7 @@ pub fn delete_records(
 }
 
 fn delete_records_from_single_primary_column(
-    dm: &DaoManager,
+    dm: &mut DaoManager,
     main_table: &Table,
     record_ids: &[Vec<(&ColumnName, Value)>],
 ) -> Result<Rows, DbError> {
@@ -86,7 +86,7 @@ fn delete_records_from_single_primary_column(
 }
 
 pub fn save_container(
-    dm: &DaoManager,
+    dm: &mut DaoManager,
     tables: &[Table],
     container: &SaveContainer,
 ) -> Result<(), IntelError> {
@@ -104,7 +104,7 @@ pub fn save_container(
 }
 
 pub fn save_changeset(
-    dm: &DaoManager,
+    dm: &mut DaoManager,
     tables: &[Table],
     window: &Window,
     table: &Table,
@@ -147,7 +147,7 @@ pub fn save_changeset(
 }
 
 fn save_one_ones(
-    dm: &DaoManager,
+    dm: &mut DaoManager,
     tables: &[Table],
     main_table: &Table,
     main_record: &Dao,
@@ -175,7 +175,7 @@ fn save_one_ones(
 }
 
 fn save_one_one_table(
-    dm: &DaoManager,
+    dm: &mut DaoManager,
     _tables: &[Table],
     main_table: &Table,
     main_record: &Dao,
@@ -192,7 +192,7 @@ fn save_one_one_table(
 }
 
 fn save_has_many(
-    dm: &DaoManager,
+    dm: &mut DaoManager,
     tables: &[Table],
     main_table: &Table,
     main_record: &Dao,
@@ -220,7 +220,7 @@ fn save_has_many(
 }
 
 fn save_has_many_table(
-    dm: &DaoManager,
+    dm: &mut DaoManager,
     _tables: &[Table],
     _main_table: &Table,
     _main_record: &Dao,
@@ -248,7 +248,7 @@ fn save_has_many_table(
 }
 
 fn delete_from_table(
-    dm: &DaoManager,
+    dm: &mut DaoManager,
     table: &Table,
     rows: &Rows,
 ) -> Result<(), IntelError> {
@@ -259,7 +259,7 @@ fn delete_from_table(
 }
 
 fn delete_record_from_table(
-    dm: &DaoManager,
+    dm: &mut DaoManager,
     table: &Table,
     record: &Dao,
 ) -> Result<(), IntelError> {
@@ -285,7 +285,7 @@ fn delete_record_from_table(
 }
 
 fn save_indirect(
-    dm: &DaoManager,
+    dm: &mut DaoManager,
     tables: &[Table],
     main_table: &Table,
     main_record: &Dao,
@@ -343,7 +343,7 @@ fn save_indirect(
 
 /// delete the entry from the linker table
 fn unlink_from_indirect_table(
-    dm: &DaoManager,
+    dm: &mut DaoManager,
     _tables: &[Table],
     main_table: &Table,
     main_record: &Dao,
@@ -367,7 +367,7 @@ fn unlink_from_indirect_table(
 /// create an entry to the indirect table
 /// and create an entry into the linker table
 fn link_new_for_indirect_table(
-    dm: &DaoManager,
+    dm: &mut DaoManager,
     _tables: &[Table],
     main_table: &Table,
     main_record: &Dao,
@@ -422,7 +422,7 @@ fn create_linker_record(
 /// create an entry to the linker table
 /// linking existing record from the indirect table
 fn link_existing_for_indirect_table(
-    dm: &DaoManager,
+    dm: &mut DaoManager,
     _tables: &[Table],
     main_table: &Table,
     main_record: &Dao,
@@ -445,7 +445,7 @@ fn link_existing_for_indirect_table(
 
 /// triggered by the main tab
 fn update_records_in_table(
-    dm: &DaoManager,
+    dm: &mut DaoManager,
     main_table: &Table,
     rows: &Rows,
 ) -> Result<Vec<Dao>, IntelError> {
@@ -458,7 +458,7 @@ fn update_records_in_table(
 }
 
 fn update_record_in_table(
-    dm: &DaoManager,
+    dm: &mut DaoManager,
     main_table: &Table,
     record: &Dao,
 ) -> Result<Dao, DbError> {
@@ -517,7 +517,7 @@ fn update_record_in_table(
 
 /// insert rows all at once in one query
 fn insert_rows_to_table(
-    dm: &DaoManager,
+    dm: &mut DaoManager,
     table: &Table,
     rows: &Rows,
 ) -> Result<Rows, IntelError> {
@@ -582,7 +582,7 @@ fn are_all_nil(column: &str, rows: &Rows) -> bool {
 
 /// insert rows 1 by 1
 pub fn insert_records_to_table1(
-    dm: &DaoManager,
+    dm: &mut DaoManager,
     main_table: &Table,
     rows: &Rows,
 ) -> Result<Vec<Dao>, IntelError> {
@@ -595,7 +595,7 @@ pub fn insert_records_to_table1(
 }
 
 fn insert_record_to_table(
-    dm: &DaoManager,
+    dm: &mut DaoManager,
     main_table: &Table,
     record: &Dao,
 ) -> Result<Dao, DbError> {
@@ -647,7 +647,7 @@ fn insert_record_to_table(
 }
 
 fn insert_record_to_linker_table(
-    dm: &DaoManager,
+    dm: &mut DaoManager,
     linker_table: &Table,
     record: &Dao,
 ) -> Result<Dao, DbError> {
@@ -702,7 +702,7 @@ fn insert_record_to_linker_table(
 /// TODO: make the database trait tell which version is in used
 /// use appropriate query for depending on which features are supported
 fn upsert_one_one_record_to_table(
-    dm: &DaoManager,
+    dm: &mut DaoManager,
     main_table: &Table,
     main_record: &Dao,
     one_one_table: &Table,

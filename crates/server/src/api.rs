@@ -49,7 +49,7 @@ pub fn windows(
         TryFrom::try_from(&req);
 
     web::block(move || {
-        let context = session::create_context(credentials);
+        let context = session::create_context(credentials.ok());
         context.map(|context| context.grouped_window)
     })
     .from_err()
@@ -81,9 +81,12 @@ pub fn sql(
         TryFrom::try_from(&req);
 
     web::block(move || {
-        let context = session::create_context(credentials)
+        let context = session::create_context(credentials.ok())
             .expect("unable to create context");
-        data_read::execute_sql_query(&context, &sql_param.sql)
+
+        let mut dm = global::get_pool_dm().expect("must get dm");
+        let mut em = global::get_pool_em().expect("must get em");
+        data_read::execute_sql_query(&context, &mut em, &mut dm, &sql_param.sql)
     })
     .from_err()
     .then(move |rows| {
@@ -113,14 +116,20 @@ pub fn record_detail(
     let credentials: Result<Credentials, ServiceError> =
         TryFrom::try_from(&req);
 
+    let credentials = credentials.ok();
+
     web::block(move || {
-        let context = session::create_context(credentials)
+        let context = session::create_context(credentials.clone())
             .expect("unable to create context");
         let table_name = TableName::from(&table_name_param.to_string());
         let dao: Dao = ron::de::from_str(&dao_param.dao)
             .expect("Unable to deserialize dao");
+        let (mut em, mut dm) =
+            crate::session::get_em_dm(credentials).expect("must not error");
         let detail = data_read::fetch_detail(
             &context,
+            &mut em,
+            &mut dm,
             &table_name,
             &dao,
             global::PAGE_SIZE,
@@ -150,12 +159,18 @@ pub fn main_data(
     let credentials: Result<Credentials, ServiceError> =
         TryFrom::try_from(&req);
 
+    let credentials = credentials.ok();
+
     web::block(move || {
-        let context = session::create_context(credentials)
+        let context = session::create_context(credentials.clone())
             .expect("unable to create context");
+        let (mut em, mut dm) =
+            crate::session::get_em_dm(credentials).expect("must not error");
         let table_name = TableName::from(&param.0);
         let res = data_read::get_window_main_table_data(
             &context,
+            &mut em,
+            &mut dm,
             &table_name,
             param.1,
             global::PAGE_SIZE,

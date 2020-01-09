@@ -2,6 +2,7 @@ use crate::error::ServiceError;
 use actix_web::HttpRequest;
 use std::convert::TryFrom;
 
+#[derive(Clone)]
 pub struct Credentials {
     pub username: String,
     pub password: String,

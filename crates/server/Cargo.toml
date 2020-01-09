@@ -16,7 +16,7 @@ url = "1.5"
 include_dir = "0.2"
 cfg-if = "0.1.2"
 diwata_intel = { version = "0.1.2", features = ["with-rustorm", "with-postgres"] }
-rustorm =  {version = "0.15.2", features = ["with-postgres"]}
+rustorm =  {version = "0.16.0", features = ["with-postgres"]}
 ron = "0.5.1"
 actix-web = "1.0.0"
 actix-files = "0.1.0"

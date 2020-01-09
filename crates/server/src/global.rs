@@ -117,9 +117,9 @@ pub fn get_session_db_url() -> Result<String, ServiceError> {
 pub fn precache() -> Result<(), ServiceError> {
     match cache::CACHE_POOL.lock() {
         Ok(mut cache_pool) => {
-            let em = get_pool_em()?;
+            let mut em = get_pool_em()?;
             let db_url = get_db_url()?;
-            cache_pool.precache(&em, &db_url)?;
+            cache_pool.precache(&mut em, &db_url)?;
             Ok(())
         }
         Err(e) => Err(ServiceError::GenericError(format!("{}", e))),

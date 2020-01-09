@@ -5,6 +5,7 @@ use crate::{
 use rustorm::{
     types::SqlType,
     Dao,
+    DaoManager,
     DbError,
     Rows,
     Table,
@@ -15,6 +16,7 @@ use std::collections::BTreeMap;
 
 pub struct Query<'c> {
     context: &'c Context,
+    dm: &'c mut DaoManager,
     sql: String,
     from_table: Vec<TableName>,
     joined_tables: Vec<TableName>,
@@ -23,7 +25,7 @@ pub struct Query<'c> {
 }
 
 impl<'c> Query<'c> {
-    pub fn new(context: &'c Context) -> Self {
+    pub fn new(context: &'c Context, dm: &'c mut DaoManager) -> Self {
         Query {
             context,
             sql: String::new(),
@@ -31,6 +33,7 @@ impl<'c> Query<'c> {
             joined_tables: vec![],
             params: vec![],
             column_datatypes: BTreeMap::new(),
+            dm,
         }
     }
 
@@ -168,35 +171,32 @@ impl<'c> Query<'c> {
         self.append(&format!("\nLIMIT {} ", page_size));
     }
 
-    pub fn collect_rows(&self) -> Result<Rows, DbError> {
+    pub fn collect_rows(&mut self) -> Result<Rows, DbError> {
         println!("SQL: {}", self.sql);
         println!("params: {:?}", self.params);
         let bparams: Vec<&Value> = self.params.iter().collect();
         let result: Result<Rows, DbError> =
-            self.context.dm.execute_sql_with_return(&self.sql, &bparams);
+            self.dm.execute_sql_with_return(&self.sql, &bparams);
         result.map(|rows| common::cast_rows(rows, &self.column_datatypes))
     }
 
-    pub fn collect_maybe_record(&self) -> Result<Option<Dao>, DbError> {
+    pub fn collect_maybe_record(&mut self) -> Result<Option<Dao>, DbError> {
         println!("SQL: {}", self.sql);
         println!("params: {:?}", self.params);
         let bparams: Vec<&Value> = self.params.iter().collect();
         let record = self
-            .context
             .dm
             .execute_sql_with_maybe_one_return(&self.sql, &bparams);
         record
             .map(|r| r.map(|o| common::cast_record(o, &self.column_datatypes)))
     }
 
-    pub fn collect_one_record(&self) -> Result<Dao, DbError> {
+    pub fn collect_one_record(&mut self) -> Result<Dao, DbError> {
         println!("SQL: {}", self.sql);
         println!("params: {:?}", self.params);
         let bparams: Vec<&Value> = self.params.iter().collect();
-        let record = self
-            .context
-            .dm
-            .execute_sql_with_one_return(&self.sql, &bparams)?;
+        let record =
+            self.dm.execute_sql_with_one_return(&self.sql, &bparams)?;
         Ok(common::cast_record(record, &self.column_datatypes))
     }
 }

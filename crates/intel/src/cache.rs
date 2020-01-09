@@ -66,7 +66,7 @@ impl CachePool {
 
     pub fn precache(
         &mut self,
-        em: &EntityManager,
+        em: &mut EntityManager,
         db_url: &str,
     ) -> Result<(), IntelError> {
         self.ensure_cache(db_url);
@@ -76,7 +76,7 @@ impl CachePool {
 
     pub fn get_cached_tables(
         &mut self,
-        em: &EntityManager,
+        em: &mut EntityManager,
         db_url: &str,
     ) -> Result<Vec<Table>, IntelError> {
         self.ensure_cache(db_url);
@@ -104,7 +104,7 @@ impl CachePool {
 
     pub fn get_cached_windows(
         &mut self,
-        em: &EntityManager,
+        em: &mut EntityManager,
         db_url: &str,
     ) -> Result<Vec<Window>, IntelError> {
         self.ensure_cache(db_url);
@@ -132,7 +132,7 @@ impl CachePool {
 
     fn perform_table_caching(
         &mut self,
-        em: &EntityManager,
+        em: &mut EntityManager,
         db_url: &str,
     ) -> Result<(), IntelError> {
         let cache = self.0.get_mut(db_url);
@@ -144,7 +144,7 @@ impl CachePool {
 
     fn perform_window_caching(
         &mut self,
-        em: &EntityManager,
+        em: &mut EntityManager,
         db_url: &str,
     ) -> Result<(), IntelError> {
         let cache = self.0.get_mut(db_url);
@@ -182,7 +182,7 @@ impl Cache {
 
     fn perform_table_caching(
         &mut self,
-        em: &EntityManager,
+        em: &mut EntityManager,
     ) -> Result<(), IntelError> {
         println!("----> ACTUAL TABLE CACHING");
         let tables = em.get_all_tables()?;
@@ -192,7 +192,7 @@ impl Cache {
 
     fn perform_window_caching(
         &mut self,
-        em: &EntityManager,
+        em: &mut EntityManager,
     ) -> Result<(), IntelError> {
         println!("----> ACTUAL WINDOW CACHING");
         match self.tables {

@@ -12,6 +12,7 @@ use crate::{
 };
 use rustorm::{
     Dao,
+    DaoManager,
     DatabaseName,
     DbError,
     EntityManager,
@@ -26,19 +27,23 @@ use sqlparser::{
 mod detail_record;
 
 pub fn get_database_name(
-    em: &EntityManager,
+    em: &mut EntityManager,
 ) -> Result<Option<DatabaseName>, DbError> {
     em.get_database_name()
 }
 
 pub fn fetch_detail(
     context: &Context,
+    em: &mut EntityManager,
+    dm: &mut DaoManager,
     table_name: &TableName,
     primary_dao: &Dao,
     page_size: usize,
 ) -> Result<RecordDetail, IntelError> {
     detail_record::get_selected_record_detail(
         context,
+        em,
+        dm,
         table_name,
         primary_dao,
         page_size,
@@ -47,11 +52,14 @@ pub fn fetch_detail(
 
 pub fn execute_sql_query(
     context: &Context,
+    em: &mut EntityManager,
+    dm: &mut DaoManager,
     sql: &str,
 ) -> Result<QueryResult, DbError> {
     let dialect = GenericSqlDialect {};
     let ast = Parser::parse_sql(&dialect, sql.to_string());
     println!("{:#?}", ast);
+    let rows = dm.execute_sql_with_return(&sql, &[])?;
     let window = if let Ok(ast) = ast {
         if !ast.is_empty() {
             if let Some(table_name) = query_parser::extract_table_name(&ast[0])
@@ -68,44 +76,51 @@ pub fn execute_sql_query(
     } else {
         None
     };
-    let rows = context.dm.execute_sql_with_return(&sql, &[])?;
     Ok(QueryResult::with_rows(window, rows))
 }
 
 pub fn get_window_main_table_data(
     context: &Context,
+    em: &mut EntityManager,
+    dm: &mut DaoManager,
     table_name: &TableName,
     page: usize,
     page_size: usize,
 ) -> Result<QueryResult, IntelError> {
+    let rows =
+        fetch_main_table_data(context, em, dm, table_name, page, page_size)?;
     let window = context.get_window(table_name);
-    let rows = fetch_main_table_data(context, table_name, page, page_size)?;
     Ok(QueryResult::with_rows(window, rows))
 }
 
 fn fetch_main_table_data(
     context: &Context,
+    em: &mut EntityManager,
+    dm: &mut DaoManager,
     table_name: &TableName,
     page: usize,
     page_size: usize,
 ) -> Result<Rows, IntelError> {
-    let mut query = Query::new(context);
-    query.select();
     let main_table = context
         .get_table(table_name)
         .expect("there should be table");
+
+    let mut query = Query::new(context, dm);
+    query.select();
     query.enumerate_columns(&main_table);
     query.from(table_name);
     query.set_page(page, page_size);
     let mut rows = query.collect_rows()?;
     println!("Returning: {} rows", rows.data.len());
-    let row_count = context.em.get_total_records(table_name)?;
+    let row_count = em.get_total_records(table_name)?;
     rows.count = Some(row_count);
     Ok(rows)
 }
 
 pub fn retrieve_app_data(
     context: &Context,
+    em: &mut EntityManager,
+    dm: &mut DaoManager,
     table_name: Option<TableName>,
     page_size: usize,
 ) -> Result<AppData, IntelError> {
@@ -116,11 +131,17 @@ pub fn retrieve_app_data(
     } else {
         &grouped_window[0].window_names[0].table_name
     };
+    let rows = fetch_main_table_data(
+        context,
+        em,
+        dm,
+        retrieve_table_name,
+        1,
+        page_size,
+    )?;
     let first_window = context
         .get_window(retrieve_table_name)
         .expect("expecting a window");
-    let rows =
-        fetch_main_table_data(context, retrieve_table_name, 1, page_size)?;
     let first_window_data = WindowData::from_rows(rows);
     Ok(AppData {
         grouped_window,

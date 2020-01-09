@@ -3,16 +3,12 @@ use crate::{
     Window,
 };
 use rustorm::{
-    DaoManager,
-    EntityManager,
     Table,
     TableName,
 };
 use std::collections::HashMap;
 
 pub struct Context {
-    pub em: EntityManager,
-    pub dm: DaoManager,
     pub tables: HashMap<TableName, Table>,
     pub windows: HashMap<TableName, Window>,
     pub grouped_window: Vec<GroupedWindow>,
