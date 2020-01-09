@@ -25,7 +25,7 @@ dotenv = "0.13.0"
 env_logger = "0.5.10"
 futures = "0.1.22"
 log = "0.4.3"
-sauron = "0.7.0"
+sauron = "0.20.3"
 
 [features]
 with-sqlite = ["diwata_intel/with-sqlite", "diwata_intel/with-rustorm", "rustorm/with-sqlite"]

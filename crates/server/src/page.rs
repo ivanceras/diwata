@@ -34,8 +34,8 @@ use sauron::{
     html::{
         attributes::*,
         *,
+        self,
     },
-    html_extra,
     Node,
 };
 use std::convert::TryFrom;
@@ -56,7 +56,7 @@ fn get_index_html(
     .expect("there should be app data");
     let app_data_serialized =
         ron::ser::to_string(&app_data).expect("unable to serialize to ron");
-    let view: Node<()> = html_extra::html(
+    let view: Node<()> = html::html(
         vec![lang("en")],
         vec![
             head(
@@ -87,7 +87,7 @@ fn get_index_html(
                         ],
                         vec![],
                     ),
-                    html_extra::title(vec![], vec![text("Diwata")]),
+                    html::tags::title(vec![], vec![text("Diwata")]),
                 ],
             ),
             body(
