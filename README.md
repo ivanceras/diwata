@@ -1,7 +1,7 @@
 # Diwata
 
 
-Diwata is a database interface for PostgreSQL with the goal of being usable, user-friendly with its basic and advanced functionality be discoverable by the user.
+Diwata is a database interface for PostgreSQL,Mysql, Sqlite with the goal of being usable, user-friendly with its basic and advanced functionality be discoverable by the user.
 
 [![](https://travis-ci.org/ivanceras/diwata.svg?branch=master)](https://travis-ci.org/ivanceras/diwata)
 [![Backers on Open Collective](https://opencollective.com/diwata/backers/badge.svg)](#backers)
