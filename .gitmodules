@@ -1,6 +1,3 @@
-[submodule "sakila"]
-	path = crates/sakila
-	url = https://ivanceras@github.com/ivanceras/sakila
 [submodule "rustorm"]
 	path = crates/rustorm
 	url = https://ivanceras@github.com/ivanceras/rustorm
